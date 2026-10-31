@@ -189,6 +189,12 @@
   .seal { position: relative; z-index: 3; display: flex; justify-content: center; margin: -64px 0 -48px; }
   .seal svg { width: 128px; height: 128px; transform: rotate(-3deg); filter: drop-shadow(0 14px 16px rgba(30,43,63,.35)); }
   @media (max-width: 520px) { .seal { margin: -48px 0 -32px; } .seal svg { width: 96px; height: 96px; } }
+
+  /* George's welcome note, right under the seal */
+  .welcome { padding-top: 72px; }
+  .welcome h2 { text-align: center; }
+  .welcome .letter { margin: 20px auto 0; }
+  .welcome .sign { text-align: right; }
 </style>
 </head>
 <body>
@@ -253,6 +259,15 @@
   </div>
 
   <main class="wrap">
+    <section class="welcome" aria-labelledby="note">
+      <h2 id="note">A note from George</h2>
+      <div class="letter">
+        <p>Hey guys! Welcome to my site. My name is George Kling and I am 10 years old. This is a place for some of my ideas, book reviews, quotes I like, thoughts I have and photos from adventures and builds.</p>
+        <p>I want to make this site fun for you and for everyone. Please enjoy this and make it one of your favorite places on the internet to visit.</p>
+        <p class="sign">Thanks!<br>George Kling</p>
+      </div>
+    </section>
+
     <section id="stories" aria-labelledby="stories-h">
       <div class="head">
         <svg class="badge r" viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="56" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="60" cy="60" r="31" fill="none" stroke="currentColor" stroke-width="1.5"/><text font-family="Special Elite, Courier New, monospace" font-size="12" fill="currentColor"><textPath href="#ring" textLength="252" lengthAdjust="spacing">WRITTEN BY GEORGE ★ WRITTEN BY GEORGE ★</textPath></text><text x="60" y="71" text-anchor="middle" font-family="Young Serif, Georgia, serif" font-size="32" fill="currentColor">G</text></svg>
@@ -358,14 +373,6 @@
       </div>
     </section>
 
-    <section aria-labelledby="note">
-      <h2 id="note">A note from George</h2>
-      <div class="letter">
-        <p>Hey guys! Welcome to my site. My name is George Kling and I am 10 years old. This is a place for some of my ideas, book reviews, quotes I like, thoughts I have and photos from adventures and builds.</p>
-        <p>I want to make this site fun for you and for everyone. Please enjoy this and make it one of your favorite places on the internet to visit.</p>
-        <p class="sign">Thanks!<br>George Kling</p>
-      </div>
-    </section>
   </main>
 
   <footer>
