@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>George</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Special+Elite&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --page: #F4F6F1;
+    --paper: #FFFFFF;
+    --ink: #1E2B3F;
+    --ink-soft: #4A5568;
+    --rule: rgba(30,43,63,.14);
+    --red: #D2402F;
+    --green: #1F6B45;
+    --green-deep: #17563A;
+    --orange: #EE8133;
+    --cream: #FFF6EA;
+    --manila: #EBDAA9;
+    --manila-line: #C9B57E;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body {
+    margin: 0;
+    background: var(--page);
+    color: var(--ink);
+    font-family: "Atkinson Hyperlegible", system-ui, sans-serif;
+    font-size: 1.125rem;
+    line-height: 1.6;
+  }
+  a { color: var(--green); text-underline-offset: 3px; }
+  :focus-visible { outline: 3px solid var(--orange); outline-offset: 3px; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 16px; }
+
+  /* ---------- Green band: nav + hero ---------- */
+  .band { background: var(--green); color: var(--cream); overflow: hidden; }
+  .top .wrap { display: flex; flex-wrap: wrap; gap: 6px 22px; align-items: baseline; padding-top: 16px; padding-bottom: 16px; }
+  .top .home { font-family: "Young Serif", Georgia, serif; font-size: 1.25rem; color: var(--cream); text-decoration: none; margin-right: auto; }
+  .top nav { display: flex; flex-wrap: wrap; gap: 4px 18px; font-size: 1rem; }
+  .top nav a { color: #CFE3D6; text-decoration: none; }
+  .top nav a:hover { color: var(--cream); text-decoration: underline; }
+
+  .hero {
+    display: grid; grid-template-columns: 1fr; gap: 56px;
+    padding: 32px 0 88px; align-items: center;
+  }
+  @media (min-width: 860px) { .hero { grid-template-columns: 1fr 1.05fr; padding: 56px 0 120px; gap: 64px; } }
+  h1 {
+    font-family: "Young Serif", Georgia, serif; font-weight: 400;
+    font-size: clamp(4.5rem, 17vw, 10rem);
+    line-height: .88; letter-spacing: -0.025em;
+    margin: 0 0 28px; color: var(--cream);
+  }
+  h1 .dot { color: var(--orange); }
+  .intro { font-size: 1.25rem; max-width: 32ch; margin: 0; color: #CFE3D6; }
+
+  /* Library card */
+  .pocket { position: relative; padding-top: 16px; max-width: 470px; justify-self: center; width: 100%; }
+  .card {
+    position: relative; z-index: 1;
+    background: var(--manila); color: var(--ink);
+    border-radius: 4px; padding: 22px 22px 120px;
+    transform: rotate(-3deg);
+    box-shadow: 0 22px 34px -16px rgba(0,0,0,.45);
+  }
+  .card-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    border-bottom: 2px solid var(--ink); padding-bottom: 8px; margin-bottom: 4px;
+    font-family: "Young Serif", Georgia, serif; font-size: 1.15rem;
+  }
+  .card-head small { font-family: "Atkinson Hyperlegible", sans-serif; font-size: .9rem; color: var(--ink-soft); }
+  .card table { width: 100%; border-collapse: collapse; }
+  .card th { text-align: left; font-weight: 700; font-size: .8rem; color: var(--ink-soft); padding: 6px 0; border-bottom: 1px solid var(--manila-line); }
+  .card td { border-bottom: 1px solid var(--manila-line); padding: 10px 0; vertical-align: middle; height: 46px; }
+  .card td:first-child { width: 7.5rem; padding-right: 10px; }
+  .title { font-family: "Young Serif", Georgia, serif; font-size: 1.05rem; line-height: 1.3; }
+  .next { color: var(--ink-soft); font-style: italic; font-size: .95rem; }
+  .pocket-front {
+    position: absolute; z-index: 2;
+    left: -10px; right: -10px; bottom: -18px; height: 128px;
+    background: var(--orange); border-radius: 6px 6px 10px 10px;
+    display: grid; place-items: center; text-align: center; padding: 0 20px;
+    color: var(--cream); font-family: "Young Serif", Georgia, serif; font-size: 1.15rem;
+    box-shadow: inset 0 2px 0 rgba(255,255,255,.25), 0 14px 24px -14px rgba(0,0,0,.5);
+  }
+
+  /* Rubber stamps, used across the site */
+  .stamp {
+    display: inline-block;
+    font-family: "Special Elite", "Courier New", monospace;
+    color: var(--red); border: 2px solid var(--red); border-radius: 3px;
+    padding: 1px 6px; font-size: .85rem; line-height: 1.3; opacity: .9;
+  }
+  .card tr:nth-child(odd) .stamp { transform: rotate(-4deg); }
+  .card tr:nth-child(even) .stamp { transform: rotate(3deg); }
+
+  /* ---------- Sections ---------- */
+  section { padding: 80px 0; scroll-margin-top: 12px; }
+  section + section { border-top: 1px solid var(--rule); }
+  .head { display: flex; gap: 22px; align-items: center; margin-bottom: 36px; }
+  .badge { flex: none; width: 96px; height: 96px; }
+  .badge.r { color: var(--red); transform: rotate(-8deg); }
+  .badge.g { color: var(--green); transform: rotate(6deg); }
+  .badge.o { color: var(--orange); transform: rotate(-4deg); }
+  @media (max-width: 520px) { .badge { width: 76px; height: 76px; } .head { gap: 16px; } }
+  h2 {
+    font-family: "Young Serif", Georgia, serif; font-weight: 400;
+    font-size: clamp(1.9rem, 5vw, 2.7rem); line-height: 1.1; margin: 0 0 6px;
+  }
+  .lede { color: var(--ink-soft); max-width: 50ch; margin: 0; }
+  h3 { font-family: "Young Serif", Georgia, serif; font-weight: 400; font-size: 1.35rem; line-height: 1.25; margin: 0 0 6px; }
+  .meta { color: var(--ink-soft); font-size: .95rem; margin: 0 0 12px; }
+  .grid { display: grid; gap: 24px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+  figure { margin: 0; }
+  figcaption { font-size: 1rem; margin-top: 10px; }
+  figcaption span { color: var(--ink-soft); }
+  .placeholder { color: var(--ink-soft); font-size: 1rem; text-align: center; }
+
+  /* Stories: notebook paper */
+  .story {
+    background-color: var(--paper);
+    background-image:
+      linear-gradient(90deg, transparent 38px, rgba(210,64,47,.55) 38px, rgba(210,64,47,.55) 40px, transparent 40px),
+      repeating-linear-gradient(transparent 0 31px, rgba(31,107,69,.18) 31px 32px);
+    background-position: 0 -4px;
+    border-radius: 4px; padding: 32px 20px 32px 56px; line-height: 32px;
+    box-shadow: 0 1px 0 var(--rule), 0 10px 20px -16px rgba(30,43,63,.4);
+  }
+  .story h3 { line-height: 32px; margin: 0; }
+  .story p { margin: 0; color: var(--ink-soft); }
+
+  /* Book reviews: index cards */
+  .review { background: var(--paper); border-top: 6px solid var(--green); border-radius: 4px; padding: 20px 22px 24px; box-shadow: 0 10px 20px -16px rgba(30,43,63,.4); }
+  .review p:last-child { margin: 0; color: var(--ink-soft); }
+
+  /* Toy reviews: score stamp */
+  .toy { position: relative; background: var(--paper); border-radius: 4px; padding: 22px; box-shadow: 0 10px 20px -16px rgba(30,43,63,.4); }
+  .toy .score { position: absolute; top: -14px; right: 16px; transform: rotate(6deg); font-size: 1.15rem; color: var(--orange); border-color: var(--orange); background: var(--paper); padding: 2px 10px; }
+  .toy p { margin: 0; color: var(--ink-soft); }
+
+  /* Games: a screen */
+  .screen {
+    aspect-ratio: 4 / 3; border-radius: 10px;
+    background: var(--green-deep); color: #CFE3D6;
+    display: grid; place-items: center; padding: 16px; text-align: center;
+    border: 10px solid var(--ink); box-shadow: inset 0 0 0 2px rgba(255,255,255,.08);
+    font-size: 1rem;
+  }
+  .screen strong { display: block; color: var(--orange); font-family: "Special Elite", "Courier New", monospace; font-weight: 400; font-size: 1.3rem; margin-bottom: 4px; }
+
+  /* Lego: a baseplate with studs */
+  .plate { position: relative; padding-top: 14px; }
+  .plate::before {
+    content: ""; position: absolute; top: 0; left: 10px; right: 10px; height: 14px;
+    background: radial-gradient(circle at 12px 8px, var(--c) 6px, transparent 6.5px) 0 0 / 26px 14px repeat-x;
+  }
+  .plate .photo { aspect-ratio: 4 / 3; border-radius: 4px; background: var(--c); display: grid; place-items: center; padding: 16px; }
+  .plate .photo .placeholder { color: var(--cream); }
+  .plate.r { --c: var(--red); } .plate.g { --c: var(--green); } .plate.o { --c: var(--orange); }
+
+  /* Travels: postcards with passport stamps */
+  .postcard { position: relative; background: var(--paper); padding: 10px 10px 14px; border-radius: 3px; box-shadow: 0 12px 22px -14px rgba(30,43,63,.5); }
+  .postcard:nth-child(odd) { transform: rotate(-1.2deg); }
+  .postcard:nth-child(even) { transform: rotate(1deg); }
+  .postcard .photo { aspect-ratio: 4 / 3; background: #E3E8E0; display: grid; place-items: center; }
+  .postcard .visa { position: absolute; right: 18px; bottom: 54px; transform: rotate(-10deg); background: rgba(255,255,255,.85); }
+  .postcard:nth-child(3n+2) .visa { color: var(--green); border-color: var(--green); }
+  .postcard:nth-child(3n) .visa { color: var(--orange); border-color: var(--orange); }
+  .postcard figcaption { padding: 0 4px; }
+
+  /* Letter */
+  .letter { max-width: 62ch; margin-top: 24px; }
+  .letter p { margin: 0 0 1.1em; }
+  .sign { font-family: "Young Serif", Georgia, serif; font-size: 1.3rem; margin-top: 1.6em; }
+
+  footer { background: var(--green); color: #CFE3D6; padding: 36px 0 44px; font-size: 1rem; }
+  footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px; }
+  footer .mark { font-family: "Young Serif", Georgia, serif; color: var(--cream); font-size: 1.2rem; }
+</style>
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs><path id="ring" d="M60,60 m-41,0 a41,41 0 1,1 82,0 a41,41 0 1,1 -82,0"/></defs>
+  </svg>
+
+  <div class="band">
+    <div class="top">
+      <div class="wrap">
+        <a class="home" href="#">George</a>
+        <nav aria-label="Sections">
+          <a href="#stories">Stories</a>
+          <a href="#books">Books</a>
+          <a href="#toys">Toys</a>
+          <a href="#games">Games</a>
+          <a href="#lego">Lego</a>
+          <a href="#travels">Travels</a>
+        </nav>
+      </div>
+    </div>
+
+    <div class="wrap">
+      <header class="hero">
+        <div>
+          <h1>George<span class="dot">.</span></h1>
+          <p class="intro">Stories, book reviews, toy reviews, Scratch games, Lego builds, and photos from places I've been.</p>
+        </div>
+
+        <div class="pocket" aria-label="George's reading card">
+          <div class="card">
+            <div class="card-head">
+              <span>Books George has read</span>
+              <small>Card no. 1</small>
+            </div>
+            <table>
+              <thead><tr><th scope="col">Finished</th><th scope="col">Title</th></tr></thead>
+              <tbody>
+                <tr><td><span class="stamp">JUL 2026</span></td><td class="title">Where the Mountain Meets the Moon</td></tr>
+                <tr><td><span class="stamp">JUL 27 2026</span></td><td class="title">From the Mixed-Up Files of Mrs. Basil E. Frankweiler</td></tr>
+                <tr><td></td><td class="next">Next book goes here</td></tr>
+                <tr><td></td><td></td></tr>
+                <tr><td></td><td></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="pocket-front" aria-hidden="true">Please return to George</div>
+        </div>
+      </header>
+    </div>
+  </div>
+
+  <main class="wrap">
+    <section id="stories" aria-labelledby="stories-h">
+      <div class="head">
+        <svg class="badge r" viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="56" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="60" cy="60" r="31" fill="none" stroke="currentColor" stroke-width="1.5"/><text font-family="Special Elite, Courier New, monospace" font-size="12" fill="currentColor"><textPath href="#ring" textLength="252" lengthAdjust="spacing">WRITTEN BY GEORGE ★ WRITTEN BY GEORGE ★</textPath></text><text x="60" y="71" text-anchor="middle" font-family="Young Serif, Georgia, serif" font-size="32" fill="currentColor">G</text></svg>
+        <div>
+          <h2 id="stories-h">Stories</h2>
+          <p class="lede">Stories George wrote.</p>
+        </div>
+      </div>
+      <div class="grid">
+        <article class="story">
+          <h3>George's first story</h3>
+          <p>The title, the first few lines, and a link to read the whole thing.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="books" aria-labelledby="books-h">
+      <div class="head">
+        <svg class="badge g" viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="56" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="60" cy="60" r="31" fill="none" stroke="currentColor" stroke-width="1.5"/><text font-family="Special Elite, Courier New, monospace" font-size="12" fill="currentColor"><textPath href="#ring" textLength="252" lengthAdjust="spacing">READ &amp; REVIEWED ★ READ &amp; REVIEWED ★</textPath></text><text x="60" y="71" text-anchor="middle" font-family="Young Serif, Georgia, serif" font-size="32" fill="currentColor">G</text></svg>
+        <div>
+          <h2 id="books-h">Book reviews</h2>
+          <p class="lede">What George thought, in his own words.</p>
+        </div>
+      </div>
+      <div class="grid">
+        <article class="review">
+          <h3>From the Mixed-Up Files of Mrs. Basil E. Frankweiler</h3>
+          <p class="meta">by E. L. Konigsburg</p>
+          <p>George's review goes here.</p>
+        </article>
+        <article class="review">
+          <h3>Where the Mountain Meets the Moon</h3>
+          <p class="meta">by Grace Lin</p>
+          <p>George's review goes here.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="toys" aria-labelledby="toys-h">
+      <div class="head">
+        <svg class="badge o" viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="56" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="60" cy="60" r="31" fill="none" stroke="currentColor" stroke-width="1.5"/><text font-family="Special Elite, Courier New, monospace" font-size="12" fill="currentColor"><textPath href="#ring" textLength="252" lengthAdjust="spacing">TESTED BY GEORGE ★ TESTED BY GEORGE ★</textPath></text><text x="60" y="71" text-anchor="middle" font-family="Young Serif, Georgia, serif" font-size="32" fill="currentColor">G</text></svg>
+        <div>
+          <h2 id="toys-h">Toy reviews</h2>
+          <p class="lede">Every toy gets a score out of 10.</p>
+        </div>
+      </div>
+      <div class="grid">
+        <article class="toy">
+          <span class="stamp score">_ / 10</span>
+          <h3>First toy review</h3>
+          <p>What it is, what's great, what's not, and who should get one.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="games" aria-labelledby="games-h">
+      <div class="head">
+        <svg class="badge r" viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="56" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="60" cy="60" r="31" fill="none" stroke="currentColor" stroke-width="1.5"/><text font-family="Special Elite, Courier New, monospace" font-size="12" fill="currentColor"><textPath href="#ring" textLength="252" lengthAdjust="spacing">MADE BY GEORGE ★ PRESS PLAY ★</textPath></text><text x="60" y="71" text-anchor="middle" font-family="Young Serif, Georgia, serif" font-size="32" fill="currentColor">G</text></svg>
+        <div>
+          <h2 id="games-h">Games George built</h2>
+          <p class="lede">Scratch projects and any game he makes. You can play them right here.</p>
+        </div>
+      </div>
+      <div class="grid">
+        <figure>
+          <div class="screen"><div><strong>Press start</strong>A Scratch project plays here once it's shared</div></div>
+          <figcaption>Project name <span>and what it does</span></figcaption>
+        </figure>
+        <figure>
+          <div class="screen"><div><strong>Press start</strong>His own game plays here</div></div>
+          <figcaption>Game name <span>and how to play</span></figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section id="lego" aria-labelledby="lego-h">
+      <div class="head">
+        <svg class="badge g" viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="56" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="60" cy="60" r="31" fill="none" stroke="currentColor" stroke-width="1.5"/><text font-family="Special Elite, Courier New, monospace" font-size="12" fill="currentColor"><textPath href="#ring" textLength="252" lengthAdjust="spacing">BUILT BRICK BY BRICK ★ NO INSTRUCTIONS ★</textPath></text><text x="60" y="71" text-anchor="middle" font-family="Young Serif, Georgia, serif" font-size="32" fill="currentColor">G</text></svg>
+        <div>
+          <h2 id="lego-h">Lego builds</h2>
+          <p class="lede">His own creations, not just the ones from the box.</p>
+        </div>
+      </div>
+      <div class="grid">
+        <figure class="plate r"><div class="photo"><span class="placeholder">Photo of a Lego build</span></div><figcaption>Build name <span>and how long it took</span></figcaption></figure>
+        <figure class="plate g"><div class="photo"><span class="placeholder">Photo of a Lego build</span></div><figcaption>Build name <span>and how long it took</span></figcaption></figure>
+        <figure class="plate o"><div class="photo"><span class="placeholder">Photo of a Lego build</span></div><figcaption>Build name <span>and how long it took</span></figcaption></figure>
+      </div>
+    </section>
+
+    <section id="travels" aria-labelledby="travels-h">
+      <div class="head">
+        <svg class="badge o" viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="56" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="60" cy="60" r="31" fill="none" stroke="currentColor" stroke-width="1.5"/><text font-family="Special Elite, Courier New, monospace" font-size="12" fill="currentColor"><textPath href="#ring" textLength="252" lengthAdjust="spacing">BEEN THERE ★ SEEN THAT ★ BEEN THERE ★</textPath></text><text x="60" y="71" text-anchor="middle" font-family="Young Serif, Georgia, serif" font-size="32" fill="currentColor">G</text></svg>
+        <div>
+          <h2 id="travels-h">Travels</h2>
+          <p class="lede">Photos from places George has been.</p>
+        </div>
+      </div>
+      <div class="grid">
+        <figure class="postcard"><div class="photo"><span class="placeholder">Travel photo</span></div><span class="stamp visa">VISITED 2026</span><figcaption>Place <span>and year</span></figcaption></figure>
+        <figure class="postcard"><div class="photo"><span class="placeholder">Travel photo</span></div><span class="stamp visa">VISITED 2026</span><figcaption>Place <span>and year</span></figcaption></figure>
+        <figure class="postcard"><div class="photo"><span class="placeholder">Travel photo</span></div><span class="stamp visa">VISITED 2026</span><figcaption>Place <span>and year</span></figcaption></figure>
+      </div>
+    </section>
+
+    <section aria-labelledby="note">
+      <h2 id="note">A note for George</h2>
+      <div class="letter">
+        <p>George, this little website is yours. For now I'm keeping it for you, and someday you'll take it over and make it whatever you want it to be.</p>
+        <p>Until then, it holds the things you write, build, and love, and a few things I want you to remember about who you are right now, at ten.</p>
+        <p class="sign">Love, [your name]</p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <span class="mark">George.</span>
+      <span>Kept for George until he's ready to run it himself.</span>
+    </div>
+  </footer>
+</body>
+</html>
