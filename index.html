@@ -164,6 +164,7 @@
     border: 10px solid var(--ink); box-shadow: inset 0 0 0 2px rgba(255,255,255,.08);
     font-size: 1rem;
   }
+  video.screen { display: block; width: 100%; height: auto; padding: 0; background: var(--ink); object-fit: contain; }
   .screen strong { display: block; color: var(--orange); font-family: "Special Elite", "Courier New", monospace; font-weight: 400; font-size: 1.3rem; margin-bottom: 4px; }
 
   /* Lego: a baseplate with studs */
@@ -344,8 +345,8 @@
       </div>
       <div class="grid">
         <figure>
-          <div class="screen"><div><strong>Press start</strong>A Scratch project plays here once it's shared</div></div>
-          <figcaption>Project name <span>and what it does</span></figcaption>
+          <video class="screen" src="games/scratchjr-1.mp4" poster="games/scratchjr-1.jpg" controls playsinline preload="none" width="1280" height="962" aria-label="The Super Mario Game Movie, a ScratchJr movie by George"></video>
+          <figcaption>The Super Mario Game Movie <span>made in ScratchJr</span></figcaption>
         </figure>
         <figure>
           <div class="screen"><div><strong>Press start</strong>His own game plays here</div></div>
