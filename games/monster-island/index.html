@@ -388,6 +388,11 @@ function save(){if(!PROFILE||!S)return;try{localStorage.setItem(keyFor(PROFILE.i
 
 // ================= SOUND =================
 let AC=null,MUTE=false;try{MUTE=localStorage.getItem('mi-mute')==='1'}catch(e){}
+// iPads and phones only allow sound after a tap, and the silent switch mutes web sound unless we ask for "playback"
+try{if(navigator.audioSession)navigator.audioSession.type='playback'}catch(e){}
+function unlockAudio(){try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();if(AC.state!=='running')AC.resume();const b=AC.createBuffer(1,1,22050),src=AC.createBufferSource();src.buffer=b;src.connect(AC.destination);src.start(0)}catch(e){}
+  if(AC&&AC.state==='running')['pointerdown','touchend','keydown'].forEach(ev=>document.removeEventListener(ev,unlockAudio,true))}
+['pointerdown','touchend','keydown'].forEach(ev=>document.addEventListener(ev,unlockAudio,true));
 function tone(f,d,type='triangle',t0=0,vol=.07){if(MUTE)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();const t=AC.currentTime+t0,o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(vol,t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g).connect(AC.destination);o.start(t);o.stop(t+d+.03)}catch(e){}}
 const SFX={
   coin:()=>{tone(1175,.1,'sine');tone(1568,.3,'sine',.08)},
