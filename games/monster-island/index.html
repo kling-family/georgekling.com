@@ -222,6 +222,17 @@ table.lb td.top{color:var(--gold);font-weight:800}
 .labL .labprev .art{background:radial-gradient(circle at 50% 60%,#fff 0,#f1e8d6 70%);border-radius:50%}
 .labL .labprev input{background:#fff;color:#1d2a3a;border:2px solid #e3d7c2}
 .labL .labprev input::placeholder{color:#a89c88}
+.buddy{position:fixed;left:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:6;display:flex;gap:10px;align-items:flex-end;max-width:min(380px,calc(100vw - 32px));animation:bpop .35s cubic-bezier(.3,1.6,.5,1);cursor:pointer}
+.buddy.bye{opacity:0;transform:translateY(20px);transition:.3s}
+@keyframes bpop{from{transform:translateY(60px) scale(.6);opacity:0}}
+.buddy .bart{width:84px;height:84px;flex:none}
+.buddy .btxt{background:#fbf7ef;color:#1d2a3a;border:2px solid #eadfcc;border-radius:18px 18px 18px 4px;padding:10px 14px;box-shadow:0 10px 28px rgba(0,0,0,.35);display:flex;flex-direction:column;gap:4px;font-size:15px;line-height:1.35}
+.buddy .btxt b{font-family:var(--display);font-size:16px;color:#2a8f7e}
+.buddy .btxt button{align-self:flex-start;font-family:var(--display);font-weight:600;font-size:13px;border-radius:99px;padding:4px 12px;background:#1d2a3a;color:#fff;border:0;margin-top:2px}
+.meet{max-width:560px;margin:0 auto;display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center}
+.meet .art{width:180px;height:180px}
+.meet .say{position:relative;background:#fff;border:2px solid #eadfcc;border-radius:18px;padding:14px 18px;font-size:17px;line-height:1.45}
+.meet input{font:inherit;font-family:var(--display);font-size:20px;text-align:center;background:#fff;color:#1d2a3a;border:2px solid #e3d7c2;border-radius:12px;padding:10px;width:min(280px,100%)}
 .labsub{font-family:var(--display);font-weight:600;font-size:15px;color:#5a6474;margin-top:4px}
 .labdots{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
 .labopts .labdots{justify-content:flex-start}
@@ -1003,14 +1014,15 @@ function starter(){
 }
 function trackPlay(){if(trackPlay.done)return;trackPlay.done=1;try{const go=()=>window.goatcounter&&window.goatcounter.count&&window.goatcounter.count({path:'/games/monster-island/play',title:'Monster Island: someone started playing'});if(window.goatcounter&&window.goatcounter.count)go();else setTimeout(go,3000)}catch(e){}}
 function map(){
-  SCREEN='map';applyLook();trackPlay();WORLD=null;scrollTo(0,0);playSong('island');
-  app.innerHTML=`<div class="box hud"><span class="name">${PROFILE?PROFILE.name+"'s islands":"The Islands"}</span><div class="stats"><span class="pill"><i style="background:#ffc83d"></i>${S.coins} coins</span><span class="pill"><i style="background:#3fd6ff"></i>${S.supers} super nets</span>${journalBtn()}<button class="btn ghost sm" id="meb">My explorer</button><button class="btn ghost sm" id="labb">Monster Lab</button><button class="btn ghost sm" id="team">Team</button><button class="btn ghost sm" id="scode">Save code</button><button class="btn ghost sm" id="home">Switch player</button>${muteBtn()}</div></div>
+  if(S&&!S.buddy)return meetBuddy(map);
+  SCREEN='map';applyLook();registerBuddy();trackPlay();WORLD=null;scrollTo(0,0);playSong('island');
+  app.innerHTML=`<div class="box hud"><span class="name">${PROFILE?PROFILE.name+"'s islands":"The Islands"}</span><div class="stats"><span class="pill"><i style="background:#ffc83d"></i>${S.coins} coins</span><span class="pill"><i style="background:#3fd6ff"></i>${S.supers} super nets</span>${journalBtn()}<button class="btn ghost sm" id="askb">Ask ${S.buddy.name}</button><button class="btn ghost sm" id="meb">My explorer</button><button class="btn ghost sm" id="labb">Monster Lab</button><button class="btn ghost sm" id="team">Team</button><button class="btn ghost sm" id="scode">Save code</button><button class="btn ghost sm" id="home">Switch player</button>${muteBtn()}</div></div>
   <div class="box np"><canvas class="scene" id="sea" data-aspect=".68"></canvas></div>
   <div class="box"><div class="row" style="justify-content:space-between">
     <div><b>${S.beaten.length} of 5</b> champions beaten. <b>${caughtCount()} of ${BOOK().length}</b> monsters caught.<div class="muted small">Click an island, or press its number, to sail there.</div></div>
     <button class="btn ghost sm" id="gd">Element guide</button></div><div id="guide"></div></div>`;
   MAPVIEW=runSeaView(document.getElementById('sea'),{locks:true,onPick:goIsland});
-  document.getElementById('team').onclick=()=>team(map);bindJournal(map);document.getElementById('scode').onclick=showSaveCode;document.getElementById('labb').onclick=()=>openLab(map);document.getElementById('meb').onclick=()=>explorer(map);
+  document.getElementById('team').onclick=()=>team(map);bindJournal(map);document.getElementById('scode').onclick=showSaveCode;document.getElementById('labb').onclick=()=>openLab(map);document.getElementById('meb').onclick=()=>explorer(map);document.getElementById('askb').onclick=()=>buddySay(buddyHint(null),true);
   document.getElementById('home').onclick=title;
   document.getElementById('gd').onclick=()=>{const g=document.getElementById('guide');g.innerHTML=g.innerHTML?'':`<div class="guide">${Object.keys(BEATS).map(e=>`<div>${chip(e)} beats ${BEATS[e].map(x=>EL[x].n).join(' and ')}</div>`).join('')}</div><p class="muted small" style="margin-top:8px">Strong moves do double damage. Weak moves do half.</p>`};
 }
@@ -1033,7 +1045,7 @@ function island(i,fromMap){
   const legendGot=s.secret&&S.caught[s.legend];
   app.innerHTML=`<div class="box hud"><span class="name">${s.name}</span><div class="stats"><span class="pill" id="tm"></span><span class="pill" id="hc"></span><span class="pill" id="hn"></span>
     <span class="zoom"><button id="zo" aria-label="Zoom out">&#8722;</button><span id="zl">Close</span><button id="zi" aria-label="Zoom in">+</button></span>
-    ${journalBtn()}<button class="btn ghost sm" id="team">Team</button><button class="btn ghost sm" id="mapb">Map</button></div></div>
+    ${S.buddy?`<button class="btn ghost sm" id="askb">Ask ${S.buddy.name}</button>`:''}${journalBtn()}<button class="btn ghost sm" id="team">Team</button><button class="btn ghost sm" id="mapb">Map</button></div></div>
   <div class="worldwrap box np"><canvas class="scene" id="cv" data-aspect=".62"></canvas><div class="prompt box" id="prompt" hidden></div><div class="tip3d" id="tip3d" hidden>&#9650; walk forward &nbsp; &#9664; &#9654; turn &nbsp; &#9660; turn around</div></div>
   <div class="controls"><div class="box help">
     <b>Arrow keys</b> or <b>WASD</b> to walk. <b>+</b> and <b>&#8722;</b> zoom out to see the whole island and the sea.
@@ -1043,6 +1055,7 @@ function island(i,fromMap){
   <div class="box"><h3>Monsters on ${s.name}</h3><div class="wild">${list.map(sp=>{const got=S.caught[sp],isR=sp===s.rare;return `<div class="${got?'':'unknown'}"><div class="art">${spr(sp)}</div>${got?SP[sp].name:'???'}${s.secret?(sp===s.legend?'<div class="muted" style="font-size:12px">Legendary!</div>':''):NIGHT[i].includes(sp)?'<div class="muted" style="font-size:12px">Only at night</div>':isR?`<div class="muted" style="font-size:12px">${done?'Rare. It runs away!':'Appears after the champion'}</div>`:''}</div>`}).join('')}</div>
     <p class="muted small" style="margin-top:10px">${s.secret?`Monsters here are level ${s.lv[0]} to ${s.lv[1]}. ${SP[s.legend].name} is level ${s.llv}. Bring your strongest team and a Super Net!`:`Wild monsters here are level ${s.lv[0]} to ${s.lv[1]}. ${s.champ.name} has ${s.champ.team.length} monsters, up to level ${Math.max(...s.champ.team.map(t=>t[1]))}. Secret: ${S.secrets[i]?'<b>found!</b> '+SECRETS[i].name:'not found yet'}. Trainers beaten: ${m.trainers.filter(t=>(S.tb[i]||[]).includes(t.k)).length} of ${m.trainers.length}${m.trainers.some(t=>t.rival&&!(S.tb[i]||[]).includes(t.k))?' (Rival Rex is waiting just past the first gate!)':''}.`}</p></div>`;
   document.getElementById('team').onclick=()=>{WORLD=null;team(()=>island(i))};bindJournal(()=>island(i));
+  const ab=document.getElementById('askb');if(ab)ab.onclick=()=>{if(WORLD)WORLD.lastBuddy=performance.now();buddySay(buddyHint(i),true)};
   document.getElementById('mapb').onclick=()=>{SFX.select();if(s.deep)return map();if(s.secret){S.pos[s.parent]={x:genMap(s.parent).secretStone.fx,y:genMap(s.parent).secretStone.fy};island(s.parent,'portal')}else map()};
   if(s.secret)document.getElementById('mapb').textContent='Leave';
   document.getElementById('zo').onclick=()=>zoom(1);document.getElementById('zi').onclick=()=>zoom(-1);
@@ -1066,7 +1079,8 @@ function startWorld(i,inv,fromMap){
   if(S.beaten.includes(i)&&!ws.mons.some(x=>x.rare)&&Math.random()<.6)spawn(true,9);
   hud();
   const c3=cv3();cv.parentElement.appendChild(c3);c3.hidden=true;R3.camPos=null;
-  const loop=t=>{if(!WORLD||WORLD.cv!==cv||!cv.isConnected)return;tick(t);if(!WORLD.lastHud||t-WORLD.lastHud>2000){WORLD.lastHud=t;hud()}const in3=WORLD.z===0&&window.THREE;c3.hidden=!in3;if(in3){try{render3D(t)}catch(e){console.error(e);WORLD.z=1}}else drawOver(t);requestAnimationFrame(loop)};
+  WORLD.lastBuddy=now-(BUDDY_SEEN.has(i)?0:BUDDY_EVERY-2500);BUDDY_SEEN.add(i);
+  const loop=t=>{if(!WORLD||WORLD.cv!==cv||!cv.isConnected)return;tick(t);if(S.buddy&&!WORLD.paused&&!WORLD.appr&&t-WORLD.lastBuddy>BUDDY_EVERY){WORLD.lastBuddy=t;buddySay(buddyHint(i))}if(!WORLD.lastHud||t-WORLD.lastHud>2000){WORLD.lastHud=t;hud()}const in3=WORLD.z===0&&window.THREE;c3.hidden=!in3;if(in3){try{render3D(t)}catch(e){console.error(e);WORLD.z=1}}else drawOver(t);requestAnimationFrame(loop)};
   requestAnimationFrame(loop);
 }
 const monAt=(x,y)=>WORLD.ws.mons.find(o=>o.x===x&&o.y===y);
@@ -1604,10 +1618,10 @@ function registerCustom(id,d){SP[id]={name:d.name,el:d.el,color:d.color,color2:d
 function monImage(sp){return new Promise(res=>{const i=new Image();i.onload=()=>{MIMG[sp]=i;res()};i.onerror=res;i.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(art(sp).replace('width="100" height="100"','width="220" height="220"'))})}
 function registerAll(sv){if(!sv||!sv.custom)return;for(const [id,d] of Object.entries(sv.custom)){const fresh=!SP[id]||LOOK[id]!==lookString(d)||SP[id].color!==d.color||SP[id].name!==d.name;registerCustom(id,d);if(fresh||!MIMG[id])monImage(id)}}
 const randLook=()=>{const pick=a=>a[Math.floor(Math.random()*a.length)];const d={};for(const k in LAB_OPTS)d[k]=pick(LAB_OPTS[k]);if(Math.random()<.6)d.wings='none';d.color=pick(LAB_COLORS);d.belly=pick(LAB_BELLY);d.cheeks=Math.random()<.5;d.arms=Math.random()<.5;return d};
-function lab(onDone,editId){
+function lab(onDone,editId,bud){
   SCREEN='lab';WORLD=null;scrollTo(0,0);
   const mine=S&&S.custom?S.custom:{};
-  const d=editId?{...mine[editId]}:{...randLook(),el:'fire',name:''};
+  const d=bud?{...bud}:editId?{...mine[editId]}:{...randLook(),el:'fire',name:''};
   const els=['fire','water','leaf','stone','storm','shadow'];
   const TABS=[...Object.keys(LAB_OPTS),'colors'];let tab=lab.tab&&TABS.includes(lab.tab)?lab.tab:'shape';
   // each choice is shown on a plain monster so you can see just that part
@@ -1626,7 +1640,7 @@ function lab(onDone,editId){
     <div class="labwrap labL"><div class="box labprev"><div class="art">${spr('_lab','bob')}</div>
       <input id="lname" maxlength="12" placeholder="Name your monster" value="${d.name||''}" autocomplete="off">
       <div class="labsub">Element</div><div class="labdots">${els.map(e=>`<button class="chipbtn${d.el===e?' on':''}" data-el="${e}" style="background:${EL[e].c}">${EL[e].n}</button>`).join('')}</div>
-      <button class="btn" id="ls">${editId?'Save changes':'Bring it to life!'}</button>
+      <button class="btn" id="ls">${bud?'Save my buddy':editId?'Save changes':'Bring it to life!'}</button>
       <button class="labtog" id="lr">Surprise me!</button>
       <p class="small" id="lerr" style="color:#c0392b;text-align:center;margin:0"></p></div>
     <div class="box labopts"><div class="labtabs">${TABS.map(k=>`<button class="${k===tab?'on':''}" data-tab="${k}">${k==='colors'?'Colors':LAB_LABEL[k]}</button>`).join('')}</div>${panel}</div></div>`;
@@ -1640,12 +1654,74 @@ function lab(onDone,editId){
     const tc=document.getElementById('tcheek');if(tc)tc.onclick=()=>{d.cheeks=!d.cheeks;keep(draw)};const ta=document.getElementById('tarms');if(ta)ta.onclick=()=>{d.arms=!d.arms;keep(draw)};
     document.getElementById('lr').onclick=()=>{const n=d.name,e=d.el;Object.assign(d,randLook(),{name:n,el:e});SFX.whoosh();keep(draw)};
     document.getElementById('ls').onclick=()=>{const n=nameOk(d.name||'');if(!n){document.getElementById('lerr').textContent='Give your monster a name first!';SFX.bump();nameIn.focus();return}
+      if(bud){d.name=n;SFX.catch();return onDone({...d})}
       d.name=n;const id=editId||('c'+Date.now());if(!S)S={starter:'flicklet',team:[],unlocked:1,beaten:[],caught:{},coins:0,supers:1,pos:{}};S.custom=S.custom||{};S.custom[id]={...d};registerCustom(id,d);
       if(!editId){const lv=Math.max(5,...S.team.map(m=>m.lvl-2));S.team.push(mk(id,lv));S.caught[id]=1}
       save();monImage(id).then(()=>{SFX.catch();onDone(id)})};
   };
   // keep the scroll spot steady while the page redraws
   const keep=f=>{const y=scrollY,o=document.querySelector('.labopts'),oy=o?o.scrollTop:0;f();scrollTo(0,y);const o2=document.querySelector('.labopts');if(o2)o2.scrollTop=oy};
+  draw();
+}
+// ================= BUDDY: your helper monster =================
+const BUDDY_DEF={shape:'round',eyes:'big',mouth:'grin',ears:'none',top:'antenna',tail:'curl',wings:'fairy',pat:'none',color:'#3cc2a8',belly:'#fff2b8',cheeks:true,arms:true,el:'storm'};
+const BUDDY_NAMES=['Zib','Bloop','Sparky','Pip','Gizmo','Nugget','Waffles','Ziggy','Mochi','Bolt','Pickle','Noodle','Fizz','Biscuit','Squish','Comet','Taco','Bean','Glimmer','Rumble'];
+const BUDDY_EVERY=110000,BUDDY_SEEN=new Set();
+function registerBuddy(){if(S&&S.buddy)registerCustom('_buddy',{...BUDDY_DEF,...S.buddy.d,name:S.buddy.name})}
+function buddySay(text,asked){if(!S||!S.buddy||!text)return;registerBuddy();document.querySelectorAll('.buddy').forEach(b=>b.remove());
+  const b=document.createElement('div');b.className='buddy';b.setAttribute('role','status');
+  b.innerHTML=`<div class="bart">${spr('_buddy','bob')}</div><div class="btxt"><b>${S.buddy.name}</b><span>${text}</span><button>Thanks, ${S.buddy.name}!</button></div>`;
+  document.body.appendChild(b);if(!asked)SFX.coin();else SFX.select();const close=()=>{b.classList.add('bye');setTimeout(()=>b.remove(),300)};b.onclick=close;setTimeout(close,11000)}
+const counterOf=el=>Object.keys(BEATS).find(e=>BEATS[e].includes(el));
+function buddyHint(i){
+  const pick=a=>a[Math.floor(Math.random()*a.length)],team=S.team,hp=team.reduce((a,m)=>a+m.hp,0)/team.reduce((a,m)=>a+maxHp(m),0),top=Math.max(...team.map(m=>m.lvl));
+  const pieces=Object.keys(S.pieces||{}).length;
+  if(i===null||i===undefined){const n=S.unlocked-1;if(S.beaten.length>=MAIN)return pieces>=MAIN&&!S.caught.leviathorn?'All five map pieces point to the whirlpool between the islands. Sail into it, if you dare!':'You beat every champion! Now hunt for secret worlds and fill your monster book.';
+    const is=ISLES[Math.min(n,MAIN-1)];return `Let's sail to ${is.name}! ${is.champ.name} is the champion there, and ${EL[counterOf(ISLES[Math.min(n,MAIN-1)].el)].n} moves work great against ${EL[is.el].n} monsters.`}
+  const s=ISLES[i],m=genMap(i);
+  if(hp<.4)return 'Your team looks really tired! Heal at the tent, a Rest House with a heart on the roof, or a sparkly spring.';
+  if(s.secret)return S.caught[s.legend]?'You caught the legend! Walk back onto the glowing portal to go home.':`The legendary ${SP[s.legend].name} waits at the far end. Weaken it first, then throw a Super Net!`;
+  const secrets=[];
+  if(!S.secrets[i])secrets.push('Psst... I saw a big rock sparkle somewhere in the middle towns. Walk right up to it and see what happens!');
+  const rex=m.trainers.find(t=>t.rival);if(rex&&!tbHas(i,99))secrets.push('Rival Rex is hiding just past the first gate. He thinks his monsters are stronger than yours!');
+  if(NIGHT[i]&&NIGHT[i].some(sp=>!S.caught[sp]))secrets.push('Some monsters only come out at night. Explore when the sky gets dark!');
+  if(WORLD&&m.chests.some(c=>!WORLD.ws.opened.has(c.x+','+c.y)))secrets.push('Every island has five treasure chests hidden in quiet corners. Peek behind trees and rocks!');
+  if(S.beaten.includes(i)&&!everyoneBeaten(i))secrets.push(`Beat every single trainer on ${s.name} and you'll get a map piece. ${m.trainers.filter(t=>!tbHas(i,t.k)).length} left to go!`);
+  if(pieces>=2)secrets.push('Your map pieces fit together into a sea chart. Open your Journal and look closely at the swirl.');
+  if(S.beaten.includes(i))secrets.push(`A rare ${SP[s.rare].name} roams ${s.name} now. It runs away fast, so bring a Super Net!`);
+  if(secrets.length&&Math.random()<.4)return pick(secrets);
+  const z=m.zoneOf(WORLD?WORLD.p.x:m.start.x,WORLD?WORLD.p.y:m.start.y);
+  if(!S.beaten.includes(i)){
+    if(z<3&&!gateOpen(i,z)){const L=s.tr[z],mx=Math.max(...L.team.map(t=>t[1]));return `${L.name} guards the gate in ${m.towns[z].name}. Beat them to open the way forward!${top<mx-1?` Their monsters are up to level ${mx}, so train in the tall grass first.`:''}`}
+    const mx=Math.max(...s.champ.team.map(t=>t[1]));return `${s.champ.name} waits at the far end of the island. ${EL[counterOf(s.el)].n} moves are super strong against ${EL[s.el].n} monsters.${top<mx-1?` Their best is level ${mx}, so level up a bit first!`:''}`}
+  return secrets.length?pick(secrets):'You did it here! Use the Map button to sail somewhere new.';
+}
+function meetBuddy(next){
+  SCREEN='buddy';WORLD=null;scrollTo(0,0);playSong('island');
+  let name=meetBuddy.n||(S.buddy&&S.buddy.name)||'',d={...BUDDY_DEF,...(meetBuddy.d||{})},step=meetBuddy.step||0;meetBuddy.d=null;meetBuddy.step=0;meetBuddy.n='';
+  const sugg=[...BUDDY_NAMES].sort(()=>Math.random()-.5).slice(0,8);
+  const RULES=[n=>`Here's how Monster Island works. Walk with the arrow keys or WASD. Monsters hide in the tall grass. Walk into one to battle it, then throw a net to catch it!`,
+    n=>`Every island has three towns with locked gates. Beat each town's leader to open the gate. Watch out: other trainers will battle you if they spot you!`,
+    n=>`Beat the champion at the far end of an island to unlock the next one. Win all five islands to become the Island Champion!`,
+    n=>`Tired monsters? Heal at the tent, a Rest House with a heart on the roof, or a sparkly spring. Every element is strong against two others, so check the Element guide on the map.`,
+    n=>`And every island hides secrets. I'll pop up with hints when I find them. Tap "Ask ${n}" any time you're stuck. Let's go!`];
+  const draw=()=>{registerCustom('_buddy',{...d,name:name||'Buddy'});
+    const talk=step===0?`Hi${PROFILE?' '+PROFILE.name:''}! I'm your buddy monster. I'll come along on your adventure, give you hints, and tell you secrets I find. First, what's my name?`:RULES[step-1](name);
+    app.innerHTML=`<div class="box hud"><span class="name">Meet your buddy</span>${step>0?`<button class="btn ghost sm" id="skip">Skip</button>`:''}</div>
+    <div class="labL"><div class="box meet"><div class="art">${spr('_buddy','bob')}</div><div class="say">${talk}</div>
+    ${step===0?`<input id="bname" maxlength="12" placeholder="Name your buddy" value="${name}" autocomplete="off">
+      <div class="labdots">${sugg.map(n=>`<button class="labtog" data-n="${n}">${n}</button>`).join('')}</div>
+      <div class="row" style="justify-content:center;gap:8px"><button class="labtog" id="blook">Change my look</button><button class="btn" id="bok">That's my name!</button></div><p class="small" id="berr" style="color:#c0392b;margin:0"></p>`
+    :`<div class="row" style="justify-content:center;gap:8px">${step>1?`<button class="labtog" id="bback">Back</button>`:''}<button class="btn" id="bnext">${step===RULES.length?"Let's go!":'Next'}</button></div><div class="small" style="color:#8a7f6e">${step} of ${RULES.length}</div>`}</div></div>`;
+    const done=()=>{S.buddy={name,d};save();registerBuddy();monImage('_buddy');next()};
+    const sk=document.getElementById('skip');if(sk)sk.onclick=done;
+    if(step===0){const inp=document.getElementById('bname');inp.oninput=()=>{name=inp.value};
+      app.querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>{name=b.dataset.n;SFX.select();draw()});
+      document.getElementById('blook').onclick=()=>lab(nd=>{if(nd){d={...nd};name=nd.name}meetBuddy.d=d;meetBuddy.n=name;meetBuddy(next);},null,{...d,name:name||''});
+      document.getElementById('bok').onclick=()=>{const n=nameOk(name);if(!n){document.getElementById('berr').textContent='Pick a name for me first!';SFX.bump();return}name=n;SFX.catch();step=1;draw()};
+      inp.onkeydown=e=>{if(e.key==='Enter')document.getElementById('bok').click()};
+    }else{document.getElementById('bnext').onclick=()=>{SFX.select();if(step===RULES.length)return done();step++;draw()};const bb=document.getElementById('bback');if(bb)bb.onclick=()=>{step--;draw()}}
+  };
   draw();
 }
 function explorer(back){
@@ -1669,21 +1745,21 @@ function explorer(back){
   draw();
 }
 function openLab(back){
-  const mine=S&&S.custom?Object.entries(S.custom):[];
-  if(!mine.length)return lab(id=>{if(id)toast(`${SP[id].name} joined your team!`);back()});
-  SCREEN='lab';scrollTo(0,0);
+  hushBuddy();const mine=S&&S.custom?Object.entries(S.custom):[];
+  SCREEN='lab';scrollTo(0,0);registerBuddy();
   app.innerHTML=`<div class="box hud"><span class="name">Monster Lab</span><button class="btn ghost sm" id="lb">Back</button></div>
   <div class="box"><p>Your designs. You can make up to 3 of your own monsters, and change how they look any time.</p>
-  <div class="pgrid" style="margin-top:12px">${mine.map(([id,d])=>`<div class="box pcard"><div class="art" style="margin:auto">${spr(id,'squish')}</div><div class="disp" style="font-size:19px;text-align:center">${d.name} ${chip(d.el)}</div><button class="btn ghost sm" data-ed="${id}">Change its look</button></div>`).join('')}
+  <div class="pgrid" style="margin-top:12px">${S.buddy?`<div class="box pcard"><div class="art" style="margin:auto">${spr('_buddy','bob')}</div><div class="disp" style="font-size:19px;text-align:center">${S.buddy.name}</div><div class="muted small" style="text-align:center">Your buddy</div><button class="btn ghost sm" id="edb">Change my buddy</button></div>`:''}${mine.map(([id,d])=>`<div class="box pcard"><div class="art" style="margin:auto">${spr(id,'squish')}</div><div class="disp" style="font-size:19px;text-align:center">${d.name} ${chip(d.el)}</div><button class="btn ghost sm" data-ed="${id}">Change its look</button></div>`).join('')}
   ${mine.length<3?`<div class="box pcard newp"><button class="pick" id="mk"><div class="art"><div class="initial">+</div></div><div class="disp" style="font-size:19px">Design a new one</div></button></div>`:''}</div></div>`;
   document.getElementById('lb').onclick=back;
+  const eb=document.getElementById('edb');if(eb)eb.onclick=()=>lab(nd=>{if(nd){S.buddy={name:nd.name,d:nd};save();registerBuddy();monImage('_buddy');toast(`${nd.name} loves the new look!`)}openLab(back)},null,{...S.buddy.d,name:S.buddy.name});
   app.querySelectorAll('[data-ed]').forEach(b=>b.onclick=()=>lab(id=>{if(id)toast('Looking good!');openLab(back)},b.dataset.ed));
   const mk2=document.getElementById('mk');if(mk2)mk2.onclick=()=>lab(id=>{if(id)toast(`${SP[id].name} joined your team!`);openLab(back)});
   focusFirst('.pgrid');
 }
 
 // ================= TEAM =================
-function team(back){
+function team(back){hushBuddy();
   SCREEN='team';scrollTo(0,0);
   const all=BOOK();
   app.innerHTML=`<div class="box hud"><span class="name">Your team</span><button class="btn ghost sm" id="back">Back</button></div>
@@ -1715,7 +1791,8 @@ function victory(){
 const enemy=()=>B.enemies[B.ei];
 const foe=()=>B.trainer?B.trainer.name:ISLES[B.isle].champ.name;
 const active=()=>S.team[B.pi];
-function battle(cfg){
+const hushBuddy=()=>document.querySelectorAll('.buddy').forEach(b=>b.remove());
+function battle(cfg){hushBuddy();
   SCREEN='battle';WORLD=null;
   B={...cfg,ei:0,pi:S.team.findIndex(m=>m.hp>0),busy:true};playSong((B.wild&&!B.legend)||B.trainer?'battle':'boss');
   const s=ISLES[B.isle],a=ARENA[s.el];
