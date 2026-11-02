@@ -89,10 +89,17 @@ canvas.scene{display:block;width:100%;height:auto;touch-action:none}
 .prompt .who{font-family:var(--display);font-weight:600;font-size:18px}
 .controls{display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap}
 .controls .help{flex:1;min-width:230px;font-size:15px}
+.hmore{margin-top:6px;color:var(--dim);font-size:14px}.hmore summary{cursor:pointer;font-family:var(--display);font-weight:600;color:var(--dim);font-size:13px;list-style:none;display:inline-block;border:1px solid var(--line);border-radius:99px;padding:3px 10px}.hmore summary::-webkit-details-marker{display:none}.hmore[open] summary{margin-bottom:6px}
 .dpad{display:grid;grid-template-columns:repeat(3,52px);grid-template-rows:repeat(3,52px);gap:5px;touch-action:none;user-select:none;-webkit-user-select:none}
 .dpad button{background:var(--panel-2);color:var(--text);border:1px solid var(--line);border-radius:14px;font-size:18px;touch-action:none;box-shadow:0 4px 12px rgba(0,0,0,.25)}
 .dpad button:active{background:var(--cyan);color:#06213a}
 .dpad .u{grid-area:1/2}.dpad .l{grid-area:2/1}.dpad .r{grid-area:2/3}.dpad .d{grid-area:3/2}
+.dpad.float{position:fixed;z-index:5;padding:6px;border-radius:22px;background:rgba(6,20,40,.35);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.dpad.float button{background:rgba(22,52,96,.82)}
+.dpad.drag{outline:2px dashed var(--cyan);outline-offset:4px}
+.dpad .grip{grid-area:2/2;place-self:center;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.12);border:1px solid var(--line);display:grid;grid-template-columns:repeat(2,5px);gap:4px;place-content:center;cursor:grab;touch-action:none}
+.dpad .grip i{width:5px;height:5px;border-radius:50%;background:var(--dim)}
+.dpad.drag .grip{cursor:grabbing;background:var(--cyan)}
 .wild{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px;margin-top:10px}
 .wild>div{text-align:center;font-size:14px;background:rgba(255,255,255,.04);border-radius:14px;padding:8px}
 .wild .art{width:68px;height:68px;margin:0 auto}
@@ -642,7 +649,7 @@ function updStorms(dt){for(const st of STORMS)if(!st.fixed){st.x+=st.vx*dt/1000;
 
 // ================= DAY AND NIGHT =================
 // one full day takes 8 minutes; the game starts in the morning
-const DAYLEN=480000,T0=performance.now();
+const DAYLEN=480000;let T0=performance.now();
 const dayPhase=()=>(((performance.now()-T0)/DAYLEN)+.82)%1;
 const daylight=()=>clamp(.55+.95*Math.cos(dayPhase()*Math.PI*2),0,1);
 const isNight=()=>daylight()<.3;
@@ -1094,10 +1101,10 @@ function island(i,fromMap){
     <span class="zoom"><button id="zo" aria-label="Zoom out">&#8722;</button><span id="zl">Close</span><button id="zi" aria-label="Zoom in">+</button></span>
     ${muteBtn()}${S.buddy?`<button class="btn ghost sm" id="askb">Ask ${S.buddy.name}</button>`:''}${journalBtn()}<button class="btn ghost sm" id="team">Team</button><button class="btn ghost sm" id="mapb">Map</button></div></div>
   <div class="worldwrap box np"><canvas class="scene" id="cv" data-aspect=".62"></canvas><div class="prompt box" id="prompt" hidden></div><div class="tip3d" id="tip3d" hidden>&#9650; walk forward &nbsp; &#9664; &#9654; turn &nbsp; &#9660; turn around</div></div>
-  <div class="controls"><div class="box help">
-    <b>Arrow keys</b> or <b>WASD</b> to walk. <b>+</b> and <b>&#8722;</b> zoom out to see the whole island and the sea.
-    ${s.secret?`<b>${s.deep?'You found the underwater kingdom!':'You found a secret world!'}</b> ${s.blurb} Rare monsters roam everywhere. The legendary <b>${SP[s.legend].name}</b> waits at the far end${legendGot?' (you caught it!)':''}. Walk back onto the glowing portal to go home.</div>`:`Monsters wander the tall grass. Walk into one to battle. If you get too close, they come after you!
-    Each island has <b>three towns</b> split by locked <b>gates</b>. Beat each town's <b>leader</b> to open the gate to the next town. Other <b>trainers</b> battle you if they see you! Find the hidden <b>treasure chests</b>. Heal your team at the <b>tent</b>, any <b>Rest House</b> (the ones with a heart), or a sparkly <b>healing spring</b>. ${s.champ.name} waits at the far end. Every town has a <b>Move Shop</b>. And somewhere on this island is a <b>secret</b>...</div>`}
+  <div class="controls"><div class="box help"><div class="hshort">${s.secret?`Find the legendary <b>${SP[s.legend].name}</b> at the far end. Walk onto the glowing portal to go home.`:done?`You beat ${s.champ.name}! Explore for secrets, chests and rare monsters.`:`Tap anywhere on the island to walk there. Make your way to <b>${s.champ.name}</b> at the far end.`}${S.buddy?` Stuck? Tap <b>Ask ${S.buddy.name}</b>.`:''}</div>
+    <details class="hmore"><summary>How to play</summary><b>Tap</b> a spot to walk there, or use the <b>arrow keys</b> or <b>WASD</b> to walk. <b>+</b> and <b>&#8722;</b> zoom out to see the whole island and the sea.
+    ${s.secret?`<b>${s.deep?'You found the underwater kingdom!':'You found a secret world!'}</b> ${s.blurb} Rare monsters roam everywhere. The legendary <b>${SP[s.legend].name}</b> waits at the far end${legendGot?' (you caught it!)':''}. Walk back onto the glowing portal to go home.</details></div>`:`Monsters wander the tall grass. Walk into one to battle. If you get too close, they come after you!
+    Each island has <b>three towns</b> split by locked <b>gates</b>. Beat each town's <b>leader</b> to open the gate to the next town. Other <b>trainers</b> battle you if they see you! Find the hidden <b>treasure chests</b>. Heal your team at the <b>tent</b>, any <b>Rest House</b> (the ones with a heart), or a sparkly <b>healing spring</b>. ${s.champ.name} waits at the far end. Every town has a <b>Move Shop</b>. And somewhere on this island is a <b>secret</b>...</details></div>`}
     <div class="dpad" aria-label="Move"><button class="u" data-d="up" aria-label="Up">&#9650;</button><button class="l" data-d="left" aria-label="Left">&#9664;</button><button class="r" data-d="right" aria-label="Right">&#9654;</button><button class="d" data-d="down" aria-label="Down">&#9660;</button></div></div>
   ${s.secret?'':boardHTML()}
   <div class="box"><h3>Monsters on ${s.name}</h3><div class="wild">${list.map(sp=>{const got=S.caught[sp],isR=sp===s.rare;return `<div class="${got?'':'unknown'}"><div class="art">${spr(sp)}</div>${got?SP[sp].name:'???'}${s.secret?(sp===s.legend?'<div class="muted" style="font-size:12px">Legendary!</div>':''):NIGHT[i].includes(sp)?'<div class="muted" style="font-size:12px">Only at night</div>':isR?`<div class="muted" style="font-size:12px">${done?'Rare. It runs away!':'Appears after the champion'}</div>`:''}</div>`}).join('')}</div>
@@ -1112,10 +1119,41 @@ function island(i,fromMap){
     const up=()=>{if(WORLD&&WORLD.heldKey===d){WORLD.held=null;WORLD.heldKey=null}};['pointerup','pointercancel','lostpointercapture'].forEach(ev=>b.addEventListener(ev,up));
     b.addEventListener('contextmenu',e=>e.preventDefault())});
   const cv=document.getElementById('cv');
+  cv.addEventListener('pointerdown',tapWalk);
   cv.addEventListener('wheel',e=>{e.preventDefault();const t=performance.now();if(WORLD&&t-(WORLD.lastWheel||0)>250){WORLD.lastWheel=t;zoom(e.deltaY>0?1:-1)}},{passive:false});
-  bindBoard();startWorld(i,inv,fromMap);
+  bindBoard();floatPad();startWorld(i,inv,fromMap);
 }
 function zoom(d){if(!WORLD)return;const z=Math.max(0,Math.min(ISLES[WORLD.i].secret?2:3,WORLD.z+d));if(z===WORLD.z)return;if(z===0){WORLD.camF=ORD.indexOf(WORLD.p.dir);R3.camPos=null;R3.yaw=null}const tip=document.getElementById('tip3d');if(tip)tip.hidden=z!==0||!window.THREE;if(z===0&&!window.THREE){SFX.bump();return toast('3D needs the internet to load. Check your connection and reload the page.')}WORLD.z=z;SFX.whoosh();const l=document.getElementById('zl');if(l)l.textContent=ZNAME[z]}
+// the arrow pad floats over the game, and you can drag it by its middle to anywhere you like
+function floatPad(){const pad=document.querySelector('.dpad');if(!pad)return;pad.classList.add('float');
+  const g=document.createElement('div');g.className='grip';g.title='Drag to move the arrows';g.innerHTML='<i></i><i></i><i></i><i></i>';pad.appendChild(g);
+  let pos=null;try{pos=JSON.parse(localStorage.getItem('mi-dpad'))}catch(e){}
+  const place=()=>{const w=pad.offsetWidth,h=pad.offsetHeight,W=innerWidth,H=innerHeight;let x,y;if(pos){x=pos.x*W-w/2;y=pos.y*H-h/2}else{x=W-w-16;y=H-h-24}
+    pad.style.left=clamp(x,4,W-w-4)+'px';pad.style.top=clamp(y,4,H-h-4)+'px'};place();
+  addEventListener('resize',place);
+  g.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();try{g.setPointerCapture(e.pointerId)}catch(_){}pad.classList.add('drag');const r=pad.getBoundingClientRect(),ox=e.clientX-r.left,oy=e.clientY-r.top;
+    const mv=ev=>{const W=innerWidth,H=innerHeight,w=pad.offsetWidth,h=pad.offsetHeight;const x=clamp(ev.clientX-ox,4,W-w-4),y=clamp(ev.clientY-oy,4,H-h-4);pad.style.left=x+'px';pad.style.top=y+'px';pos={x:(x+w/2)/W,y:(y+h/2)/H}};
+    const up=()=>{pad.classList.remove('drag');g.removeEventListener('pointermove',mv);g.removeEventListener('pointerup',up);g.removeEventListener('pointercancel',up);try{localStorage.setItem('mi-dpad',JSON.stringify(pos))}catch(_){}};
+    g.addEventListener('pointermove',mv);g.addEventListener('pointerup',up);g.addEventListener('pointercancel',up)})}
+// tap (or click) a spot on the island and your explorer walks there
+function tapWalk(e){const Wd=WORLD;if(!Wd||Wd.z===0||Wd.paused||Wd.appr)return;const cv=Wd.cv,r=cv.getBoundingClientRect(),o=isleOff(Wd.i);
+  const px=(e.clientX-r.left)*cv.width/r.width,py=(e.clientY-r.top)*cv.height/r.height;
+  const tx=Math.floor(Wd.cam.x-o.x+(px-cv.width/2)/Wd.sc),ty=Math.floor(Wd.cam.y-o.y+(py-cv.height/2)/Wd.sc);
+  const path=findPath(Wd.p.x,Wd.p.y,tx,ty);if(!path){SFX.bump();Wd.tap={x:tx,y:ty,t:performance.now(),bad:1};return}
+  Wd.path=path;Wd.held=null;Wd.tap={x:tx,y:ty,t:performance.now()};SFX.select()}
+function findPath(sx,sy,tx,ty){const Wd=WORLD,m=Wd.m;if(tx<0||ty<0||tx>=W||ty>=H||(tx===sx&&ty===sy))return null;
+  const special=(x,y)=>(x===m.champ.x&&y===m.champ.y)||(m.secretStone&&x===m.secretStone.x&&y===m.secretStone.y)||chestAt(x,y)||trainerAt(x,y)||houseAt(x,y)||monAt(x,y);
+  const goalOk=walk(m.g[ty][tx])||special(tx,ty);if(!goalOk)return null;
+  const pass=(x,y)=>{if(x<0||y<0||x>=W||y>=H||!walk(m.g[y][x]))return false;const gt=gateAt(x,y);if(gt&&!gateOpen(Wd.i,gt.k))return false;return !special(x,y)};
+  const prev=new Int32Array(W*H).fill(-1),q=[sy*W+sx];prev[sy*W+sx]=sy*W+sx;
+  for(let h=0;h<q.length;h++){const c=q[h],cx=c%W,cy=(c/W)|0;for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){const nx=cx+dx,ny=cy+dy,n=ny*W+nx;if(nx<0||ny<0||nx>=W||ny>=H||prev[n]>=0)continue;
+    if(nx===tx&&ny===ty){prev[n]=c;const out=[];let k=n;while(k!==sy*W+sx){out.push([k%W,(k/W)|0]);k=prev[k]}return out.reverse()}
+    if(pass(nx,ny)){prev[n]=c;q.push(n)}}}
+  return null}
+function drawTap(t){const Wd=WORLD,tp=Wd&&Wd.tap;if(!tp)return;const k=(t-tp.t)/700;if(k>1&&!(Wd.path&&Wd.path.length)){Wd.tap=null;return}
+  const {ctx,cv}=Wd,o=isleOff(Wd.i),sc=Wd.sc;ctx.setTransform(sc,0,0,sc,cv.width/2-Wd.cam.x*sc,cv.height/2-Wd.cam.y*sc);
+  const x=o.x+tp.x+.5,y=o.y+tp.y+.6,a=Math.max(.35,1-Math.min(1,k));ctx.strokeStyle=tp.bad?`rgba(255,90,90,${a})`:`rgba(255,255,255,${a})`;ctx.lineWidth=.07;
+  ctx.beginPath();ctx.ellipse(x,y,.3+.15*Math.min(1,k),.14+.07*Math.min(1,k),0,0,7);ctx.stroke();ctx.setTransform(1,0,0,1,0,0)}
 function hud(){const tm=document.getElementById('tm');if(tm)tm.innerHTML=`<i style="background:${isNight()?'#9fb6ff':'#ffd25a'}"></i>${timeName()}`;const c=document.getElementById('hc'),n=document.getElementById('hn');if(c)c.innerHTML=`<i style="background:#ffc83d"></i>${S.coins} coins`;if(n)n.innerHTML=`<i style="background:#3fd6ff"></i>${S.supers} super nets`}
 function startWorld(i,inv,fromMap){
   buildSea();buildHi(i);const m=genMap(i),ws=WSTATE[i],cv=document.getElementById('cv');sizeCanvas(cv,.62);const ctx=cv.getContext('2d'),now=performance.now(),o=isleOff(i),ps=S.pos[i];
@@ -1128,7 +1166,7 @@ function startWorld(i,inv,fromMap){
   hud();
   const c3=cv3();cv.parentElement.appendChild(c3);c3.hidden=true;R3.camPos=null;
   WORLD.lastBuddy=now-(BUDDY_SEEN.has(i)?0:BUDDY_EVERY-2500);BUDDY_SEEN.add(i);
-  const loop=t=>{if(!WORLD||WORLD.cv!==cv||!cv.isConnected)return;tick(t);if(S.buddy&&!WORLD.paused&&!WORLD.appr&&t-WORLD.lastBuddy>BUDDY_EVERY){WORLD.lastBuddy=t;buddySay(buddyHint(i))}if(!WORLD.lastHud||t-WORLD.lastHud>2000){WORLD.lastHud=t;hud()}const in3=WORLD.z===0&&window.THREE;c3.hidden=!in3;if(in3){try{render3D(t)}catch(e){console.error(e);WORLD.z=1}}else drawOver(t);requestAnimationFrame(loop)};
+  const loop=t=>{if(!WORLD||WORLD.cv!==cv||!cv.isConnected)return;tick(t);if(S.buddy&&!WORLD.paused&&!WORLD.appr&&t-WORLD.lastBuddy>BUDDY_EVERY){WORLD.lastBuddy=t;buddySay(buddyHint(i))}if(!WORLD.lastHud||t-WORLD.lastHud>2000){WORLD.lastHud=t;hud()}const in3=WORLD.z===0&&window.THREE;c3.hidden=!in3;if(in3){try{render3D(t)}catch(e){console.error(e);WORLD.z=1}}else{drawOver(t);drawTap(t)}requestAnimationFrame(loop)};
   requestAnimationFrame(loop);
 }
 const monAt=(x,y)=>WORLD.ws.mons.find(o=>o.x===x&&o.y===y);
@@ -1184,7 +1222,8 @@ function tick(t){
   if(Wd.paused)return;
   if(p.mv){const k=Math.min(1,(t-p.mv.t0)/170);p.fx=p.mv.ax+(p.mv.tx-p.mv.ax)*k;p.fy=p.mv.ay+(p.mv.ty-p.mv.ay)*k;p.walkT+=.33;if(k>=1){p.x=p.mv.tx;p.y=p.mv.ty;p.fx=p.x;p.fy=p.y;p.mv=null;arrive()}}
   else p.walkT=0;
-  if(!p.mv&&Wd.held&&!Wd.paused)tryMove(Wd.held,t);
+  if(!p.mv&&Wd.held&&!Wd.paused){Wd.path=null;tryMove(Wd.held,t)}
+  else if(!p.mv&&Wd.path&&Wd.path.length&&!Wd.paused){const [nx,ny]=Wd.path.shift(),dir=nx>p.x?'right':nx<p.x?'left':ny>p.y?'down':'up';tryMove(dir,t);if(!p.mv||Wd.paused)Wd.path=null}
   for(const o of Wd.ws.mons){
     if(o.mv){const k=Math.min(1,(t-o.mv.t0)/(o.chase?220:420));o.fx=o.mv.ax+(o.x-o.mv.ax)*k;o.fy=o.mv.ay+(o.y-o.mv.ay)*k;if(k>=1){o.fx=o.x;o.fy=o.y;o.mv=null}}
     else if(t>=o.next&&!Wd.paused){o.next=t+(o.chase?260:900+Math.random()*1400);monStep(o,t)}
@@ -1534,6 +1573,7 @@ function enterHouse(h){
   <div class="controls"><div class="box help">Walk around with the <b>arrow keys</b>. Bump into people to talk, the <b>bed</b> to take a nap (it heals your team), the <b>bookshelf</b> to read, and the sparkly <b>treasure chest</b> to open it. Walk out the door at the bottom to leave.</div>
     <div class="dpad" aria-label="Move"><button class="u" data-d="up" aria-label="Up">&#9650;</button><button class="l" data-d="left" aria-label="Left">&#9664;</button><button class="r" data-d="right" aria-label="Right">&#9654;</button><button class="d" data-d="down" aria-label="Down">&#9660;</button></div></div>`;
   hud();document.getElementById('out').onclick=leaveHouse;
+  floatPad();
   app.querySelectorAll('.dpad button').forEach(b=>{const d=b.dataset.d;b.addEventListener('pointerdown',e=>{e.preventDefault();try{b.setPointerCapture(e.pointerId)}catch(_){}if(ROOM){ROOM.held=d;ROOM.heldKey=d}});
     const up=()=>{if(ROOM&&ROOM.heldKey===d){ROOM.held=null;ROOM.heldKey=null}};['pointerup','pointercancel','lostpointercapture'].forEach(ev=>b.addEventListener(ev,up));b.addEventListener('contextmenu',e=>e.preventDefault())});
   const cv=document.getElementById('rc');sizeCanvas(cv,RH/RW);const ctx=cv.getContext('2d'),R=ROOM;SFX.whoosh();
@@ -1552,7 +1592,7 @@ function roomTick(t){
     if(nx===R.lay.chest[0]&&ny===R.lay.chest[1]){R.held=null;if(S.gifts[R.key])return roomSay('Treasure chest','It is empty. You already found the treasure here!');
       S.gifts[R.key]=1;SFX.chest();const tr=TREASURES[R.treasure];const msg=giveTreasure(R.treasure);save();hud();return roomSay('You found a special treasure!',`<b>${tr.name}!</b> ${tr.txt} ${msg}`,'Awesome!')}
     const f=roomFurnAt(nx,ny);
-    if(f){R.held=null;if(f[0]==='bed'){S.team.forEach(x=>x.hp=maxHp(x));SFX.heal();save();return roomSay('Nap time','You take a quick nap. Zzz... Your whole team is healed!')}
+    if(f){R.held=null;if(f[0]==='bed'){S.team.forEach(x=>x.hp=maxHp(x));SFX.heal();save();if(daylight()<.85){T0=performance.now();return roomSay('Good morning!','You climb into bed and sleep all night. Zzz... The sun is up, and your whole team is healed!')}return roomSay('Nap time','You take a quick nap. Zzz... Your whole team is healed! (Sleep here at night to wake up in the morning.)')}
       if(f[0]==='shelf')return roomSay('Bookshelf',BOOKS[(R.h.h+nx)%BOOKS.length]);if(f[0]==='fire')return roomSay('Fireplace','Toasty! The fire crackles.');
       if(f[0]==='stove')return roomSay('Stove','Something yummy is cooking. It smells like monster cookies.');if(f[0]==='table')return roomSay('Table','There is a plate of cookies. You leave them for the family.');return}
     if(nx<0||ny<0||nx>=RW||ny>=RH||(R.blocked[ny][nx]&&!(ny===RH-1&&nx===5))){SFX.bump();return}
@@ -1767,7 +1807,7 @@ function meetBuddy(next){
   SCREEN='buddy';WORLD=null;scrollTo(0,0);playSong('island');
   let name=meetBuddy.n||(S.buddy&&S.buddy.name)||'',d={...BUDDY_DEF,...(meetBuddy.d||{})},step=meetBuddy.step||0;meetBuddy.d=null;meetBuddy.step=0;meetBuddy.n='';
   const sugg=[...BUDDY_NAMES].sort(()=>Math.random()-.5).slice(0,8);
-  const RULES=[n=>`Here's how Monster Island works. Walk with the arrow keys, WASD, or the arrow buttons. Monsters hide in the tall grass. Walk into one to battle it, then throw a net to catch it!`,
+  const RULES=[n=>`Here's how Monster Island works. Tap anywhere on the island to walk there, or use the arrow buttons or keys. Monsters hide in the tall grass. Walk into one to battle it, then throw a net to catch it!`,
     n=>`Every island has three towns with locked gates. Beat each town's leader to open the gate. Watch out: other trainers will battle you if they spot you!`,
     n=>`Beat the champion at the far end of an island to unlock the next one. Win all five islands to become the Island Champion!`,
     n=>`Tired monsters? Heal at the tent, a Rest House with a heart on the roof, or a sparkly spring. Every element is strong against two others. Tap Element guide on the map to see which!`,
