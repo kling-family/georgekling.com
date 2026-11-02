@@ -1206,7 +1206,7 @@ const palFor=tr=>tr.rival?RIVALPAL:TPAL[tr.k%3];
 const TLINES=['Hey! You look like a strong trainer. Let\'s battle!','Our eyes met! That means we battle!','I have been training all day. Show me what you got!'];
 function spotCheck(t){
   const Wd=WORLD,p=Wd.p,m=Wd.m;if(t<Wd.inv)return false;
-  for(const tr of Wd.ws.trainers){if(trBeaten(tr.k))continue;const [dx,dy]=DIRS[tr.dir];
+  for(const tr of Wd.ws.trainers){if(trBeaten(tr.k)||(Wd.ws.fled&&Wd.ws.fled.has(tr.k)))continue;const [dx,dy]=DIRS[tr.dir];
     for(let s=1;s<=4;s++){const x=tr.x+dx*s,y=tr.y+dy*s;if(x<0||y<0||x>=W||y>=H||!walk(m.g[y][x]))break;if(x===p.x&&y===p.y){spotted(tr,s,t);return true}}}
   return false}
 function spotted(tr,steps,t){
@@ -1984,8 +1984,8 @@ function opts(list){const a=document.getElementById('act');a.innerHTML=list.map(
   a.querySelectorAll('.opt').forEach((b,k)=>{b.onclick=()=>{if(b.disabled)return;SFX.select();list[k].go()};b.onmouseenter=()=>b.focus({preventScroll:true})});focusFirst('#act')}
 function menu(){
   document.getElementById('log').textContent=`What will ${nm(active())} do?`;
-  opts([{label:'Fight',go:fightMenu},{label:'Net',off:!B.wild,sub:B.wild?(S.supers?`Super nets: ${S.supers}`:'Catch it!'):"Can't catch a champion's monster",go:netMenu},
-    {label:'Switch',off:S.team.filter(m=>m.hp>0).length<2,go:()=>swapMenu(false)},{label:'Run',off:!B.wild,go:async()=>{lock();await say('You got away safely!');save();island(B.isle)}}]);
+  opts([{label:'Fight',go:fightMenu},{label:'Net',off:!B.wild,sub:B.wild?(S.supers?`Super nets: ${S.supers}`:'Catch it!'):(B.trainer?"Can't catch a trainer's monster":"Can't catch a champion's monster"),go:netMenu},
+    {label:'Switch',off:S.team.filter(m=>m.hp>0).length<2,go:()=>swapMenu(false)},{label:'Run',sub:B.wild?'':'No coins if you run',go:async()=>{lock();if(B.trainer){const ws=WSTATE[B.isle];if(ws){ws.fled=ws.fled||new Set();ws.fled.add(B.trainer.k)}await say(`You ran away from ${B.trainer.name}!`,900);await say('Walk up to them when you are ready for a rematch.',1100)}else if(!B.wild){await say(`You ran away from ${foe()}! Come back when you're ready.`,1200)}else await say('You got away safely!');save();island(B.isle)}}]);
 }
 function fightMenu(){
   const e=enemy();
