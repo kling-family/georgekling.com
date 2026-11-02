@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Movies and videos George made.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="George's Videos">
+<meta property="og:description" content="Movies and videos George made.">
+<meta property="og:url" content="https://georgekling.com/videos/">
+<meta property="og:image" content="https://georgekling.com/videos/scratchjr-1.jpg">
+<title>George's Videos</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Special+Elite&display=swap" rel="stylesheet">
+<style>
+
+  :root {
+    --page: #F4F6F1;
+    --paper: #FFFFFF;
+    --ink: #1E2B3F;
+    --ink-soft: #4A5568;
+    --rule: rgba(30,43,63,.14);
+    --red: #D2402F;
+    --green: #1F6B45;
+    --green-deep: #17563A;
+    --orange: #EE8133;
+    --cream: #FFF6EA;
+    --manila: #EBDAA9;
+    --manila-line: #C9B57E;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body {
+    margin: 0;
+    background: var(--page);
+    color: var(--ink);
+    font-family: "Atkinson Hyperlegible", system-ui, sans-serif;
+    font-size: 1.125rem;
+    line-height: 1.6;
+  }
+  a { color: var(--green); text-underline-offset: 3px; }
+  :focus-visible { outline: 3px solid var(--orange); outline-offset: 3px; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 16px; }
+
+  /* ---------- Green band: nav + hero ---------- */
+  .band { background: var(--green); color: var(--cream); overflow: hidden; }
+  .top .wrap { display: flex; flex-wrap: wrap; gap: 6px 22px; align-items: baseline; padding-top: 16px; padding-bottom: 16px; }
+  .top .home { font-family: "Young Serif", Georgia, serif; font-size: 1.25rem; color: var(--cream); text-decoration: none; margin-right: auto; }
+  .top nav { display: flex; flex-wrap: wrap; gap: 4px 18px; font-size: 1rem; }
+  .top nav a { color: #CFE3D6; text-decoration: none; }
+  .top nav a:hover { color: var(--cream); text-decoration: underline; }
+
+  .hero {
+    display: grid; grid-template-columns: 1fr; gap: 56px;
+    padding: 32px 0 88px; align-items: center;
+  }
+  @media (min-width: 860px) { .hero { grid-template-columns: 1fr 1.05fr; padding: 56px 0 120px; gap: 64px; } }
+  h1 {
+    font-family: "Young Serif", Georgia, serif; font-weight: 400;
+    font-size: clamp(4.5rem, 17vw, 10rem);
+    line-height: .88; letter-spacing: -0.025em;
+    margin: 0 0 28px; color: var(--cream);
+  }
+  h1 .dot { color: var(--orange); }
+  .intro { font-size: 1.25rem; max-width: 32ch; margin: 0; color: #CFE3D6; }
+
+  /* Rubber stamps, used across the site */
+  .stamp {
+    display: inline-block;
+    font-family: "Special Elite", "Courier New", monospace;
+    color: var(--red); border: 2px solid var(--red); border-radius: 3px;
+    padding: 1px 6px; font-size: .85rem; line-height: 1.3; opacity: .9;
+  }
+  .card tr:nth-child(odd) .stamp { transform: rotate(-4deg); }
+  .card tr:nth-child(even) .stamp { transform: rotate(3deg); }
+
+  /* ---------- Sections ---------- */
+  section { padding: 80px 0; scroll-margin-top: 12px; }
+  section + section { border-top: 1px solid var(--rule); }
+  .head { display: flex; gap: 22px; align-items: center; margin-bottom: 36px; }
+  .badge { flex: none; width: 96px; height: 96px; }
+  .badge.r { color: var(--red); transform: rotate(-8deg); }
+  .badge.g { color: var(--green); transform: rotate(6deg); }
+  .badge.o { color: var(--orange); transform: rotate(-4deg); }
+  @media (max-width: 520px) { .badge { width: 76px; height: 76px; } .head { gap: 16px; } }
+  h2 {
+    font-family: "Young Serif", Georgia, serif; font-weight: 400;
+    font-size: clamp(1.9rem, 5vw, 2.7rem); line-height: 1.1; margin: 0 0 6px;
+  }
+  .lede { color: var(--ink-soft); max-width: 50ch; margin: 0; }
+  h3 { font-family: "Young Serif", Georgia, serif; font-weight: 400; font-size: 1.35rem; line-height: 1.25; margin: 0 0 6px; }
+  .meta { color: var(--ink-soft); font-size: .95rem; margin: 0 0 12px; }
+  .grid { display: grid; gap: 24px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+  figure { margin: 0; }
+  figcaption { font-size: 1rem; margin-top: 10px; }
+  figcaption span { color: var(--ink-soft); }
+  .placeholder { color: var(--ink-soft); font-size: 1rem; text-align: center; }
+
+  /* Games: a screen */
+  .screen {
+    aspect-ratio: 4 / 3; border-radius: 10px;
+    background: var(--green-deep); color: #CFE3D6;
+    display: grid; place-items: center; padding: 16px; text-align: center;
+    border: 10px solid var(--ink); box-shadow: inset 0 0 0 2px rgba(255,255,255,.08);
+    font-size: 1rem;
+  }
+  video.screen { display: block; width: 100%; height: auto; padding: 0; background: var(--ink); object-fit: contain; }
+  .screen strong { display: block; color: var(--orange); font-family: "Special Elite", "Courier New", monospace; font-weight: 400; font-size: 1.3rem; margin-bottom: 4px; }
+  a.screen.play { position: relative; display: block; padding: 0; overflow: hidden; text-decoration: none; }
+  a.screen.play img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center top; transition: transform .3s ease; }
+  a.screen.play span { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); background: var(--orange); color: var(--ink); font-family: "Special Elite", "Courier New", monospace; font-size: 1.05rem; padding: 8px 16px; border-radius: 999px; white-space: nowrap; box-shadow: 0 6px 14px -6px rgba(0,0,0,.6); }
+  a.screen.play:hover img, a.screen.play:focus-visible img { transform: scale(1.04); }
+  a.screen.play:focus-visible { outline: 3px solid var(--orange); outline-offset: 3px; }
+  .more { margin: 28px 0 0; font-size: 1.05rem; }
+  .more a { font-family: "Young Serif", Georgia, serif; }
+
+  .more { margin: 28px 0 0; font-size: 1.05rem; }
+  .more a { font-family: "Young Serif", Georgia, serif; }
+  footer { background: var(--green); color: #CFE3D6; padding: 36px 0 44px; font-size: 1rem; }
+  footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px; }
+  footer .mark { font-family: "Young Serif", Georgia, serif; color: var(--cream); font-size: 1.2rem; }
+
+
+  .pagehead { padding-top: 24px; padding-bottom: 64px; }
+  .pagehead h1 { font-size: clamp(3.2rem, 11vw, 6rem); margin: 0 0 14px; }
+  .crumb { color: #CFE3D6; font-size: 1rem; }
+  .crumb a { color: var(--cream); }
+  main section { padding-top: 56px; }
+  .shelf { display: grid; gap: 32px; align-items: start; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+  .cart { background: var(--paper); border-radius: 6px; padding: 14px 14px 20px; box-shadow: 0 12px 22px -14px rgba(30,43,63,.45); display: flex; flex-direction: column; gap: 10px; }
+  .cart h3 { margin: 6px 4px 0; }
+  .cart p { margin: 0 4px; color: var(--ink-soft); font-size: 1rem; }
+  .cart .made { margin: 0 4px; }
+  .cart .made .stamp { transform: rotate(-3deg); }
+  .cart.soon .screen { background: var(--green-deep); }
+</style>
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs><path id="ring" d="M60,60 m-41,0 a41,41 0 1,1 82,0 a41,41 0 1,1 -82,0"/></defs>
+  </svg>
+  <div class="band">
+    <div class="top">
+      <div class="wrap">
+        <a class="home" href="/">George</a>
+        <nav aria-label="Sections">
+          <a href="/#stories">Stories</a>
+          <a href="/#books">Books</a>
+          <a href="/#toys">Toys</a>
+          <a href="/games/">Games</a>
+          <a href="/videos/" aria-current="page">Videos</a>
+          <a href="/#lego">Lego</a>
+          <a href="/#travels">Travels</a>
+        </nav>
+      </div>
+    </div>
+    <div class="wrap pagehead">
+      <p class="crumb"><a href="/">George</a> / Videos</p>
+      <h1>Videos<span class="dot">.</span></h1>
+      <p class="intro">Movies and videos George made.</p>
+    </div>
+  </div>
+  <main class="wrap">
+    <section aria-label="George's videos">
+      <div class="shelf">
+        <article class="cart">
+          <video class="screen" src="/videos/scratchjr-1.mp4" poster="/videos/scratchjr-1.jpg" controls playsinline preload="none" width="1280" height="962" aria-label="The Super Mario Game Movie, a ScratchJr movie by George"></video>
+          <h3>The Super Mario Game Movie</h3>
+          <p class="made"><span class="stamp">MADE IN SCRATCHJR</span></p>
+          <p>A movie George made in ScratchJr.</p>
+        </article>
+        <article class="cart soon">
+          <div class="screen"><div><strong>Coming soon</strong>George's next video</div></div>
+          <h3>Next video</h3>
+          <p>Coming soon.</p>
+        </article>
+      </div>
+    </section>
+  </main>
+  <footer>
+    <div class="wrap">
+      <span class="mark">George.</span>
+      <span>Built by George in partnership with his parents.</span>
+    </div>
+  </footer>
+</body>
+</html>

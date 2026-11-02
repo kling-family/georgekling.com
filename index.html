@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="Stories, book reviews, toy reviews, games, Lego builds, and travels by George.">
+<meta name="description" content="Stories, book reviews, toy reviews, games, videos, Lego builds, and travels by George.">
 <meta property="og:type" content="website">
 <meta property="og:title" content="George.">
-<meta property="og:description" content="Stories, book reviews, toy reviews, games, Lego builds, and travels by George.">
+<meta property="og:description" content="Stories, book reviews, toy reviews, games, videos, Lego builds, and travels by George.">
 <meta property="og:url" content="https://georgekling.com/">
 <meta property="og:image" content="https://georgekling.com/share.png">
 <meta property="og:image:width" content="1200">
@@ -171,6 +171,8 @@
   a.screen.play span { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); background: var(--orange); color: var(--ink); font-family: "Special Elite", "Courier New", monospace; font-size: 1.05rem; padding: 8px 16px; border-radius: 999px; white-space: nowrap; box-shadow: 0 6px 14px -6px rgba(0,0,0,.6); }
   a.screen.play:hover img, a.screen.play:focus-visible img { transform: scale(1.04); }
   a.screen.play:focus-visible { outline: 3px solid var(--orange); outline-offset: 3px; }
+  .more { margin: 28px 0 0; font-size: 1.05rem; }
+  .more a { font-family: "Young Serif", Georgia, serif; }
 
   /* Lego: a baseplate with studs */
   .plate { position: relative; padding-top: 14px; }
@@ -227,7 +229,8 @@
           <a href="#stories">Stories</a>
           <a href="#books">Books</a>
           <a href="#toys">Toys</a>
-          <a href="#games">Games &amp; movies</a>
+          <a href="#games">Games</a>
+          <a href="#videos">Videos</a>
           <a href="#lego">Lego</a>
           <a href="#travels">Travels</a>
         </nav>
@@ -238,7 +241,7 @@
       <header class="hero">
         <div>
           <h1>George<span class="dot">.</span></h1>
-          <p class="intro">Stories, book reviews, toy reviews, games and movies, Lego builds, and photos from places I've been.</p>
+          <p class="intro">Stories, book reviews, toy reviews, games, videos, Lego builds, and photos from places I've been.</p>
         </div>
 
         <div class="pocket" aria-label="George's reading card">
@@ -344,20 +347,34 @@
       <div class="head">
         <svg class="badge r" viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="56" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="60" cy="60" r="31" fill="none" stroke="currentColor" stroke-width="1.5"/><text font-family="Special Elite, Courier New, monospace" font-size="12" fill="currentColor"><textPath href="#ring" textLength="252" lengthAdjust="spacing">MADE BY GEORGE ★ PRESS PLAY ★</textPath></text><text x="60" y="71" text-anchor="middle" font-family="Young Serif, Georgia, serif" font-size="32" fill="currentColor">G</text></svg>
         <div>
-          <h2 id="games-h">Made by George</h2>
-          <p class="lede">Games, movies, and whatever I make next. Press play right here.</p>
+          <h2 id="games-h">Games</h2>
+          <p class="lede">Games I designed. Press play right here.</p>
         </div>
       </div>
       <div class="grid">
-        <figure>
-          <video class="screen" src="games/scratchjr-1.mp4" poster="games/scratchjr-1.jpg" controls playsinline preload="none" width="1280" height="962" aria-label="The Super Mario Game Movie, a ScratchJr movie by George"></video>
-          <figcaption>The Super Mario Game Movie <span>made in ScratchJr</span></figcaption>
-        </figure>
         <figure>
           <a class="screen play" href="games/monster-island/"><img src="games/monster-island.jpg" alt="Monster Island title screen with five islands in a blue sea" width="1145" height="1061" loading="lazy"><span>&#9654; Play Monster Island</span></a>
           <figcaption>Monster Island <span>catch monsters, battle trainers, explore five islands</span></figcaption>
         </figure>
       </div>
+      <p class="more"><a href="games/">See all of George's games &rarr;</a></p>
+    </section>
+
+    <section id="videos" aria-labelledby="videos-h">
+      <div class="head">
+        <svg class="badge o" viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="56" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="60" cy="60" r="31" fill="none" stroke="currentColor" stroke-width="1.5"/><text font-family="Special Elite, Courier New, monospace" font-size="12" fill="currentColor"><textPath href="#ring" textLength="252" lengthAdjust="spacing">DIRECTED BY GEORGE ★ ROLL CAMERA ★</textPath></text><text x="60" y="71" text-anchor="middle" font-family="Young Serif, Georgia, serif" font-size="32" fill="currentColor">G</text></svg>
+        <div>
+          <h2 id="videos-h">Videos</h2>
+          <p class="lede">Movies and videos I made.</p>
+        </div>
+      </div>
+      <div class="grid">
+        <figure>
+          <video class="screen" src="videos/scratchjr-1.mp4" poster="videos/scratchjr-1.jpg" controls playsinline preload="none" width="1280" height="962" aria-label="The Super Mario Game Movie, a ScratchJr movie by George"></video>
+          <figcaption>The Super Mario Game Movie <span>made in ScratchJr</span></figcaption>
+        </figure>
+      </div>
+      <p class="more"><a href="videos/">See all of George's videos &rarr;</a></p>
     </section>
 
     <section id="lego" aria-labelledby="lego-h">
