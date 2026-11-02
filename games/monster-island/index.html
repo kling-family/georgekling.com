@@ -1111,7 +1111,7 @@ function island(i,fromMap){
     <p class="muted small" style="margin-top:10px">${s.secret?`Monsters here are level ${s.lv[0]} to ${s.lv[1]}. ${SP[s.legend].name} is level ${s.llv}. Bring your strongest team and a Super Net!`:`Wild monsters here are level ${s.lv[0]} to ${s.lv[1]}. ${s.champ.name} has ${s.champ.team.length} monsters, up to level ${Math.max(...s.champ.team.map(t=>t[1]))}. Secret: ${S.secrets[i]?'<b>found!</b> '+SECRETS[i].name:'not found yet'}. Trainers beaten: ${m.trainers.filter(t=>(S.tb[i]||[]).includes(t.k)).length} of ${m.trainers.length}${m.trainers.some(t=>t.rival&&!(S.tb[i]||[]).includes(t.k))?' (Rival Rex is waiting just past the first gate!)':''}.`}</p></div>`;
   document.getElementById('team').onclick=()=>{WORLD=null;team(()=>island(i))};bindJournal(()=>island(i));
   const ab=document.getElementById('askb');if(ab)ab.onclick=()=>{if(WORLD)WORLD.lastBuddy=performance.now();buddySay(buddyHint(i),true)};
-  document.getElementById('mapb').onclick=()=>{SFX.select();if(s.deep)return map();if(s.secret){S.pos[s.parent]={x:genMap(s.parent).secretStone.fx,y:genMap(s.parent).secretStone.fy};island(s.parent,'portal')}else map()};
+  document.getElementById('mapb').onclick=()=>{SFX.select();if(s.deep)return map();if(s.secret){S.pos[s.parent]=secretReturn(s.parent);island(s.parent,'portal')}else map()};
   if(s.secret)document.getElementById('mapb').textContent='Leave';
   document.getElementById('zo').onclick=()=>zoom(1);document.getElementById('zi').onclick=()=>zoom(-1);
   app.querySelectorAll('.dpad button').forEach(b=>{const d=b.dataset.d;
@@ -1294,15 +1294,18 @@ function openSecret(){
   pr.hidden=false;
   pr.innerHTML=`<div class="who">${first?'You found a secret!':q.name}</div><div>${first?`The ${q.hid.replace(/s$/,'')} shakes and slides aside... a glowing doorway! It leads to <b>${q.name}</b>.`:'The glowing doorway hums quietly.'} Go inside?</div><div class="row"><button class="btn sm" id="py">Go inside</button><button class="btn ghost sm" id="pn">Not now</button></div>`;
   document.getElementById('pn').onclick=()=>{pr.hidden=true;Wd.paused=false};
-  document.getElementById('py').onclick=()=>{pr.hidden=true;SFX.whoosh();island(MAIN+i,'portal')};
+  document.getElementById('py').onclick=()=>{pr.hidden=true;SFX.whoosh();S.secretFrom=S.secretFrom||{};S.secretFrom[i]={x:Wd.p.x,y:Wd.p.y};save();island(MAIN+i,'portal')};
   focusFirst('#prompt');
 }
+// coming back out of a secret world puts you exactly where you went in, so it can't skip a locked gate
+function secretReturn(par){const f=S.secretFrom&&S.secretFrom[par];if(f)return {x:f.x,y:f.y};const m=genMap(par),st=m.secretStone,z=m.zoneOf(st.fx,st.fy);
+  if(z===0||gateOpen(par,z-1))return {x:st.fx,y:st.fy};let best=null;for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){const x=st.x+dx,y=st.y+dy;if(x>=0&&y>=0&&x<W&&y<H&&walk(m.g[y][x])&&(m.zoneOf(x,y)===0||gateOpen(par,m.zoneOf(x,y)-1)))best={x,y}}return best||{...m.start}}
 function leaveSecret(){
   const Wd=WORLD,s=ISLES[Wd.i],pr=document.getElementById('prompt');Wd.paused=true;Wd.held=null;pr.hidden=false;
   if(s.deep){pr.innerHTML=`<div class="who">Bubble current</div><div>Swim back up to the surface?</div><div class="row"><button class="btn sm" id="py">Swim up</button><button class="btn ghost sm" id="pn">Stay</button></div>`;document.getElementById('pn').onclick=()=>{pr.hidden=true;Wd.paused=false;Wd.leftStart=false};document.getElementById('py').onclick=()=>{pr.hidden=true;SFX.whoosh();map()};focusFirst('#prompt');return}
   pr.innerHTML=`<div class="who">Glowing portal</div><div>Go back to ${ISLES[s.parent].name}?</div><div class="row"><button class="btn sm" id="py">Go back</button><button class="btn ghost sm" id="pn">Stay</button></div>`;
   document.getElementById('pn').onclick=()=>{pr.hidden=true;Wd.paused=false;Wd.leftStart=false};
-  document.getElementById('py').onclick=()=>{pr.hidden=true;SFX.whoosh();const st=genMap(s.parent).secretStone;S.pos[s.parent]={x:st.fx,y:st.fy};island(s.parent,'portal')};
+  document.getElementById('py').onclick=()=>{pr.hidden=true;SFX.whoosh();S.pos[s.parent]=secretReturn(s.parent);island(s.parent,'portal')};
   focusFirst('#prompt');
 }
 function openLegend(){
