@@ -1204,12 +1204,12 @@ function spotted(tr,steps,t){
 }
 function trainerTalk(tr){
   const Wd=WORLD,s=ISLES[Wd.i],info=trainerInfo(Wd.i,tr.k),pr=document.getElementById('prompt');Wd.paused=true;Wd.held=null;
-  if(trBeaten(tr.k)){Wd.paused=false;return toast(info.name+(info.rival?': No way! Next island, I am going to beat you for sure!':info.leader?': The gate is open. Go show them what you can do!':': Wow, your monsters are tough! Good luck with '+s.champ.name+'.'))}
+  const again=trBeaten(tr.k);
   const tired=!S.team.some(x=>x.hp>0);pr.hidden=false;
-  const line=info.rival?`Hey, it's me, Rex! I've been training super hard. Bet my monsters are stronger than yours now!`:info.leader?`I'm the leader of ${info.town}. Nobody gets through my gate without beating me!`:TLINES[tr.k%3];
-  pr.innerHTML=`<div class="who">${info.name}${info.leader?` <span class="chip" style="background:var(--hot)">Leader of ${info.town}</span>`:''}</div><div>${tired?'Your monsters look tired. Go rest, then come back!':line}</div><div class="row">${tired?'<button class="btn sm" id="pn">OK</button>':'<button class="btn hot sm" id="py">Battle!</button>'}</div>`;
+  const line=again?(info.rival?`You again? Fine. This time I'm going to win for sure!`:info.leader?`You already opened my gate, but I've been training. Want a rematch?`:`Back for more? My monsters got stronger too. Rematch?`):info.rival?`Hey, it's me, Rex! I've been training super hard. Bet my monsters are stronger than yours now!`:info.leader?`I'm the leader of ${info.town}. Nobody gets through my gate without beating me!`:TLINES[tr.k%3];
+  pr.innerHTML=`<div class="who">${info.name}${info.leader?` <span class="chip" style="background:var(--hot)">Leader of ${info.town}</span>`:''}</div><div>${tired?'Your monsters look tired. Go rest, then come back!':line}</div><div class="row">${tired?'<button class="btn sm" id="pn">OK</button>':`<button class="btn hot sm" id="py">${again?'Rematch!':'Battle!'}</button>${again?'<button class="btn ghost sm" id="pn">Not now</button>':''}`}</div>`;
   const n=document.getElementById('pn');if(n)n.onclick=()=>{pr.hidden=true;tr.alert=false;Wd.inv=performance.now()+3000;Wd.paused=false};
-  const y=document.getElementById('py');if(y)y.onclick=()=>{pr.hidden=true;battle({wild:false,isle:Wd.i,trainer:{k:tr.k,name:info.name,leader:info.leader},enemies:scaled(info.team,trBonus(info)).map(([sp,l])=>mk(sp,l))})};
+  const y=document.getElementById('py');if(y)y.onclick=()=>{pr.hidden=true;battle({wild:false,isle:Wd.i,trainer:{k:tr.k,name:info.name,leader:info.leader,again},enemies:scaled(info.team,trBonus(info)).map(([sp,l])=>mk(sp,l))})};
   focusFirst('#prompt');
 }
 function spawn(rare,minD){
@@ -1295,6 +1295,8 @@ function encounter(o){
 }
 function openSecret(){
   const Wd=WORLD,i=Wd.i,q=SECRETS[i],pr=document.getElementById('prompt'),first=!S.secrets[i];Wd.paused=true;Wd.held=null;
+  // the secret door is a reward for winning the island: it stays shut until you beat the champion
+  if(!S.beaten.includes(i)){pr.hidden=false;SFX.bump();pr.innerHTML=`<div class="who">A humming ${q.hid.replace(/s$/,'')}</div><div>Something glows deep inside... but it won't budge. Come back when you're the champion of ${ISLES[i].name}!</div><div class="row"><button class="btn sm" id="pn">OK</button></div>`;document.getElementById('pn').onclick=()=>{pr.hidden=true;Wd.paused=false};return focusFirst('#prompt')}
   if(first){S.secrets[i]=1;save();SFX.chest();Wd.sparkle=performance.now()}
   pr.hidden=false;
   pr.innerHTML=`<div class="who">${first?'You found a secret!':q.name}</div><div>${first?`The ${q.hid.replace(/s$/,'')} shakes and slides aside... a glowing doorway! It leads to <b>${q.name}</b>.`:'The glowing doorway hums quietly.'} Go inside?</div><div class="row"><button class="btn sm" id="py">Go inside</button><button class="btn ghost sm" id="pn">Not now</button></div>`;
@@ -1778,7 +1780,7 @@ function buddyHint(i){
   if(hp<.4)return 'Your team looks really tired! Heal at the tent, a Rest House with a heart on the roof, or a sparkly spring.';
   if(s.secret)return S.caught[s.legend]?'You caught the legend! Walk back onto the glowing portal to go home.':`The legendary ${SP[s.legend].name} waits at the far end. Weaken it first, then throw a Super Net!`;
   const secrets=[];
-  if(!S.secrets[i])secrets.push('Psst... I saw a big rock sparkle somewhere in the middle towns. Walk right up to it and see what happens!');
+  if(!S.secrets[i])secrets.push(S.beaten.includes(i)?'Psst... now that you beat the champion, that sparkly rock in the middle towns might open. Go take a look!':'Psst... I saw a big rock sparkle somewhere in the middle towns. I think it only opens for the champion of this island!');
   const rex=m.trainers.find(t=>t.rival);if(rex&&!tbHas(i,99))secrets.push('Rival Rex is hiding just past the first gate. He thinks his monsters are stronger than yours!');
   if(NIGHT[i]&&NIGHT[i].some(sp=>!S.caught[sp]))secrets.push('Some monsters only come out at night. Explore when the sky gets dark!');
   if(WORLD&&m.chests.some(c=>!WORLD.ws.opened.has(c.x+','+c.y)))secrets.push('Every island has five treasure chests hidden in quiet corners. Peek behind trees and rocks!');
@@ -2082,9 +2084,9 @@ async function checkPiece(i){
 async function winBattle(){
   stopSong();doVictoryHop();
   if(B.wild){SFX.win();await say('You won the battle!');save();island(B.isle);return}
-  if(B.trainer){const n=8+B.enemies.reduce((a,m)=>a+m.lvl,0);SFX.win();await say(`You beat ${B.trainer.name}!`,900);
-    S.tb[B.isle].push(B.trainer.k);S.coins+=n;await say(`${B.trainer.name} gives you ${n} coins.`,900);
-    if(B.trainer.leader){const m=genMap(B.isle),k=B.trainer.k;SFX.chest();await say(`The gate to ${k<2?m.towns[k+1].name:ISLES[B.isle].champ.name+"'s arena"} is open!`,1100)}
+  if(B.trainer){const n=Math.round((8+B.enemies.reduce((a,m)=>a+m.lvl,0))*(B.trainer.again?.5:1));SFX.win();await say(`You beat ${B.trainer.name}!`,900);
+    if(!B.trainer.again)S.tb[B.isle].push(B.trainer.k);S.coins+=n;await say(`${B.trainer.name} gives you ${n} coins.`,900);
+    if(B.trainer.leader&&!B.trainer.again){const m=genMap(B.isle),k=B.trainer.k;SFX.chest();await say(`The gate to ${k<2?m.towns[k+1].name:ISLES[B.isle].champ.name+"'s arena"} is open!`,1100)}
     await checkPiece(B.isle);save();island(B.isle);return}
   const i=B.isle,s=ISLES[i],first=!S.beaten.includes(i);
   SFX.win();await say(`You beat ${s.champ.name}!`,1000);
