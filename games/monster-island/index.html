@@ -1274,7 +1274,7 @@ function tryMove(dir,t){
 function openChest(c){
   const ws=WORLD.ws,k=c.x+','+c.y;if(ws.opened.has(k))return toast('This chest is empty.');
   ws.opened.add(k);SFX.chest();
-  if(Math.random()<.45){S.supers++;toast('Treasure! You found a Super Net. It always catches.')}
+  if(Math.random()<.15){S.supers++;toast('Treasure! You found a Super Net. It always catches.')}
   else{const n=rnd(8,16);S.coins+=n;toast(`Treasure! You found ${n} coins.`)}
   hud();save();
 }
@@ -1519,11 +1519,11 @@ function openShop(h){
   const head=sub=>`<div class="row" style="justify-content:space-between"><h2>Move Shop <span class="muted" style="font-size:16px">in ${town}</span></h2><span class="pill"><i style="background:#ffc83d"></i>${S.coins} coins</span></div>${sub?`<p class="muted small">${sub}</p>`:''}`;
   const list=()=>{const stock=shopStock(Wd.i,h.k);
     wrap.innerHTML=`<div class="box">${head('Teach your monsters new moves! Any monster can learn any move, even from another element.')}
-      <div class="items"><button class="item" data-n="__net" ${S.coins<25?'disabled':''}>Super Net<small>Always catches a wild monster</small><span class="price">25 coins</span></button>
+      <div class="items"><button class="item" data-n="__net" ${S.coins<120?'disabled':''}>Super Net<small>Always catches a wild monster. Save it for a rare one!</small><span class="price">120 coins</span></button>
       ${stock.map(n=>{const mv=MOVEDEX[n],p=movePrice(n);return `<button class="item" data-n="${n}" ${S.coins<p?'disabled':''}>${n} <small>${chip(mv.el)} power ${mv.pow}${mv.first?', always goes first':''}${mv.acc?', can miss':''}</small><span class="price">${p} coins</span></button>`}).join('')}</div>
       <div class="row"><button class="btn ghost sm" id="sx">Leave the shop</button></div></div>`;
     wrap.querySelector('#sx').onclick=close;
-    wrap.querySelectorAll('.item').forEach(b=>b.onclick=()=>{SFX.select();const n=b.dataset.n;if(n==='__net'){S.coins-=25;S.supers++;SFX.coin();save();toast('You bought a Super Net!');return list()}pickMon(n)});
+    wrap.querySelectorAll('.item').forEach(b=>b.onclick=()=>{SFX.select();const n=b.dataset.n;if(n==='__net'){if(S.coins<120)return;S.coins-=120;S.supers++;SFX.coin();save();toast('You bought a Super Net!');return list()}pickMon(n)});
     focusFirst('.shop')};
   const pickMon=n=>{const p=movePrice(n);
     wrap.innerHTML=`<div class="box">${head(`Who should learn <b>${n}</b>? (${p} coins)`)}
@@ -1553,7 +1553,7 @@ const TREASURES=[
   {name:'Power Snack',txt:'A Power Snack! Your leader eats it and grows one level!'},
   {name:'Mystery Egg',txt:'A Mystery Egg! It wobbles... and hatches!'},
   {name:'Coin Bag',txt:'A heavy Coin Bag with 40 coins inside!'},
-  {name:'Super Net Pack',txt:'A Super Net Pack! You get 2 Super Nets.'},
+  {name:'Super Net',txt:'A shiny Super Net! Save it for a rare monster.'},
   {name:'Golden Scroll',txt:'A Golden Scroll! It teaches your leader a powerful move.'}];
 const TALK=['Welcome! Make yourself at home. You can nap in my bed if your monsters are tired.','My grandma had a {mon}. It loved napping by the fire.','The leader of this town is tough. Try a move their monsters are weak to!',
   'I hide my best treasure in a special chest. Shh!','When I was your age, I caught a rare monster with just a regular net. Lucky!','Have you found the secret on this island yet? Look for something that sparkles!'];
@@ -1564,7 +1564,7 @@ function giveTreasure(t){
     const was=doEvolve(lead);return `${was?SP[was].name:nm(lead)} grew to level ${lead.lvl}!${was?` And then... it evolved into ${nm(lead)}!`:''}`}
   if(t===1){const s=ISLES[ROOM.i],pool=Math.random()<.2?[s.rare]:s.wild,sp=pool[Math.floor(Math.random()*pool.length)],m=mk(sp,Math.max(4,lead.lvl-2));S.team.push(m);const first=!S.caught[sp];S.caught[sp]=1;return `Out pops a baby ${SP[sp].name}! It joins your team.${first?' New in your monster book!':''}`}
   if(t===2){S.coins+=40;return 'You now have '+S.coins+' coins.'}
-  if(t===3){S.supers+=2;return 'You now have '+S.supers+' Super Nets.'}
+  if(t===3){S.supers+=1;return 'You now have '+S.supers+' Super Nets.'}
   const els=ELS.filter(e=>e!==SP[lead.sp].el),mvn=ELMOVES[els[Math.floor(Math.random()*els.length)]][2];movesOf(lead);
   if(lead.moves.includes(mvn)){S.coins+=30;return `${nm(lead)} already knows ${mvn}. Here are 30 coins instead!`}
   if(lead.moves.length<4)lead.moves.push(mvn);else{const weak=lead.moves.reduce((a,b)=>MOVEDEX[b].pow<MOVEDEX[a].pow?b:a);lead.moves[lead.moves.indexOf(weak)]=mvn}
