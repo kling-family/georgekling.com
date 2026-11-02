@@ -11,6 +11,7 @@
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="/favicon.png" type="image/png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<script data-goatcounter="https://georgekling.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 <style>:root{color-scheme:dark;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}
 .homelink{display:block;max-width:820px;margin:0 auto 8px;color:#9fb6d8;font:600 14px Nunito,system-ui,sans-serif;text-decoration:none}.homelink:hover{color:#fff}</style>
 </head>
@@ -964,7 +965,7 @@ function showSaveCode(){
   focusFirst('.shop');
 }
 function starter(){
-  SCREEN='starter';scrollTo(0,0);playSong('island');
+  SCREEN='starter';trackPlay();scrollTo(0,0);playSong('island');
   app.innerHTML=`<div class="box"><h2>Pick your first monster</h2><p class="muted small" style="margin-top:4px">Press 1, 2 or 3, or click one.</p></div>
   <div class="starters">${STARTERS.map((s,k)=>`<div class="box starter"><div class="art">${spr(s,'bob')}</div><h3 style="font-size:22px">${SP[s].name}</h3>${chip(SP[s].el)}<button class="btn sm" data-s="${s}">${k+1}. Choose ${SP[s].name}</button></div>`).join('')}</div>
   <div class="box row" style="justify-content:space-between"><div><b>Or design your very own monster!</b><div class="muted small">Pick its body, eyes, ears, tail, colors and element, just like making an avatar.</div></div><button class="btn cyan" id="own">4. Design my own</button></div>
@@ -973,8 +974,9 @@ function starter(){
   app.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{SFX.catch();const s=b.dataset.s;S={starter:s,team:[mk(s,5)],unlocked:1,beaten:[],caught:{[s]:1},coins:0,supers:1,pos:{}};save();map()});
   focusFirst('.starters');
 }
+function trackPlay(){if(trackPlay.done)return;trackPlay.done=1;try{const go=()=>window.goatcounter&&window.goatcounter.count&&window.goatcounter.count({path:'monster-island-play',title:'Monster Island: someone started playing',event:true});if(window.goatcounter&&window.goatcounter.count)go();else setTimeout(go,3000)}catch(e){}}
 function map(){
-  SCREEN='map';WORLD=null;scrollTo(0,0);playSong('island');
+  SCREEN='map';trackPlay();WORLD=null;scrollTo(0,0);playSong('island');
   app.innerHTML=`<div class="box hud"><span class="name">${PROFILE?PROFILE.name+"'s islands":"The Islands"}</span><div class="stats"><span class="pill"><i style="background:#ffc83d"></i>${S.coins} coins</span><span class="pill"><i style="background:#3fd6ff"></i>${S.supers} super nets</span>${journalBtn()}<button class="btn ghost sm" id="labb">Monster Lab</button><button class="btn ghost sm" id="team">Team</button><button class="btn ghost sm" id="scode">Save code</button><button class="btn ghost sm" id="home">Switch player</button>${muteBtn()}</div></div>
   <div class="box np"><canvas class="scene" id="sea" data-aspect=".68"></canvas></div>
   <div class="box"><div class="row" style="justify-content:space-between">
