@@ -1144,7 +1144,7 @@ function tapWalk(e){const Wd=WORLD;if(!Wd||Wd.z===0||Wd.paused||Wd.appr)return;c
 function findPath(sx,sy,tx,ty){const Wd=WORLD,m=Wd.m;if(tx<0||ty<0||tx>=W||ty>=H||(tx===sx&&ty===sy))return null;
   const special=(x,y)=>(x===m.champ.x&&y===m.champ.y)||(m.secretStone&&x===m.secretStone.x&&y===m.secretStone.y)||chestAt(x,y)||trainerAt(x,y)||houseAt(x,y)||monAt(x,y);
   const goalOk=walk(m.g[ty][tx])||special(tx,ty);if(!goalOk)return null;
-  const pass=(x,y)=>{if(x<0||y<0||x>=W||y>=H||!walk(m.g[y][x]))return false;const gt=gateAt(x,y);if(gt&&!gateOpen(Wd.i,gt.k))return false;return !special(x,y)};
+  const pass=(x,y)=>{if(x<0||y<0||x>=W||y>=H||!walk(m.g[y][x]))return false;const gt=gateAt(x,y);if(gt&&!gateOpen(Wd.i,gt.k)&&m.zoneOf(sx,sy)<=gt.k)return false;return !special(x,y)};
   const prev=new Int32Array(W*H).fill(-1),q=[sy*W+sx];prev[sy*W+sx]=sy*W+sx;
   for(let h=0;h<q.length;h++){const c=q[h],cx=c%W,cy=(c/W)|0;for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){const nx=cx+dx,ny=cy+dy,n=ny*W+nx;if(nx<0||ny<0||nx>=W||ny>=H||prev[n]>=0)continue;
     if(nx===tx&&ny===ty){prev[n]=c;const out=[];let k=n;while(k!==sy*W+sx){out.push([k%W,(k/W)|0]);k=prev[k]}return out.reverse()}
@@ -1259,7 +1259,7 @@ function tryMove(dir,t){
   const o=monAt(nx,ny);if(o){Wd.held=null;return encounter(o)}
   const c=chestAt(nx,ny);if(c){Wd.held=null;return openChest(c)}
   const tr=trainerAt(nx,ny);if(tr){Wd.held=null;if(!trBeaten(tr.k)){tr.alert=true;SFX.alert();tr.dir=dx>0?'left':dx<0?'right':dy>0?'up':'down'}return trainerTalk(tr)}
-  const gt=gateAt(nx,ny);if(gt&&!gateOpen(Wd.i,gt.k)){Wd.held=null;const ld=trainerInfo(Wd.i,gt.k);SFX.bump();return toast(`The gate to ${gt.k<2?m.towns[gt.k+1].name:ISLES[Wd.i].champ.name+"'s arena"} is locked. Beat ${ld.name}, the leader of ${m.towns[gt.k].name}, to open it.`)}
+  const gt=gateAt(nx,ny);if(gt&&!gateOpen(Wd.i,gt.k)&&m.zoneOf(p.x,p.y)<=gt.k){Wd.held=null;const ld=trainerInfo(Wd.i,gt.k);SFX.bump();return toast(`The gate to ${gt.k<2?m.towns[gt.k+1].name:ISLES[Wd.i].champ.name+"'s arena"} is locked. Beat ${ld.name}, the leader of ${m.towns[gt.k].name}, to open it.`)}
   const hs=houseAt(nx,ny);if(hs){Wd.held=null;if(hs.rest){if(S.team.some(x=>x.hp<maxHp(x))){S.team.forEach(x=>x.hp=maxHp(x));SFX.heal();save();return toast(`The Rest House in ${m.towns[hs.k].name} heals your team!`)}return toast('Rest House: your team is already feeling great!')}if(hs.shop)return openShop(hs);if(!hs.rest)return enterHouse(hs);return toast(`Someone in ${m.towns[hs.k].name} says: "${HINTS[(hs.h+hs.k)%HINTS.length].replace('{hid}',SECRETS[Wd.i]?SECRETS[Wd.i].hid:'rocks')}"`)}
   if(nx<0||ny<0||nx>=W||ny>=H||!walk(m.g[ny][nx])){if(t-Wd.lastBump>350){Wd.lastBump=t;SFX.bump()}return}
   p.mv={ax:p.x,ay:p.y,tx:nx,ty:ny,t0:t};
