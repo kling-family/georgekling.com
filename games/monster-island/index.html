@@ -588,7 +588,9 @@ function genMap(i){
 }
 // who each trainer is: leaders come from the island list, the others get made up from the island's monsters
 // trainers grow with you: if your best monster gets ahead of a trainer's team, their whole team levels up to match
-function scaled(team,bonus){const top=Math.max(1,...S.team.map(m=>m.lvl)),mx=Math.max(...team.map(t=>t[1])),up=Math.max(0,top+bonus-mx);return team.map(([sp,l])=>[sp,Math.min(60,l+up)])}
+// ...and their monsters evolve at the same levels yours do
+const evolved=(sp,l)=>{let n=0;while(EVO[sp]&&l>=EVO[sp][1]&&SP[EVO[sp][0]]&&n++<3)sp=EVO[sp][0];return sp};
+function scaled(team,bonus){const top=Math.max(1,...S.team.map(m=>m.lvl)),mx=Math.max(...team.map(t=>t[1])),up=Math.max(0,top+bonus-mx);return team.map(([sp,l])=>{const L=Math.min(60,l+up);return [evolved(sp,L),L]})}
 const trBonus=info=>info.rival?1:info.leader?1:0;
 function trainerInfo(i,k){
   const s=ISLES[i],m=genMap(i),t=m.trainers.find(q=>q.k===k);
