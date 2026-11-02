@@ -138,6 +138,7 @@
   .cart .made { margin: 0 4px; }
   .cart .made .stamp { transform: rotate(-3deg); }
   .cart.soon .screen { background: var(--green-deep); }
+  .plays { margin-left: 8px; font-family: "Special Elite", "Courier New", monospace; font-size: .95rem; color: var(--green); }
 </style>
 <script data-goatcounter="https://georgekling.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 </head>
@@ -172,7 +173,7 @@
         <article class="cart">
           <a class="screen play" href="/games/monster-island/"><img src="/games/monster-island.jpg" alt="Monster Island title screen with five islands in a blue sea" width="1145" height="1061"><span>&#9654; Play</span></a>
           <h3>Monster Island</h3>
-          <p class="made"><span class="stamp">MADE NOV 2026</span></p>
+          <p class="made"><span class="stamp">MADE NOV 2026</span> <span class="plays" id="mi-plays" hidden></span></p>
           <p>Catch and battle monsters across five islands. Beat the town leaders, find the secret worlds, design your own monster, and look for the torn map pieces.</p>
           <p><b>How to play:</b> arrow keys or WASD to walk, number keys in battle. Works on tablets too.</p>
         </article>
@@ -190,5 +191,8 @@
       <span>Built by George in partnership with his parents.</span>
     </div>
   </footer>
+<script>
+fetch('https://georgekling.goatcounter.com/counter/'+encodeURIComponent('/games/monster-island/play')+'.json').then(r=>r.ok?r.json():null).then(d=>{const el=document.getElementById('mi-plays');if(!d||!d.count||!el)return;el.textContent='Played '+d.count+' times';el.hidden=false}).catch(()=>{});
+</script>
 </body>
 </html>

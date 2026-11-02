@@ -67,6 +67,7 @@ canvas.scene{display:block;width:100%;height:auto;touch-action:none}
 .by{font-family:var(--display);font-weight:600;letter-spacing:.24em;font-size:13px;color:var(--cyan);text-transform:uppercase}
 .title .box{width:100%;box-sizing:border-box}
 .hint{font-size:13px;color:var(--dim)}
+.plays{font-family:var(--display);font-weight:600;font-size:15px;color:var(--gold);background:rgba(255,200,61,.1);border:1px solid rgba(255,200,61,.35);border-radius:99px;padding:6px 14px}
 .pulse{animation:pulse 1.6s ease-in-out infinite}
 @keyframes pulse{50%{opacity:.35}}
 
@@ -912,6 +913,7 @@ function runSeaView(cv,opts){
   return view;
 }
 
+function showPlays(){if(!/georgekling\.com$/.test(location.hostname))return;fetch('https://georgekling.goatcounter.com/counter/'+encodeURIComponent('/games/monster-island/play')+'.json').then(r=>r.ok?r.json():null).then(d=>{const el=document.getElementById('plays');if(!d||!d.count||!el)return;el.textContent=`Played ${d.count} times by players around the world!`;el.hidden=false}).catch(()=>{})}
 const PCOL=['#ff5a3d','#2fa8e0','#4cbf5a','#e9b81e','#8a5ce6','#ff7aa8'];
 const nameOk=n=>n.replace(/[^A-Za-z0-9 ]/g,'').trim().slice(0,12);
 function statsOf(sv){if(!sv)return null;registerAll(sv);const lv=Math.max(0,...(sv.team||[]).map(m=>m.lvl));return {caught:Object.keys(sv.caught||{}).length,top:lv,champs:(sv.beaten||[]).length,pieces:Object.keys(sv.pieces||{}).length,lead:(sv.team&&sv.team[0])?sv.team[0].sp:null}}
@@ -928,12 +930,14 @@ function title(){
   app.innerHTML=`<div class="title">
     <div class="by">A game by George</div>
     <h1 class="logo">Monster<br>Island</h1>
+    <div class="plays" id="plays" hidden></div>
     <div class="box np"><canvas class="scene" id="sea" data-aspect=".68"></canvas></div>
     <h2>Who's playing?</h2>
     <div class="pgrid" id="pgrid">${ps.map(card).join('')}<div class="box pcard newp"><button class="pick" id="newp"><div class="art"><div class="initial">+</div></div><div class="disp" style="font-size:20px">New player</div><div class="muted small">Start your own adventure</div></button></div></div>
     <div id="pform" style="width:100%"></div>
     ${board}
     <div class="row center">${ps.length?'':''}<button class="btn ghost sm" id="loadcode">Load a save code</button>${muteBtn()}</div></div>`;
+  showPlays();
   runSeaView(document.getElementById('sea'),{drift:true});
   app.querySelectorAll('.pick[data-id]').forEach(b=>b.onclick=()=>{SFX.select();PROFILE=ps.find(p=>p.id===b.dataset.id);S=load();if(S)map();else starter()});
   const form=(html)=>{const f=document.getElementById('pform');f.innerHTML=`<div class="box">${html}</div>`;f.scrollIntoView({behavior:'smooth',block:'center'});const inp=f.querySelector('input,textarea');if(inp)setTimeout(()=>inp.focus({preventScroll:true}),250);return f};
@@ -974,7 +978,7 @@ function starter(){
   app.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{SFX.catch();const s=b.dataset.s;S={starter:s,team:[mk(s,5)],unlocked:1,beaten:[],caught:{[s]:1},coins:0,supers:1,pos:{}};save();map()});
   focusFirst('.starters');
 }
-function trackPlay(){if(trackPlay.done)return;trackPlay.done=1;try{const go=()=>window.goatcounter&&window.goatcounter.count&&window.goatcounter.count({path:'monster-island-play',title:'Monster Island: someone started playing',event:true});if(window.goatcounter&&window.goatcounter.count)go();else setTimeout(go,3000)}catch(e){}}
+function trackPlay(){if(trackPlay.done)return;trackPlay.done=1;try{const go=()=>window.goatcounter&&window.goatcounter.count&&window.goatcounter.count({path:'/games/monster-island/play',title:'Monster Island: someone started playing'});if(window.goatcounter&&window.goatcounter.count)go();else setTimeout(go,3000)}catch(e){}}
 function map(){
   SCREEN='map';trackPlay();WORLD=null;scrollTo(0,0);playSong('island');
   app.innerHTML=`<div class="box hud"><span class="name">${PROFILE?PROFILE.name+"'s islands":"The Islands"}</span><div class="stats"><span class="pill"><i style="background:#ffc83d"></i>${S.coins} coins</span><span class="pill"><i style="background:#3fd6ff"></i>${S.supers} super nets</span>${journalBtn()}<button class="btn ghost sm" id="labb">Monster Lab</button><button class="btn ghost sm" id="team">Team</button><button class="btn ghost sm" id="scode">Save code</button><button class="btn ghost sm" id="home">Switch player</button>${muteBtn()}</div></div>
