@@ -913,7 +913,7 @@ function runSeaView(cv,opts){
   return view;
 }
 
-function showPlays(){if(!/georgekling\.com$/.test(location.hostname))return;fetch('https://georgekling.goatcounter.com/counter/'+encodeURIComponent('/games/monster-island/play')+'.json').then(r=>r.ok?r.json():null).then(d=>{const el=document.getElementById('plays');if(!d||!d.count||!el)return;el.textContent=`Played ${d.count} times by players around the world!`;el.hidden=false}).catch(()=>{})}
+function showPlays(){if(!/georgekling\.com$/.test(location.hostname))return;fetch('https://georgekling.goatcounter.com/counter/'+encodeURIComponent('/games/monster-island/play')+'.json').then(r=>r.ok?r.json():null).then(d=>{const el=document.getElementById('plays');if(!d||!d.count||!el)return;el.textContent=d.count==1?'Played once so far. Players around the world, join in!':`Played ${d.count} times by players around the world!`;el.hidden=false}).catch(()=>{})}
 const PCOL=['#ff5a3d','#2fa8e0','#4cbf5a','#e9b81e','#8a5ce6','#ff7aa8'];
 const nameOk=n=>n.replace(/[^A-Za-z0-9 ]/g,'').trim().slice(0,12);
 function statsOf(sv){if(!sv)return null;registerAll(sv);const lv=Math.max(0,...(sv.team||[]).map(m=>m.lvl));return {caught:Object.keys(sv.caught||{}).length,top:lv,champs:(sv.beaten||[]).length,pieces:Object.keys(sv.pieces||{}).length,lead:(sv.team&&sv.team[0])?sv.team[0].sp:null}}

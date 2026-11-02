@@ -192,7 +192,7 @@
     </div>
   </footer>
 <script>
-fetch('https://georgekling.goatcounter.com/counter/'+encodeURIComponent('/games/monster-island/play')+'.json').then(r=>r.ok?r.json():null).then(d=>{const el=document.getElementById('mi-plays');if(!d||!d.count||!el)return;el.textContent='Played '+d.count+' times';el.hidden=false}).catch(()=>{});
+fetch('https://georgekling.goatcounter.com/counter/'+encodeURIComponent('/games/monster-island/play')+'.json').then(r=>r.ok?r.json():null).then(d=>{const el=document.getElementById('mi-plays');if(!d||!d.count||!el)return;el.textContent=d.count==1?'Played once':'Played '+d.count+' times';el.hidden=false}).catch(()=>{});
 </script>
 </body>
 </html>
