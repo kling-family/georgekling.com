@@ -1045,7 +1045,7 @@ function island(i,fromMap){
   const legendGot=s.secret&&S.caught[s.legend];
   app.innerHTML=`<div class="box hud"><span class="name">${s.name}</span><div class="stats"><span class="pill" id="tm"></span><span class="pill" id="hc"></span><span class="pill" id="hn"></span>
     <span class="zoom"><button id="zo" aria-label="Zoom out">&#8722;</button><span id="zl">Close</span><button id="zi" aria-label="Zoom in">+</button></span>
-    ${S.buddy?`<button class="btn ghost sm" id="askb">Ask ${S.buddy.name}</button>`:''}${journalBtn()}<button class="btn ghost sm" id="team">Team</button><button class="btn ghost sm" id="mapb">Map</button></div></div>
+    ${muteBtn()}${S.buddy?`<button class="btn ghost sm" id="askb">Ask ${S.buddy.name}</button>`:''}${journalBtn()}<button class="btn ghost sm" id="team">Team</button><button class="btn ghost sm" id="mapb">Map</button></div></div>
   <div class="worldwrap box np"><canvas class="scene" id="cv" data-aspect=".62"></canvas><div class="prompt box" id="prompt" hidden></div><div class="tip3d" id="tip3d" hidden>&#9650; walk forward &nbsp; &#9664; &#9654; turn &nbsp; &#9660; turn around</div></div>
   <div class="controls"><div class="box help">
     <b>Arrow keys</b> or <b>WASD</b> to walk. <b>+</b> and <b>&#8722;</b> zoom out to see the whole island and the sea.
