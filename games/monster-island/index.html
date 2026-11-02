@@ -587,6 +587,9 @@ function genMap(i){
   return MAPS[i]={g,start,champ,tent,grass,dist,chests,objs,trainers,gates,towns,houses,zoneOf,springs,secretStone,secret};
 }
 // who each trainer is: leaders come from the island list, the others get made up from the island's monsters
+// trainers grow with you: if your best monster gets ahead of a trainer's team, their whole team levels up to match
+function scaled(team,bonus){const top=Math.max(1,...S.team.map(m=>m.lvl)),mx=Math.max(...team.map(t=>t[1])),up=Math.max(0,top+bonus-mx);return team.map(([sp,l])=>[sp,Math.min(60,l+up)])}
+const trBonus=info=>info.rival?1:info.leader?1:0;
 function trainerInfo(i,k){
   const s=ISLES[i],m=genMap(i),t=m.trainers.find(q=>q.k===k);
   if(t.leader)return {...s.tr[k],leader:true,town:m.towns[k].name};
@@ -1110,7 +1113,7 @@ function island(i,fromMap){
     <div class="dpad" aria-label="Move"><button class="u" data-d="up" aria-label="Up">&#9650;</button><button class="l" data-d="left" aria-label="Left">&#9664;</button><button class="r" data-d="right" aria-label="Right">&#9654;</button><button class="d" data-d="down" aria-label="Down">&#9660;</button></div></div>
   ${s.secret?'':boardHTML()}
   <div class="box"><h3>Monsters on ${s.name}</h3><div class="wild">${list.map(sp=>{const got=S.caught[sp],isR=sp===s.rare;return `<div class="${got?'':'unknown'}"><div class="art">${spr(sp)}</div>${got?SP[sp].name:'???'}${s.secret?(sp===s.legend?'<div class="muted" style="font-size:12px">Legendary!</div>':''):NIGHT[i].includes(sp)?'<div class="muted" style="font-size:12px">Only at night</div>':isR?`<div class="muted" style="font-size:12px">${done?'Rare. It runs away!':'Appears after the champion'}</div>`:''}</div>`}).join('')}</div>
-    <p class="muted small" style="margin-top:10px">${s.secret?`Monsters here are level ${s.lv[0]} to ${s.lv[1]}. ${SP[s.legend].name} is level ${s.llv}. Bring your strongest team and a Super Net!`:`Wild monsters here are level ${s.lv[0]} to ${s.lv[1]}. ${s.champ.name} has ${s.champ.team.length} monsters, up to level ${Math.max(...s.champ.team.map(t=>t[1]))}. Secret: ${S.secrets[i]?'<b>found!</b> '+SECRETS[i].name:'not found yet'}. Trainers beaten: ${m.trainers.filter(t=>(S.tb[i]||[]).includes(t.k)).length} of ${m.trainers.length}${m.trainers.some(t=>t.rival&&!(S.tb[i]||[]).includes(t.k))?' (Rival Rex is waiting just past the first gate!)':''}.`}</p></div>`;
+    <p class="muted small" style="margin-top:10px">${s.secret?`Monsters here are level ${s.lv[0]} to ${s.lv[1]}. ${SP[s.legend].name} is level ${s.llv}. Bring your strongest team and a Super Net!`:`Wild monsters here are level ${s.lv[0]} to ${s.lv[1]}. ${s.champ.name} has ${s.champ.team.length} monsters, up to level ${Math.max(...scaled(s.champ.team,2).map(t=>t[1]))}. Secret: ${S.secrets[i]?'<b>found!</b> '+SECRETS[i].name:'not found yet'}. Trainers beaten: ${m.trainers.filter(t=>(S.tb[i]||[]).includes(t.k)).length} of ${m.trainers.length}${m.trainers.some(t=>t.rival&&!(S.tb[i]||[]).includes(t.k))?' (Rival Rex is waiting just past the first gate!)':''}.`}</p></div>`;
   document.getElementById('team').onclick=()=>{WORLD=null;team(()=>island(i))};bindJournal(()=>island(i));
   const ab=document.getElementById('askb');if(ab)ab.onclick=()=>{if(WORLD)WORLD.lastBuddy=performance.now();buddySay(buddyHint(i),true)};
   document.getElementById('mapb').onclick=()=>{SFX.select();if(s.deep)return map();if(s.secret){S.pos[s.parent]=secretReturn(s.parent);island(s.parent,'portal')}else map()};
@@ -1206,7 +1209,7 @@ function trainerTalk(tr){
   const line=info.rival?`Hey, it's me, Rex! I've been training super hard. Bet my monsters are stronger than yours now!`:info.leader?`I'm the leader of ${info.town}. Nobody gets through my gate without beating me!`:TLINES[tr.k%3];
   pr.innerHTML=`<div class="who">${info.name}${info.leader?` <span class="chip" style="background:var(--hot)">Leader of ${info.town}</span>`:''}</div><div>${tired?'Your monsters look tired. Go rest, then come back!':line}</div><div class="row">${tired?'<button class="btn sm" id="pn">OK</button>':'<button class="btn hot sm" id="py">Battle!</button>'}</div>`;
   const n=document.getElementById('pn');if(n)n.onclick=()=>{pr.hidden=true;tr.alert=false;Wd.inv=performance.now()+3000;Wd.paused=false};
-  const y=document.getElementById('py');if(y)y.onclick=()=>{pr.hidden=true;battle({wild:false,isle:Wd.i,trainer:{k:tr.k,name:info.name,leader:info.leader},enemies:info.team.map(([sp,l])=>mk(sp,l))})};
+  const y=document.getElementById('py');if(y)y.onclick=()=>{pr.hidden=true;battle({wild:false,isle:Wd.i,trainer:{k:tr.k,name:info.name,leader:info.leader},enemies:scaled(info.team,trBonus(info)).map(([sp,l])=>mk(sp,l))})};
   focusFirst('#prompt');
 }
 function spawn(rare,minD){
@@ -1326,7 +1329,7 @@ function openChamp(){
     :`<div class="who">${s.champ.name}</div><div>${S.beaten.includes(Wd.i)?'Back for a rematch?':'So you want to battle for '+s.name+'?'}</div><div class="row"><button class="btn hot sm" id="py">Battle!</button><button class="btn ghost sm" id="pn">Not yet</button></div>`;
   const close=()=>{pr.hidden=true;Wd.paused=false};
   document.getElementById('pn').onclick=close;
-  const y=document.getElementById('py');if(y)y.onclick=()=>{pr.hidden=true;battle({wild:false,isle:Wd.i,enemies:s.champ.team.map(([sp,l])=>mk(sp,l))})};
+  const y=document.getElementById('py');if(y)y.onclick=()=>{pr.hidden=true;battle({wild:false,isle:Wd.i,enemies:(s.secret?s.champ.team:scaled(s.champ.team,2)).map(([sp,l])=>mk(sp,l))})};
   focusFirst('#prompt');
 }
 function drawOver(t){
@@ -1785,8 +1788,8 @@ function buddyHint(i){
   if(secrets.length&&Math.random()<.4)return pick(secrets);
   const z=m.zoneOf(WORLD?WORLD.p.x:m.start.x,WORLD?WORLD.p.y:m.start.y);
   if(!S.beaten.includes(i)){
-    if(z<3&&!gateOpen(i,z)){const L=s.tr[z],mx=Math.max(...L.team.map(t=>t[1]));return `${L.name} guards the gate in ${m.towns[z].name}. Beat them to open the way forward!${top<mx-1?` Their monsters are up to level ${mx}, so train in the tall grass first.`:''}`}
-    const mx=Math.max(...s.champ.team.map(t=>t[1]));return `${s.champ.name} waits at the far end of the island. ${EL[counterOf(s.el)].n} moves are super strong against ${EL[s.el].n} monsters.${top<mx-1?` Their best is level ${mx}, so level up a bit first!`:''}`}
+    if(z<3&&!gateOpen(i,z)){const L=s.tr[z],mx=Math.max(...scaled(L.team,1).map(t=>t[1]));return `${L.name} guards the gate in ${m.towns[z].name}. Beat them to open the way forward!${top<mx-1?` Their monsters are up to level ${mx}, so train in the tall grass first.`:''}`}
+    const mx=Math.max(...scaled(s.champ.team,2).map(t=>t[1]));return `${s.champ.name} waits at the far end of the island. ${EL[counterOf(s.el)].n} moves are super strong against ${EL[s.el].n} monsters.${top<mx-1?` Their best is level ${mx}, so level up a bit first!`:''}`}
   return secrets.length?pick(secrets):'You did it here! Use the Map button to sail somewhere new.';
 }
 // little moving pictures for the buddy's rules
