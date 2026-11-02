@@ -412,6 +412,8 @@ function migrateProfiles(){let p=profiles();if(!p.length){let legacy=null;try{le
 function readSave(id){try{const r=localStorage.getItem(keyFor(id));return r?JSON.parse(r):null}catch(e){return null}}
 let S=null;
 function load(){if(!PROFILE)return null;try{const r=localStorage.getItem(keyFor(PROFILE.id));if(!r)return null;const s=JSON.parse(r);registerAll(s);s.coins=s.coins||0;s.supers=s.supers??1;s.pos=s.pos||{};return s}catch(e){return null}}
+// save the moment the page is hidden or closed, too
+['pagehide','visibilitychange'].forEach(ev=>addEventListener(ev,()=>{try{save()}catch(e){}}));
 function save(){if(!PROFILE||!S)return;try{localStorage.setItem(keyFor(PROFILE.id),JSON.stringify(S))}catch(e){}}
 
 // ================= SOUND =================
@@ -1273,7 +1275,7 @@ function openChest(c){
 }
 function arrive(){
   const Wd=WORLD,p=Wd.p,m=Wd.m;
-  S.pos[Wd.i]={x:p.x,y:p.y};
+  S.pos[Wd.i]={x:p.x,y:p.y};if(!arrive.t||performance.now()-arrive.t>3000){arrive.t=performance.now();save()}
   if(m.secret){if(p.x===m.start.x&&p.y===m.start.y){if(Wd.leftStart){save();return leaveSecret()}}else Wd.leftStart=true}
   if(p.x===m.tent.x&&p.y===m.tent.y){if(S.team.some(x=>x.hp<maxHp(x))){S.team.forEach(x=>x.hp=maxHp(x));SFX.heal()}openCamp()}
   if(springAt(p.x,p.y)&&S.team.some(x=>x.hp<maxHp(x))){S.team.forEach(x=>x.hp=maxHp(x));SFX.heal();Wd.sparkle=performance.now();toast('You splash in the healing spring. Your team is all better!')}
