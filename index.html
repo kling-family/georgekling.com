@@ -166,6 +166,11 @@
   }
   video.screen { display: block; width: 100%; height: auto; padding: 0; background: var(--ink); object-fit: contain; }
   .screen strong { display: block; color: var(--orange); font-family: "Special Elite", "Courier New", monospace; font-weight: 400; font-size: 1.3rem; margin-bottom: 4px; }
+  a.screen.play { position: relative; display: block; padding: 0; overflow: hidden; text-decoration: none; }
+  a.screen.play img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center top; transition: transform .3s ease; }
+  a.screen.play span { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); background: var(--orange); color: var(--ink); font-family: "Special Elite", "Courier New", monospace; font-size: 1.05rem; padding: 8px 16px; border-radius: 999px; white-space: nowrap; box-shadow: 0 6px 14px -6px rgba(0,0,0,.6); }
+  a.screen.play:hover img, a.screen.play:focus-visible img { transform: scale(1.04); }
+  a.screen.play:focus-visible { outline: 3px solid var(--orange); outline-offset: 3px; }
 
   /* Lego: a baseplate with studs */
   .plate { position: relative; padding-top: 14px; }
@@ -349,8 +354,8 @@
           <figcaption>The Super Mario Game Movie <span>made in ScratchJr</span></figcaption>
         </figure>
         <figure>
-          <div class="screen"><div><strong>Press start</strong>His own game plays here</div></div>
-          <figcaption>Game name <span>and how to play</span></figcaption>
+          <a class="screen play" href="games/monster-island/"><img src="games/monster-island.jpg" alt="Monster Island title screen with five islands in a blue sea" width="1145" height="1061" loading="lazy"><span>&#9654; Play Monster Island</span></a>
+          <figcaption>Monster Island <span>catch monsters, battle trainers, explore five islands</span></figcaption>
         </figure>
       </div>
     </section>
