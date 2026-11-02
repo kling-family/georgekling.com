@@ -261,6 +261,8 @@ table.lb td.top{color:var(--gold);font-weight:800}
 .prow .pl b{font-family:var(--display);color:var(--text);font-size:15px;font-variant-numeric:tabular-nums}.prow .pl small{color:var(--dim);font-size:12px}
 .pbar{height:5px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden;margin-top:4px}.pbar i{display:block;height:100%;border-radius:99px;opacity:.85}
 .pnote{font-size:11px;color:var(--dim);margin:6px 0 0;line-height:1.4}
+.card .tbtns{display:flex;flex-direction:column;gap:6px;align-items:flex-end}
+.card.picked{outline:2px solid var(--gold);border-radius:14px}
 .labsub{font-family:var(--display);font-weight:600;font-size:15px;color:#5a6474;margin-top:4px}
 .labdots{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
 .labopts .labdots{justify-content:flex-start}
@@ -411,9 +413,13 @@ function saveProfiles(p){try{localStorage.setItem(PKEY,JSON.stringify(p))}catch(
 function migrateProfiles(){let p=profiles();if(!p.length){let legacy=null;try{legacy=localStorage.getItem('monster-island-save-v1')}catch(e){}if(legacy){p=[{id:'p1',name:'Player 1',color:0}];saveProfiles(p)}}return p}
 function readSave(id){try{const r=localStorage.getItem(keyFor(id));return r?JSON.parse(r):null}catch(e){return null}}
 let S=null;
-function load(){if(!PROFILE)return null;try{const r=localStorage.getItem(keyFor(PROFILE.id));if(!r)return null;const s=JSON.parse(r);registerAll(s);s.coins=s.coins||0;s.supers=s.supers??1;s.pos=s.pos||{};return s}catch(e){return null}}
+function load(){if(!PROFILE)return null;try{const r=localStorage.getItem(keyFor(PROFILE.id));if(!r)return null;const s=JSON.parse(r);registerAll(s);s.coins=s.coins||0;s.supers=s.supers??1;s.pos=s.pos||{};return fixTeam(s)}catch(e){return null}}
 // save the moment the page is hidden or closed, too
 ['pagehide','visibilitychange'].forEach(ev=>addEventListener(ev,()=>{try{save()}catch(e){}}));
+// battle team holds 6; extra monsters rest at Monster Camp and can be swapped in any time
+const TEAM_MAX=6;
+function fixTeam(sv){if(!sv||!sv.team)return sv;sv.box=sv.box||[];if(sv.team.length>TEAM_MAX){const extra=sv.team.splice(TEAM_MAX);extra.forEach(m=>m.hp=maxHp(m));sv.box.push(...extra)}return sv}
+function addMon(m){if(S.team.length<TEAM_MAX){S.team.push(m);return ''}m.hp=maxHp(m);S.box=S.box||[];S.box.push(m);return `Your team is full, so ${nm(m)} went to Monster Camp. Swap it in from the Team screen!`}
 function save(){if(!PROFILE||!S)return;try{localStorage.setItem(keyFor(PROFILE.id),JSON.stringify(S))}catch(e){}}
 
 // ================= SOUND =================
@@ -592,6 +598,8 @@ function genMap(i){
 const evolved=(sp,l)=>{let n=0;while(EVO[sp]&&l>=EVO[sp][1]&&SP[EVO[sp][0]]&&n++<3)sp=EVO[sp][0];return sp};
 function scaled(team,bonus){const top=Math.max(1,...S.team.map(m=>m.lvl)),mx=Math.max(...team.map(t=>t[1])),up=Math.max(0,top+bonus-mx);return team.map(([sp,l])=>{const L=Math.min(60,l+up);return [evolved(sp,L),L]})}
 const trBonus=info=>info.rival?1:info.leader?1:0;
+function champTeam(i){const s=ISLES[i];if(s.secret)return s.champ.team;const t=[...s.champ.team],lo=Math.min(...t.map(x=>x[1])),pool=[...s.wild,...(NIGHT[i]||[])].filter(sp=>!t.some(x=>x[0]===sp));
+  for(let k=0;t.length<6&&k<pool.length;k++)t.push([pool[k],lo]);return scaled(t,2)}
 function trainerInfo(i,k){
   const s=ISLES[i],m=genMap(i),t=m.trainers.find(q=>q.k===k);
   if(t.leader)return {...s.tr[k],leader:true,town:m.towns[k].name};
@@ -1032,7 +1040,7 @@ function title(){
 // ---- save codes: a copyable backup of one player's whole game ----
 function encodeSave(){return 'MI1:'+btoa(unescape(encodeURIComponent(JSON.stringify({name:PROFILE?PROFILE.name:'Player',color:PROFILE?PROFILE.color:0,save:S}))))}
 function decodeSave(code){try{code=code.trim().replace(/\s+/g,'');if(!code.startsWith('MI1:'))return null;const d=JSON.parse(decodeURIComponent(escape(atob(code.slice(4)))));if(!d.save||!Array.isArray(d.save.team)||!d.save.team.length)return null;
-  const s2=d.save;s2.coins=s2.coins||0;s2.supers=s2.supers??1;s2.pos=s2.pos||{};return d}catch(e){return null}}
+  const s2=d.save;s2.coins=s2.coins||0;s2.supers=s2.supers??1;s2.pos=s2.pos||{};fixTeam(s2);return d}catch(e){return null}}
 function showSaveCode(){
   const code=encodeSave(),wrap=document.createElement('div');wrap.className='shop';document.body.appendChild(wrap);const close=()=>wrap.remove();
   wrap.innerHTML=`<div class="box"><h2>Your save code</h2><p class="muted small">This code is a backup of ${PROFILE?PROFILE.name+"'s":'your'} whole game. Copy it and keep it somewhere safe, like a note. To get your game back, or play on another device, choose <b>Load a save code</b> on the title screen and paste it in.</p>
@@ -1115,7 +1123,7 @@ function island(i,fromMap){
     <div class="dpad" aria-label="Move"><button class="u" data-d="up" aria-label="Up">&#9650;</button><button class="l" data-d="left" aria-label="Left">&#9664;</button><button class="r" data-d="right" aria-label="Right">&#9654;</button><button class="d" data-d="down" aria-label="Down">&#9660;</button></div></div>
   ${s.secret?'':boardHTML()}
   <div class="box"><h3>Monsters on ${s.name}</h3><div class="wild">${list.map(sp=>{const got=S.caught[sp],isR=sp===s.rare;return `<div class="${got?'':'unknown'}"><div class="art">${spr(sp)}</div>${got?SP[sp].name:'???'}${s.secret?(sp===s.legend?'<div class="muted" style="font-size:12px">Legendary!</div>':''):NIGHT[i].includes(sp)?'<div class="muted" style="font-size:12px">Only at night</div>':isR?`<div class="muted" style="font-size:12px">${done?'Rare. It runs away!':'Appears after the champion'}</div>`:''}</div>`}).join('')}</div>
-    <p class="muted small" style="margin-top:10px">${s.secret?`Monsters here are level ${s.lv[0]} to ${s.lv[1]}. ${SP[s.legend].name} is level ${s.llv}. Bring your strongest team and a Super Net!`:`Wild monsters here are level ${s.lv[0]} to ${s.lv[1]}. ${s.champ.name} has ${s.champ.team.length} monsters, up to level ${Math.max(...scaled(s.champ.team,2).map(t=>t[1]))}. Secret: ${S.secrets[i]?'<b>found!</b> '+SECRETS[i].name:'not found yet'}. Trainers beaten: ${m.trainers.filter(t=>(S.tb[i]||[]).includes(t.k)).length} of ${m.trainers.length}${m.trainers.some(t=>t.rival&&!(S.tb[i]||[]).includes(t.k))?' (Rival Rex is waiting just past the first gate!)':''}.`}</p></div>`;
+    <p class="muted small" style="margin-top:10px">${s.secret?`Monsters here are level ${s.lv[0]} to ${s.lv[1]}. ${SP[s.legend].name} is level ${s.llv}. Bring your strongest team and a Super Net!`:`Wild monsters here are level ${s.lv[0]} to ${s.lv[1]}. ${s.champ.name} has ${champTeam(i).length} monsters, up to level ${Math.max(...champTeam(i).map(t=>t[1]))}. Secret: ${S.secrets[i]?'<b>found!</b> '+SECRETS[i].name:'not found yet'}. Trainers beaten: ${m.trainers.filter(t=>(S.tb[i]||[]).includes(t.k)).length} of ${m.trainers.length}${m.trainers.some(t=>t.rival&&!(S.tb[i]||[]).includes(t.k))?' (Rival Rex is waiting just past the first gate!)':''}.`}</p></div>`;
   document.getElementById('team').onclick=()=>{WORLD=null;team(()=>island(i))};bindJournal(()=>island(i));
   const ab=document.getElementById('askb');if(ab)ab.onclick=()=>{if(WORLD)WORLD.lastBuddy=performance.now();buddySay(buddyHint(i),true)};
   document.getElementById('mapb').onclick=()=>{SFX.select();if(s.deep)return map();if(s.secret){S.pos[s.parent]=secretReturn(s.parent);island(s.parent,'portal')}else map()};
@@ -1267,7 +1275,7 @@ function tryMove(dir,t){
   const c=chestAt(nx,ny);if(c){Wd.held=null;return openChest(c)}
   const tr=trainerAt(nx,ny);if(tr){Wd.held=null;if(!trBeaten(tr.k)){tr.alert=true;SFX.alert();tr.dir=dx>0?'left':dx<0?'right':dy>0?'up':'down'}return trainerTalk(tr)}
   const gt=gateAt(nx,ny);if(gt&&!gateOpen(Wd.i,gt.k)&&m.zoneOf(p.x,p.y)<=gt.k){Wd.held=null;const ld=trainerInfo(Wd.i,gt.k);SFX.bump();return toast(`The gate to ${gt.k<2?m.towns[gt.k+1].name:ISLES[Wd.i].champ.name+"'s arena"} is locked. Beat ${ld.name}, the leader of ${m.towns[gt.k].name}, to open it.`)}
-  const hs=houseAt(nx,ny);if(hs){Wd.held=null;if(hs.rest){if(S.team.some(x=>x.hp<maxHp(x))){S.team.forEach(x=>x.hp=maxHp(x));SFX.heal();save();return toast(`The Rest House in ${m.towns[hs.k].name} heals your team!`)}return toast('Rest House: your team is already feeling great!')}if(hs.shop)return openShop(hs);if(!hs.rest)return enterHouse(hs);return toast(`Someone in ${m.towns[hs.k].name} says: "${HINTS[(hs.h+hs.k)%HINTS.length].replace('{hid}',SECRETS[Wd.i]?SECRETS[Wd.i].hid:'rocks')}"`)}
+  const hs=houseAt(nx,ny);if(hs){Wd.held=null;if(hs.rest){if(S.team.some(x=>x.hp<maxHp(x))){[...S.team,...(S.box||[])].forEach(x=>x.hp=maxHp(x));SFX.heal();save();return toast(`The Rest House in ${m.towns[hs.k].name} heals your team!`)}return toast('Rest House: your team is already feeling great!')}if(hs.shop)return openShop(hs);if(!hs.rest)return enterHouse(hs);return toast(`Someone in ${m.towns[hs.k].name} says: "${HINTS[(hs.h+hs.k)%HINTS.length].replace('{hid}',SECRETS[Wd.i]?SECRETS[Wd.i].hid:'rocks')}"`)}
   if(nx<0||ny<0||nx>=W||ny>=H||!walk(m.g[ny][nx])){if(t-Wd.lastBump>350){Wd.lastBump=t;SFX.bump()}return}
   p.mv={ax:p.x,ay:p.y,tx:nx,ty:ny,t0:t};
 }
@@ -1282,8 +1290,8 @@ function arrive(){
   const Wd=WORLD,p=Wd.p,m=Wd.m;
   S.pos[Wd.i]={x:p.x,y:p.y};if(!arrive.t||performance.now()-arrive.t>3000){arrive.t=performance.now();save()}
   if(m.secret){if(p.x===m.start.x&&p.y===m.start.y){if(Wd.leftStart){save();return leaveSecret()}}else Wd.leftStart=true}
-  if(p.x===m.tent.x&&p.y===m.tent.y){if(S.team.some(x=>x.hp<maxHp(x))){S.team.forEach(x=>x.hp=maxHp(x));SFX.heal()}openCamp()}
-  if(springAt(p.x,p.y)&&S.team.some(x=>x.hp<maxHp(x))){S.team.forEach(x=>x.hp=maxHp(x));SFX.heal();Wd.sparkle=performance.now();toast('You splash in the healing spring. Your team is all better!')}
+  if(p.x===m.tent.x&&p.y===m.tent.y){if(S.team.some(x=>x.hp<maxHp(x))){[...S.team,...(S.box||[])].forEach(x=>x.hp=maxHp(x));SFX.heal()}openCamp()}
+  if(springAt(p.x,p.y)&&S.team.some(x=>x.hp<maxHp(x))){[...S.team,...(S.box||[])].forEach(x=>x.hp=maxHp(x));SFX.heal();Wd.sparkle=performance.now();toast('You splash in the healing spring. Your team is all better!')}
   const tw=m.towns.find(q=>Math.abs(q.x-p.x)+Math.abs(q.y-p.y)<=4);
   if(tw&&Wd.lastTown!==tw.k){Wd.lastTown=tw.k;toast(`Welcome to ${tw.name}!`)}else if(!tw&&Wd.lastTown!=null&&!m.towns.some(q=>Math.abs(q.x-p.x)+Math.abs(q.y-p.y)<=7))Wd.lastTown=null;
   save();
@@ -1333,7 +1341,7 @@ function openChamp(){
     :`<div class="who">${s.champ.name}</div><div>${S.beaten.includes(Wd.i)?'Back for a rematch?':'So you want to battle for '+s.name+'?'}</div><div class="row"><button class="btn hot sm" id="py">Battle!</button><button class="btn ghost sm" id="pn">Not yet</button></div>`;
   const close=()=>{pr.hidden=true;Wd.paused=false};
   document.getElementById('pn').onclick=close;
-  const y=document.getElementById('py');if(y)y.onclick=()=>{pr.hidden=true;battle({wild:false,isle:Wd.i,enemies:(s.secret?s.champ.team:scaled(s.champ.team,2)).map(([sp,l])=>mk(sp,l))})};
+  const y=document.getElementById('py');if(y)y.onclick=()=>{pr.hidden=true;battle({wild:false,isle:Wd.i,enemies:champTeam(Wd.i).map(([sp,l])=>mk(sp,l))})};
   focusFirst('#prompt');
 }
 function drawOver(t){
@@ -1562,7 +1570,7 @@ function giveTreasure(t){
   const lead=S.team[0];
   if(t===0){const old=maxHp(lead);lead.lvl++;lead.hp+=maxHp(lead)-old;movesOf(lead);for(const [lv,mvn] of learnset(lead.sp))if(lv===lead.lvl&&!lead.moves.includes(mvn)){if(lead.moves.length<4)lead.moves.push(mvn);else{const weak=lead.moves.reduce((a,b)=>MOVEDEX[b].pow<MOVEDEX[a].pow?b:a);if(MOVEDEX[mvn].pow>MOVEDEX[weak].pow)lead.moves[lead.moves.indexOf(weak)]=mvn}}
     const was=doEvolve(lead);return `${was?SP[was].name:nm(lead)} grew to level ${lead.lvl}!${was?` And then... it evolved into ${nm(lead)}!`:''}`}
-  if(t===1){const s=ISLES[ROOM.i],pool=Math.random()<.2?[s.rare]:s.wild,sp=pool[Math.floor(Math.random()*pool.length)],m=mk(sp,Math.max(4,lead.lvl-2));S.team.push(m);const first=!S.caught[sp];S.caught[sp]=1;return `Out pops a baby ${SP[sp].name}! It joins your team.${first?' New in your monster book!':''}`}
+  if(t===1){const s=ISLES[ROOM.i],pool=Math.random()<.2?[s.rare]:s.wild,sp=pool[Math.floor(Math.random()*pool.length)],m=mk(sp,Math.max(4,lead.lvl-2));const full=addMon(m);const first=!S.caught[sp];S.caught[sp]=1;return `Out pops a baby ${SP[sp].name}! ${full||'It joins your team.'}${first?' New in your monster book!':''}`}
   if(t===2){S.coins+=40;return 'You now have '+S.coins+' coins.'}
   if(t===3){S.supers+=1;return 'You now have '+S.supers+' Super Nets.'}
   const els=ELS.filter(e=>e!==SP[lead.sp].el),mvn=ELMOVES[els[Math.floor(Math.random()*els.length)]][2];movesOf(lead);
@@ -1604,7 +1612,7 @@ function roomTick(t){
     if(nx===R.lay.chest[0]&&ny===R.lay.chest[1]){R.held=null;if(S.gifts[R.key])return roomSay('Treasure chest','It is empty. You already found the treasure here!');
       S.gifts[R.key]=1;SFX.chest();const tr=TREASURES[R.treasure];const msg=giveTreasure(R.treasure);save();hud();return roomSay('You found a special treasure!',`<b>${tr.name}!</b> ${tr.txt} ${msg}`,'Awesome!')}
     const f=roomFurnAt(nx,ny);
-    if(f){R.held=null;if(f[0]==='bed'){S.team.forEach(x=>x.hp=maxHp(x));SFX.heal();save();if(daylight()<.85){T0=performance.now();return roomSay('Good morning!','You climb into bed and sleep all night. Zzz... The sun is up, and your whole team is healed!')}return roomSay('Nap time','You take a quick nap. Zzz... Your whole team is healed! (Sleep here at night to wake up in the morning.)')}
+    if(f){R.held=null;if(f[0]==='bed'){[...S.team,...(S.box||[])].forEach(x=>x.hp=maxHp(x));SFX.heal();save();if(daylight()<.85){T0=performance.now();return roomSay('Good morning!','You climb into bed and sleep all night. Zzz... The sun is up, and your whole team is healed!')}return roomSay('Nap time','You take a quick nap. Zzz... Your whole team is healed! (Sleep here at night to wake up in the morning.)')}
       if(f[0]==='shelf')return roomSay('Bookshelf',BOOKS[(R.h.h+nx)%BOOKS.length]);if(f[0]==='fire')return roomSay('Fireplace','Toasty! The fire crackles.');
       if(f[0]==='stove')return roomSay('Stove','Something yummy is cooking. It smells like monster cookies.');if(f[0]==='table')return roomSay('Table','There is a plate of cookies. You leave them for the family.');return}
     if(nx<0||ny<0||nx>=RW||ny>=RH||(R.blocked[ny][nx]&&!(ny===RH-1&&nx===5))){SFX.bump();return}
@@ -1756,7 +1764,7 @@ function lab(onDone,editId,bud){
     document.getElementById('ls').onclick=()=>{const n=nameOk(d.name||'');if(!n){document.getElementById('lerr').textContent='Give your monster a name first!';SFX.bump();nameIn.focus();return}
       if(bud){d.name=n;SFX.catch();return onDone({...d})}
       d.name=n;const id=editId||('c'+Date.now());if(!S)S={starter:'flicklet',team:[],unlocked:1,beaten:[],caught:{},coins:0,supers:1,pos:{}};S.custom=S.custom||{};S.custom[id]={...d};registerCustom(id,d);
-      if(!editId){const lv=Math.max(5,...S.team.map(m=>m.lvl-2));S.team.push(mk(id,lv));S.caught[id]=1}
+      if(!editId){const lv=Math.max(5,...S.team.map(m=>m.lvl-2));const full=addMon(mk(id,lv));S.caught[id]=1;if(full)setTimeout(()=>toast(full),2600)}
       save();monImage(id).then(()=>{SFX.catch();onDone(id)})};
   };
   // keep the scroll spot steady while the page redraws
@@ -1793,7 +1801,7 @@ function buddyHint(i){
   const z=m.zoneOf(WORLD?WORLD.p.x:m.start.x,WORLD?WORLD.p.y:m.start.y);
   if(!S.beaten.includes(i)){
     if(z<3&&!gateOpen(i,z)){const L=s.tr[z],mx=Math.max(...scaled(L.team,1).map(t=>t[1]));return `${L.name} guards the gate in ${m.towns[z].name}. Beat them to open the way forward!${top<mx-1?` Their monsters are up to level ${mx}, so train in the tall grass first.`:''}`}
-    const mx=Math.max(...scaled(s.champ.team,2).map(t=>t[1]));return `${s.champ.name} waits at the far end of the island. ${EL[counterOf(s.el)].n} moves are super strong against ${EL[s.el].n} monsters.${top<mx-1?` Their best is level ${mx}, so level up a bit first!`:''}`}
+    const mx=Math.max(...champTeam(i).map(t=>t[1]));return `${s.champ.name} waits at the far end of the island. ${EL[counterOf(s.el)].n} moves are super strong against ${EL[s.el].n} monsters.${top<mx-1?` Their best is level ${mx}, so level up a bit first!`:''}`}
   return secrets.length?pick(secrets):'You did it here! Use the Map button to sail somewhere new.';
 }
 // little moving pictures for the buddy's rules
@@ -1879,23 +1887,35 @@ function openLab(back){
 }
 
 // ================= TEAM =================
-function team(back){hushBuddy();
-  SCREEN='team';scrollTo(0,0);
-  const all=BOOK();
-  app.innerHTML=`<div class="box hud"><span class="name">Your team</span><button class="btn ghost sm" id="back">Back</button></div>
-  <div class="box" style="display:flex;flex-direction:column;gap:8px">
-    <p class="muted small">Your leader starts every battle.</p>
-    ${S.team.map((m,k)=>{const mh=maxHp(m),r=m.hp/mh;return `<div class="card"><div class="art">${spr(m.sp)}</div><div class="info">
+function team(back,pick){hushBuddy();
+  SCREEN='team';const y0=scrollY;S.box=S.box||[];
+  const all=BOOK(),box=S.box;
+  const card=(m,k,where)=>{const mh=maxHp(m),r=m.hp/mh;return `<div class="card${pick!==undefined&&where==='box'&&pick===k?' picked':''}"><div class="art">${spr(m.sp)}</div><div class="info">
       <div class="row" style="justify-content:space-between;gap:6px"><span class="disp" style="font-size:18px">${nm(m)} ${chip(SP[m.sp].el)}</span><span class="disp">Lv ${m.lvl}</span></div>
       <div class="bar"><i style="width:${r*100}%;background:${hpColor(r)}"></i></div>
       <div class="muted" style="font-size:13px">HP ${m.hp}/${mh}. Moves: ${movesOf(m).map(x=>x.name).join(', ')}${EVO[m.sp]?`. Evolves at level ${EVO[m.sp][1]}!`:''}</div>
-      <div class="bar xp"><i style="width:${m.xp/xpNeed(m.lvl)*100}%"></i></div><div class="small" style="color:#ff8ab0">&#9829; ${joyWord(m.joy??50)}</div></div>
-      ${k?`<button class="btn ghost sm" data-k="${k}">Make leader</button>`:`<span class="chip" style="background:var(--hot)">Leader</span>`}</div>`}).join('')}
+      ${where==='team'?`<div class="bar xp"><i style="width:${m.xp/xpNeed(m.lvl)*100}%"></i></div><div class="small" style="color:#ff8ab0">&#9829; ${joyWord(m.joy??50)}</div>`:''}</div>
+      <div class="tbtns">${where==='team'?(pick!==undefined?`<button class="btn sm" data-swap="${k}">Swap out</button>`:`${k?`<button class="btn ghost sm" data-k="${k}">Make leader</button>`:`<span class="chip" style="background:var(--hot)">Leader</span>`}${S.team.length>1?`<button class="btn ghost sm" data-out="${k}">Send to camp</button>`:''}`)
+        :(pick===k?`<button class="btn ghost sm" data-cancel="1">Cancel</button>`:`<button class="btn ${S.team.length<TEAM_MAX?'':'ghost '}sm" data-in="${k}">${S.team.length<TEAM_MAX?'Add to team':'Swap in'}</button>`)}</div></div>`};
+  app.innerHTML=`<div class="box hud"><span class="name">Your team</span><button class="btn ghost sm" id="back">Back</button></div>
+  <div class="box" style="display:flex;flex-direction:column;gap:8px">
+    <div class="row" style="justify-content:space-between"><h3>Battle team <span class="muted">${S.team.length} of ${TEAM_MAX}</span></h3></div>
+    <p class="muted small">${pick!==undefined?`Pick who sits out so <b>${nm(box[pick])}</b> can join.`:'These monsters battle with you. Your leader goes first.'}</p>
+    ${S.team.map((m,k)=>card(m,k,'team')).join('')}
   </div>
+  <div class="box" style="display:flex;flex-direction:column;gap:8px"><h3>Monster Camp <span class="muted">${box.length}</span></h3>
+    <p class="muted small">${box.length?'Swap these monsters in any time. They heal whenever you rest at a tent, Rest House, spring or bed.':'When your team has 6 monsters, new ones you catch wait here.'}</p>
+    ${box.map((m,k)=>card(m,k,'box')).join('')}</div>
   <div class="box"><h3 style="margin-bottom:10px">Monster book ${caughtCount()} of ${all.length}</h3>
     <div class="dex">${all.map(sp=>`<div class="${S.caught[sp]?'':'unknown'}" title="${S.caught[sp]?SP[sp].name:'Not caught yet'}">${spr(sp)}</div>`).join('')}</div></div>`;
+  scrollTo(0,pick===undefined&&y0===0?0:y0);
   document.getElementById('back').onclick=back;
-  app.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{SFX.select();const k=+b.dataset.k;const [m]=S.team.splice(k,1);S.team.unshift(m);save();team(back)});
+  const re=p=>team(back,p);
+  app.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{SFX.select();const k=+b.dataset.k;const [m]=S.team.splice(k,1);S.team.unshift(m);save();re()});
+  app.querySelectorAll('[data-out]').forEach(b=>b.onclick=()=>{SFX.select();const [m]=S.team.splice(+b.dataset.out,1);box.push(m);save();toast(`${nm(m)} is resting at camp.`);re()});
+  app.querySelectorAll('[data-in]').forEach(b=>b.onclick=()=>{SFX.select();const k=+b.dataset.in;if(S.team.length<TEAM_MAX){const [m]=box.splice(k,1);S.team.push(m);save();toast(`${nm(m)} joined your team!`);return re()}re(k)});
+  app.querySelectorAll('[data-swap]').forEach(b=>b.onclick=()=>{SFX.catch();const t=+b.dataset.swap,[m]=box.splice(pick,1),[o]=S.team.splice(t,1,m);box.push(o);save();toast(`${nm(m)} is in, ${nm(o)} is resting at camp.`);re()});
+  app.querySelectorAll('[data-cancel]').forEach(b=>b.onclick=()=>re());
   focusFirst('.hud');
 }
 function victory(){
@@ -2061,8 +2081,8 @@ async function throwNet(sup){
   if(!ok){net.classList.add('burst');SFX.bump();setTimeout(()=>net.remove(),500)}
   if(ok){
     await anim('eart','caught',800);net.remove();SFX.catch();popText('eart','GOTCHA!','#4be38a',36);
-    e.hp=Math.max(1,e.hp);S.team.push(e);const first=!S.caught[e.sp];S.caught[e.sp]=1;save();
-    await say(`Gotcha! You caught ${nm(e)}!`,900);
+    e.hp=Math.max(1,e.hp);const full=addMon(e);const first=!S.caught[e.sp];S.caught[e.sp]=1;save();
+    await say(`Gotcha! You caught ${nm(e)}!`,900);if(full)await say(full,1400);
     if(first)await say(`${nm(e)} was added to your monster book.`,800);
     island(B.isle);return;
   }
