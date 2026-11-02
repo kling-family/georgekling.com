@@ -492,7 +492,10 @@ const maxHp=m=>Math.floor(SP[m.sp].b[0]*m.lvl/10)+m.lvl+14;
 const stat=(m,i)=>Math.floor(SP[m.sp].b[i]*m.lvl/20)+5;
 const xpNeed=l=>l*20;
 function mk(sp,lvl){const m={sp,lvl,xp:0,moves:defaultMoves(sp,lvl)};m.hp=maxHp(m);return m}
-function movesOf(m){if(!m.moves||!m.moves.length)m.moves=defaultMoves(m.sp,m.lvl);return m.moves.filter(n=>MOVEDEX[n]).map(n=>({name:n,...MOVEDEX[n]}))}
+// opposite elements can't learn each other's moves (Fire and Water, Leaf and Shadow, Stone and Storm)
+const OPP={fire:'water',water:'fire',leaf:'shadow',shadow:'leaf',stone:'storm',storm:'stone'};
+const canLearn=(sp,n)=>!MOVEDEX[n]||MOVEDEX[n].el!==OPP[SP[sp]&&SP[sp].el];
+function movesOf(m){if(m.moves&&m.moves.some(n=>!canLearn(m.sp,n)))m.moves=m.moves.filter(n=>canLearn(m.sp,n));if(!m.moves||!m.moves.length)m.moves=defaultMoves(m.sp,m.lvl);return m.moves.filter(n=>MOVEDEX[n]).map(n=>({name:n,...MOVEDEX[n]}))}
 function mult(a,d){if(a==='none')return 1;if(BEATS[a].includes(d))return 2;if(BEATS[d]&&BEATS[d].includes(a))return .5;return 1}
 function damage(a,d,mv){const base=(((2*a.lvl/5+2)*mv.pow*stat(a,1)/stat(d,2))/35+2)*(S&&S.team.includes(a)&&(a.joy??50)>=80?1.1:1);const same=mv.el===SP[a.sp].el?1.2:1;return Math.max(1,Math.round(base*same*mult(mv.el,SP[d.sp].el)*(.85+Math.random()*.15)))}
 const nm=m=>SP[m.sp].name;
@@ -1526,7 +1529,7 @@ function openShop(h){
   wrap.addEventListener('click',e=>{if(e.target===wrap)close()});
   const head=sub=>`<div class="row" style="justify-content:space-between"><h2>Move Shop <span class="muted" style="font-size:16px">in ${town}</span></h2><span class="pill"><i style="background:#ffc83d"></i>${S.coins} coins</span></div>${sub?`<p class="muted small">${sub}</p>`:''}`;
   const list=()=>{const stock=shopStock(Wd.i,h.k);
-    wrap.innerHTML=`<div class="box">${head('Teach your monsters new moves! Any monster can learn any move, even from another element.')}
+    wrap.innerHTML=`<div class="box">${head('Teach your monsters new moves, even from other elements! Just not opposites: Fire and Water, Leaf and Shadow, Stone and Storm.')}
       <div class="items"><button class="item" data-n="__net" ${S.coins<120?'disabled':''}>Super Net<small>Always catches a wild monster. Save it for a rare one!</small><span class="price">120 coins</span></button>
       ${stock.map(n=>{const mv=MOVEDEX[n],p=movePrice(n);return `<button class="item" data-n="${n}" ${S.coins<p?'disabled':''}>${n} <small>${chip(mv.el)} power ${mv.pow}${mv.first?', always goes first':''}${mv.acc?', can miss':''}</small><span class="price">${p} coins</span></button>`}).join('')}</div>
       <div class="row"><button class="btn ghost sm" id="sx">Leave the shop</button></div></div>`;
@@ -1535,7 +1538,7 @@ function openShop(h){
     focusFirst('.shop')};
   const pickMon=n=>{const p=movePrice(n);
     wrap.innerHTML=`<div class="box">${head(`Who should learn <b>${n}</b>? (${p} coins)`)}
-      <div class="items">${S.team.map((mo,k)=>{const knows=movesOf(mo).some(x=>x.name===n);return `<button class="item" data-k="${k}" ${knows?'disabled':''}><span class="mrow"><span class="art">${spr(mo.sp)}</span><span>${nm(mo)} <small>Lv ${mo.lvl}${knows?', already knows it':''}</small></span></span></button>`}).join('')}</div>
+      <div class="items">${S.team.map((mo,k)=>{const knows=movesOf(mo).some(x=>x.name===n),no=!canLearn(mo.sp,n);return `<button class="item" data-k="${k}" ${knows||no?'disabled':''}><span class="mrow"><span class="art">${spr(mo.sp)}</span><span>${nm(mo)} <small>Lv ${mo.lvl}${knows?', already knows it':no?`, ${EL[SP[mo.sp].el].n} monsters can't learn ${EL[MOVEDEX[n].el].n} moves`:''}</small></span></span></button>`}).join('')}</div>
       <div class="row"><button class="btn ghost sm" id="sb">Back</button></div></div>`;
     wrap.querySelector('#sb').onclick=list;
     wrap.querySelectorAll('.item').forEach(b=>b.onclick=()=>{const mo=S.team[+b.dataset.k];if(movesOf(mo).length<4){buy(mo,n,null)}else forget(mo,n)});
@@ -2041,6 +2044,7 @@ async function faints(){
 }
 function choose(q,list){return new Promise(res=>{B.choosing=true;document.getElementById('log').textContent=q;opts(list.map(o=>({...o,go:()=>{B.choosing=false;document.getElementById('act').innerHTML='';res(o.val)}})))})}
 async function learnMove(m,name,ask){
+  if(!canLearn(m.sp,name))return;
   if(m.moves.length<4){m.moves.push(name);SFX.level();await say(`${nm(m)} learned ${name}!`);return}
   if(!ask){const weak=m.moves.reduce((a,b)=>MOVEDEX[b].pow<MOVEDEX[a].pow?b:a);if(MOVEDEX[name].pow>MOVEDEX[weak].pow){m.moves[m.moves.indexOf(weak)]=name;await say(`${nm(m)} forgot ${weak} and learned ${name}!`)}return}
   await say(`${nm(m)} wants to learn ${name}! But it already knows 4 moves.`,300);
