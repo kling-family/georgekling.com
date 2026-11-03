@@ -536,9 +536,11 @@ function genMap(i){
   const grounds=[];for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(g[y][x]===T_GROUND)grounds.push({x,y});
   const pick=()=>grounds[Math.floor(r()*grounds.length)];
   const centers=[];for(let k=0;k<200&&centers.length<8;k++){const c=pick();if(Math.abs(c.x-start.x)+Math.abs(c.y-start.y)>=6&&centers.every(o=>Math.abs(o.x-c.x)+Math.abs(o.y-c.y)>=7))centers.push(c)}
-  for(const c of centers){const rad=2.2+r()*1.8;for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(g[y][x]===T_GROUND&&(x-c.x)**2+((y-c.y)*1.15)**2<=rad*rad)g[y][x]=T_GRASS}
-  for(let k=0;k<9;k++){const c=pick(),rad=1.5+r()*2.2;for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(g[y][x]===T_GROUND&&(x-c.x)**2+(y-c.y)**2<=rad*rad&&r()<.6)g[y][x]=T_OBST}
-  for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(g[y][x]===T_GROUND&&r()<.05)g[y][x]=T_OBST;
+  // some islands are roomier (George asked for more space on Tidepool Bay): fewer obstacles, bigger grass patches
+  const roomy={1:.6}[i]||0,thin=rng(i*104729+5);
+  for(const c of centers){const rad=2.2+r()*1.8+(roomy?1:0);for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(g[y][x]===T_GROUND&&(x-c.x)**2+((y-c.y)*1.15)**2<=rad*rad)g[y][x]=T_GRASS}
+  for(let k=0;k<9;k++){const c=pick(),rad=1.5+r()*2.2;for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(g[y][x]===T_GROUND&&(x-c.x)**2+(y-c.y)**2<=rad*rad&&r()<.6&&!(roomy&&thin()<roomy))g[y][x]=T_OBST}
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(g[y][x]===T_GROUND&&r()<.05&&!(roomy&&thin()<roomy))g[y][x]=T_OBST;
   for(let y=start.y-2;y<=start.y+1;y++)for(let x=start.x-2;x<=start.x+2;x++)if(g[y]&&g[y][x]===T_OBST)g[y][x]=T_GROUND;
   const carve=(a,b)=>{let x=a.x,y=a.y;while(x!==b.x||y!==b.y){if(x!==b.x&&(y===b.y||r()<.45))x+=Math.sign(b.x-x);else y+=Math.sign(b.y-y);if(g[y][x]!==T_GRASS&&!(x===start.x&&y===start.y))g[y][x]=T_PATH}};
   {let prev=start;const left=[...centers];while(left.length){left.sort((a,b)=>(Math.abs(a.x-prev.x)+Math.abs(a.y-prev.y))-(Math.abs(b.x-prev.x)+Math.abs(b.y-prev.y)));const c=left.shift();carve(prev,c);prev=c}}
