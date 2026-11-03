@@ -582,7 +582,11 @@ function genMap(i){
   for(const n of nooks){if(chests.length>=5)break;if(chests.every(c=>Math.abs(c.x-n.x)+Math.abs(c.y-n.y)>=8)&&!(n.x===champ.x&&n.y===champ.y)&&!(n.x===tent.x&&n.y===tent.y)&&!gates.some(gt=>gt.x===n.x&&gt.y===n.y)&&!springs.some(q=>q.x===n.x&&q.y===n.y))chests.push({x:n.x,y:n.y})}
   // trainers: a leader beside each gate, plus a few more along the paths
   const trainers=[],taken=(x,y,sp)=>springs.some(q=>Math.abs(q.x-x)+Math.abs(q.y-y)<2)||(x===champ.x&&y===champ.y)||(x===tent.x&&y===tent.y)||chests.some(c=>c.x===x&&c.y===y)||trainers.some(c=>Math.abs(c.x-x)+Math.abs(c.y-y)<sp)||(x===start.x&&y===start.y)||onRoute(x,y);
-  const beside=(pt,sp)=>{for(const [dx,dy,dir] of [[1,0,'left'],[-1,0,'right'],[0,1,'up'],[0,-1,'down']]){const x=pt.x+dx,y=pt.y+dy;if(x<1||y<1||x>=W-1||y>=H-1||!walk(g[y][x])||g[y][x]===T_PATH&&!lead||taken(x,y,sp)||dist[y][x]<0||gates.some(gt=>gt.x===x&&gt.y===y))continue;return {x,y,dir}}return null};let lead=false;
+  // never stand a trainer where they'd cut off part of the island (George found the Coral Cove leader blocking the way)
+  const reach=(bx,by)=>{const seen=new Uint8Array(W*H),solid=(x,y)=>(x===bx&&y===by)||trainers.some(t=>t.x===x&&t.y===y)||houses.some(h=>h.x===x&&h.y===y)||chests.some(c=>c.x===x&&c.y===y);
+    const q=[start];seen[start.y*W+start.x]=1;let n=0;for(let h=0;h<q.length;h++){const p=q[h];n++;for(const [dx,dy] of N4){const x=p.x+dx,y=p.y+dy;if(x<0||y<0||x>=W||y>=H||seen[y*W+x]||!walk(g[y][x])||solid(x,y))continue;seen[y*W+x]=1;q.push({x,y})}}return n};
+  const blocks=(x,y)=>reach(x,y)<reach(-1,-1)-1;
+  const beside=(pt,sp)=>{for(const [dx,dy,dir] of [[1,0,'left'],[-1,0,'right'],[0,1,'up'],[0,-1,'down']]){const x=pt.x+dx,y=pt.y+dy;if(x<1||y<1||x>=W-1||y>=H-1||!walk(g[y][x])||g[y][x]===T_PATH&&!lead||taken(x,y,sp)||dist[y][x]<0||gates.some(gt=>gt.x===x&&gt.y===y)||blocks(x,y))continue;return {x,y,dir}}return null};let lead=false;
   if(!secret)for(let off=3;off<12;off++){const pt=route[gates[0].D+off];if(!pt)break;const s2=beside(pt,3);if(s2){trainers.push({...s2,k:99,leader:false,rival:true,zone:1});break}}
   lead=true;gates.forEach((gt,k)=>{for(let back=1;back<9;back++){const s=beside(route[gt.D-back],1);if(s){trainers.push({...s,k,leader:true,zone:k});break}}});lead=false;
   const rn=rng(i*131+5),extra=[[0,2],[1,2],[2,2],[3,1]];let ek=3;
@@ -1114,6 +1118,8 @@ function island(i,fromMap){
   const ws=WSTATE[i]||(WSTATE[i]={mons:[]});
   if(fromMap||!ws.opened)ws.opened=new Set();
   if(fromMap||!ws.trainers)ws.trainers=m.trainers.map(t=>({...t,fx:t.x,fy:t.y,alert:false}));
+  // after a battle (won or run from), a trainer who walked over to you goes back to their own spot so they never block a path
+  ws.trainers.forEach(t=>{const o=m.trainers.find(q=>q.k===t.k);if(o&&(tbHas(i,t.k)||(ws.fled&&ws.fled.has(t.k)))&&(t.x!==o.x||t.y!==o.y)){t.x=t.fx=o.x;t.y=t.fy=o.y;t.dir=o.dir;t.alert=false}});
   S.tb=S.tb||{};S.tb[i]=S.tb[i]||[];
   let inv=false;
   if(B&&B.isle===i){if(B.ent)ws.mons=ws.mons.filter(x=>x!==B.ent);if(B.lost)S.pos[i]=respawnPoint(m,S.pos[i]);inv=true}
