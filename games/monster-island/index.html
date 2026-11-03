@@ -601,7 +601,10 @@ function genMap(i){
 // trainers grow with you: if your best monster gets ahead of a trainer's team, their whole team levels up to match
 // ...and their monsters evolve at the same levels yours do
 const evolved=(sp,l)=>{let n=0;while(EVO[sp]&&l>=EVO[sp][1]&&SP[EVO[sp][0]]&&n++<3)sp=EVO[sp][0];return sp};
-function scaled(team,bonus){const top=Math.max(1,...S.team.map(m=>m.lvl)),mx=Math.max(...team.map(t=>t[1])),up=Math.max(0,top+bonus-mx);return team.map(([sp,l])=>{const L=Math.min(60,l+up);return [evolved(sp,L),L]})}
+// each of their monsters is matched to one of yours: their strongest vs your strongest, their weakest vs your weakest
+// (never below the trainer's normal level), so one low-level monster on your team gets a fair fight too
+function scaled(team,bonus){const mine=S.team.map(m=>m.lvl).sort((a,b)=>b-a),order=team.map((t,k)=>k).sort((a,b)=>team[b][1]-team[a][1]),out=team.map(t=>[...t]);
+  order.forEach((k,j)=>{const ref=mine[Math.min(j,mine.length-1)]||1,L=Math.min(60,Math.max(team[k][1],ref+bonus));out[k]=[evolved(team[k][0],L),L]});return out}
 const trBonus=info=>info.rival?1:info.leader?1:0;
 function champTeam(i){const s=ISLES[i];if(s.secret)return s.champ.team;const t=[...s.champ.team],lo=Math.min(...t.map(x=>x[1])),pool=[...s.wild,...(NIGHT[i]||[])].filter(sp=>!t.some(x=>x[0]===sp));
   for(let k=0;t.length<6&&k<pool.length;k++)t.push([pool[k],lo]);return scaled(t,2)}
