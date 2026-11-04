@@ -1948,7 +1948,7 @@ const active=()=>S.team[B.pi];
 const hushBuddy=()=>document.querySelectorAll('.buddy').forEach(b=>b.remove());
 function battle(cfg){hushBuddy();
   SCREEN='battle';WORLD=null;
-  B={...cfg,ei:0,pi:S.team.findIndex(m=>m.hp>0),busy:true};playSong((B.wild&&!B.legend)||B.trainer?'battle':'boss');
+  B={...cfg,ei:0,pi:S.team.findIndex(m=>m.hp>0),busy:true,used:new Set()};B.used.add(S.team[B.pi]);playSong((B.wild&&!B.legend)||B.trainer?'battle':'boss');
   const s=ISLES[B.isle],a=ARENA[s.el];
   app.innerHTML=`<div class="box hud"><span class="name">${B.wild?'Wild battle on '+s.name:foe()}</span><span class="pill" id="left"></span></div>
   <div class="arena${isNight()&&!ISLES[B.isle].secret?' night':''}" id="arena" style="--s1:${a[0]};--s2:${a[1]};--s3:${a[2]};--g1:${a[3]};--g2:${a[4]};--g3:${a[5]}"><canvas id="fx" style="position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-events:none"></canvas><div id="flash" style="position:absolute;inset:0;z-index:4;pointer-events:none;background:#fff;opacity:0;transition:opacity .15s"></div>
@@ -2009,7 +2009,7 @@ function netMenu(){
 function swapMenu(forced){
   if(forced)document.getElementById('log').textContent='Who will you send out?';
   const list=S.team.map((m,k)=>({label:nm(m),sub:`Lv ${m.lvl}, HP ${Math.max(0,m.hp)}/${maxHp(m)}`,off:m.hp<=0||k===B.pi,go:async()=>{
-    lock();B.pi=k;drawSides('p');await say(`Go, ${nm(active())}!`);
+    lock();B.pi=k;B.used.add(S.team[k]);drawSides('p');await say(`Go, ${nm(active())}!`);
     if(!forced){await enemyAttack();if(await faints()!=='ok')return}
     B.busy=false;menu()}}));
   if(!forced)list.push({label:'Back',id:'bk',go:menu});
@@ -2075,8 +2075,9 @@ async function evolveInBattle(m,isActive){
 async function giveXp(e){
   const gain=Math.round(e.lvl*(B.wild?11:18));
   for(const [k,m] of S.team.entries()){
-    if(m.hp<=0)continue;const g=k===B.pi?gain:Math.floor(gain/3);m.xp+=g;
-    if(k===B.pi)await say(`${nm(m)} got ${g} XP!`,450);
+    // monsters that fought in this battle get full XP; ones that sat on the bench get a little
+    if(m.hp<=0)continue;const fought=k===B.pi||(B.used&&B.used.has(m)),g=fought?gain:Math.floor(gain/5);m.xp+=g;
+    if(fought)await say(`${nm(m)} got ${g} XP!`,450);
     while(m.xp>=xpNeed(m.lvl)){m.xp-=xpNeed(m.lvl);const old=maxHp(m);m.lvl++;m.hp+=maxHp(m)-old;if(k===B.pi){updTags();const pa=document.getElementById('part');if(pa){const au=document.createElement('div');au.className='aura';pa.appendChild(au);setTimeout(()=>au.remove(),1100)}popText('part','LEVEL UP!','#ffe07a',30)}SFX.level();
       await say(`${nm(m)} grew to level ${m.lvl}!`);movesOf(m);for(const [lv,mvn] of learnset(m.sp))if(lv===m.lvl&&!m.moves.includes(mvn))await learnMove(m,mvn,k===B.pi);await evolveInBattle(m,k===B.pi)}
     // a monster that joined already past its evolution level (like one from a mystery egg) evolves after its next battle
