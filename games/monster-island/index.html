@@ -301,11 +301,14 @@ const MOVEDEX={Tackle:{el:'none',pow:35},'Quick Strike':{el:'none',pow:40,first:
   'Vine Whip':{el:'leaf',pow:40},'Razor Leaf':{el:'leaf',pow:55},'Leaf Storm':{el:'leaf',pow:68},'Solar Burst':{el:'leaf',pow:95,acc:.8},
   'Rock Toss':{el:'stone',pow:40},'Rock Slide':{el:'stone',pow:55},'Boulder Slam':{el:'stone',pow:68},Earthquake:{el:'stone',pow:95,acc:.8},
   Zap:{el:'storm',pow:40},'Spark Dash':{el:'storm',pow:55},'Thunder Clap':{el:'storm',pow:68},'Mega Bolt':{el:'storm',pow:95,acc:.8},
+  'Quill Burst':{el:'fire',pow:100,acc:.95,sig:'spikeburst'},
   Spook:{el:'shadow',pow:40},'Shadow Claw':{el:'shadow',pow:55},'Night Shade':{el:'shadow',pow:68},'Eclipse Beam':{el:'shadow',pow:95,acc:.8}};
 const ELMOVES={fire:['Ember','Fire Spin','Flame Burst','Inferno'],water:['Splash Jet','Bubble Beam','Tidal Crash','Hydro Cannon'],leaf:['Vine Whip','Razor Leaf','Leaf Storm','Solar Burst'],
   stone:['Rock Toss','Rock Slide','Boulder Slam','Earthquake'],storm:['Zap','Spark Dash','Thunder Clap','Mega Bolt'],shadow:['Spook','Shadow Claw','Night Shade','Eclipse Beam']};
 const LEARN=[[1,'Tackle'],[1,0],[4,'Quick Strike'],[6,1],[10,2],[13,'Body Slam'],[17,3]];
-const learnset=sp=>LEARN.map(([l,a])=>[l,typeof a==='number'?ELMOVES[SP[sp].el][a]:a]);
+// signature moves: only that one monster can ever know them
+const SIGNATURE={spikeburst:[25,'Quill Burst']};
+const learnset=sp=>{const L=LEARN.map(([l,a])=>[l,typeof a==='number'?ELMOVES[SP[sp].el][a]:a]);if(SIGNATURE[sp])L.push(SIGNATURE[sp]);return L.sort((a,b)=>a[0]-b[0])};
 const defaultMoves=(sp,lvl)=>learnset(sp).filter(x=>x[0]<=lvl).map(x=>x[1]).slice(-4);
 const movePrice=n=>{const p=MOVEDEX[n].pow;return p>=90?90:p>=70?55:p>=65?45:p>=55?30:15};
 const SP={
@@ -500,8 +503,10 @@ const xpNeed=l=>l*20;
 function mk(sp,lvl){const m={sp,lvl,xp:0,moves:defaultMoves(sp,lvl)};m.hp=maxHp(m);return m}
 // opposite elements can't learn each other's moves (Fire and Water, Leaf and Shadow, Stone and Storm)
 const OPP={fire:'water',water:'fire',leaf:'shadow',shadow:'leaf',stone:'storm',storm:'stone'};
-const canLearn=(sp,n)=>!MOVEDEX[n]||MOVEDEX[n].el!==OPP[SP[sp]&&SP[sp].el];
-function movesOf(m){if(m.moves&&m.moves.some(n=>!canLearn(m.sp,n)))m.moves=m.moves.filter(n=>canLearn(m.sp,n));if(!m.moves||!m.moves.length)m.moves=defaultMoves(m.sp,m.lvl);return m.moves.filter(n=>MOVEDEX[n]).map(n=>({name:n,...MOVEDEX[n]}))}
+const canLearn=(sp,n)=>!MOVEDEX[n]||((!MOVEDEX[n].sig||MOVEDEX[n].sig===sp)&&MOVEDEX[n].el!==OPP[SP[sp]&&SP[sp].el]);
+function movesOf(m){if(m.moves&&m.moves.some(n=>!canLearn(m.sp,n)))m.moves=m.moves.filter(n=>canLearn(m.sp,n));if(!m.moves||!m.moves.length)m.moves=defaultMoves(m.sp,m.lvl);
+  const sg=SIGNATURE[m.sp];if(sg&&m.lvl>=sg[0]&&!m.moves.includes(sg[1])){if(m.moves.length<4)m.moves.push(sg[1]);else{const w=m.moves.reduce((a,b)=>(MOVEDEX[b]||{pow:0}).pow<(MOVEDEX[a]||{pow:0}).pow?b:a);m.moves[m.moves.indexOf(w)]=sg[1]}}
+  return m.moves.filter(n=>MOVEDEX[n]).map(n=>({name:n,...MOVEDEX[n]}))}
 function mult(a,d){if(a==='none')return 1;if(BEATS[a].includes(d))return 2;if(BEATS[d]&&BEATS[d].includes(a))return .5;return 1}
 function damage(a,d,mv){const base=(((2*a.lvl/5+2)*mv.pow*stat(a,1)/stat(d,2))/35+2)*(S&&S.team.includes(a)&&(a.joy??50)>=80?1.1:1);const same=mv.el===SP[a.sp].el?1.2:1;return Math.max(1,Math.round(base*same*mult(mv.el,SP[d.sp].el)*(.85+Math.random()*.15)))}
 const nm=m=>SP[m.sp].name;
@@ -1919,7 +1924,7 @@ function team(back,pick){hushBuddy();
   const card=(m,k,where)=>{const mh=maxHp(m),r=m.hp/mh;return `<div class="card${pick!==undefined&&where==='box'&&pick===k?' picked':''}"><div class="art">${spr(m.sp)}</div><div class="info">
       <div class="row" style="justify-content:space-between;gap:6px"><span class="disp" style="font-size:18px">${nm(m)} ${chip(SP[m.sp].el)}</span><span class="disp">Lv ${m.lvl}</span></div>
       <div class="bar"><i style="width:${r*100}%;background:${hpColor(r)}"></i></div>
-      <div class="muted" style="font-size:13px">HP ${m.hp}/${mh}. Moves: ${movesOf(m).map(x=>x.name).join(', ')}${EVO[m.sp]?`. Evolves at level ${EVO[m.sp][1]}!`:''}</div>
+      <div class="muted" style="font-size:13px">HP ${m.hp}/${mh}. Moves: ${movesOf(m).map(x=>x.sig?x.name+' &#9733;':x.name).join(', ')}${EVO[m.sp]?`. Evolves at level ${EVO[m.sp][1]}!`:''}</div>
       ${where==='team'?`<div class="bar xp"><i style="width:${m.xp/xpNeed(m.lvl)*100}%"></i></div><div class="small" style="color:#ff8ab0">&#9829; ${joyWord(m.joy??50)}</div>`:''}</div>
       <div class="tbtns">${where==='team'?(pick!==undefined?`<button class="btn sm" data-swap="${k}">Swap out</button>`:`${k?`<button class="btn ghost sm" data-k="${k}">Make leader</button>`:`<span class="chip" style="background:var(--hot)">Leader</span>`}${S.team.length>1?`<button class="btn ghost sm" data-out="${k}">Send to camp</button>`:''}`)
         :(pick===k?`<button class="btn ghost sm" data-cancel="1">Cancel</button>`:`<button class="btn ${S.team.length<TEAM_MAX?'':'ghost '}sm" data-in="${k}">${S.team.length<TEAM_MAX?'Add to team':'Swap in'}</button>`)}</div></div>`};
@@ -2029,7 +2034,7 @@ function swapMenu(forced){
 }
 function enemyMove(e,p){const ms=movesOf(e);if(Math.random()<(B&&!B.wild?.1:.3))return ms[rnd(0,ms.length-1)];return ms.reduce((a,m)=>m.pow*mult(m.el,SP[p.sp].el)>a.pow*mult(a.el,SP[p.sp].el)?m:a)}
 async function attack(a,d,mv,side){
-  await say(`${side==='e'?(B.wild?'Wild ':'Their '):''}${nm(a)} used ${mv.name}!`,350);
+  await say(`${side==='e'?(B.wild?'Wild ':'Their '):''}${nm(a)} used ${mv.name}!${mv.sig?' Its signature move!':''}`,mv.sig?700:350);
   anim(side==='p'?'part':'eart',side==='p'?'lunge-r':'lunge-l',300);await sleep(120);
   if(mv.acc&&Math.random()>mv.acc){await sleep(250);popText(side==='p'?'eart':'part','MISS','#9fb6d8',30);await say(`${nm(a)} missed!`,500);return}
   await playFx(mv,side);
