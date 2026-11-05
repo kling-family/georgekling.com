@@ -388,8 +388,9 @@ const SECRETS=[
   {name:'Hidden Grove',el:'leaf',parent:2,legend:'sylvanox',lv:[12,15],llv:19,blurb:'A secret forest where the oldest tree guards Sylvanox.',hid:'trees'},
   {name:'Sky Fortress',el:'storm',parent:3,legend:'voltara',lv:[15,18],llv:22,blurb:'A castle in the clouds, crackling with lightning.',hid:'boulders'},
   {name:'Starfall Void',el:'shadow',parent:4,legend:'nyxis',lv:[18,21],llv:26,blurb:'A world of stars and darkness at the edge of everything.',hid:'crystals'}];
-ISLES[0].rares=['spikeburst']; // George's own monster, a second rare on Ember Isle
 SECRETS.forEach((q,k)=>{const p=ISLES[q.parent];ISLES.push({...q,secret:true,x:1100+k*80,y:70,wild:[p.rare,...p.wild.slice(2)],rare:p.rare,champ:{name:SP[q.legend].name,team:[[q.legend,q.llv]]},tr:[]})});
+// Spikeburst (George's own monster) lives only in the Lava Cavern
+ISLES.find(q=>q.secret&&q.parent===0).wild.push('spikeburst');
 const SECRET_BG={fire:'#2a0c06',water:'#062848',leaf:'#0c2614',storm:'#bcd6f4',shadow:'#05030f',deep:'#0a3a6a'};
 const DEEP=ISLES.length;
 ISLES.push({name:'Coralheart Deep',el:'deep',secret:true,deep:true,x:1600,y:70,wild:['coralfin','anglet','pearlcrab','jellybell','tidefang','abyssquid'],rare:'tidefang',lv:[18,22],legend:'leviathorn',llv:30,
