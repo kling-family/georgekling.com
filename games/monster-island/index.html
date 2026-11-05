@@ -1246,8 +1246,11 @@ function spawn(rare,minD){
   const {m,ws,p,i}=WORLD,s=ISLES[i],t=performance.now();
   const opts=m.grass.filter(c=>!monAt(c.x,c.y)&&Math.abs(c.x-p.x)+Math.abs(c.y-p.y)>=minD);
   if(!opts.length)return false;const c=opts[Math.floor(Math.random()*opts.length)];
-  const night=!rare&&i<MAIN&&isNight()&&Math.random()<.45,rp=[s.rare,...(s.rares||[])],sp=rare?rp[Math.floor(Math.random()*rp.length)]:night?NIGHT[i][rnd(0,1)]:s.wild[rnd(0,s.wild.length-1)];
-  ws.mons.push({sp,rare,lvl:rare?s.lv[1]+1:rnd(s.lv[0],s.lv[1]),x:c.x,y:c.y,hx:c.x,hy:c.y,fx:c.x,fy:c.y,mv:null,next:t+600+Math.random()*1200,face:Math.random()<.5,chase:false});
+  let night=!rare&&i<MAIN&&isNight()&&Math.random()<.45,rp=[s.rare,...(s.rares||[])],sp=rare?rp[Math.floor(Math.random()*rp.length)]:night?NIGHT[i][rnd(0,1)]:s.wild[rnd(0,s.wild.length-1)];
+  // Spikeburst is one of a kind: only one roams at a time, it's level 28, and once you own it no more appear
+  const UNIQUE={spikeburst:28};
+  if(UNIQUE[sp]){const owned=[...S.team,...(S.box||[])].some(x=>x.sp===sp)||ws.mons.some(x=>x.sp===sp);if(owned){const alt=s.wild.filter(x=>!UNIQUE[x]);sp=alt[rnd(0,alt.length-1)]}}
+  ws.mons.push({sp,rare,lvl:UNIQUE[sp]||(rare?s.lv[1]+1:rnd(s.lv[0],s.lv[1])),x:c.x,y:c.y,hx:c.x,hy:c.y,fx:c.x,fy:c.y,mv:null,next:t+600+Math.random()*1200,face:Math.random()<.5,chase:false});
   return true;
 }
 const DIRS={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]};
