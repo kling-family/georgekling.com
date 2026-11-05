@@ -1394,7 +1394,7 @@ function drawOver(t){
   const vx0=cam.x-o.x-cw/2/sc-1,vx1=cam.x-o.x+cw/2/sc+1,vy0=cam.y-o.y-ch/2/sc-1,vy1=cam.y-o.y+ch/2/sc+2,vis=(x,y)=>x>=vx0&&x<=vx1&&y>=vy0&&y<=vy1;
   const tilePx=sc;
   if(m.secret)drawPortal(ctx,m.start.x,m.start.y,t);else drawDock(ctx,m.start.x,m.start.y);
-  if(m.secretStone){const q=m.secretStone;if(S.secrets[i])drawPortal(ctx,q.x,q.y-.15,t,.8);else if(Math.floor(t/300)%11===0){ctx.fillStyle='#fff';ctx.globalAlpha=.9;ctx.fillRect(q.x+.62,q.y-.25,.05,.24);ctx.fillRect(q.x+.53,q.y-.16,.24,.05);ctx.globalAlpha=1}}
+  if(m.secretStone){const q=m.secretStone;if(S.secrets[i])drawPortal(ctx,q.x,q.y-.15,t,.8);else if(S.beaten.includes(i)){const k=.5+.5*Math.sin(t/220),cx=q.x+.5,cy=q.y+.1;ctx.save();ctx.globalAlpha=.35+.35*k;const gg=ctx.createRadialGradient(cx,cy,.05,cx,cy,.9);gg.addColorStop(0,'#fff');gg.addColorStop(.4,'#e6a8ff');gg.addColorStop(1,'rgba(200,120,255,0)');ctx.fillStyle=gg;ctx.beginPath();ctx.arc(cx,cy,.9,0,7);ctx.fill();ctx.globalAlpha=.9;ctx.fillStyle='#fff';const L=.22+.12*k;ctx.fillRect(cx-.03,cy-L,.06,L*2);ctx.fillRect(cx-L,cy-.03,L*2,.06);ctx.restore()}else if(Math.floor(t/300)%11===0){ctx.fillStyle='#fff';ctx.globalAlpha=.9;ctx.fillRect(q.x+.62,q.y-.25,.05,.24);ctx.fillRect(q.x+.53,q.y-.16,.24,.05);ctx.globalAlpha=1}}
   if(tilePx>=9){
     if(tilePx>=16)for(const g of m.grass)if(vis(g.x,g.y))drawTufts(ctx,th,g.x,g.y,t);
     const ents=[];
@@ -1422,6 +1422,7 @@ function drawOver(t){
     for(const q of m.springs)dot(q.x,q.y,'#7ee4f4',.9);for(const h of m.houses)if(h.rest)dot(h.x,h.y,'#ff8ab0',.9);
     for(const mo of ws.mons)dot(mo.fx,mo.fy,mo.rare?'#fff6a0':mo.chase?'#ff2a2a':'#ff6a5a',.85);
     dot(m.champ.x,m.champ.y,'#c77dff',1.1);
+    if(m.secretStone&&(S.beaten.includes(i)||S.secrets[i]))dot(m.secretStone.x,m.secretStone.y,'#ff7ae0',1.1);
     for(const tr of ws.trainers)if(!trBeaten(tr.k))dot(tr.fx,tr.fy,'#3fd6ff',.9);
     for(const gt of m.gates)if(!gateOpen(i,gt.k))dot(gt.x,gt.y,'#ffffff',.8);
     const pr=1+.35*Math.sin(t/200);ctx.strokeStyle='#fff';ctx.lineWidth=Math.max(.15,2/sc);ctx.beginPath();ctx.arc(p.fx+.5,p.fy+.5,r*2.2*pr,0,7);ctx.stroke();dot(p.fx,p.fy,'#4be38a',1.2);
@@ -1437,7 +1438,7 @@ function drawOver(t){
   ctx.setTransform(1,0,0,1,0,0);
   if(sc<16){const fs=Math.max(11,cw/58);ctx.font=`600 ${fs}px Fredoka, sans-serif`;ctx.textAlign='center';
     ISLES.slice(0,MAIN).forEach((is,k)=>{const lx=cw/2+(is.x-cam.x)*sc,ly=ch/2+(is.y+16.5-cam.y)*sc,txt=k<S.unlocked?is.name:'Locked';ctx.lineWidth=fs/3.2;ctx.lineJoin='round';ctx.strokeStyle='rgba(6,20,40,.75)';ctx.strokeText(txt,lx,ly);ctx.fillStyle=k===i?'#ffe07a':'#fff';ctx.fillText(txt,lx,ly)});
-    const lg=[['#4be38a','You'],['#ff6a5a','Monsters'],['#3fd6ff','Trainers'],['#ffffff','Gates'],['#ffc83d','Treasure'],['#c77dff','Champion'],['#7ee4f4','Healing']];ctx.font=`600 ${fs*.85}px Nunito, sans-serif`;ctx.textAlign='left';
+    const lg=[['#4be38a','You'],['#ff6a5a','Monsters'],['#3fd6ff','Trainers'],['#ffffff','Gates'],['#ffc83d','Treasure'],['#c77dff','Champion'],['#7ee4f4','Healing'],...(m.secretStone&&(S.beaten.includes(i)||S.secrets[i])?[['#ff7ae0','Secret door']]:[])];ctx.font=`600 ${fs*.85}px Nunito, sans-serif`;ctx.textAlign='left';
     let lx=fs;const ly=fs*1.6;ctx.fillStyle='rgba(6,20,40,.65)';ctx.beginPath();ctx.roundRect(fs*.5,ly-fs*1.1,cw-fs,fs*1.6,fs*.5);ctx.fill();
     for(const [c,n] of lg){ctx.fillStyle=c;ctx.beginPath();ctx.arc(lx+fs*.35,ly-fs*.3,fs*.32,0,7);ctx.fill();ctx.fillStyle='#fff';ctx.fillText(n,lx+fs*.9,ly);lx+=ctx.measureText(n).width+fs*2}}
 }
@@ -1826,13 +1827,15 @@ function buddyHint(i){
   if(hp<.4)return 'Your team looks really tired! Heal at the tent, a Rest House with a heart on the roof, or a sparkly spring.';
   if(s.secret)return S.caught[s.legend]?'You caught the legend! Walk back onto the glowing portal to go home.':`The legendary ${SP[s.legend].name} waits at the far end. Weaken it first, then throw a Super Net!`;
   const secrets=[];
-  if(!S.secrets[i])secrets.push(S.beaten.includes(i)?'Psst... now that you beat the champion, that sparkly rock in the middle towns might open. Go take a look!':'Psst... I saw a big rock sparkle somewhere in the middle towns. I think it only opens for the champion of this island!');
+  const st=m.secretStone,side=st?(st.x<W*.35?'west':st.x>W*.65?'east':st.y<H*.4?'north':st.y>H*.6?'south':'middle'):'';
+  if(!S.secrets[i]&&st)secrets.push(S.beaten.includes(i)?`Psst... the secret door is open now! Look for the glowing pink sparkle on the ${side} side of the island. Zoom out and it shows as a pink dot.`:'Psst... I saw a big rock sparkle somewhere in the middle towns. I think it only opens for the champion of this island!');
   const rex=m.trainers.find(t=>t.rival);if(rex&&!tbHas(i,99))secrets.push('Rival Rex is hiding just past the first gate. He thinks his monsters are stronger than yours!');
   if(NIGHT[i]&&NIGHT[i].some(sp=>!S.caught[sp]))secrets.push('Some monsters only come out at night. Explore when the sky gets dark!');
   if(WORLD&&m.chests.some(c=>!WORLD.ws.opened.has(c.x+','+c.y)))secrets.push('Every island has five treasure chests hidden in quiet corners. Peek behind trees and rocks!');
   if(S.beaten.includes(i)&&!everyoneBeaten(i))secrets.push(`Beat every single trainer on ${s.name} and you'll get a map piece. ${m.trainers.filter(t=>!tbHas(i,t.k)).length} left to go!`);
   if(pieces>=2)secrets.push('Your map pieces fit together into a sea chart. Open your Journal and look closely at the swirl.');
   if(S.beaten.includes(i))secrets.push(`A rare ${SP[s.rare].name} roams ${s.name} now. It runs away fast, so bring a Super Net!`);
+  if(st&&S.beaten.includes(i)&&!S.secrets[i]&&Math.random()<.7)return secrets[0];
   if(secrets.length&&Math.random()<.4)return pick(secrets);
   const z=m.zoneOf(WORLD?WORLD.p.x:m.start.x,WORLD?WORLD.p.y:m.start.y);
   if(!S.beaten.includes(i)){
