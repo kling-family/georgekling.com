@@ -302,12 +302,13 @@ const MOVEDEX={Tackle:{el:'none',pow:35},'Quick Strike':{el:'none',pow:40,first:
   'Rock Toss':{el:'stone',pow:40},'Rock Slide':{el:'stone',pow:55},'Boulder Slam':{el:'stone',pow:68},Earthquake:{el:'stone',pow:95,acc:.8},
   Zap:{el:'storm',pow:40},'Spark Dash':{el:'storm',pow:55},'Thunder Clap':{el:'storm',pow:68},'Mega Bolt':{el:'storm',pow:95,acc:.8},
   'Quill Burst':{el:'fire',pow:100,acc:.95,sig:'spikeburst'},
+  'Tidal Tears':{el:'water',pow:100,acc:.95,sig:'hydrowashy'},
   Spook:{el:'shadow',pow:40},'Shadow Claw':{el:'shadow',pow:55},'Night Shade':{el:'shadow',pow:68},'Eclipse Beam':{el:'shadow',pow:95,acc:.8}};
 const ELMOVES={fire:['Ember','Fire Spin','Flame Burst','Inferno'],water:['Splash Jet','Bubble Beam','Tidal Crash','Hydro Cannon'],leaf:['Vine Whip','Razor Leaf','Leaf Storm','Solar Burst'],
   stone:['Rock Toss','Rock Slide','Boulder Slam','Earthquake'],storm:['Zap','Spark Dash','Thunder Clap','Mega Bolt'],shadow:['Spook','Shadow Claw','Night Shade','Eclipse Beam']};
 const LEARN=[[1,'Tackle'],[1,0],[4,'Quick Strike'],[6,1],[10,2],[13,'Body Slam'],[17,3]];
 // signature moves: only that one monster can ever know them
-const SIGNATURE={spikeburst:[25,'Quill Burst']};
+const SIGNATURE={spikeburst:[25,'Quill Burst'],hydrowashy:[25,'Tidal Tears']};
 const learnset=sp=>{const L=LEARN.map(([l,a])=>[l,typeof a==='number'?ELMOVES[SP[sp].el][a]:a]);if(SIGNATURE[sp])L.push(SIGNATURE[sp]);return L.sort((a,b)=>a[0]-b[0])};
 const defaultMoves=(sp,lvl)=>learnset(sp).filter(x=>x[0]<=lvl).map(x=>x[1]).slice(-4);
 const movePrice=n=>{const p=MOVEDEX[n].pow;return p>=90?90:p>=70?55:p>=65?45:p>=55?30:15};
@@ -322,7 +323,7 @@ const SP={
   squibble:{name:'Squibble',el:'water',shape:'tall',color:'#4bb8d8',color2:'#d2f1fa',b:[46,46,46,56]},
   zaplet:{name:'Zaplet',el:'storm',shape:'round',color:'#f2c230',color2:'#fff2b8',b:[40,54,38,72]},
   tidefang:{name:'Tidefang',el:'water',shape:'spiky',color:'#1f6fb8',color2:'#8fd3ff',b:[66,70,58,60],rare:1,fang:1},
-  hydrowashy:{name:'Hydro Washy',el:'water',color:'#6fb8f5',color2:'#b8e4ff',b:[60,56,62,58],by:'George'},
+  hydrowashy:{name:'Hydro Washy',el:'water',color:'#6fb8f5',color2:'#b8e4ff',b:[64,72,62,64],rare:1,by:'George'},
   thornbug:{name:'Thornbug',el:'leaf',shape:'wide',color:'#4f9e3a',color2:'#c8ec9a',b:[46,56,50,52]},
   mudpuff:{name:'Mudpuff',el:'stone',shape:'blob',color:'#8a6a4a',color2:'#d8bc96',b:[56,46,58,36]},
   mossbrute:{name:'Mossbrute',el:'leaf',shape:'tall',color:'#2f7a3a',color2:'#a8d98a',b:[72,68,66,40],rare:1,fang:1},
@@ -1255,8 +1256,8 @@ function spawn(rare,minD){
   const opts=m.grass.filter(c=>!monAt(c.x,c.y)&&Math.abs(c.x-p.x)+Math.abs(c.y-p.y)>=minD);
   if(!opts.length)return false;const c=opts[Math.floor(Math.random()*opts.length)];
   let night=!rare&&i<MAIN&&isNight()&&Math.random()<.45,rp=[s.rare,...(s.rares||[])],sp=rare?rp[Math.floor(Math.random()*rp.length)]:night?NIGHT[i][rnd(0,1)]:s.wild[rnd(0,s.wild.length-1)];
-  // Spikeburst is one of a kind: only one roams at a time, it's level 28, and once you own it no more appear
-  const UNIQUE={spikeburst:28};
+  // Spikeburst and Hydro Washy are one of a kind: only one roams at a time, it's level 28, and once you own it no more appear
+  const UNIQUE={spikeburst:28,hydrowashy:28};
   if(UNIQUE[sp]){const owned=[...S.team,...(S.box||[])].some(x=>x.sp===sp)||ws.mons.some(x=>x.sp===sp);if(owned){const alt=s.wild.filter(x=>!UNIQUE[x]);sp=alt[rnd(0,alt.length-1)]}}
   ws.mons.push({sp,rare,lvl:UNIQUE[sp]||(rare?s.lv[1]+1:rnd(s.lv[0],s.lv[1])),x:c.x,y:c.y,hx:c.x,hy:c.y,fx:c.x,fy:c.y,mv:null,next:t+600+Math.random()*1200,face:Math.random()<.5,chase:false});
   return true;
