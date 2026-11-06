@@ -518,7 +518,9 @@ function movesOf(m){if(m.moves&&m.moves.some(n=>!canLearn(m.sp,n)))m.moves=m.mov
   const sg=SIGNATURE[m.sp];if(sg&&m.lvl>=sg[0]&&!m.moves.includes(sg[1])){if(m.moves.length<4)m.moves.push(sg[1]);else{const w=m.moves.reduce((a,b)=>(MOVEDEX[b]||{pow:0}).pow<(MOVEDEX[a]||{pow:0}).pow?b:a);m.moves[m.moves.indexOf(w)]=sg[1]}}
   return m.moves.filter(n=>MOVEDEX[n]).map(n=>({name:n,...MOVEDEX[n]}))}
 function mult(a,d){if(a==='none')return 1;if(BEATS[a].includes(d))return 2;if(BEATS[d]&&BEATS[d].includes(a))return .5;return 1}
-function damage(a,d,mv){const base=(((2*a.lvl/5+2)*mv.pow*stat(a,1)/stat(d,2))/35+2)*(S&&S.team.includes(a)&&(a.joy??50)>=80?1.1:1);const same=mv.el===SP[a.sp].el?1.2:1;return Math.max(1,Math.round(base*same*mult(mv.el,SP[d.sp].el)*(.85+Math.random()*.15)))}
+// Beginner's luck: until you beat your first champion, your monsters hit harder and take less damage
+const beginner=()=>S&&S.beaten&&S.beaten.length===0;
+function damage(a,d,mv){const bl=beginner()?(S.team.includes(a)?1.5:S.team.includes(d)?.5:1):1;const base=bl*(((2*a.lvl/5+2)*mv.pow*stat(a,1)/stat(d,2))/35+2)*(S&&S.team.includes(a)&&(a.joy??50)>=80?1.1:1);const same=mv.el===SP[a.sp].el?1.2:1;return Math.max(1,Math.round(base*same*mult(mv.el,SP[d.sp].el)*(.85+Math.random()*.15)))}
 const nm=m=>SP[m.sp].name;
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
 const hexRgb=h=>{const n=parseInt(h.slice(1),16);return [n>>16,n>>8&255,n&255]};
@@ -628,7 +630,8 @@ function genMap(i){
 const evolved=(sp,l)=>{let n=0;while(EVO[sp]&&l>=EVO[sp][1]&&SP[EVO[sp][0]]&&n++<3)sp=EVO[sp][0];return sp};
 // each of their monsters is matched to one of yours: their strongest vs your strongest, their weakest vs your weakest
 // (never below the trainer's normal level), so one low-level monster on your team gets a fair fight too
-function scaled(team,bonus){const mine=S.team.map(m=>m.lvl).sort((a,b)=>b-a),order=team.map((t,k)=>k).sort((a,b)=>team[b][1]-team[a][1]),out=team.map(t=>[...t]);
+function scaled(team,bonus){if(beginner())return team.map(([sp,l])=>[evolved(sp,l),l]); // first island: trainers stay at their normal levels so training up helps
+const mine=S.team.map(m=>m.lvl).sort((a,b)=>b-a),order=team.map((t,k)=>k).sort((a,b)=>team[b][1]-team[a][1]),out=team.map(t=>[...t]);
   order.forEach((k,j)=>{const ref=mine[Math.min(j,mine.length-1)]||1,L=Math.min(60,Math.max(team[k][1],ref+bonus));out[k]=[evolved(team[k][0],L),L]});return out}
 const trBonus=info=>info.rival?1:info.leader?1:0;
 function champTeam(i){const s=ISLES[i];if(s.secret)return s.champ.team;const t=[...s.champ.team],lo=Math.min(...t.map(x=>x[1])),pool=[...s.wild,...(NIGHT[i]||[])].filter(sp=>!t.some(x=>x[0]===sp));
@@ -1164,6 +1167,7 @@ function wheel(box,sel){
 function map(){
   if(S&&!S.look&&!S.lookSeen){S.lookSeen=1;save();return explorer(map)}
   if(S&&!S.buddy)return meetBuddy(map);
+  if(S&&S.buddy&&!S.gift&&beginner()){S.gift=1;S.coins+=60;save();setTimeout(()=>buddySay(`I found 60 coins in my backpack! Take them. You can buy a new move at a Move Shop. Tip: until you beat your first champion, your monsters get Beginner's Luck and hit extra hard!`,true),900)}
   if(S&&S.buddy&&!S.compass&&(caughtCount()>=2||Object.values(S.tb||{}).some(t=>t.length)||S.beaten.length))return compassGift(map);
   SCREEN='map';applyLook();registerBuddy();trackPlay();WORLD=null;scrollTo(0,0);playSong('island');
   app.innerHTML=`<div class="box hud"><span class="name">${PROFILE?PROFILE.name+"'s islands":"The Islands"}</span><div class="stats"><span class="pill"><i style="background:#ffc83d"></i>${S.coins} coins</span><span class="pill"><i style="background:#3fd6ff"></i>${S.supers} super nets</span>${journalBtn()}<button class="btn ghost sm" id="askb">Ask ${S.buddy.name}</button><button class="btn ghost sm" id="meb">My explorer</button><button class="btn ghost sm" id="labb">Monster Lab</button><button class="btn ghost sm" id="team">Team</button><button class="btn ghost sm" id="scode">Save code</button><button class="btn ghost sm" id="home">Switch player</button>${muteBtn()}</div></div>
@@ -2214,7 +2218,7 @@ async function checkPiece(i){
 }
 async function winBattle(){
   stopSong();doVictoryHop();
-  if(B.wild){SFX.win();await say('You won the battle!');save();island(B.isle);return}
+  if(B.wild){SFX.win();await say('You won the battle!');const c=3+Math.floor(enemy().lvl/2);S.coins+=c;await say(`You found ${c} coins!`,700);save();island(B.isle);return}
   if(B.trainer){const n=Math.round((8+B.enemies.reduce((a,m)=>a+m.lvl,0))*(B.trainer.again?.5:1));SFX.win();await say(`You beat ${B.trainer.name}!`,900);
     if(!B.trainer.again)S.tb[B.isle].push(B.trainer.k);S.coins+=n;await say(`${B.trainer.name} gives you ${n} coins.`,900);
     if(B.trainer.leader&&!B.trainer.again){const m=genMap(B.isle),k=B.trainer.k;SFX.chest();await say(`The gate to ${k<2?m.towns[k+1].name:ISLES[B.isle].champ.name+"'s arena"} is open!`,1100)}
