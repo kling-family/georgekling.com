@@ -154,6 +154,7 @@ canvas.scene{display:block;width:100%;height:auto;touch-action:none}
 @keyframes pop{from{transform:translate(-50%,12px);opacity:0}}
 .win{display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center}
 .win h1{font-size:clamp(40px,10vw,72px);font-weight:700;background:linear-gradient(180deg,#fff2a8,var(--gold),#ff8a3d);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 4px 0 #7a2e12)}
+.wheelwrap{display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:center;margin-top:12px}.wheel{width:min(320px,100%);height:auto}.winfo{display:flex;flex-direction:column;gap:10px;min-width:220px;font-size:15px}.wnode:focus{outline:none}.wnode:focus circle{stroke:#3fd6ff;stroke-width:4}
 .guide{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px;margin-top:12px;font-size:15px}
 
 /* cartoon motion */
@@ -1111,6 +1112,32 @@ function bindBoard(){const P=progress(),el=document.getElementById('ptsn'),bd=do
   document.getElementById('btog').onclick=()=>set(!bd.classList.contains('open'));
   const from=PB_LAST===null?P.points:PB_LAST;PB_LAST=P.points;if(from===P.points)return;bd.classList.add('up');const t0=performance.now();
   const step=t=>{const k=Math.min(1,(t-t0)/1200);el.textContent=Math.round(from+(P.points-from)*(1-Math.pow(1-k,3)));if(k<1)requestAnimationFrame(step);else setTimeout(()=>bd.classList.remove('up'),700)};requestAnimationFrame(step);if(P.points>from)SFX.coin()}
+// ================= ELEMENT WHEEL (George's idea) =================
+// tap an element: green arrows show what it's strong against, red arrows show what beats it
+const WHEEL_ORDER=['fire','leaf','water','stone','storm','shadow'];
+const ELICON={fire:'M0 -9 C5 -3 6 2 3 6 C1 8 -1 8 -3 6 C-6 2 -4 -2 -2 -1 C-2 -5 -1 -7 0 -9Z',water:'M0 -9 C4 -3 7 1 7 4 C7 8 3 10 0 10 C-3 10 -7 8 -7 4 C-7 1 -4 -3 0 -9Z',
+  leaf:'M-7 7 C-8 -2 -2 -8 8 -8 C8 2 2 8 -7 7Z M-7 7 L4 -4',stone:'M-8 4 L-5 -5 L3 -8 L8 -1 L5 7 L-4 8Z',storm:'M2 -10 L-6 2 L0 2 L-3 10 L6 -3 L0 -3Z',shadow:'M3 -9 A9 9 0 1 0 9 3 A7 7 0 1 1 3 -9Z'};
+function wheel(box,sel){
+  const R=108,C=150,pos={};WHEEL_ORDER.forEach((e,k)=>{const a=-Math.PI/2+k*Math.PI/3;pos[e]=[C+R*Math.cos(a),C+R*Math.sin(a)]});
+  const arrows=[];for(const a of WHEEL_ORDER)for(const d of BEATS[a]){const [x1,y1]=pos[a],[x2,y2]=pos[d],dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy),ux=dx/L,uy=dy/L,
+    sx=x1+ux*31,sy=y1+uy*31,ex=x2-ux*36,ey=y2-uy*36,mx=(sx+ex)/2-uy*16,my=(sy+ey)/2+ux*16;
+    const st=!sel?'all':a===sel?'out':d===sel?'in':'off';arrows.push({a,d,path:`M${sx.toFixed(1)} ${sy.toFixed(1)} Q${mx.toFixed(1)} ${my.toFixed(1)} ${ex.toFixed(1)} ${ey.toFixed(1)}`,st})}
+  const col={all:null,out:'#3ad07a',in:'#ff5a4a',off:'#ffffff'};
+  const svg=`<svg viewBox="0 0 300 300" class="wheel" role="img" aria-label="Element wheel"><defs>${['out','in','all'].map(k=>`<marker id="ah-${k}" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10Z" fill="${k==='all'?'#cfe6ff':col[k]}"/></marker>`).join('')}</defs>
+    <circle cx="150" cy="150" r="${R}" fill="none" stroke="rgba(140,205,255,.15)" stroke-width="2"/>
+    ${arrows.filter(r=>r.st!=='off').map(r=>`<path d="${r.path}" fill="none" stroke="${r.st==='all'?ELHEX[r.a]:col[r.st]}" stroke-width="${r.st==='all'?2.2:4}" opacity="${r.st==='all'?.55:1}" stroke-linecap="round" marker-end="url(#ah-${r.st==='all'?'all':r.st})"/>`).join('')}
+    ${WHEEL_ORDER.map(e=>{const [x,y]=pos[e],on=sel===e,dim=sel&&!on&&!BEATS[sel].includes(e)&&!BEATS[e].includes(sel);return `<g class="wnode" data-el="${e}" tabindex="0" role="button" aria-label="${EL[e].n}" style="cursor:pointer;opacity:${dim?.35:1}">
+      <circle cx="${x}" cy="${y}" r="${on?31:27}" fill="${ELHEX[e]}" stroke="${on?'#fff':'rgba(255,255,255,.35)'}" stroke-width="${on?4:2}"/>
+      <path d="${ELICON[e]}" transform="translate(${x} ${y-6}) scale(1.05)" fill="${e==='leaf'?'#eaffd8':'#fff'}" stroke="${e==='leaf'?'#fff':'none'}" stroke-width="1.6" opacity=".95"/>
+      <text x="${x}" y="${y+16}" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff" font-family="Fredoka, sans-serif">${EL[e].n}</text></g>`}).join('')}
+    <text x="150" y="146" text-anchor="middle" font-size="12" font-weight="700" fill="#cfe6ff" font-family="Fredoka, sans-serif">${sel?EL[sel].n:'Tap an'}</text>
+    <text x="150" y="162" text-anchor="middle" font-size="12" font-weight="700" fill="#cfe6ff" font-family="Fredoka, sans-serif">${sel?'':'element!'}</text></svg>`;
+  const weak=sel?WHEEL_ORDER.filter(e=>BEATS[e].includes(sel)):[];
+  const info=sel?`<div class="winfo"><div><b style="color:#3ad07a">Strong against</b> ${BEATS[sel].map(chip).join(' ')}</div><div><b style="color:#ff6a5a">Weak to</b> ${weak.map(chip).join(' ')}</div><div class="muted small">Opposite element: ${chip(OPP[sel])} ${EL[sel].n} monsters can't learn ${EL[OPP[sel]].n} moves.</div></div>`
+    :`<p class="muted small">Arrows point from the winner to the loser. Strong moves do double damage, weak moves do half.</p>`;
+  box.innerHTML=`<div class="wheelwrap">${svg}${info}</div>`;
+  box.querySelectorAll('.wnode').forEach(n=>{const go=()=>{SFX.select();wheel(box,sel===n.dataset.el?null:n.dataset.el)};n.onclick=go;n.onkeydown=ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();go()}}});
+}
 function map(){
   if(S&&!S.look&&!S.lookSeen){S.lookSeen=1;save();return explorer(map)}
   if(S&&!S.buddy)return meetBuddy(map);
@@ -1120,11 +1147,11 @@ function map(){
   ${boardHTML()}
   <div class="box"><div class="row" style="justify-content:space-between">
     <div><div class="muted small">Click an island, or press its number, to sail there.</div></div>
-    <button class="btn ghost sm" id="gd">Element guide</button></div><div id="guide"></div></div>`;
+    <button class="btn ghost sm" id="gd">Element wheel</button></div><div id="guide"></div></div>`;
   bindBoard();MAPVIEW=runSeaView(document.getElementById('sea'),{locks:true,onPick:goIsland});
   document.getElementById('team').onclick=()=>team(map);bindJournal(map);document.getElementById('scode').onclick=showSaveCode;document.getElementById('labb').onclick=()=>openLab(map);document.getElementById('meb').onclick=()=>explorer(map);document.getElementById('askb').onclick=()=>buddySay(buddyHint(null),true);
   document.getElementById('home').onclick=title;
-  document.getElementById('gd').onclick=()=>{const g=document.getElementById('guide');g.innerHTML=g.innerHTML?'':`<div class="guide">${Object.keys(BEATS).map(e=>`<div>${chip(e)} beats ${BEATS[e].map(x=>EL[x].n).join(' and ')}</div>`).join('')}</div><p class="muted small" style="margin-top:8px">Strong moves do double damage. Weak moves do half.</p>`};
+  document.getElementById('gd').onclick=()=>{const g=document.getElementById('guide');if(g.innerHTML){g.innerHTML='';return}SFX.select();wheel(g,null)};
 }
 function goIsland(i){if(i===DEEP){SFX.whoosh();toast('You dive into the whirlpool... down, down, down!');return island(DEEP,'portal')}if(i>=S.unlocked){SFX.bump();return toast('Beat the champion before this island to unlock it.')}SFX.whoosh();island(i,true)}
 
@@ -1981,8 +2008,9 @@ function battle(cfg){hushBuddy();
     <div class="side player"><div class="art"><div class="plat"></div><div class="sprite" id="part"></div></div><div class="tag" id="ptag"></div></div>
   </div>
   <div class="box dialog"><div id="log" aria-live="polite"></div><div class="act" id="act"></div>
-  <div class="keys">Keys: arrows and Enter, or press a number. Space skips the text. Esc goes back.</div></div>`;
+  <div class="row" style="justify-content:space-between;gap:8px"><div class="keys">Keys: arrows and Enter, or press a number. Space skips the text. Esc goes back.</div><button class="btn ghost sm" id="bwheel">Element wheel</button></div></div>`;
   document.getElementById('log').onclick=()=>{SKIP=true};
+  document.getElementById('bwheel').onclick=()=>{SFX.select();const w=document.createElement('div');w.className='shop';w.innerHTML=`<div class="box"><div class="row" style="justify-content:space-between"><h2>Element wheel</h2><button class="btn ghost sm" id="wx">Close</button></div><div id="wbox"></div></div>`;document.body.appendChild(w);const close=()=>w.remove();w.onclick=e=>{if(e.target===w)close()};w.querySelector('#wx').onclick=close;wheel(w.querySelector('#wbox'),SP[enemy().sp].el)};
   drawSides();
   (async()=>{
     await say(B.wild?`A wild ${nm(enemy())} appeared!`:`${foe()} wants to battle!`);
