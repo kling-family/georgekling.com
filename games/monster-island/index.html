@@ -1172,7 +1172,7 @@ function wheel(box,sel){
   box.innerHTML=`<div class="wheelwrap">${svg}${info}</div>`;
   box.querySelectorAll('.wnode').forEach(n=>{const go=()=>{SFX.select();wheel(box,sel===n.dataset.el?null:n.dataset.el)};n.onclick=go;n.onkeydown=ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();go()}}});
 }
-// ================= SHOWDOWN SHOALS (George's idea) =================
+// ================= BATTLE BAY (George's idea) =================
 // a just-for-fun island: battle the other players saved on this device. Everyone's monsters are set to the same level, and nothing you win or lose changes your real game.
 const SD_LEVEL=25;
 const sdClone=m=>{const c={sp:m.sp,lvl:SD_LEVEL,xp:0,moves:[...(m.moves||[])],joy:m.joy};c.hp=maxHp(c);movesOf(c);return c};
@@ -1180,8 +1180,8 @@ function showdown(){
   SCREEN='showdown';WORLD=null;scrollTo(0,0);playSong('island');S.arena=S.arena||{};
   const others=profiles().filter(p=>!PROFILE||p.id!==PROFILE.id).map(p=>({p,sv:readSave(p.id)})).filter(o=>o.sv&&o.sv.team&&o.sv.team.length);
   others.forEach(o=>registerAll(o.sv));
-  app.innerHTML=`<div class="box hud"><span class="name">Showdown Shoals</span><button class="btn ghost sm" id="sdx">Back to the map</button></div>
-  <div class="box sdhead"><h2>Welcome to Showdown Shoals!</h2><p>Battle the other players on this device. Every monster on both teams is set to <b>level ${SD_LEVEL}</b>, so it's all about your team and your moves. It's just for fun: your real monsters don't gain or lose anything here.</p></div>
+  app.innerHTML=`<div class="box hud"><span class="name">Battle Bay</span><button class="btn ghost sm" id="sdx">Back to the map</button></div>
+  <div class="box sdhead"><h2>Welcome to Battle Bay!</h2><p>Battle the other players on this device. Every monster on both teams is set to <b>level ${SD_LEVEL}</b>, so it's all about your team and your moves. It's just for fun: your real monsters don't gain or lose anything here.</p></div>
   <div class="box"><h3 style="margin-bottom:10px">Pick who to battle</h3>
     ${others.length?`<div class="sdlist">${others.map(o=>{const r=S.arena[o.p.id]||{w:0,l:0};return `<div class="sdcard" style="--pc:${PCOL[o.p.color||0]}"><div><div class="disp" style="font-size:20px">${o.p.name}</div><div class="muted small">Your record: ${r.w} win${r.w===1?'':'s'}, ${r.l} loss${r.l===1?'':'es'}</div></div>
       <div class="sdmons">${o.sv.team.slice(0,6).map(m=>`<div title="${SP[m.sp]?SP[m.sp].name:''}">${SP[m.sp]?spr(m.sp):''}</div>`).join('')}</div><button class="btn hot" data-op="${o.p.id}">Battle!</button></div>`}).join('')}</div>`
@@ -1205,7 +1205,7 @@ function map(){
   if(S&&S.buddy&&!S.gift&&beginner()){S.gift=1;S.coins+=60;save();setTimeout(()=>buddySay(`I found 60 coins in my backpack! Take them. You can buy a new move at a Move Shop. Tip: until you beat your first champion, your monsters get Beginner's Luck and hit extra hard!`,true),900)}
   if(S&&S.buddy&&!S.compass&&(caughtCount()>=2||Object.values(S.tb||{}).some(t=>t.length)||S.beaten.length))return compassGift(map);
   SCREEN='map';applyLook();registerBuddy();trackPlay();WORLD=null;scrollTo(0,0);playSong('island');
-  app.innerHTML=`<div class="box hud"><span class="name">${PROFILE?PROFILE.name+"'s islands":"The Islands"}</span><div class="stats"><span class="pill"><i style="background:#ffc83d"></i>${S.coins} coins</span><span class="pill"><i style="background:#3fd6ff"></i>${S.supers} super nets</span>${journalBtn()}${S.beaten.includes(0)?'<button class="btn ghost sm" id="sdb">Showdown Shoals</button>':''}<button class="btn ghost sm" id="askb">Ask ${S.buddy.name}</button><button class="btn ghost sm" id="meb">My explorer</button><button class="btn ghost sm" id="labb">Monster Lab</button><button class="btn ghost sm" id="team">Team</button><button class="btn ghost sm" id="scode">Save code</button><button class="btn ghost sm" id="home">Switch player</button>${muteBtn()}</div></div>
+  app.innerHTML=`<div class="box hud"><span class="name">${PROFILE?PROFILE.name+"'s islands":"The Islands"}</span><div class="stats"><span class="pill"><i style="background:#ffc83d"></i>${S.coins} coins</span><span class="pill"><i style="background:#3fd6ff"></i>${S.supers} super nets</span>${journalBtn()}${S.beaten.includes(0)?'<button class="btn ghost sm" id="sdb">Battle Bay</button>':''}<button class="btn ghost sm" id="askb">Ask ${S.buddy.name}</button><button class="btn ghost sm" id="meb">My explorer</button><button class="btn ghost sm" id="labb">Monster Lab</button><button class="btn ghost sm" id="team">Team</button><button class="btn ghost sm" id="scode">Save code</button><button class="btn ghost sm" id="home">Switch player</button>${muteBtn()}</div></div>
   <div class="box np"><canvas class="scene" id="sea" data-aspect=".68"></canvas></div>
   ${boardHTML()}
   <div class="box"><div class="row" style="justify-content:space-between">
