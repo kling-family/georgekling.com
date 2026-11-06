@@ -264,6 +264,7 @@ table.lb td.top{color:var(--gold);font-weight:800}
 .pnote{font-size:11px;color:var(--dim);margin:6px 0 0;line-height:1.4}
 .card .tbtns{display:flex;flex-direction:column;gap:6px;align-items:flex-end}
 .card.picked{outline:2px solid var(--gold);border-radius:14px}
+.fb{display:inline-block;align-self:flex-start;width:max-content;margin-left:0!important;font-size:10px;font-weight:800;letter-spacing:.05em;color:#3a1a00;background:linear-gradient(90deg,#ffd25a,#ff8a2a);border-radius:6px;padding:1px 6px;margin-left:6px;vertical-align:2px}
 .labsub{font-family:var(--display);font-weight:600;font-size:15px;color:#5a6474;margin-top:4px}
 .labdots{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
 .labopts .labdots{justify-content:flex-start}
@@ -2098,11 +2099,11 @@ function opts(list){const a=document.getElementById('act');a.innerHTML=list.map(
 function menu(){
   document.getElementById('log').textContent=`What will ${nm(active())} do?`;
   opts([{label:'Fight',go:fightMenu},{label:'Net',off:!B.wild,sub:B.wild?(S.supers?`Super nets: ${S.supers}`:'Catch it!'):(B.trainer?"Can't catch a trainer's monster":"Can't catch a champion's monster"),go:netMenu},
-    {label:'Switch',off:S.team.filter(m=>m.hp>0).length<2,go:()=>swapMenu(false)},{label:'Run',sub:B.wild?'':'No coins if you run',go:async()=>{lock();if(B.trainer){const ws=WSTATE[B.isle];if(ws){ws.fled=ws.fled||new Set();ws.fled.add(B.trainer.k)}await say(`You ran away from ${B.trainer.name}!`,900);await say('Walk up to them when you are ready for a rematch.',1100)}else if(!B.wild){await say(`You ran away from ${foe()}! Come back when you're ready.`,1200)}else await say('You got away safely!');save();island(B.isle)}}]);
+    {label:'Dodge',off:!!B.tired,sub:B.tired?'Too tired after a Full Blast!':'50% chance to dodge',go:dodgeTurn},{label:'Switch',off:S.team.filter(m=>m.hp>0).length<2,go:()=>swapMenu(false)},{label:'Run',sub:B.wild?'':'No coins if you run',go:async()=>{lock();if(B.trainer){const ws=WSTATE[B.isle];if(ws){ws.fled=ws.fled||new Set();ws.fled.add(B.trainer.k)}await say(`You ran away from ${B.trainer.name}!`,900);await say('Walk up to them when you are ready for a rematch.',1100)}else if(!B.wild){await say(`You ran away from ${foe()}! Come back when you're ready.`,1200)}else await say('You got away safely!');save();island(B.isle)}}]);
 }
 function fightMenu(){
   const e=enemy();
-  opts([...movesOf(active()).map(m=>{const x=mult(m.el,SP[e.sp].el);return {label:m.name,sub:`${EL[m.el].n}, power ${m.pow}${m.first?', goes first':''}${m.acc?', can miss':''}${x>1?', STRONG!':x<1?', weak':''}`,go:()=>turn(m)}}),{label:'Back',id:'bk',go:menu}]);
+  opts([...movesOf(active()).map(m=>{const x=mult(m.el,SP[e.sp].el);return {label:m.name+(fullBlast(m)?' <span class="fb">FULL BLAST</span>':''),sub:`${EL[m.el].n}, power ${m.pow}${m.first?', goes first':''}${m.acc?', can miss':''}${fullBlast(m)?', can\'t be dodged':''}${x>1?', STRONG!':x<1?', weak':''}`,go:()=>turn(m)}}),{label:'Back',id:'bk',go:menu}]);
 }
 function netMenu(){
   if(!S.supers)return throwNet(false);
@@ -2118,10 +2119,16 @@ function swapMenu(forced){
   opts(list);
 }
 function enemyMove(e,p){const ms=movesOf(e);if(Math.random()<(B&&!B.wild?.1:.3))return ms[rnd(0,ms.length-1)];return ms.reduce((a,m)=>m.pow*mult(m.el,SP[p.sp].el)>a.pow*mult(a.el,SP[p.sp].el)?m:a)}
-async function attack(a,d,mv,side){
+// George's dodge idea: Dodge gives a 50% chance to avoid an attack. Full Blast moves (power 90+ and signature moves) can't be dodged,
+// and using a Full Blast move leaves your monster too worn out to dodge on the next turn
+const fullBlast=mv=>!!mv&&(mv.pow>=90||!!mv.sig);
+async function attack(a,d,mv,side,dodging){
   await say(`${side==='e'?(B.wild?'Wild ':'Their '):''}${nm(a)} used ${mv.name}!${mv.sig?' Its signature move!':''}`,mv.sig?700:350);
   anim(side==='p'?'part':'eart',side==='p'?'lunge-r':'lunge-l',300);await sleep(120);
   if(mv.acc&&Math.random()>mv.acc){await sleep(250);popText(side==='p'?'eart':'part','MISS','#9fb6d8',30);await say(`${nm(a)} missed!`,500);return}
+  if(dodging){if(fullBlast(mv)){popText(side==='p'?'eart':'part','FULL BLAST!','#ffb02e',26);await say(`It's a Full Blast! Too big to dodge!`,600)}
+    else if(Math.random()<.5){const tid=side==='p'?'eart':'part';anim(tid,side==='p'?'lunge-r':'lunge-l',300);SFX.whoosh();popText(tid,'DODGE!','#7ee4f4',34);await say(`${nm(d)} dodged it!`,650);return}
+    else await say(`${nm(d)} tried to dodge, but got hit!`,500)}
   await playFx(mv,side);
   let dmg=damage(a,d,mv);let held=false;if(S.team.includes(d)&&(d.joy??50)>=90&&d.hp>1&&dmg>=d.hp&&Math.random()<.35){dmg=d.hp-1;held=true}d.hp=Math.max(0,d.hp-dmg);const x=mult(mv.el,SP[d.sp].el),tid=side==='p'?'eart':'part';
   anim(tid,'hit',550);updTags();popText(tid,'-'+dmg,x>1?'#ffe07a':'#fff',x>1?44:34);if(x>1)setTimeout(()=>popText(tid,'SUPER!','#ff5a3d',26),180);
@@ -2133,10 +2140,17 @@ async function enemyAttack(){const e=enemy(),p=active();await attack(e,p,enemyMo
 async function turn(mv){
   if(B.busy)return;lock();
   const p=active(),e=enemy(),em=enemyMove(e,p);
+  // trainers and champions sometimes try to dodge instead of attacking
+  if(!B.wild&&!B.eTired&&Math.random()<.2){B.eTired=false;await say(`${foe()}'s ${nm(e)} gets ready to dodge!`,600);await attack(p,e,mv,'p',true);B.tired=fullBlast(mv);if(await faints()!=='ok')return;save();B.busy=false;menu();return}
   const pf=(mv.first?1:0)-(em.first?1:0);
   const order=(pf>0||(pf===0&&stat(p,3)>=stat(e,3)))?[[p,e,mv,'p'],[e,p,em,'e']]:[[e,p,em,'e'],[p,e,mv,'p']];
   for(const [a,d,m,side] of order){if(a.hp<=0||d.hp<=0)continue;await attack(a,d,m,side);if(await faints()!=='ok')return}
-  save();B.busy=false;menu();
+  B.tired=fullBlast(mv);B.eTired=fullBlast(em);save();B.busy=false;menu();
+}
+async function dodgeTurn(){
+  if(B.busy)return;lock();const p=active(),e=enemy(),em=enemyMove(e,p);
+  await say(`${nm(p)} gets ready to dodge!`,500);await attack(e,p,em,'e',true);B.eTired=fullBlast(em);B.tired=false;
+  if(await faints()!=='ok')return;save();B.busy=false;menu();
 }
 async function faints(){
   const e=enemy(),p=active();
