@@ -2150,7 +2150,7 @@ function netMenu(){
 function swapMenu(forced){
   if(forced)document.getElementById('log').textContent='Who will you send out?';
   const list=S.team.map((m,k)=>({label:nm(m),sub:`Lv ${m.lvl}, HP ${Math.max(0,m.hp)}/${maxHp(m)}`,off:m.hp<=0||k===B.pi,go:async()=>{
-    lock();B.pi=k;B.used.add(S.team[k]);drawSides('p');await say(`Go, ${nm(active())}!`);
+    lock();B.pi=k;B.used.add(S.team[k]);B.tired=false;drawSides('p');await say(`Go, ${nm(active())}!`);
     if(!forced){await enemyAttack();if(await faints()!=='ok')return}
     B.busy=false;menu()}}));
   if(!forced)list.push({label:'Back',id:'bk',go:menu});
@@ -2195,7 +2195,7 @@ async function faints(){
   if(e.hp<=0){
     SFX.faint();await anim('eart','faint',800);await say(`${B.wild?'Wild ':''}${nm(e)} fainted!`);
     await giveXp(e);
-    if(B.ei<B.enemies.length-1){B.ei++;document.getElementById('eart').classList.remove('faint');drawSides('e');
+    if(B.ei<B.enemies.length-1){B.ei++;B.eTired=false;document.getElementById('eart').classList.remove('faint');drawSides('e');
       await say(`${foe()} sends out ${nm(enemy())}!`);B.busy=false;save();menu();return 'next'}
     await winBattle();return 'over';
   }
