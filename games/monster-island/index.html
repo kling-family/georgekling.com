@@ -265,6 +265,7 @@ table.lb td.top{color:var(--gold);font-weight:800}
 .card .tbtns{display:flex;flex-direction:column;gap:6px;align-items:flex-end}
 .card.picked{outline:2px solid var(--gold);border-radius:14px}
 .fb{display:inline-block;align-self:flex-start;width:max-content;margin-left:0!important;font-size:10px;font-weight:800;letter-spacing:.05em;color:#3a1a00;background:linear-gradient(90deg,#ffd25a,#ff8a2a);border-radius:6px;padding:1px 6px;margin-left:6px;vertical-align:2px}
+.sdrex{border:2px solid #ff5a5a;background:linear-gradient(90deg,rgba(255,60,60,.15),var(--panel) 60%)}
 .sdhead p{margin-top:6px}.sdlist{display:flex;flex-direction:column;gap:10px}.sdcard{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:var(--panel-2);border:1px solid var(--line);border-left:5px solid var(--pc);border-radius:14px;padding:12px 14px}.sdcard>div:first-child{min-width:140px}.sdmons{display:flex;gap:4px;flex:1;flex-wrap:wrap}.sdmons>div{width:46px;height:46px}
 .labsub{font-family:var(--display);font-weight:600;font-size:15px;color:#5a6474;margin-top:4px}
 .labdots{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
@@ -1176,17 +1177,26 @@ function wheel(box,sel){
 // a just-for-fun island: battle the other players saved on this device. Everyone's monsters are set to the same level, and nothing you win or lose changes your real game.
 const SD_LEVEL=25;
 const sdClone=m=>{const c={sp:m.sp,lvl:SD_LEVEL,xp:0,moves:[...(m.moves||[])],joy:m.joy};c.hp=maxHp(c);movesOf(c);return c};
+// Rival Rex sometimes waits at Battle Bay, with a team built to beat yours
+function rexTeam(){const base=S.starter||'bubblop',ctr={flicklet:'bubblop',bubblop:'sproutle',sproutle:'flicklet'}[base]||'flicklet';
+  const pool=BOOK().filter(sp=>!SP[sp].legend&&!SP[sp].rare&&sp!==ctr&&!STARTERS.includes(sp)),pick=[evolved(ctr,SD_LEVEL)];while(pick.length<6&&pool.length){const e=evolved(pool.splice(Math.floor(Math.random()*pool.length),1)[0],SD_LEVEL);if(!pick.includes(e))pick.push(e)}
+  return pick.map(sp=>mk(sp,SD_LEVEL))}
+const REX_HI=["There you are! I've been waiting all day. Let's settle this!","Same levels, no excuses. Ready to lose?","I trained my team just for you. Let's go!","Battle Bay is MY bay. Prove you belong here!"];
 function showdown(){
   SCREEN='showdown';WORLD=null;scrollTo(0,0);playSong('island');S.arena=S.arena||{};
+  if(showdown.rex===undefined)showdown.rex=Math.random()<.5;const rex=showdown.rex,rr=S.arena.rex||{w:0,l:0};
   const others=profiles().filter(p=>!PROFILE||p.id!==PROFILE.id).map(p=>({p,sv:readSave(p.id)})).filter(o=>o.sv&&o.sv.team&&o.sv.team.length);
   others.forEach(o=>registerAll(o.sv));
   app.innerHTML=`<div class="box hud"><span class="name">Battle Bay</span><button class="btn ghost sm" id="sdx">Back to the map</button></div>
   <div class="box sdhead"><h2>Welcome to Battle Bay!</h2><p>Battle the other players on this device. Every monster on both teams is set to <b>level ${SD_LEVEL}</b>, so it's all about your team and your moves. It's just for fun: your real monsters don't gain or lose anything here.</p></div>
+  ${rex?`<div class="box sdrex"><div class="row" style="gap:14px;align-items:center;flex-wrap:nowrap"><canvas id="rexcv" width="120" height="150" style="width:60px;height:75px;flex:none"></canvas><div style="flex:1"><div class="disp" style="font-size:20px">Rival Rex is here!</div><div>"${REX_HI[Math.floor(Math.random()*REX_HI.length)]}"</div><div class="muted small">Your record vs Rex: ${rr.w} win${rr.w===1?'':'s'}, ${rr.l} loss${rr.l===1?'':'es'}</div></div><button class="btn hot" id="rexb">Battle Rex!</button></div></div>`:''}
   <div class="box"><h3 style="margin-bottom:10px">Pick who to battle</h3>
     ${others.length?`<div class="sdlist">${others.map(o=>{const r=S.arena[o.p.id]||{w:0,l:0};return `<div class="sdcard" style="--pc:${PCOL[o.p.color||0]}"><div><div class="disp" style="font-size:20px">${o.p.name}</div><div class="muted small">Your record: ${r.w} win${r.w===1?'':'s'}, ${r.l} loss${r.l===1?'':'es'}</div></div>
       <div class="sdmons">${o.sv.team.slice(0,6).map(m=>`<div title="${SP[m.sp]?SP[m.sp].name:''}">${SP[m.sp]?spr(m.sp):''}</div>`).join('')}</div><button class="btn hot" data-op="${o.p.id}">Battle!</button></div>`}).join('')}</div>`
-    :`<p class="muted">There's nobody else on this device yet. Make another player (tap <b>Switch player</b> on the map, then <b>New player</b>) and you can battle each other here. Try it with a brother, sister or friend!</p>`}</div>`;
-  document.getElementById('sdx').onclick=()=>{SFX.select();map()};
+    :`<p class="muted">${rex?'Rex is the only one here right now. ':''}There's nobody else on this device yet. Make another player (tap <b>Switch player</b> on the map, then <b>New player</b>) and you can battle each other here. Try it with a brother, sister or friend!</p>`}</div>`;
+  document.getElementById('sdx').onclick=()=>{SFX.select();showdown.rex=undefined;map()};
+  const rb=document.getElementById('rexb');if(rb){const cv=document.getElementById('rexcv'),cx=cv.getContext('2d');cx.setTransform(100,0,0,100,10,42);drawPerson(cx,0,0,'down',0,RIVALPAL);
+    rb.onclick=()=>{showdown.rex=false;SFX.alert();const real=S.team;S.team=real.map(sdClone);battle({showdown:true,opp:'rex',isle:Math.min(S.at||0,MAIN-1),trainer:{k:-9,name:'Rival Rex',showdown:true},enemies:rexTeam()});B.realTeam=real}}
   app.querySelectorAll('[data-op]').forEach(b=>b.onclick=()=>{const o=others.find(x=>x.p.id===b.dataset.op);startShowdown(o)});
   focusFirst('.hud');
 }
@@ -2268,7 +2278,7 @@ async function checkPiece(i){
 }
 async function winBattle(){
   stopSong();doVictoryHop();
-  if(B.showdown){SFX.win();await say(`You won the showdown against ${B.trainer.name}!`,1200);return endShowdown(true)}
+  if(B.showdown){SFX.win();await say(`You won the showdown against ${B.trainer.name}!`,1200);if(B.opp==='rex')await say('Rex: "WHAT?! Fine... but next time I\'m winning!"',1300);return endShowdown(true)}
   if(B.wild){SFX.win();await say('You won the battle!');const c=3+Math.floor(enemy().lvl/2);S.coins+=c;await say(`You found ${c} coins!`,700);save();island(B.isle);return}
   if(B.trainer){const n=Math.round((8+B.enemies.reduce((a,m)=>a+m.lvl,0))*(B.trainer.again?.5:1));SFX.win();await say(`You beat ${B.trainer.name}!`,900);
     if(!B.trainer.again)S.tb[B.isle].push(B.trainer.k);S.coins+=n;await say(`${B.trainer.name} gives you ${n} coins.`,900);
@@ -2286,7 +2296,7 @@ async function winBattle(){
 }
 async function loseBattle(){
   stopSong();
-  if(B.showdown){await say(`${B.trainer.name} wins this showdown! Good battle!`,1200);return endShowdown(false)}
+  if(B.showdown){await say(`${B.trainer.name} wins this showdown! Good battle!`,1200);if(B.opp==='rex')await say('Rex: "Ha! Told you my team was better!"',1300);return endShowdown(false)}
   await say('All your monsters fainted.',900);
   await say('You hurry back to rest. Your team gets all better.',1100);
   S.team.forEach(m=>m.hp=maxHp(m));B.lost=true;save();island(B.isle);
