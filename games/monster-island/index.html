@@ -17,7 +17,7 @@
 </head>
 <body>
 <a class="homelink" href="/games/">&larr; Back to George's games</a>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&display=swap">
 <style>
 /* Layout: one centered column on a deep-ocean page. Glass panels float over full-bleed game canvases. */
 :root{
@@ -154,7 +154,7 @@ canvas.scene{display:block;width:100%;height:auto;touch-action:none}
 @keyframes pop{from{transform:translate(-50%,12px);opacity:0}}
 .win{display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center}
 .win h1{font-size:clamp(40px,10vw,72px);font-weight:700;background:linear-gradient(180deg,#fff2a8,var(--gold),#ff8a3d);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 4px 0 #7a2e12)}
-.wheelwrap{display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:center;margin-top:12px}.wheel{width:min(320px,100%);height:auto}.winfo{display:flex;flex-direction:column;gap:10px;min-width:220px;font-size:15px}.wnode:focus{outline:none}.wnode:focus circle{stroke:#3fd6ff;stroke-width:4}
+.wheelwrap{display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:center;margin-top:12px}.wheel{width:min(330px,100%);height:auto;filter:drop-shadow(0 8px 18px rgba(0,0,0,.5))}.winfo{display:flex;flex-direction:column;gap:10px;min-width:220px;max-width:300px;font-size:15px;color:#3a2a10;font-family:Cinzel,Georgia,'Times New Roman',serif;background:radial-gradient(120% 120% at 30% 20%,#f4e8c4,#e2cf9c 70%,#cdb37a);border:2px solid #8a6a2a;border-radius:6px;padding:14px 16px;box-shadow:inset 0 0 18px rgba(120,80,20,.35),0 6px 16px rgba(0,0,0,.35)}.winfo .small{color:#5a4420}.wnode:focus{outline:none}.wnode:focus circle{stroke:#3fd6ff;stroke-width:4}
 .guide{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px;margin-top:12px;font-size:15px}
 
 /* cartoon motion */
@@ -1118,23 +1118,41 @@ const WHEEL_ORDER=['fire','leaf','water','stone','storm','shadow'];
 const ELICON={fire:'M0 -9 C5 -3 6 2 3 6 C1 8 -1 8 -3 6 C-6 2 -4 -2 -2 -1 C-2 -5 -1 -7 0 -9Z',water:'M0 -9 C4 -3 7 1 7 4 C7 8 3 10 0 10 C-3 10 -7 8 -7 4 C-7 1 -4 -3 0 -9Z',
   leaf:'M-7 7 C-8 -2 -2 -8 8 -8 C8 2 2 8 -7 7Z M-7 7 L4 -4',stone:'M-8 4 L-5 -5 L3 -8 L8 -1 L5 7 L-4 8Z',storm:'M2 -10 L-6 2 L0 2 L-3 10 L6 -3 L0 -3Z',shadow:'M3 -9 A9 9 0 1 0 9 3 A7 7 0 1 1 3 -9Z'};
 function wheel(box,sel){
-  const R=108,C=150,pos={};WHEEL_ORDER.forEach((e,k)=>{const a=-Math.PI/2+k*Math.PI/3;pos[e]=[C+R*Math.cos(a),C+R*Math.sin(a)]});
+  const R=104,C=150,pos={};WHEEL_ORDER.forEach((e,k)=>{const a=-Math.PI/2+k*Math.PI/3;pos[e]=[C+R*Math.cos(a),C+R*Math.sin(a)]});
+  const MUTE={fire:'#c4502e',leaf:'#5f8f3a',water:'#2f6f9a',stone:'#8a7a62',storm:'#c9a032',shadow:'#5a3f86'};
   const arrows=[];for(const a of WHEEL_ORDER)for(const d of BEATS[a]){const [x1,y1]=pos[a],[x2,y2]=pos[d],dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy),ux=dx/L,uy=dy/L,
-    sx=x1+ux*31,sy=y1+uy*31,ex=x2-ux*36,ey=y2-uy*36,mx=(sx+ex)/2-uy*16,my=(sy+ey)/2+ux*16;
+    sx=x1+ux*29,sy=y1+uy*29,ex=x2-ux*34,ey=y2-uy*34,mx=(sx+ex)/2-uy*16,my=(sy+ey)/2+ux*16;
     const st=!sel?'all':a===sel?'out':d===sel?'in':'off';arrows.push({a,d,path:`M${sx.toFixed(1)} ${sy.toFixed(1)} Q${mx.toFixed(1)} ${my.toFixed(1)} ${ex.toFixed(1)} ${ey.toFixed(1)}`,st})}
-  const col={all:null,out:'#3ad07a',in:'#ff5a4a',off:'#ffffff'};
-  const svg=`<svg viewBox="0 0 300 300" class="wheel" role="img" aria-label="Element wheel"><defs>${['out','in','all'].map(k=>`<marker id="ah-${k}" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10Z" fill="${k==='all'?'#cfe6ff':col[k]}"/></marker>`).join('')}</defs>
-    <circle cx="150" cy="150" r="${R}" fill="none" stroke="rgba(140,205,255,.15)" stroke-width="2"/>
-    ${arrows.filter(r=>r.st!=='off').map(r=>`<path d="${r.path}" fill="none" stroke="${r.st==='all'?ELHEX[r.a]:col[r.st]}" stroke-width="${r.st==='all'?2.2:4}" opacity="${r.st==='all'?.55:1}" stroke-linecap="round" marker-end="url(#ah-${r.st==='all'?'all':r.st})"/>`).join('')}
-    ${WHEEL_ORDER.map(e=>{const [x,y]=pos[e],on=sel===e,dim=sel&&!on&&!BEATS[sel].includes(e)&&!BEATS[e].includes(sel);return `<g class="wnode" data-el="${e}" tabindex="0" role="button" aria-label="${EL[e].n}" style="cursor:pointer;opacity:${dim?.35:1}">
-      <circle cx="${x}" cy="${y}" r="${on?31:27}" fill="${ELHEX[e]}" stroke="${on?'#fff':'rgba(255,255,255,.35)'}" stroke-width="${on?4:2}"/>
-      <path d="${ELICON[e]}" transform="translate(${x} ${y-6}) scale(1.05)" fill="${e==='leaf'?'#eaffd8':'#fff'}" stroke="${e==='leaf'?'#fff':'none'}" stroke-width="1.6" opacity=".95"/>
-      <text x="${x}" y="${y+16}" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff" font-family="Fredoka, sans-serif">${EL[e].n}</text></g>`}).join('')}
-    <text x="150" y="146" text-anchor="middle" font-size="12" font-weight="700" fill="#cfe6ff" font-family="Fredoka, sans-serif">${sel?EL[sel].n:'Tap an'}</text>
-    <text x="150" y="162" text-anchor="middle" font-size="12" font-weight="700" fill="#cfe6ff" font-family="Fredoka, sans-serif">${sel?'':'element!'}</text></svg>`;
+  const col={all:'#e8c98a',out:'#9be06a',in:'#ff6a3a'};
+  const RUNES=['M-3 -4 L0 4 L3 -4','M-3 -4 L-3 4 M-3 0 L3 -4 M-3 0 L3 4','M0 -4 L0 4 M-3 -1 L3 -1','M-3 4 L0 -4 L3 4 M-2 1 L2 1','M-3 -4 L3 4 M3 -4 L-3 4','M-3 -4 L3 -4 L-3 4 L3 4'];
+  const ticks=[...Array(48)].map((_,k)=>{const a=k/48*Math.PI*2,r1=136,r2=k%4?140:144;return `<line x1="${(C+r1*Math.cos(a)).toFixed(1)}" y1="${(C+r1*Math.sin(a)).toFixed(1)}" x2="${(C+r2*Math.cos(a)).toFixed(1)}" y2="${(C+r2*Math.sin(a)).toFixed(1)}"/>`}).join('');
+  const runes=[...Array(12)].map((_,k)=>{const a=(k+.5)/12*Math.PI*2-Math.PI/2,x=C+128*Math.cos(a),y=C+128*Math.sin(a);return `<path d="${RUNES[k%6]}" transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${(a*180/Math.PI+90).toFixed(0)})"/>`}).join('');
+  const F='Cinzel, Georgia, \'Times New Roman\', serif';
+  const svg=`<svg viewBox="0 0 300 300" class="wheel" role="img" aria-label="Element wheel"><defs>
+    <radialGradient id="wstone" cx=".42" cy=".38" r=".75"><stop offset="0" stop-color="#7a6a50"/><stop offset=".65" stop-color="#4f4330"/><stop offset="1" stop-color="#2e2618"/></radialGradient>
+    <linearGradient id="wbronze" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f0d48a"/><stop offset=".45" stop-color="#b8862e"/><stop offset="1" stop-color="#6a4a14"/></linearGradient>
+    <radialGradient id="wgem" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#fff" stop-opacity=".45"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".45"/></radialGradient>
+    <filter id="wrough"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="4"/><feColorMatrix values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .35 0"/><feComposite in2="SourceGraphic" operator="in"/></filter>
+    ${['out','in','all'].map(k=>`<marker id="ah-${k}" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 L3 5Z" fill="${col[k]}"/></marker>`).join('')}</defs>
+    <circle cx="150" cy="150" r="147" fill="url(#wbronze)"/><circle cx="150" cy="150" r="147" fill="#000" filter="url(#wrough)" opacity=".6"/>
+    <g stroke="#3a2a0c" stroke-width="1.4" fill="none" stroke-linecap="round">${ticks}</g>
+    <circle cx="150" cy="150" r="133" fill="url(#wstone)" stroke="#2a1e08" stroke-width="2"/><circle cx="150" cy="150" r="133" fill="#000" filter="url(#wrough)"/>
+    <g stroke="#d9b56a" stroke-width="1.5" fill="none" stroke-linecap="round" opacity=".75">${runes}</g>
+    <circle cx="150" cy="150" r="118" fill="none" stroke="#c9a14e" stroke-width="1.2" opacity=".6"/>
+    <circle cx="150" cy="150" r="${R}" fill="none" stroke="#c9a14e" stroke-width="1" stroke-dasharray="2 5" opacity=".55"/>
+    <g opacity=".55"><circle cx="150" cy="150" r="30" fill="#3a3020" stroke="#c9a14e" stroke-width="1.5"/>${[...Array(8)].map((_,k)=>`<path d="M150 ${150-36} L${150+4} ${150-29} L${150-4} ${150-29}Z" fill="#c9a14e" transform="rotate(${k*45} 150 150)"/>`).join('')}</g>
+    ${arrows.filter(r=>r.st!=='off').map(r=>`<path d="${r.path}" fill="none" stroke="#1a1208" stroke-width="${r.st==='all'?4.4:6.5}" opacity=".55" stroke-linecap="round"/><path d="${r.path}" fill="none" stroke="${col[r.st]}" stroke-width="${r.st==='all'?2:3.6}" opacity="${r.st==='all'?.8:1}" stroke-linecap="round" marker-end="url(#ah-${r.st})"/>`).join('')}
+    ${WHEEL_ORDER.map(e=>{const [x,y]=pos[e],on=sel===e,dim=sel&&!on&&!BEATS[sel].includes(e)&&!BEATS[e].includes(sel),r=on?29:25;return `<g class="wnode" data-el="${e}" tabindex="0" role="button" aria-label="${EL[e].n}" style="cursor:pointer;opacity:${dim?.4:1}">
+      <circle cx="${x}" cy="${y+2}" r="${r+3}" fill="#1a1208" opacity=".5"/>
+      <circle cx="${x}" cy="${y}" r="${r+3}" fill="url(#wbronze)" stroke="${on?'#fff3c4':'#3a2a0c'}" stroke-width="${on?2.5:1.2}"/>
+      <circle cx="${x}" cy="${y}" r="${r-2}" fill="${MUTE[e]}"/><circle cx="${x}" cy="${y}" r="${r-2}" fill="url(#wgem)"/><circle cx="${x}" cy="${y}" r="${r-2}" fill="#000" filter="url(#wrough)" opacity=".7"/>
+      <path d="${ELICON[e]}" transform="translate(${x} ${y-5}) scale(1)" fill="${e==='leaf'?'#f3e6c0':'#f6ead0'}" stroke="${e==='leaf'?'#f6ead0':'none'}" stroke-width="1.6" opacity=".95"/>
+      <text x="${x}" y="${y+15}" text-anchor="middle" font-size="8.5" font-weight="700" letter-spacing=".8" fill="#fbf0d4" font-family="${F}">${EL[e].n.toUpperCase()}</text></g>`}).join('')}
+    <text x="150" y="${sel?154:148}" text-anchor="middle" font-size="${sel?11:9.5}" font-weight="700" letter-spacing="1" fill="#f0d48a" font-family="${F}">${sel?EL[sel].n.toUpperCase():'TOUCH A'}</text>
+    ${sel?'':`<text x="150" y="160" text-anchor="middle" font-size="9.5" font-weight="700" letter-spacing="1" fill="#f0d48a" font-family="${F}">STONE</text>`}</svg>`;
   const weak=sel?WHEEL_ORDER.filter(e=>BEATS[e].includes(sel)):[];
-  const info=sel?`<div class="winfo"><div><b style="color:#3ad07a">Strong against</b> ${BEATS[sel].map(chip).join(' ')}</div><div><b style="color:#ff6a5a">Weak to</b> ${weak.map(chip).join(' ')}</div><div class="muted small">Opposite element: ${chip(OPP[sel])} ${EL[sel].n} monsters can't learn ${EL[OPP[sel]].n} moves.</div></div>`
-    :`<p class="muted small">Arrows point from the winner to the loser. Strong moves do double damage, weak moves do half.</p>`;
+  const info=sel?`<div class="winfo"><div><b style="color:#3f6a1e">Strong against</b> ${BEATS[sel].map(chip).join(' ')}</div><div><b style="color:#9a2a14">Weak to</b> ${weak.map(chip).join(' ')}</div><div class="small">Opposite element: ${chip(OPP[sel])} ${EL[sel].n} monsters can't learn ${EL[OPP[sel]].n} moves.</div></div>`
+    :`<div class="winfo"><div class="small">The ancient wheel of the islands. Arrows point from the winner to the loser. Strong moves do double damage, weak moves do half.</div></div>`;
   box.innerHTML=`<div class="wheelwrap">${svg}${info}</div>`;
   box.querySelectorAll('.wnode').forEach(n=>{const go=()=>{SFX.select();wheel(box,sel===n.dataset.el?null:n.dataset.el)};n.onclick=go;n.onkeydown=ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();go()}}});
 }
