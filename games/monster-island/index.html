@@ -615,6 +615,12 @@ function genMap(i){
   const rn=rng(i*131+5),extra=[[0,2],[1,2],[2,2],[3,1]];let ek=3;
   if(!secret)for(const [z,cnt] of extra)for(let tries2=0,got=0;tries2<2;tries2++){const want=cnt-trainers.filter(t=>!t.leader&&t.zone===z).length;if(want<=0)break;const pts=[];for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++)if((g[y][x]===T_PATH||(tries2>0&&(g[y][x]===T_GROUND||g[y][x]===T_SAND)))&&dist[y][x]>3&&zoneOf(x,y)===z&&!gates.some(gt=>Math.abs(gt.x-x)+Math.abs(gt.y-y)<3))pts.push({x,y});
     for(let n=0,tries=0;n<want&&tries<300&&pts.length;tries++){const s=beside(pts[Math.floor(rn()*pts.length)],tries<150?6:4);if(s){trainers.push({...s,k:ek++,leader:false,zone:z});n++}}}
+  // every town gets its own patch of tall grass, so new players can find wild monsters before the first gate
+  if(!secret)for(let z=0;z<4;z++){let have=0;const cand=[];for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){if(dist[y][x]<0||zoneOf(x,y)!==z)continue;if(g[y][x]===T_GRASS)have++;
+      else if(g[y][x]===T_GROUND&&!onRoute(x,y)&&!houses.some(h=>Math.abs(h.x-x)+Math.abs(h.y-y)<2)&&!chests.some(c=>c.x===x&&c.y===y)&&!trainers.some(t=>Math.abs(t.x-x)+Math.abs(t.y-y)<2)&&!springs.some(q=>q.x===x&&q.y===y)&&!(x===tent.x&&y===tent.y)&&!(x===champ.x&&y===champ.y)&&Math.abs(x-start.x)+Math.abs(y-start.y)>2&&!gates.some(gt=>Math.abs(gt.x-x)+Math.abs(gt.y-y)<2))cand.push({x,y})}
+    if(have>=14||!cand.length)continue;const cx=cand.reduce((a,c)=>a+c.x,0)/cand.length,cy=cand.reduce((a,c)=>a+c.y,0)/cand.length;
+    const seed=cand.reduce((a,c)=>Math.hypot(c.x-cx,c.y-cy)<Math.hypot(a.x-cx,a.y-cy)?c:a);cand.sort((a,b)=>Math.hypot(a.x-seed.x,a.y-seed.y)-Math.hypot(b.x-seed.x,b.y-seed.y));
+    for(const c of cand.slice(0,16-have))g[c.y][c.x]=T_GRASS}
   const grass=[],objs=[];
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){if(g[y][x]===T_GRASS&&dist[y][x]>=0)grass.push({x,y});if(g[y][x]===T_OBST){const h=hash(x+i*99,y);objs.push({x,y,s:.85+(h%30)/100,h})}}
   // each main island hides one secret: a tree, rock, coral or crystal you can bump into
@@ -1312,7 +1318,8 @@ function trainerTalk(tr){
 }
 function spawn(rare,minD){
   const {m,ws,p,i}=WORLD,s=ISLES[i],t=performance.now();
-  const opts=m.grass.filter(c=>!monAt(c.x,c.y)&&Math.abs(c.x-p.x)+Math.abs(c.y-p.y)>=minD);
+  const pz=m.secret?9:m.zoneOf(p.x,p.y),reach=c=>m.secret||m.zoneOf(c.x,c.y)<=pz||gateOpen(i,m.zoneOf(c.x,c.y)-1);
+  let opts=m.grass.filter(c=>!monAt(c.x,c.y)&&Math.abs(c.x-p.x)+Math.abs(c.y-p.y)>=minD&&reach(c));if(opts.length<3)opts=m.grass.filter(c=>!monAt(c.x,c.y)&&Math.abs(c.x-p.x)+Math.abs(c.y-p.y)>=minD);
   if(!opts.length)return false;const c=opts[Math.floor(Math.random()*opts.length)];
   let night=!rare&&i<MAIN&&isNight()&&Math.random()<.45,rp=[s.rare,...(s.rares||[])],sp=rare?rp[Math.floor(Math.random()*rp.length)]:night?NIGHT[i][rnd(0,1)]:s.wild[rnd(0,s.wild.length-1)];
   // Spikeburst and Hydro Washy are one of a kind: only one roams at a time, it's level 28, and once you own it no more appear
