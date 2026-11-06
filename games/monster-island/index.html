@@ -265,6 +265,7 @@ table.lb td.top{color:var(--gold);font-weight:800}
 .card .tbtns{display:flex;flex-direction:column;gap:6px;align-items:flex-end}
 .card.picked{outline:2px solid var(--gold);border-radius:14px}
 .fb{display:inline-block;align-self:flex-start;width:max-content;margin-left:0!important;font-size:10px;font-weight:800;letter-spacing:.05em;color:#3a1a00;background:linear-gradient(90deg,#ffd25a,#ff8a2a);border-radius:6px;padding:1px 6px;margin-left:6px;vertical-align:2px}
+.sdhead p{margin-top:6px}.sdlist{display:flex;flex-direction:column;gap:10px}.sdcard{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:var(--panel-2);border:1px solid var(--line);border-left:5px solid var(--pc);border-radius:14px;padding:12px 14px}.sdcard>div:first-child{min-width:140px}.sdmons{display:flex;gap:4px;flex:1;flex-wrap:wrap}.sdmons>div{width:46px;height:46px}
 .labsub{font-family:var(--display);font-weight:600;font-size:15px;color:#5a6474;margin-top:4px}
 .labdots{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
 .labopts .labdots{justify-content:flex-start}
@@ -440,7 +441,7 @@ function load(){if(!PROFILE)return null;try{const r=localStorage.getItem(keyFor(
 const TEAM_MAX=6;
 function fixTeam(sv){if(!sv||!sv.team)return sv;sv.box=sv.box||[];if(sv.team.length>TEAM_MAX){const extra=sv.team.splice(TEAM_MAX);extra.forEach(m=>m.hp=maxHp(m));sv.box.push(...extra)}return sv}
 function addMon(m){if(S.team.length<TEAM_MAX){S.team.push(m);return ''}m.hp=maxHp(m);S.box=S.box||[];S.box.push(m);return `Your team is full, so ${nm(m)} went to Monster Camp. Swap it in from the Team screen!`}
-function save(){if(!PROFILE||!S)return;try{localStorage.setItem(keyFor(PROFILE.id),JSON.stringify(S))}catch(e){}}
+function save(){if(!PROFILE||!S)return;const t=S.team;if(B&&B.showdown&&B.realTeam)S.team=B.realTeam;try{localStorage.setItem(keyFor(PROFILE.id),JSON.stringify(S))}catch(e){}S.team=t}
 
 // ================= SOUND =================
 let AC=null,MUTE=false;try{MUTE=localStorage.getItem('mi-mute')==='1'}catch(e){}
@@ -1171,20 +1172,47 @@ function wheel(box,sel){
   box.innerHTML=`<div class="wheelwrap">${svg}${info}</div>`;
   box.querySelectorAll('.wnode').forEach(n=>{const go=()=>{SFX.select();wheel(box,sel===n.dataset.el?null:n.dataset.el)};n.onclick=go;n.onkeydown=ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();go()}}});
 }
+// ================= SHOWDOWN SHOALS (George's idea) =================
+// a just-for-fun island: battle the other players saved on this device. Everyone's monsters are set to the same level, and nothing you win or lose changes your real game.
+const SD_LEVEL=25;
+const sdClone=m=>{const c={sp:m.sp,lvl:SD_LEVEL,xp:0,moves:[...(m.moves||[])],joy:m.joy};c.hp=maxHp(c);movesOf(c);return c};
+function showdown(){
+  SCREEN='showdown';WORLD=null;scrollTo(0,0);playSong('island');S.arena=S.arena||{};
+  const others=profiles().filter(p=>!PROFILE||p.id!==PROFILE.id).map(p=>({p,sv:readSave(p.id)})).filter(o=>o.sv&&o.sv.team&&o.sv.team.length);
+  others.forEach(o=>registerAll(o.sv));
+  app.innerHTML=`<div class="box hud"><span class="name">Showdown Shoals</span><button class="btn ghost sm" id="sdx">Back to the map</button></div>
+  <div class="box sdhead"><h2>Welcome to Showdown Shoals!</h2><p>Battle the other players on this device. Every monster on both teams is set to <b>level ${SD_LEVEL}</b>, so it's all about your team and your moves. It's just for fun: your real monsters don't gain or lose anything here.</p></div>
+  <div class="box"><h3 style="margin-bottom:10px">Pick who to battle</h3>
+    ${others.length?`<div class="sdlist">${others.map(o=>{const r=S.arena[o.p.id]||{w:0,l:0};return `<div class="sdcard" style="--pc:${PCOL[o.p.color||0]}"><div><div class="disp" style="font-size:20px">${o.p.name}</div><div class="muted small">Your record: ${r.w} win${r.w===1?'':'s'}, ${r.l} loss${r.l===1?'':'es'}</div></div>
+      <div class="sdmons">${o.sv.team.slice(0,6).map(m=>`<div title="${SP[m.sp]?SP[m.sp].name:''}">${SP[m.sp]?spr(m.sp):''}</div>`).join('')}</div><button class="btn hot" data-op="${o.p.id}">Battle!</button></div>`}).join('')}</div>`
+    :`<p class="muted">There's nobody else on this device yet. Make another player (tap <b>Switch player</b> on the map, then <b>New player</b>) and you can battle each other here. Try it with a brother, sister or friend!</p>`}</div>`;
+  document.getElementById('sdx').onclick=()=>{SFX.select();map()};
+  app.querySelectorAll('[data-op]').forEach(b=>b.onclick=()=>{const o=others.find(x=>x.p.id===b.dataset.op);startShowdown(o)});
+  focusFirst('.hud');
+}
+function startShowdown(o){
+  SFX.alert();const real=S.team;S.team=real.map(sdClone);
+  battle({showdown:true,opp:o.p.id,isle:Math.min(S.at||0,MAIN-1),trainer:{k:-9,name:o.p.name,showdown:true},enemies:o.sv.team.slice(0,6).map(sdClone)});
+  B.realTeam=real;
+}
+async function endShowdown(won){
+  stopSong();const id=B.opp;S.team=B.realTeam;S.arena=S.arena||{};const r=S.arena[id]=S.arena[id]||{w:0,l:0};if(won===true)r.w++;else if(won===false)r.l++;
+  B=null;save();showdown();
+}
 function map(){
   if(S&&!S.look&&!S.lookSeen){S.lookSeen=1;save();return explorer(map)}
   if(S&&!S.buddy)return meetBuddy(map);
   if(S&&S.buddy&&!S.gift&&beginner()){S.gift=1;S.coins+=60;save();setTimeout(()=>buddySay(`I found 60 coins in my backpack! Take them. You can buy a new move at a Move Shop. Tip: until you beat your first champion, your monsters get Beginner's Luck and hit extra hard!`,true),900)}
   if(S&&S.buddy&&!S.compass&&(caughtCount()>=2||Object.values(S.tb||{}).some(t=>t.length)||S.beaten.length))return compassGift(map);
   SCREEN='map';applyLook();registerBuddy();trackPlay();WORLD=null;scrollTo(0,0);playSong('island');
-  app.innerHTML=`<div class="box hud"><span class="name">${PROFILE?PROFILE.name+"'s islands":"The Islands"}</span><div class="stats"><span class="pill"><i style="background:#ffc83d"></i>${S.coins} coins</span><span class="pill"><i style="background:#3fd6ff"></i>${S.supers} super nets</span>${journalBtn()}<button class="btn ghost sm" id="askb">Ask ${S.buddy.name}</button><button class="btn ghost sm" id="meb">My explorer</button><button class="btn ghost sm" id="labb">Monster Lab</button><button class="btn ghost sm" id="team">Team</button><button class="btn ghost sm" id="scode">Save code</button><button class="btn ghost sm" id="home">Switch player</button>${muteBtn()}</div></div>
+  app.innerHTML=`<div class="box hud"><span class="name">${PROFILE?PROFILE.name+"'s islands":"The Islands"}</span><div class="stats"><span class="pill"><i style="background:#ffc83d"></i>${S.coins} coins</span><span class="pill"><i style="background:#3fd6ff"></i>${S.supers} super nets</span>${journalBtn()}${S.beaten.includes(0)?'<button class="btn ghost sm" id="sdb">Showdown Shoals</button>':''}<button class="btn ghost sm" id="askb">Ask ${S.buddy.name}</button><button class="btn ghost sm" id="meb">My explorer</button><button class="btn ghost sm" id="labb">Monster Lab</button><button class="btn ghost sm" id="team">Team</button><button class="btn ghost sm" id="scode">Save code</button><button class="btn ghost sm" id="home">Switch player</button>${muteBtn()}</div></div>
   <div class="box np"><canvas class="scene" id="sea" data-aspect=".68"></canvas></div>
   ${boardHTML()}
   <div class="box"><div class="row" style="justify-content:space-between">
     <div><div class="muted small">Click an island, or press its number, to sail there.</div></div>
     ${S.compass?`<button class="btn ghost sm" id="gd">Ancient Compass</button>`:''}</div><div id="guide"></div></div>`;
   bindBoard();MAPVIEW=runSeaView(document.getElementById('sea'),{locks:true,onPick:goIsland});
-  document.getElementById('team').onclick=()=>team(map);bindJournal(map);document.getElementById('scode').onclick=showSaveCode;document.getElementById('labb').onclick=()=>openLab(map);document.getElementById('meb').onclick=()=>explorer(map);document.getElementById('askb').onclick=()=>buddySay(buddyHint(null),true);
+  document.getElementById('team').onclick=()=>team(map);bindJournal(map);document.getElementById('scode').onclick=showSaveCode;document.getElementById('labb').onclick=()=>openLab(map);document.getElementById('meb').onclick=()=>explorer(map);document.getElementById('askb').onclick=()=>buddySay(buddyHint(null),true);const sdb=document.getElementById('sdb');if(sdb)sdb.onclick=()=>{SFX.whoosh();showdown()};
   document.getElementById('home').onclick=title;
   if(S.compass)document.getElementById('gd').onclick=()=>{const g=document.getElementById('guide');if(g.innerHTML){g.innerHTML='';return}SFX.select();wheel(g,null)};
 }
@@ -1628,7 +1656,7 @@ function openShop(h){
   const list=()=>{const stock=shopStock(Wd.i,h.k);
     wrap.innerHTML=`<div class="box">${head('Teach your monsters new moves, even from other elements! Just not opposites: Fire and Water, Leaf and Shadow, Stone and Storm.')}
       <div class="items"><button class="item" data-n="__net" ${S.coins<120?'disabled':''}>Super Net<small>Always catches a wild monster. Save it for a rare one!</small><span class="price">120 coins</span></button>
-      ${stock.map(n=>{const mv=MOVEDEX[n],p=movePrice(n);return `<button class="item" data-n="${n}" ${S.coins<p?'disabled':''}>${n} <small>${chip(mv.el)} power ${mv.pow}${mv.first?', always goes first':''}${mv.acc?', can miss':''}</small><span class="price">${p} coins</span></button>`}).join('')}</div>
+      ${stock.map(n=>{const mv=MOVEDEX[n],p=movePrice(n);return `<button class="item" data-n="${n}" ${S.coins<p?'disabled':''}>${n} <small>${chip(mv.el)} power ${mv.pow}${mv.first?', always goes first':''}${mv.acc&&!fullBlast(mv)?', can miss':''}${fullBlast(mv)?', Full Blast: never misses, can\'t be dodged':''}</small><span class="price">${p} coins</span></button>`}).join('')}</div>
       <div class="row"><button class="btn ghost sm" id="sx">Leave the shop</button></div></div>`;
     wrap.querySelector('#sx').onclick=close;
     wrap.querySelectorAll('.item').forEach(b=>b.onclick=()=>{SFX.select();const n=b.dataset.n;if(n==='__net'){if(S.coins<120)return;S.coins-=120;S.supers++;SFX.coin();save();toast('You bought a Super Net!');return list()}pickMon(n)});
@@ -2099,11 +2127,11 @@ function opts(list){const a=document.getElementById('act');a.innerHTML=list.map(
 function menu(){
   document.getElementById('log').textContent=`What will ${nm(active())} do?`;
   opts([{label:'Fight',go:fightMenu},{label:'Net',off:!B.wild,sub:B.wild?(S.supers?`Super nets: ${S.supers}`:'Catch it!'):(B.trainer?"Can't catch a trainer's monster":"Can't catch a champion's monster"),go:netMenu},
-    {label:'Dodge',off:!!B.tired,sub:B.tired?'Too tired after a Full Blast!':'50% chance to dodge',go:dodgeTurn},{label:'Switch',off:S.team.filter(m=>m.hp>0).length<2,go:()=>swapMenu(false)},{label:'Run',sub:B.wild?'':'No coins if you run',go:async()=>{lock();if(B.trainer){const ws=WSTATE[B.isle];if(ws){ws.fled=ws.fled||new Set();ws.fled.add(B.trainer.k)}await say(`You ran away from ${B.trainer.name}!`,900);await say('Walk up to them when you are ready for a rematch.',1100)}else if(!B.wild){await say(`You ran away from ${foe()}! Come back when you're ready.`,1200)}else await say('You got away safely!');save();island(B.isle)}}]);
+    {label:'Dodge',off:!!B.tired,sub:B.tired?'Too tired after a Full Blast!':'50% chance to dodge',go:dodgeTurn},{label:'Switch',off:S.team.filter(m=>m.hp>0).length<2,go:()=>swapMenu(false)},{label:'Run',sub:B.showdown?'Leave the showdown':B.wild?'':'No coins if you run',go:async()=>{lock();if(B.showdown){await say('You left the showdown.',700);return endShowdown(null)}if(B.trainer){const ws=WSTATE[B.isle];if(ws){ws.fled=ws.fled||new Set();ws.fled.add(B.trainer.k)}await say(`You ran away from ${B.trainer.name}!`,900);await say('Walk up to them when you are ready for a rematch.',1100)}else if(!B.wild){await say(`You ran away from ${foe()}! Come back when you're ready.`,1200)}else await say('You got away safely!');save();island(B.isle)}}]);
 }
 function fightMenu(){
   const e=enemy();
-  opts([...movesOf(active()).map(m=>{const x=mult(m.el,SP[e.sp].el);return {label:m.name+(fullBlast(m)?' <span class="fb">FULL BLAST</span>':''),sub:`${EL[m.el].n}, power ${m.pow}${m.first?', goes first':''}${m.acc?', can miss':''}${fullBlast(m)?', can\'t be dodged':''}${x>1?', STRONG!':x<1?', weak':''}`,go:()=>turn(m)}}),{label:'Back',id:'bk',go:menu}]);
+  opts([...movesOf(active()).map(m=>{const x=mult(m.el,SP[e.sp].el);return {label:m.name+(fullBlast(m)?' <span class="fb">FULL BLAST</span>':''),sub:`${EL[m.el].n}, power ${m.pow}${m.first?', goes first':''}${m.acc&&!fullBlast(m)?', can miss':''}${fullBlast(m)?', never misses, can\'t be dodged':''}${x>1?', STRONG!':x<1?', weak':''}`,go:()=>turn(m)}}),{label:'Back',id:'bk',go:menu}]);
 }
 function netMenu(){
   if(!S.supers)return throwNet(false);
@@ -2125,7 +2153,7 @@ const fullBlast=mv=>!!mv&&(mv.pow>=90||!!mv.sig);
 async function attack(a,d,mv,side,dodging){
   await say(`${side==='e'?(B.wild?'Wild ':'Their '):''}${nm(a)} used ${mv.name}!${mv.sig?' Its signature move!':''}`,mv.sig?700:350);
   anim(side==='p'?'part':'eart',side==='p'?'lunge-r':'lunge-l',300);await sleep(120);
-  if(mv.acc&&Math.random()>mv.acc){await sleep(250);popText(side==='p'?'eart':'part','MISS','#9fb6d8',30);await say(`${nm(a)} missed!`,500);return}
+  if(mv.acc&&!fullBlast(mv)&&Math.random()>mv.acc){await sleep(250);popText(side==='p'?'eart':'part','MISS','#9fb6d8',30);await say(`${nm(a)} missed!`,500);return}
   if(dodging){if(fullBlast(mv)){popText(side==='p'?'eart':'part','FULL BLAST!','#ffb02e',26);await say(`It's a Full Blast! Too big to dodge!`,600)}
     else if(Math.random()<.5){const tid=side==='p'?'eart':'part';anim(tid,side==='p'?'lunge-r':'lunge-l',300);SFX.whoosh();popText(tid,'DODGE!','#7ee4f4',34);await say(`${nm(d)} dodged it!`,650);return}
     else await say(`${nm(d)} tried to dodge, but got hit!`,500)}
@@ -2189,6 +2217,7 @@ async function evolveInBattle(m,isActive){
   await say(`Congratulations! ${oldName} evolved into ${nm(m)}!`,1300);save();
 }
 async function giveXp(e){
+  if(B.showdown)return;
   const gain=Math.round(e.lvl*(B.wild?11:18));
   for(const [k,m] of S.team.entries()){
     // monsters that fought in this battle get full XP; ones that sat on the bench get a little
@@ -2239,6 +2268,7 @@ async function checkPiece(i){
 }
 async function winBattle(){
   stopSong();doVictoryHop();
+  if(B.showdown){SFX.win();await say(`You won the showdown against ${B.trainer.name}!`,1200);return endShowdown(true)}
   if(B.wild){SFX.win();await say('You won the battle!');const c=3+Math.floor(enemy().lvl/2);S.coins+=c;await say(`You found ${c} coins!`,700);save();island(B.isle);return}
   if(B.trainer){const n=Math.round((8+B.enemies.reduce((a,m)=>a+m.lvl,0))*(B.trainer.again?.5:1));SFX.win();await say(`You beat ${B.trainer.name}!`,900);
     if(!B.trainer.again)S.tb[B.isle].push(B.trainer.k);S.coins+=n;await say(`${B.trainer.name} gives you ${n} coins.`,900);
@@ -2256,6 +2286,7 @@ async function winBattle(){
 }
 async function loseBattle(){
   stopSong();
+  if(B.showdown){await say(`${B.trainer.name} wins this showdown! Good battle!`,1200);return endShowdown(false)}
   await say('All your monsters fainted.',900);
   await say('You hurry back to rest. Your team gets all better.',1100);
   S.team.forEach(m=>m.hp=maxHp(m));B.lost=true;save();island(B.isle);
