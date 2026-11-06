@@ -2179,7 +2179,7 @@ async function turn(mv){
   if(B.busy)return;lock();
   const p=active(),e=enemy(),em=enemyMove(e,p);
   // trainers and champions sometimes try to dodge instead of attacking
-  if(!B.wild&&!B.eTired&&Math.random()<.2){B.eTired=false;await say(`${foe()}'s ${nm(e)} gets ready to dodge!`,600);await attack(p,e,mv,'p',true);B.tired=fullBlast(mv);if(await faints()!=='ok')return;save();B.busy=false;menu();return}
+  if(!B.wild&&!B.eTired&&e.hp<maxHp(e)&&Math.random()<.3){B.eTired=false;anim('eart','lunge-l',300);SFX.whoosh();popText('eart','READY TO DODGE','#7ee4f4',24);await say(`${foe()}'s ${nm(e)} gets ready to dodge!`,800);await attack(p,e,mv,'p',true);B.tired=fullBlast(mv);if(await faints()!=='ok')return;save();B.busy=false;menu();return}
   const pf=(mv.first?1:0)-(em.first?1:0);
   const order=(pf>0||(pf===0&&stat(p,3)>=stat(e,3)))?[[p,e,mv,'p'],[e,p,em,'e']]:[[e,p,em,'e'],[p,e,mv,'p']];
   for(const [a,d,m,side] of order){if(a.hp<=0||d.hp<=0)continue;await attack(a,d,m,side);if(await faints()!=='ok')return}
