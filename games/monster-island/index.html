@@ -1141,6 +1141,7 @@ function wheel(box,sel){
     <circle cx="150" cy="150" r="118" fill="none" stroke="#c9a14e" stroke-width="1.2" opacity=".6"/>
     <circle cx="150" cy="150" r="${R}" fill="none" stroke="#c9a14e" stroke-width="1" stroke-dasharray="2 5" opacity=".55"/>
     <g opacity=".55"><circle cx="150" cy="150" r="30" fill="#3a3020" stroke="#c9a14e" stroke-width="1.5"/>${[...Array(8)].map((_,k)=>`<path d="M150 ${150-36} L${150+4} ${150-29} L${150-4} ${150-29}Z" fill="#c9a14e" transform="rotate(${k*45} 150 150)"/>`).join('')}</g>
+    ${(()=>{const ang=sel?WHEEL_ORDER.indexOf(sel)*60:0;return `<g transform="rotate(${ang} 150 150)" opacity=".9"><path d="M150 112 L156 150 L150 158 L144 150Z" fill="#c0392b" stroke="#3a1208" stroke-width="1"/><path d="M150 188 L156 150 L144 150Z" fill="#e8d8b0" stroke="#3a2a0c" stroke-width="1"/><circle cx="150" cy="150" r="4" fill="url(#wbronze)" stroke="#3a2a0c"/></g>`})()}
     ${arrows.filter(r=>r.st!=='off').map(r=>`<path d="${r.path}" fill="none" stroke="#1a1208" stroke-width="${r.st==='all'?4.4:6.5}" opacity=".55" stroke-linecap="round"/><path d="${r.path}" fill="none" stroke="${col[r.st]}" stroke-width="${r.st==='all'?2:3.6}" opacity="${r.st==='all'?.8:1}" stroke-linecap="round" marker-end="url(#ah-${r.st})"/>`).join('')}
     ${WHEEL_ORDER.map(e=>{const [x,y]=pos[e],on=sel===e,dim=sel&&!on&&!BEATS[sel].includes(e)&&!BEATS[e].includes(sel),r=on?29:25;return `<g class="wnode" data-el="${e}" tabindex="0" role="button" aria-label="${EL[e].n}" style="cursor:pointer;opacity:${dim?.4:1}">
       <circle cx="${x}" cy="${y+2}" r="${r+3}" fill="#1a1208" opacity=".5"/>
@@ -1148,28 +1149,29 @@ function wheel(box,sel){
       <circle cx="${x}" cy="${y}" r="${r-2}" fill="${MUTE[e]}"/><circle cx="${x}" cy="${y}" r="${r-2}" fill="url(#wgem)"/><circle cx="${x}" cy="${y}" r="${r-2}" fill="#000" filter="url(#wrough)" opacity=".7"/>
       <path d="${ELICON[e]}" transform="translate(${x} ${y-5}) scale(1)" fill="${e==='leaf'?'#f3e6c0':'#f6ead0'}" stroke="${e==='leaf'?'#f6ead0':'none'}" stroke-width="1.6" opacity=".95"/>
       <text x="${x}" y="${y+15}" text-anchor="middle" font-size="8.5" font-weight="700" letter-spacing=".8" fill="#fbf0d4" font-family="${F}">${EL[e].n.toUpperCase()}</text></g>`}).join('')}
-    <text x="150" y="${sel?154:148}" text-anchor="middle" font-size="${sel?11:9.5}" font-weight="700" letter-spacing="1" fill="#f0d48a" font-family="${F}">${sel?EL[sel].n.toUpperCase():'TOUCH A'}</text>
-    ${sel?'':`<text x="150" y="160" text-anchor="middle" font-size="9.5" font-weight="700" letter-spacing="1" fill="#f0d48a" font-family="${F}">STONE</text>`}</svg>`;
+    <text x="150" y="${sel?205:200}" text-anchor="middle" font-size="${sel?11:9.5}" font-weight="700" letter-spacing="1" fill="#f0d48a" font-family="${F}">${sel?EL[sel].n.toUpperCase():'TOUCH A'}</text>
+    ${sel?'':`<text x="150" y="212" text-anchor="middle" font-size="9.5" font-weight="700" letter-spacing="1" fill="#f0d48a" font-family="${F}">STONE</text>`}</svg>`;
   const weak=sel?WHEEL_ORDER.filter(e=>BEATS[e].includes(sel)):[];
   const info=sel?`<div class="winfo"><div><b style="color:#3f6a1e">Strong against</b> ${BEATS[sel].map(chip).join(' ')}</div><div><b style="color:#9a2a14">Weak to</b> ${weak.map(chip).join(' ')}</div><div class="small">Opposite element: ${chip(OPP[sel])} ${EL[sel].n} monsters can't learn ${EL[OPP[sel]].n} moves.</div></div>`
-    :`<div class="winfo"><div class="small">The ancient wheel of the islands. Arrows point from the winner to the loser. Strong moves do double damage, weak moves do half.</div></div>`;
+    :`<div class="winfo"><div class="small">The Ancient Compass, found by your buddy deep underground. Touch an element and the needle points to it. Arrows point from the winner to the loser. Strong moves do double damage, weak moves do half.</div></div>`;
   box.innerHTML=`<div class="wheelwrap">${svg}${info}</div>`;
   box.querySelectorAll('.wnode').forEach(n=>{const go=()=>{SFX.select();wheel(box,sel===n.dataset.el?null:n.dataset.el)};n.onclick=go;n.onkeydown=ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();go()}}});
 }
 function map(){
   if(S&&!S.look&&!S.lookSeen){S.lookSeen=1;save();return explorer(map)}
   if(S&&!S.buddy)return meetBuddy(map);
+  if(S&&S.buddy&&!S.compass&&(caughtCount()>=2||Object.values(S.tb||{}).some(t=>t.length)||S.beaten.length))return compassGift(map);
   SCREEN='map';applyLook();registerBuddy();trackPlay();WORLD=null;scrollTo(0,0);playSong('island');
   app.innerHTML=`<div class="box hud"><span class="name">${PROFILE?PROFILE.name+"'s islands":"The Islands"}</span><div class="stats"><span class="pill"><i style="background:#ffc83d"></i>${S.coins} coins</span><span class="pill"><i style="background:#3fd6ff"></i>${S.supers} super nets</span>${journalBtn()}<button class="btn ghost sm" id="askb">Ask ${S.buddy.name}</button><button class="btn ghost sm" id="meb">My explorer</button><button class="btn ghost sm" id="labb">Monster Lab</button><button class="btn ghost sm" id="team">Team</button><button class="btn ghost sm" id="scode">Save code</button><button class="btn ghost sm" id="home">Switch player</button>${muteBtn()}</div></div>
   <div class="box np"><canvas class="scene" id="sea" data-aspect=".68"></canvas></div>
   ${boardHTML()}
   <div class="box"><div class="row" style="justify-content:space-between">
     <div><div class="muted small">Click an island, or press its number, to sail there.</div></div>
-    <button class="btn ghost sm" id="gd">Element wheel</button></div><div id="guide"></div></div>`;
+    ${S.compass?`<button class="btn ghost sm" id="gd">Ancient Compass</button>`:''}</div><div id="guide"></div></div>`;
   bindBoard();MAPVIEW=runSeaView(document.getElementById('sea'),{locks:true,onPick:goIsland});
   document.getElementById('team').onclick=()=>team(map);bindJournal(map);document.getElementById('scode').onclick=showSaveCode;document.getElementById('labb').onclick=()=>openLab(map);document.getElementById('meb').onclick=()=>explorer(map);document.getElementById('askb').onclick=()=>buddySay(buddyHint(null),true);
   document.getElementById('home').onclick=title;
-  document.getElementById('gd').onclick=()=>{const g=document.getElementById('guide');if(g.innerHTML){g.innerHTML='';return}SFX.select();wheel(g,null)};
+  if(S.compass)document.getElementById('gd').onclick=()=>{const g=document.getElementById('guide');if(g.innerHTML){g.innerHTML='';return}SFX.select();wheel(g,null)};
 }
 function goIsland(i){if(i===DEEP){SFX.whoosh();toast('You dive into the whirlpool... down, down, down!');return island(DEEP,'portal')}if(i>=S.unlocked){SFX.bump();return toast('Beat the champion before this island to unlock it.')}SFX.whoosh();island(i,true)}
 
@@ -1907,6 +1909,20 @@ function ruleScene(step,ctx,t){const th=THEME.leaf,U=ctx.canvas.width/7.4;ctx.se
     if(ph>.5){ctx.fillStyle='#ffc83d';ctx.font='bold .28px sans-serif';ctx.textAlign='center';ctx.fillText('Treasure!',1.2,.7)}
     ctx.fillStyle='#fff';for(let k=0;k<5;k++){const a=t/500+k;ctx.globalAlpha=.4+.4*Math.sin(a*2);ctx.beginPath();ctx.arc(3.7+Math.cos(a)*.8,1.4+Math.sin(a*1.3)*.4,.04,0,7);ctx.fill()}ctx.globalAlpha=1}
 }
+// George's idea: the buddy brings back an Ancient Compass from a long trip underground
+function compassGift(next){
+  SCREEN='buddy';WORLD=null;scrollTo(0,0);registerBuddy();const n=S.buddy.name;let step=0;
+  const pages=[`Hey${PROFILE?' '+PROFILE.name:''}! Sorry I was gone for a while. I went on a long, long trip, way down into an old underground place nobody has visited in forever...`,
+    `Deep inside, behind a crumbly stone door, I found THIS. It's an <b>Ancient Compass</b>! It shows which elements beat which.`,
+    `Touch an element and the needle points to it. Green arrows show what it beats, and red arrows show what beats it. I want you to have it, to help you in your battles!`];
+  const draw=()=>{app.innerHTML=`<div class="box hud"><span class="name">${n} found something!</span></div>
+    <div class="labL"><div class="box meet"><div class="mini" style="width:110px;height:110px">${spr('_buddy','bob')}</div><div class="say">${pages[step]}</div>
+    ${step===2?'<div id="cbox" style="width:100%"></div>':''}
+    <div class="row" style="justify-content:center;gap:8px"><button class="btn" id="cn">${step===2?'Thank you, '+n+'!':'Next'}</button></div></div></div>`;
+    if(step===2)wheel(document.getElementById('cbox'),'fire');
+    document.getElementById('cn').onclick=()=>{if(step<2){step++;SFX.select();return draw()}S.compass=1;save();SFX.chest();toast('You got the Ancient Compass! Find it on the map and in battles.');next()}};
+  SFX.chest();draw();
+}
 function meetBuddy(next){
   SCREEN='buddy';WORLD=null;scrollTo(0,0);playSong('island');
   let name=meetBuddy.n||(S.buddy&&S.buddy.name)||'',d={...BUDDY_DEF,...(meetBuddy.d||{})},step=meetBuddy.step||0;meetBuddy.d=null;meetBuddy.step=0;meetBuddy.n='';
@@ -2026,9 +2042,9 @@ function battle(cfg){hushBuddy();
     <div class="side player"><div class="art"><div class="plat"></div><div class="sprite" id="part"></div></div><div class="tag" id="ptag"></div></div>
   </div>
   <div class="box dialog"><div id="log" aria-live="polite"></div><div class="act" id="act"></div>
-  <div class="row" style="justify-content:space-between;gap:8px"><div class="keys">Keys: arrows and Enter, or press a number. Space skips the text. Esc goes back.</div><button class="btn ghost sm" id="bwheel">Element wheel</button></div></div>`;
+  <div class="row" style="justify-content:space-between;gap:8px"><div class="keys">Keys: arrows and Enter, or press a number. Space skips the text. Esc goes back.</div>${S.compass?'<button class="btn ghost sm" id="bwheel">Ancient Compass</button>':''}</div></div>`;
   document.getElementById('log').onclick=()=>{SKIP=true};
-  document.getElementById('bwheel').onclick=()=>{SFX.select();const w=document.createElement('div');w.className='shop';w.innerHTML=`<div class="box"><div class="row" style="justify-content:space-between"><h2>Element wheel</h2><button class="btn ghost sm" id="wx">Close</button></div><div id="wbox"></div></div>`;document.body.appendChild(w);const close=()=>w.remove();w.onclick=e=>{if(e.target===w)close()};w.querySelector('#wx').onclick=close;wheel(w.querySelector('#wbox'),SP[enemy().sp].el)};
+  if(S.compass)document.getElementById('bwheel').onclick=()=>{SFX.select();const w=document.createElement('div');w.className='shop';w.innerHTML=`<div class="box"><div class="row" style="justify-content:space-between"><h2>Ancient Compass</h2><button class="btn ghost sm" id="wx">Close</button></div><div id="wbox"></div></div>`;document.body.appendChild(w);const close=()=>w.remove();w.onclick=e=>{if(e.target===w)close()};w.querySelector('#wx').onclick=close;wheel(w.querySelector('#wbox'),SP[enemy().sp].el)};
   drawSides();
   (async()=>{
     await say(B.wild?`A wild ${nm(enemy())} appeared!`:`${foe()} wants to battle!`);
