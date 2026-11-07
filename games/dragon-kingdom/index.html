@@ -1209,8 +1209,8 @@ function p2Sword(){
     if(d < (g.chief?3.6:3.0) && ang < 1.3 && d<bd){ bd=d; best=g; } });
   if(!best) return;
   let dmg = dmgBase + Math.floor(Math.random()*3);
-  best.hp -= dmg; best.flash = 0.2; best.state = best.state==='windup' && !best.chief ? 'chase' : best.state; // a hit can interrupt a small goblin
-  const a = Math.atan2(best.z-S.z, best.x-S.x), kb = best.chief?0.5:1.2;
+  best.hp -= dmg; best.flash = 0.2; // hitting a goblin does NOT stop its swing: block with the shield!
+  const a = Math.atan2(best.z-S.z, best.x-S.x), kb = best.chief?0.15:0.35;
   const nx = best.x+Math.cos(a)*kb, nz = best.z+Math.sin(a)*kb; if(heightAt2(nx,nz)>-0.1){ best.x=nx; best.z=nz; }
   spawnChips(best.x, heightAt2(best.x,best.z)+1.2, best.z, 0x8be05a, 6);
   P2.focus = best;
@@ -1266,11 +1266,18 @@ function p2Update(dt){
       if(fromHome > 22 || d > 18){ g.state='idle'; continue; }
       if(d > 1.9) step(S.x, S.z, sp);
       else g.yaw = Math.atan2(S.z-g.z, S.x-g.x);
-      if(d < 2.4 && g.cd<=0){ g.state='windup'; g.t = g.chief?0.75:0.6; }
+      if(d < 2.9 && g.cd<=0){ g.state='windup'; g.t = g.chief?0.7:0.55; }
     } else if(g.state==='windup'){
       g.yaw = Math.atan2(S.z-g.z, S.x-g.x);
-      if(g.t<=0){ g.state='chase'; g.cd = g.chief?1.5:1.3; g.swing = 0.25;
-        if(d < (g.chief?3.2:2.8)) hurt(g.chief?5:3); }
+      if(g.t<=0){ g.state='chase'; g.cd = g.chief?1.4:1.2; g.swing = 0.25;
+        if(d < (g.chief?3.8:3.4)){
+          const before = S.hp; hurt(g.chief?6:4);
+          if(S.hp < before){ // the club landed: get knocked back a little
+            const a = Math.atan2(S.z-g.z, S.x-g.x), kb = g.chief?1.4:0.9;
+            if(canStand2(S.x+Math.cos(a)*kb, S.z+Math.sin(a)*kb)){ S.x += Math.cos(a)*kb; S.z += Math.sin(a)*kb; }
+            spawnChips(S.x, heightAt2(S.x,S.z)+1.4, S.z, 0xffffff, 6);
+          } else spawnChips(S.x+Math.cos(S.yaw), heightAt2(S.x,S.z)+1.3, S.z+Math.sin(S.yaw), 0xf5c542, 8); // CLANG off the shield
+        } }
     }
     // separation between goblins
     for(const o of P2.gobs){ if(o===g||o.state==='gone'||o.state==='flee') continue; const dd = Math.hypot(o.x-g.x,o.z-g.z); if(dd<1.2 && dd>0.01){ g.x -= (o.x-g.x)/dd*0.03; g.z -= (o.z-g.z)/dd*0.03; } }
