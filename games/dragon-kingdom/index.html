@@ -91,10 +91,11 @@
     <div id="stats">
       <span>❤️ <span id="hpbar"><span id="hpfill" style="display:block"></span></span></span>
       <span>🪵 <b id="wood">0</b></span>
-      <span>🪨 <b id="stone">0</b></span>
+      <span id="stoneBox">🪨 <b id="stone">0</b></span>
+      <span id="goldBox" class="hidden">🪙 <b id="gold">0</b></span>
     </div>
   </div>
-  <div id="boss" class="hidden">🐉 Swamp Dragon<div id="bossbar"><div id="bossfill"></div></div></div>
+  <div id="boss" class="hidden"><span id="bossName">🐉 Swamp Dragon</span><div id="bossbar"><div id="bossfill"></div></div></div>
   <div id="status"></div>
   <div id="cams">
     <button id="camFP">👁️ Knight's eyes</button>
@@ -148,10 +149,11 @@
 
 <div id="end" class="screen hidden">
   <div class="card">
-    <h2 style="font-size:34px">Part 1 Complete!</h2>
+    <h2 style="font-size:34px" id="endTitle">Part 1 Complete!</h2>
     <p id="endText" style="font-size:19px;line-height:1.45"></p>
-    <p style="font-size:17px;color:#cfe8c4">Coming next: <b>The Volcano</b> 🌋 and the Fire Dragons</p>
-    <button id="againBtn">Play Again</button>
+    <p style="font-size:17px;color:#cfe8c4" id="endNext">Next: <b>Part 2: The Big Island</b> 🏝️ Goblins, villagers, and a village to build!</p>
+    <button id="p2Btn" style="font-size:20px;background:var(--green);color:var(--cream);box-shadow:0 4px 0 #24561f;margin-bottom:10px">⛵ Sail to Part 2</button><br>
+    <button id="againBtn">Back to Title</button>
     <p class="hint" style="margin-top:12px"><a href="/games/">&larr; George's games</a></p>
   </div>
 </div>
@@ -341,13 +343,13 @@ scatter(180, new THREE.DodecahedronGeometry(0.14,0), M(0xa9a59a), ()=>{ const x=
 // --- far-off islands: the volcano and Dragon Castle (Parts 2 and beyond!) ---
 const smoke = [];
 (() => {
-  const v = new THREE.Group(); v.position.set(150, -0.5, -90); scene.add(v);
+  const v = new THREE.Group(); v.name='far'; v.position.set(150, -0.5, -90); scene.add(v);
   mesh(new THREE.CylinderGeometry(10, 34, 4, 18), M(0xd8bf86), 0,0,0, v);
   mesh(new THREE.CylinderGeometry(5, 26, 34, 14, 3), M(0x5a4636), 0,18,0, v);
   mesh(new THREE.CylinderGeometry(4.6, 5, 1, 14), new THREE.MeshBasicMaterial({color:0xff5a1a}), 0,35.2,0, v);
   for(let i=0;i<8;i++){ const p = new THREE.Mesh(new THREE.IcosahedronGeometry(3,1), new THREE.MeshStandardMaterial({color:0x6b6b70, transparent:true, opacity:.55, flatShading:true}));
-    p.position.set(120, 38+i*4, -70); scene.add(p); smoke.push({m:p, k:i}); }
-  const c = new THREE.Group(); c.position.set(170, -0.5, 80); scene.add(c);
+    p.name='far'; p.position.set(120, 38+i*4, -70); scene.add(p); smoke.push({m:p, k:i}); }
+  const c = new THREE.Group(); c.name='far'; c.position.set(170, -0.5, 80); scene.add(c);
   mesh(new THREE.CylinderGeometry(14, 30, 10, 16), M(0x6a6a5a), 0,4,0, c);
   mesh(new THREE.CylinderGeometry(6, 14, 16, 12), M(0x55554a), 0,16,0, c);
   const stone = M(0x4b4458);
@@ -429,9 +431,10 @@ function person(shirt, hat){
   return g;
 }
 // Bea: built facing +z (her front), so rotation.y turns her toward the player
-function beaModel(){
+function beaModel(o={}){
+  o = Object.assign({skin:0xe8b48a, over:0x2f6fb5, shirt:0xf28c28, hair:0x7a3b1c, hat:'hard', hatColor:0xf5c542, tool:'hammer', pony:true, beard:false}, o);
   const g = new THREE.Group();
-  const skin = M(0xe8b48a), denim = M(0x2f6fb5), shirt = M(0xf28c28), hair = M(0x7a3b1c), dark = M(0x2a1d10);
+  const skin = M(o.skin), denim = M(o.over), shirt = M(o.shirt), hair = M(o.hair), dark = M(0x2a1d10);
   // boots + legs (overalls)
   [-1,1].forEach(s=>{
     mesh(new THREE.BoxGeometry(0.28,0.2,0.42), M(0x5a3815), s*0.17,0.1,0.05, g);
@@ -456,7 +459,7 @@ function beaModel(){
   mesh(new THREE.CylinderGeometry(0.1,0.09,0.6,8), shirt, 0,-0.28,0, armR);
   mesh(new THREE.SphereGeometry(0.1,8,8), skin, 0,-0.62,0, armR);
   // hammer in her right hand
-  const hammer = new THREE.Group(); hammer.position.set(0,-0.62,0.05); armR.add(hammer);
+  const hammer = new THREE.Group(); hammer.position.set(0,-0.62,0.05); armR.add(hammer); hammer.visible = o.tool==='hammer';
   mesh(new THREE.CylinderGeometry(0.035,0.035,0.55,6), M(0x6b4a24), 0,0,0.2, hammer).rotation.x = Math.PI/2;
   mesh(new THREE.BoxGeometry(0.12,0.12,0.28), M(0x8d8f93), 0,0,0.47, hammer).rotation.y = Math.PI/2;
   armR.rotation.set(-0.5, 0, -0.15);
@@ -475,12 +478,26 @@ function beaModel(){
   // hair: back of head + ponytail
   mesh(new THREE.SphereGeometry(0.335,16,12,0,Math.PI*2,0,Math.PI*0.55), hair, 0,0.02,-0.03, head).rotation.x = -0.35;
   const pony = new THREE.Group(); pony.position.set(0,0.0,-0.32); head.add(pony);
-  mesh(new THREE.SphereGeometry(0.07,8,8), M(0xd7382f), 0,0,0, pony); // red hair tie
-  mesh(new THREE.ConeGeometry(0.12,0.5,8), hair, 0,-0.25,-0.05, pony).rotation.x = Math.PI + 0.2;
-  // yellow hard hat
-  mesh(new THREE.SphereGeometry(0.35,16,10,0,Math.PI*2,0,Math.PI/2), M(0xf5c542), 0,0.1,0, head);
-  mesh(new THREE.CylinderGeometry(0.43,0.43,0.04,16), M(0xf5c542), 0.0,0.1,0.06, head);
-  mesh(new THREE.BoxGeometry(0.06,0.18,0.5), M(0xe0ad2a), 0,0.32,0, head).rotation.x = 0;
+  if(o.pony){
+    mesh(new THREE.SphereGeometry(0.07,8,8), M(0xd7382f), 0,0,0, pony); // red hair tie
+    mesh(new THREE.ConeGeometry(0.12,0.5,8), hair, 0,-0.25,-0.05, pony).rotation.x = Math.PI + 0.2;
+  }
+  if(o.beard){ mesh(new THREE.SphereGeometry(0.24,10,8,0,Math.PI*2,Math.PI*0.45,Math.PI*0.55), hair, 0,-0.08,0.1, head).scale.set(1.05,1.2,1); }
+  const hc = M(o.hatColor);
+  if(o.hat==='hard'){ // yellow hard hat
+    mesh(new THREE.SphereGeometry(0.35,16,10,0,Math.PI*2,0,Math.PI/2), hc, 0,0.1,0, head);
+    mesh(new THREE.CylinderGeometry(0.43,0.43,0.04,16), hc, 0.0,0.1,0.06, head);
+    mesh(new THREE.BoxGeometry(0.06,0.18,0.5), M(0xe0ad2a), 0,0.32,0, head);
+  } else if(o.hat==='straw'){
+    mesh(new THREE.CylinderGeometry(0.62,0.62,0.04,18), hc, 0,0.16,0, head);
+    mesh(new THREE.CylinderGeometry(0.26,0.32,0.26,14), hc, 0,0.3,0, head);
+    mesh(new THREE.CylinderGeometry(0.325,0.325,0.06,14), M(0xd7382f), 0,0.2,0, head);
+  } else if(o.hat==='bucket'){
+    mesh(new THREE.CylinderGeometry(0.3,0.36,0.3,14), hc, 0,0.22,0, head);
+    mesh(new THREE.CylinderGeometry(0.5,0.5,0.04,16), hc, 0,0.08,0, head);
+  } else if(o.hat==='scarf'){
+    mesh(new THREE.SphereGeometry(0.35,16,10,0,Math.PI*2,0,Math.PI/2), hc, 0,0.04,-0.02, head);
+  }
   g.userData = {armR, head, pony};
   return g;
 }
@@ -538,34 +555,71 @@ scene.add(marker);
 
 // ================= KNIGHT =================
 const knight = new THREE.Group(); scene.add(knight);
-// built facing +x
-mesh(new THREE.CylinderGeometry(0.4,0.5,1.2,10), M(0xf28c28), 0,1.05,0, knight);
-mesh(new THREE.BoxGeometry(0.08,0.7,0.12), M(0x3f9a3a), 0.45,1.1,0, knight);
-mesh(new THREE.BoxGeometry(0.08,0.12,0.5), M(0x3f9a3a), 0.46,1.2,0, knight);
-const cape = mesh(new THREE.BoxGeometry(0.1,1.3,0.9), M(0xd7382f), -0.45,1.0,0, knight);
-mesh(new THREE.CylinderGeometry(0.13,0.13,0.6,6), M(0x6b6f75), 0,0.3,-0.2, knight);
-mesh(new THREE.CylinderGeometry(0.13,0.13,0.6,6), M(0x6b6f75), 0,0.3,0.2, knight);
-mesh(new THREE.SphereGeometry(0.38,14,12), M(0xd5dce3,{metalness:.25,roughness:.35,flatShading:false}), 0,1.95,0, knight);
-mesh(new THREE.BoxGeometry(0.1,0.08,0.45), M(0x2b3138), 0.36,1.95,0, knight);
-mesh(new THREE.SphereGeometry(0.13,8,8), M(0xd7382f), 0,2.38,0, knight).scale.set(0.7,1.4,0.7);
+// built facing +x; right side is -z. Armor in steel, tunic in George's orange, green and red.
+const steel = M(0xcfd6de, {metalness:.35, roughness:.3, flatShading:false}), steelDk = M(0x8d96a0, {metalness:.35, roughness:.35, flatShading:false});
+const tunic = M(0xf28c28, {flatShading:false, roughness:.8}), leather = M(0x6b4a24, {flatShading:false}), gold = M(0xf5c542, {metalness:.4, roughness:.3, flatShading:false});
+[-1,1].forEach(s=>{
+  mesh(new THREE.CylinderGeometry(0.13,0.12,0.55,10), steelDk, 0,0.62,s*0.17, knight);           // thigh
+  mesh(new THREE.SphereGeometry(0.11,10,8), steel, 0.04,0.42,s*0.17, knight);                       // knee
+  mesh(new THREE.CylinderGeometry(0.12,0.11,0.38,10), steel, 0,0.25,s*0.17, knight);              // greave
+  mesh(new THREE.BoxGeometry(0.34,0.12,0.2), leather, 0.06,0.06,s*0.17, knight);                   // boot
+});
+mesh(new THREE.CylinderGeometry(0.34,0.4,0.5,14), tunic, 0,0.95,0, knight);                         // skirt of the tunic
+mesh(new THREE.TorusGeometry(0.33,0.05,8,20), leather, 0,1.12,0, knight).rotation.x = Math.PI/2;   // belt
+mesh(new THREE.BoxGeometry(0.06,0.12,0.12), gold, 0.33,1.12,0, knight);                             // buckle
+mesh(new THREE.CylinderGeometry(0.36,0.32,0.62,14), tunic, 0,1.45,0, knight);                       // chest
+const plate = mesh(new THREE.SphereGeometry(0.34,16,12,-Math.PI/2,Math.PI,0,Math.PI*0.7), steel, 0.02,1.62,0, knight); plate.scale.set(0.75,1,1.05);
+mesh(new THREE.BoxGeometry(0.06,0.42,0.1), M(0x3f9a3a), 0.29,1.48,0, knight);                       // green cross
+mesh(new THREE.BoxGeometry(0.06,0.1,0.32), M(0x3f9a3a), 0.29,1.55,0, knight);
+[-1,1].forEach(s=>{ const pa = mesh(new THREE.SphereGeometry(0.2,14,10,0,Math.PI*2,0,Math.PI/2), steel, 0,1.74,s*0.38, knight); pa.scale.set(1,0.8,1.1); });
+// shield arm (left, +z)
+mesh(new THREE.CylinderGeometry(0.09,0.08,0.55,8), tunic, 0.05,1.38,0.45, knight).rotation.x = -0.15;
+// head + helmet
+mesh(new THREE.CylinderGeometry(0.12,0.14,0.14,10), steelDk, 0,1.84,0, knight);
+mesh(new THREE.SphereGeometry(0.3,20,16), steel, 0,2.08,0, knight);
+mesh(new THREE.CylinderGeometry(0.3,0.3,0.26,20,1,false,-Math.PI/2.4,Math.PI/1.2), steel, 0.02,1.98,0, knight);      // face plate
+mesh(new THREE.BoxGeometry(0.06,0.04,0.36), M(0x1d2228), 0.3,2.06,0, knight);                         // visor slit
+mesh(new THREE.BoxGeometry(0.04,0.18,0.04), M(0x1d2228), 0.31,1.94,0, knight);                        // breathing slit
+mesh(new THREE.TorusGeometry(0.3,0.025,6,24), gold, 0,2.1,0, knight).rotation.x = Math.PI/2;          // gold band
+const plume = new THREE.Group(); plume.position.set(-0.02,2.36,0); knight.add(plume);
+for(let k=0;k<5;k++){ const pm = mesh(new THREE.SphereGeometry(0.1-k*0.008,10,8), M(0xd7382f,{flatShading:false}), -k*0.11, 0.06-k*k*0.025, 0, plume); pm.scale.set(1.3,1,0.8); }
+// cape: three panels so it can sway
+const cape = new THREE.Group(); cape.position.set(-0.3,1.78,0); knight.add(cape);
+{ const cm = M(0xd7382f,{side:THREE.DoubleSide, flatShading:false});
+  [[0,0.5,0.06],[1,0.46,0.12],[2,0.42,0.2]].forEach(([k,w,tilt])=>{ const pn = mesh(new THREE.BoxGeometry(0.04,0.44,w), cm, -k*0.05, -0.22-k*0.42, 0, cape); pn.rotation.z = -tilt; });
+  mesh(new THREE.SphereGeometry(0.06,8,8), gold, 0.08,0.0,0.3, cape); mesh(new THREE.SphereGeometry(0.06,8,8), gold, 0.08,0.0,-0.3, cape); }
 // sword arm (right side = -z when facing +x)
-const tpArm = new THREE.Group(); tpArm.position.set(0.1,1.3,-0.55); knight.add(tpArm);
+const tpArm = new THREE.Group(); tpArm.position.set(0.05,1.62,-0.42); knight.add(tpArm);
+mesh(new THREE.CylinderGeometry(0.09,0.08,0.5,8), tunic, 0,-0.22,0, tpArm);
+mesh(new THREE.SphereGeometry(0.1,10,8), steel, 0.02,-0.48,0, tpArm);                              // gauntlet
 function swordModel(){
   const s = new THREE.Group();
-  mesh(new THREE.BoxGeometry(0.08,1.3,0.18), M(0xe6edf3,{metalness:.25,roughness:.25,emissive:0x333333}), 0,0.85,0, s);
-  mesh(new THREE.BoxGeometry(0.12,0.08,0.55), M(0xf5c542), 0,0.2,0, s);
-  mesh(new THREE.CylinderGeometry(0.06,0.06,0.35), M(0x6b4a24), 0,0,0, s);
+  const blade = mesh(new THREE.BoxGeometry(0.06,1.15,0.16), M(0xe6edf3,{metalness:.35,roughness:.2,emissive:0x333333,flatShading:false}), 0,0.88,0, s);
+  mesh(new THREE.ConeGeometry(0.115,0.25,4), M(0xe6edf3,{metalness:.35,roughness:.2}), 0,1.58,0, s).rotation.y = Math.PI/4;
+  mesh(new THREE.BoxGeometry(0.07,1.0,0.03), M(0xaab4be,{metalness:.4}), 0,0.85,0, s);                // fuller
+  mesh(new THREE.BoxGeometry(0.12,0.08,0.6), gold, 0,0.28,0, s);                                      // crossguard
+  [-1,1].forEach(k=> mesh(new THREE.SphereGeometry(0.06,8,8), gold, 0,0.28,k*0.3, s));
+  mesh(new THREE.CylinderGeometry(0.05,0.05,0.32,8), leather, 0,0.08,0, s);                           // grip
+  mesh(new THREE.SphereGeometry(0.07,10,8), M(0xd7382f,{emissive:0x400000}), 0,-0.11,0, s);           // ruby pommel
+  s.children.unshift(s.children.splice(s.children.indexOf(blade),1)[0]);                               // blade stays children[0]
   return s;
 }
-const tpSword = swordModel(); tpSword.rotation.z = -0.6; tpArm.add(tpSword); tpSword.visible=false;
+const tpSword = swordModel(); tpSword.position.set(0.05,-0.5,0); tpSword.rotation.z = -0.6; tpArm.add(tpSword); tpSword.visible=false;
+function shieldModel(){
+  const g = new THREE.Group();
+  const sh = new THREE.Shape(); sh.moveTo(-0.45,0.45); sh.lineTo(0.45,0.45); sh.lineTo(0.45,0); sh.quadraticCurveTo(0.42,-0.4,0,-0.62); sh.quadraticCurveTo(-0.42,-0.4,-0.45,0); sh.lineTo(-0.45,0.45);
+  const body = new THREE.Mesh(new THREE.ExtrudeGeometry(sh,{depth:0.07, bevelEnabled:true, bevelThickness:0.03, bevelSize:0.04, bevelSegments:2}), M(0x3f9a3a,{flatShading:false}));
+  body.castShadow = true; g.add(body);
+  const rim = new THREE.Mesh(new THREE.ExtrudeGeometry(sh,{depth:0.05, bevelEnabled:false}), gold); rim.scale.set(1.08,1.08,1); rim.position.z = -0.02; g.add(rim);
+  const em = mesh(new THREE.BoxGeometry(0.1,0.55,0.05), M(0xf28c28), 0,-0.02,0.1, g); mesh(new THREE.BoxGeometry(0.42,0.1,0.05), M(0xf28c28), 0,0.12,0.1, g);
+  return g;
+}
 const tpShield = new THREE.Group(); tpShield.position.set(0.35,1.15,0.5); knight.add(tpShield); tpShield.visible=false;
-mesh(new THREE.CylinderGeometry(0.5,0.5,0.1,16), M(0x3f9a3a), 0,0,0, tpShield).rotation.z=Math.PI/2;
-mesh(new THREE.CylinderGeometry(0.2,0.2,0.12,12), M(0xf5c542), 0.02,0,0, tpShield).rotation.z=Math.PI/2;
+{ const sm = shieldModel(); sm.rotation.y = Math.PI/2; sm.scale.setScalar(0.95); tpShield.add(sm); }
 // first-person hands (children of camera)
 const fpSword = swordModel(); fpSword.scale.setScalar(0.45); fpSword.position.set(0.55,-0.55,-1); fpSword.rotation.set(-0.3,0,-0.35); camera.add(fpSword); fpSword.visible=false;
 const fpShield = new THREE.Group(); fpShield.scale.setScalar(0.55); fpShield.position.set(-0.6,-0.55,-1.1); camera.add(fpShield); fpShield.visible=false;
-mesh(new THREE.CylinderGeometry(0.4,0.4,0.08,16), M(0x3f9a3a), 0,0,0, fpShield).rotation.x=Math.PI/2;
-mesh(new THREE.CylinderGeometry(0.15,0.15,0.1,12), M(0xf5c542), 0,0,0.02, fpShield).rotation.x=Math.PI/2;
+fpShield.add(shieldModel());
 const fpAxe = new THREE.Group(); fpAxe.scale.setScalar(0.5); fpAxe.position.set(0.55,-0.6,-1); fpAxe.rotation.set(-0.3,0,-0.3); camera.add(fpAxe); fpAxe.visible=false;
 mesh(new THREE.CylinderGeometry(0.05,0.05,1.1), M(0x6b4a24), 0,0.3,0, fpAxe);
 mesh(new THREE.BoxGeometry(0.06,0.35,0.4), M(0xb8c0c8), 0,0.75,0.15, fpAxe);
@@ -573,32 +627,104 @@ mesh(new THREE.BoxGeometry(0.06,0.35,0.4), M(0xb8c0c8), 0,0.75,0.15, fpAxe);
 // ================= DRAGON =================
 const dragon = new THREE.Group(); scene.add(dragon);
 const dBody = new THREE.Group(); dragon.add(dBody);
-const dGreen = M(0x5a8f3e), dDark = M(0x3c6b2f), dBelly = M(0xb9d98a);
-mesh(new THREE.SphereGeometry(1.6,16,12), dGreen, 0,2,0, dBody).scale.set(1.5,1,1);
-mesh(new THREE.SphereGeometry(1.1,14,10), dBelly, 0.6,1.6,0, dBody).scale.set(1.3,0.9,0.9);
-const neck = mesh(new THREE.CylinderGeometry(0.5,0.7,1.8,10), dGreen, 2.1,3,0, dBody); neck.rotation.z=-0.8;
-const head = new THREE.Group(); head.position.set(3,3.8,0); dBody.add(head);
-mesh(new THREE.SphereGeometry(0.85,14,10), dGreen, 0,0,0, head).scale.set(1.3,0.9,1);
-mesh(new THREE.BoxGeometry(1,0.5,0.8), dGreen, 0.9,-0.2,0, head);
+// Swamp Dragon, built facing +x. Smooth scales, a long neck, a snout with a jaw,
+// curved horns, bat wings with finger bones, clawed legs and a swaying spiked tail.
+const SM = (c, o={}) => M(c, Object.assign({flatShading:false, roughness:.55}, o));
+const dGreen = SM(0x4f8a36), dDark = SM(0x34612a), dBelly = SM(0xc9dc8f), dSpike = M(0xd7382f), dClaw = SM(0xf1ead2, {roughness:.35}), dWingM = M(0x5f9a45, {side:THREE.DoubleSide, roughness:.7, emissive:0x1c3a12, transparent:true, opacity:.93});
+function seg(r1, r2, len, mat, parent){ const m = mesh(new THREE.CylinderGeometry(r2, r1, len, 14, 1), mat, 0, len/2, 0, parent); return m; }
+// body
+mesh(new THREE.SphereGeometry(1, 28, 20), dGreen, 0, 2.15, 0, dBody).scale.set(2.25, 1.3, 1.35);
+mesh(new THREE.SphereGeometry(1, 24, 16), dDark, -0.1, 2.55, 0, dBody).scale.set(2.0, 0.9, 1.05);
+for(let i=0;i<7;i++){ const pl = mesh(new THREE.BoxGeometry(0.42, 0.12, 1.3 - Math.abs(i-3)*0.12), dBelly, -1.2 + i*0.45, 1.0 + Math.sin(i/6*Math.PI)*-0.12, 0, dBody); pl.rotation.z = (i-3)*0.08; }
+// back spikes
+for(let i=0;i<7;i++){ const x = -1.8 + i*0.6; const sp = mesh(new THREE.ConeGeometry(0.22, 0.75 - Math.abs(i-3)*0.08, 6), dSpike, x, 3.45 - Math.abs(i-3)*0.1, 0, dBody); sp.rotation.z = 0.35; }
+// neck: a chain of segments curving up and forward
+const neckPts = [];
+for(let i=0;i<=6;i++){ const t = i/6; neckPts.push(new THREE.Vector3(1.6 + t*2.0, 2.7 + Math.sin(t*Math.PI*0.55)*1.9, 0)); }
+for(let i=0;i<6;i++){
+  const a = neckPts[i], b2 = neckPts[i+1], r = 0.78 - i*0.06;
+  const m = mesh(new THREE.SphereGeometry(r, 18, 14), i%2?dGreen:dGreen, a.x, a.y, 0, dBody); m.scale.set(1.15, 1, 0.95);
+  const sp = mesh(new THREE.ConeGeometry(0.14, 0.5, 6), dSpike, a.x - 0.1, a.y + r*0.95, 0, dBody); sp.rotation.z = 0.5;
+  const bel = mesh(new THREE.SphereGeometry(r*0.75, 14, 10), dBelly, a.x + r*0.3, a.y - r*0.35, 0, dBody); bel.scale.set(1, 0.8, 0.8);
+}
+// gold collar of the Dragon King (sits at the base of the neck)
+const collar = mesh(new THREE.TorusGeometry(0.82,0.1,10,28), new THREE.MeshBasicMaterial({color:0xf5c542}), 1.75,2.95,0, dBody); collar.rotation.y=Math.PI/2; collar.rotation.x=0.55;
+mesh(new THREE.OctahedronGeometry(0.2), new THREE.MeshBasicMaterial({color:0xfff2a0}), 2.45,2.4,0, dBody);
+// head
+const head = new THREE.Group(); head.position.copy(neckPts[6]).add(new THREE.Vector3(0.2, 0.15, 0)); dBody.add(head);
+mesh(new THREE.SphereGeometry(0.62, 22, 16), dGreen, 0, 0.05, 0, head).scale.set(1.25, 0.95, 1.05);
+const snout = mesh(new THREE.CylinderGeometry(0.28, 0.48, 1.35, 12), dGreen, 0.95, 0.05, 0, head); snout.rotation.z = -Math.PI/2; snout.scale.set(1, 1, 0.85);
+mesh(new THREE.SphereGeometry(0.3, 14, 10), dGreen, 1.6, 0.05, 0, head).scale.set(1, 0.85, 0.95);
 [-1,1].forEach(s=>{
-  mesh(new THREE.SphereGeometry(0.2,8,8), M(0xfff59a,{emissive:0x666600}), 0.5,0.3,s*0.45, head);
-  mesh(new THREE.ConeGeometry(0.15,0.7,6), M(0xe8d9a8), -0.3,0.75,s*0.4, head).rotation.z=0.5;
+  mesh(new THREE.SphereGeometry(0.06, 8, 6), M(0x1a1a1a), 1.8, 0.15, s*0.13, head);                             // nostrils
+  const eye = mesh(new THREE.SphereGeometry(0.17, 14, 10), M(0xffe14a, {emissive:0x806000}), 0.38, 0.28, s*0.46, head);
+  const pupil = mesh(new THREE.BoxGeometry(0.05, 0.22, 0.05), M(0x111111), 0.52, 0.28, s*0.5, head);
+  const brow = mesh(new THREE.BoxGeometry(0.5, 0.1, 0.18), dDark, 0.42, 0.47, s*0.42, head); brow.rotation.x = s*-0.25; brow.rotation.z = -0.2;
+  // curved horns: three cones bending backward
+  const h = new THREE.Group(); h.position.set(-0.25, 0.42, s*0.3); head.add(h);
+  let px = 0, py = 0;
+  for(let k=0;k<3;k++){ const c = mesh(new THREE.ConeGeometry(0.15 - k*0.04, 0.55, 8), dClaw, px, py, 0, h); c.rotation.z = 1.0 + k*0.45; px -= 0.3 + k*0.05; py += 0.28 - k*0.12; }
+  h.rotation.x = s*-0.35;
+  // cheek frills
+  for(let k=0;k<3;k++){ const f = mesh(new THREE.ConeGeometry(0.08, 0.45, 5), dSpike, -0.45, -0.05 - k*0.15, s*(0.5 + k*0.04), head); f.rotation.x = s*-1.3; f.rotation.z = 0.6; }
+  // upper teeth
+  for(let k=0;k<4;k++) mesh(new THREE.ConeGeometry(0.04, 0.14, 5), dClaw, 0.85 + k*0.22, -0.2, s*(0.3 - k*0.04), head).rotation.x = Math.PI;
 });
-const collar = mesh(new THREE.TorusGeometry(0.62,0.1,8,20), new THREE.MeshBasicMaterial({color:0xf5c542}), 1.7,2.7,0, dBody); collar.rotation.y=Math.PI/2; collar.rotation.x=0.7;
-for(let i=0;i<5;i++) mesh(new THREE.ConeGeometry(0.25,0.7,5), M(0xd7382f), -1.4+i*0.7,3.4-Math.abs(i-2)*0.15,0, dBody);
-const tail = mesh(new THREE.ConeGeometry(0.6,3.5,8), dGreen, -3.4,1.4,0, dBody); tail.rotation.z=Math.PI/2+0.3;
-[-1,1].forEach(s=>{
-  mesh(new THREE.CylinderGeometry(0.3,0.35,1.3,8), dDark, 0.9,0.6,s*0.9, dBody);
-  mesh(new THREE.CylinderGeometry(0.3,0.35,1.3,8), dDark, -0.9,0.6,s*0.9, dBody);
-});
+// lower jaw (opens when it breathes)
+const dJaw = new THREE.Group(); dJaw.position.set(0.25, -0.2, 0); head.add(dJaw);
+const jaw = mesh(new THREE.CylinderGeometry(0.2, 0.36, 1.35, 10), dBelly, 0.7, -0.05, 0, dJaw); jaw.rotation.z = -Math.PI/2; jaw.scale.set(0.6, 1, 0.8);
+[-1,1].forEach(s=>{ for(let k=0;k<4;k++) mesh(new THREE.ConeGeometry(0.04, 0.14, 5), dClaw, 0.6 + k*0.22, 0.08, s*(0.24 - k*0.035), dJaw); });
+mesh(new THREE.BoxGeometry(1.0, 0.05, 0.3), M(0xa83a3a), 0.65, 0.05, 0, dJaw); // tongue
+// legs with claws
+function dLeg(x, z, big){
+  const leg = new THREE.Group(); leg.position.set(x, 0, z); dBody.add(leg);
+  const r = big ? 0.6 : 0.45;
+  mesh(new THREE.SphereGeometry(r*1.25, 16, 12), dGreen, 0, 1.4, 0, leg).scale.set(1.2, 1.1, 0.9);   // thigh
+  const shin = mesh(new THREE.CylinderGeometry(r*0.6, r*0.75, 1.2, 12), dDark, big?-0.15:0.1, 0.7, 0, leg); shin.rotation.z = big?-0.3:0.15;
+  mesh(new THREE.SphereGeometry(r*0.7, 12, 8), dDark, 0.15, 0.18, 0, leg).scale.set(1.5, 0.6, 1.1);   // foot
+  for(let k=-1;k<=1;k++){ const c = mesh(new THREE.ConeGeometry(0.07, 0.32, 6), dClaw, 0.55, 0.1, k*0.2, leg); c.rotation.z = -Math.PI/2 - 0.3; }
+  return leg;
+}
+[-1,1].forEach(s=>{ dLeg(1.1, s*1.05, false); dLeg(-1.2, s*1.1, true); });
+// tail: nested segments so it can sway like a whip
+const tailSegs = [];
+{ let parent = new THREE.Group(); parent.position.set(-2.0, 2.0, 0); parent.rotation.z = 0.25; dBody.add(parent);
+  for(let i=0;i<11;i++){
+    const r = 0.7 - i*0.058, len = 0.75;
+    const sg = new THREE.Group(); parent.add(sg); if(i>0) sg.position.set(-len, 0, 0);
+    const m = mesh(new THREE.SphereGeometry(r, 14, 10), dGreen, -len/2, 0, 0, sg); m.scale.set(1.35, 1, 1);
+    if(i%2===0){ const sp = mesh(new THREE.ConeGeometry(Math.max(0.06, r*0.35), 0.45, 6), dSpike, -len/2, r*0.9, 0, sg); sp.rotation.z = 0.5; }
+    sg.rotation.z = i<4 ? 0.06 : -0.03;
+    tailSegs.push(sg); parent = sg;
+  }
+  const tip = mesh(new THREE.ConeGeometry(0.42, 0.9, 4), dSpike, -1.05, 0, 0, parent); tip.rotation.z = Math.PI/2; tip.scale.set(1, 1, 0.35);
+}
+// bat wings: arm + finger bones with a stretched skin between them
 const wings = [];
 [-1,1].forEach(s=>{
-  const piv = new THREE.Group(); piv.position.set(0,3,s*0.9); dBody.add(piv);
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.Float32BufferAttribute([ 1.2,0,0, -1.6,0,0, 0.2,0,s*4.5, -1.2,0,s*3.8, 1.2,0,0, 0.2,0,s*4.5, -1.6,0,0, -1.2,0,s*3.8, 0.2,0,s*4.5 ],3));
-  geo.computeVertexNormals();
-  const w = new THREE.Mesh(geo, M(0x3c6b2f,{side:THREE.DoubleSide})); w.castShadow=true; piv.add(w);
-  wings.push({piv,s});
+  const piv = new THREE.Group(); piv.position.set(0.7, 3.2, s*0.95); dBody.add(piv);
+  const tips = [[0.9, 0.6, 4.6], [-0.6, 0.2, 4.9], [-1.9, -0.2, 4.1], [-2.6, -0.4, 2.6]];   // x, y, z(out)
+  const elbow = new THREE.Vector3(0.6, 0.9, 2.0);
+  const bone = (a, b, r)=>{ const d = new THREE.Vector3().subVectors(b,a); const m = new THREE.Mesh(new THREE.CylinderGeometry(r*0.7, r, d.length(), 8), dDark);
+    m.position.copy(a).addScaledVector(d, 0.5); m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), d.clone().normalize()); m.castShadow = true; piv.add(m); };
+  const root = new THREE.Vector3(0,0,0);
+  const E = new THREE.Vector3(elbow.x, elbow.y, s*elbow.z);
+  bone(root, E, 0.14);
+  const T = tips.map(([x,y,z])=>new THREE.Vector3(x, y, s*z));
+  T.forEach(t=>bone(E, t, 0.07));
+  mesh(new THREE.ConeGeometry(0.08, 0.35, 6), dClaw, E.x+0.2, E.y+0.15, E.z, piv).rotation.z = -0.8;   // wing thumb claw
+  // membrane: fan of triangles from the elbow and the body
+  const verts = [];
+  const bodyBack = new THREE.Vector3(-1.9, -0.6, s*0.2), bodyFront = new THREE.Vector3(0.4, 0, 0);
+  verts.push(...bodyFront.toArray(), ...E.toArray(), ...T[0].toArray());
+  for(let k=0;k<3;k++) verts.push(...E.toArray(), ...T[k].toArray(), ...new THREE.Vector3().lerpVectors(T[k], T[k+1], 0.5).sub(new THREE.Vector3(0, 0, s*0.5)).toArray(),
+                                  ...E.toArray(), ...new THREE.Vector3().lerpVectors(T[k], T[k+1], 0.5).sub(new THREE.Vector3(0, 0, s*0.5)).toArray(), ...T[k+1].toArray());
+  verts.push(...E.toArray(), ...T[3].toArray(), ...bodyBack.toArray());
+  verts.push(...bodyFront.toArray(), ...E.toArray(), ...bodyBack.toArray());
+  const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3)); geo.computeVertexNormals();
+  const w = new THREE.Mesh(geo, dWingM); w.castShadow = true; piv.add(w);
+  piv.rotation.y = s*0.15;
+  wings.push({piv, s});
 });
 const DRAGON_HOME = new THREE.Vector3(28,0,0);
 dragon.position.copy(DRAGON_HOME);
@@ -622,11 +748,577 @@ function spawnChips(x,y,z,color,n=8){
   }
 }
 
+// ================= LEVEL SWITCHING =================
+// Everything built so far that belongs only to Dragon Island goes into L1root,
+// so Part 2 can hide it and show the Big Island instead.
+const L1root = new THREE.Group();
+(() => {
+  const shared = new Set([camera, hemi, sun, sun.target, sea, knight, marker, camera.userData.sky, ...skyClouds]);
+  scene.children.slice().forEach(o=>{
+    if(shared.has(o) || o.name==='far' ) return;
+    scene.remove(o); L1root.add(o);
+  });
+  scene.add(L1root);
+})();
+const L2root = new THREE.Group(); L2root.visible = false; scene.add(L2root);
+let P2 = null;              // Part 2 world + state, built the first time you sail there
+function groundH(x,z){ return S && S.part===2 ? heightAt2(x,z) : 0; }
+function showPart(n){ L1root.visible = n===1; L2root.visible = n===2; }
+
+// ================= PART 2: THE BIG ISLAND =================
+const ISL = {rx:62, rz:46};
+const LAKE = {x:24, z:6, r:10};
+const VILLAGE = {x:-30, z:0};
+const CAMPS = [
+  {x:2,  z:-30, name:'Forest Camp',  vill:0, gob:2},
+  {x:40, z:-16, name:'Rocky Camp',   vill:1, gob:2},
+  {x:38, z:26,  name:'Lakeside Camp',vill:2, gob:2},
+  {x:-2, z:31,  name:'Chief\'s Camp', vill:3, gob:2, chief:true},
+];
+const VILLAGERS = [
+  {name:'Tom', role:'the Blacksmith', look:{shirt:0x8d8f93, over:0x6b4a24, hair:0x2a1d10, hat:null, tool:'hammer', pony:false, beard:true, skin:0xc98e62},
+   hello:'Thank you! I\'m Tom, the blacksmith. Build me a house in the village and I\'ll make your sword stronger!'},
+  {name:'Rosa', role:'the Healer', look:{shirt:0xfff6e3, over:0x3f9a3a, hair:0xb8401c, hat:'scarf', hatColor:0x3f9a3a, tool:null, pony:true, skin:0xf0c9a0},
+   hello:'Oh, thank you, brave knight! I\'m Rosa, the healer. Give me a house and I\'ll brew you potions whenever you need them.'},
+  {name:'Pip', role:'the Farmer', look:{shirt:0xd7382f, over:0x2f6fb5, hair:0xe8c25a, hat:'straw', hatColor:0xe8cf8a, tool:null, pony:false, skin:0xf0c9a0},
+   hello:'Yee-haw, I\'m free! I\'m Pip, the farmer. Build me a house and I\'ll plant a farm. Good food makes you stronger!'},
+  {name:'Lin', role:'the Fisher', look:{shirt:0x2a9d8f, over:0xf5c542, hair:0x1d1d1d, hat:'bucket', hatColor:0xf5c542, tool:null, pony:true, skin:0xe0b48a},
+   hello:'You beat the Goblin Chief! I\'m Lin, the fisher. Build me a house and I\'ll fix up my boat. It can sail all the way to the volcano!'},
+];
+const PLOTS = [0, 1, 2, 3].map(i=>{ const a = i/4*Math.PI*2; return {x:VILLAGE.x+Math.cos(a)*10, z:VILLAGE.z+Math.sin(a)*10, face:a+Math.PI}; });
+
+function rng(seed){ let s = seed>>>0; return ()=>{ s = (s*1664525 + 1013904223)>>>0; return s/4294967296; }; }
+function smooth(e0,e1,x){ const t = Math.max(0,Math.min(1,(x-e0)/(e1-e0))); return t*t*(3-2*t); }
+function heightAt2(x,z){
+  const e = Math.hypot(x/ISL.rx, z/ISL.rz);
+  const wob = Math.sin(Math.atan2(z,x)*5)*0.025 + Math.sin(Math.atan2(z,x)*11+1)*0.012;
+  const d = (e - 1 - wob) * 50;                      // about "meters from the shore"
+  let hills = 0.35 + Math.max(0, Math.sin(x*0.08+1)*Math.cos(z*0.1)) * 2.2 + noise(x*0.6,z*0.6)*0.15;
+  // flatten the village and the camps so things sit nicely
+  let f = 1;
+  f = Math.min(f, smooth(13, 19, Math.hypot(x-VILLAGE.x, z-VILLAGE.z)));
+  CAMPS.forEach(c=>{ f = Math.min(f, smooth(7, 12, Math.hypot(x-c.x, z-c.z))); });
+  hills = 0.35 + (hills-0.35)*f;
+  let y = d < 0 ? hills * smooth(0, -7, d) + (d>-7? 0.05 : 0) : -d*0.32;
+  const ld = Math.hypot(x-LAKE.x, z-LAKE.z);
+  if(ld < LAKE.r+3) y = y*smooth(LAKE.r-2, LAKE.r+3, ld) + (-1.5)*(1-smooth(LAKE.r-2, LAKE.r+3, ld));
+  return Math.max(y, -4);
+}
+function canStand2(x,z){
+  if(heightAt2(x,z) < -0.1) return false;
+  for(const c of P2.cols){ if(Math.hypot(x-c.x, z-c.z) < c.r+0.5) return false; }
+  for(const g of P2.gobs){ if(g.state!=='gone' && g.state!=='flee' && Math.hypot(x-g.x, z-g.z) < 1.1) return false; }
+  return true;
+}
+
+function goblinModel(chief){
+  const g = new THREE.Group();
+  const skin = M(chief?0x4f8a3a:0x6aa84f), cloth = M(chief?0x6b2a5a:0x8b5a2b), dark = M(0x2a1d10);
+  [-1,1].forEach(s=>{ mesh(new THREE.CylinderGeometry(0.11,0.12,0.5,6), skin, 0,0.25,s*0.17, g); mesh(new THREE.BoxGeometry(0.3,0.12,0.2), dark, 0.06,0.05,s*0.17, g); });
+  mesh(new THREE.CylinderGeometry(0.3,0.4,0.7,8), cloth, 0,0.8,0, g);
+  mesh(new THREE.TorusGeometry(0.36,0.05,5,12), M(0x5a3815), 0,0.6,0, g).rotation.x = Math.PI/2;
+  const head = new THREE.Group(); head.position.set(0.05,1.4,0); g.add(head);
+  mesh(new THREE.SphereGeometry(0.33,12,10), skin, 0,0,0, head).scale.set(1,0.95,1.05);
+  [-1,1].forEach(s=>{
+    const ear = mesh(new THREE.ConeGeometry(0.12,0.55,5), skin, 0,0.05,s*0.42, head); ear.rotation.x = s*-1.25;
+    mesh(new THREE.SphereGeometry(0.075,8,8), M(0xfff1a0,{emissive:0x553300}), 0.27,0.07,s*0.12, head);
+    mesh(new THREE.SphereGeometry(0.04,6,6), M(0xc0201a,{emissive:0x400000}), 0.33,0.07,s*0.12, head);
+    mesh(new THREE.BoxGeometry(0.03,0.04,0.14), dark, 0.29,0.18,s*0.12, head).rotation.x = s*0.4; // angry brows
+  });
+  mesh(new THREE.ConeGeometry(0.08,0.28,6), skin, 0.38,-0.03,0, head).rotation.z = -Math.PI/2; // pointy nose
+  mesh(new THREE.BoxGeometry(0.04,0.04,0.2), dark, 0.3,-0.15,0, head);
+  [-1,1].forEach(s=> mesh(new THREE.ConeGeometry(0.025,0.08,4), M(0xffffff), 0.31,-0.12,s*0.06, head)); // little fangs
+  if(chief){
+    mesh(new THREE.SphereGeometry(0.35,12,8,0,Math.PI*2,0,Math.PI/2), M(0x8d8f93,{metalness:.3}), 0,0.08,0, head);
+    [-1,1].forEach(s=> mesh(new THREE.ConeGeometry(0.07,0.4,6), M(0xe8d9a8), 0,0.35,s*0.25, head).rotation.x = s*-0.5);
+  }
+  const arm = new THREE.Group(); arm.position.set(0,1.0,-0.38); g.add(arm);
+  mesh(new THREE.CylinderGeometry(0.08,0.08,0.5,6), skin, 0,-0.2,0, arm);
+  const club = new THREE.Group(); club.position.set(0.1,-0.45,0); arm.add(club);
+  mesh(new THREE.CylinderGeometry(0.06,0.06,0.5,6), M(0x6b4a24), 0,0.2,0, club);
+  mesh(new THREE.CylinderGeometry(chief?0.2:0.15,0.08,0.55,7), M(0x8b5a2b), 0,0.65,0, club);
+  if(chief) for(let i=0;i<4;i++) mesh(new THREE.ConeGeometry(0.05,0.15,4), M(0xb8c0c8), Math.cos(i*1.57)*0.2,0.75,Math.sin(i*1.57)*0.2, club).rotation.z = -Math.cos(i*1.57)*1.57;
+  arm.rotation.z = -0.3;
+  if(chief) g.scale.setScalar(1.45);
+  g.userData = {arm, head, skin};
+  return g;
+}
+
+function cabinModel(roof){
+  const g = new THREE.Group();
+  const log = M(0xa8743f), log2 = M(0x8b5a2b);
+  for(let i=0;i<6;i++){
+    [[0,1.8],[0,-1.8]].forEach(([x,z])=>{ const l = mesh(new THREE.CylinderGeometry(0.2,0.2,4,8), i%2?log:log2, x,0.2+i*0.38,z, g); l.rotation.x = Math.PI/2; l.rotation.z = Math.PI/2; });
+    [[1.8,0],[-1.8,0]].forEach(([x,z])=>{ const l = mesh(new THREE.CylinderGeometry(0.2,0.2,4,8), i%2?log2:log, x,0.39+i*0.38,z, g); l.rotation.x = Math.PI/2; });
+  }
+  const r1 = mesh(new THREE.BoxGeometry(4.6,0.18,2.7), M(roof), 0,3.25,1.05, g); r1.rotation.x = 0.62;
+  const r2 = mesh(new THREE.BoxGeometry(4.6,0.18,2.7), M(roof), 0,3.25,-1.05, g); r2.rotation.x = -0.62;
+  [-1,1].forEach(s=>{ const gab = mesh(new THREE.CylinderGeometry(0.01,2.0,1.3,3,1), log, s*1.82,2.95,0, g); gab.rotation.set(0,0,Math.PI/2); gab.rotation.y = 0; gab.scale.set(1,0.1,1); });
+  [-1,1].forEach(s=>{ const tri = new THREE.Shape(); tri.moveTo(-1.85,0); tri.lineTo(1.85,0); tri.lineTo(0,1.25); tri.lineTo(-1.85,0);
+    const m = mesh(new THREE.ExtrudeGeometry(tri,{depth:0.2,bevelEnabled:false}), log, s*1.75 - (s>0?0.2:0),2.45,0, g); m.rotation.y = Math.PI/2; });
+  mesh(new THREE.BoxGeometry(0.12,1.5,0.9), M(0x5a3815), 1.95,0.75,0, g);           // door (faces +x)
+  mesh(new THREE.SphereGeometry(0.06,6,6), M(0xf5c542), 2.02,0.75,0.3, g);
+  [-1,1].forEach(s=>{ mesh(new THREE.BoxGeometry(0.1,0.65,0.65), M(0xffe9a8,{emissive:0x664400}), 1.93,1.5,s*1.1, g); });
+  mesh(new THREE.BoxGeometry(0.6,1.4,0.6), M(0x8d8f93), -1,3.6,-1.1, g);
+  g.userData.smokeAt = new THREE.Vector3(-1,4.5,-1.1);
+  return g;
+}
+
+function cageModel(){
+  const c = new THREE.Group();
+  for(let i=0;i<10;i++){ const a=i/10*Math.PI*2; mesh(new THREE.CylinderGeometry(0.06,0.06,2.6,5), M(0x4a2f12), Math.cos(a)*1.1,1.3,Math.sin(a)*1.1, c); }
+  mesh(new THREE.CylinderGeometry(1.25,1.25,0.15,12), M(0x4a2f12), 0,2.6,0, c);
+  mesh(new THREE.CylinderGeometry(1.25,1.25,0.15,12), M(0x4a2f12), 0,0.07,0, c);
+  const lock = mesh(new THREE.BoxGeometry(0.3,0.35,0.15), M(0x8d8f93,{metalness:.4}), 1.15,1.1,0, c);
+  return c;
+}
+
+function buildPart2(){
+  const R = L2root, r = rng(2026);
+  const add = (o)=>{ R.add(o); return o; };
+  const m2 = (geo, mat, x, y, z, parent=R)=> mesh(geo, mat, x, y, z, parent);
+  P2 = {cols:[], trees:[], picks:[], gobs:[], camps:[], vill:[], plots:[], built:[false,false,false,false], home:[-1,-1,-1,-1], freed:[false,false,false,false],
+        swordLvl:0, farm:null, dock:null, fires:[], chimneys:[], done:false, warned:{}};
+  const col = (x,z,rad)=>{ const c={x,z,r:rad}; P2.cols.push(c); return c; };
+
+  // ground
+  const W = 150, D = 112, SX = 200, SZ = 150;
+  const geo = new THREE.PlaneGeometry(W, D, SX, SZ); geo.rotateX(-Math.PI/2);
+  const pos = geo.attributes.position, cols = [];
+  const c = new THREE.Color(), sand = new THREE.Color(0xd9b56e), wet = new THREE.Color(0xb59a62), grass = new THREE.Color(0x76bb4f), grass2 = new THREE.Color(0x5ea545),
+        forest = new THREE.Color(0x4a8a3a), hill = new THREE.Color(0x8cc860), dirt = new THREE.Color(0xa98454), bed = new THREE.Color(0x6b7a52), deep = new THREE.Color(0x3f8a8a);
+  const paths = [[-56,0,VILLAGE.x,VILLAGE.z], ...CAMPS.map(cp=>[VILLAGE.x,VILLAGE.z,cp.x,cp.z])];
+  const segD = (x,z,[ax,az,bx,bz])=>{ const vx=bx-ax, vz=bz-az, t=Math.max(0,Math.min(1,((x-ax)*vx+(z-az)*vz)/(vx*vx+vz*vz))); return Math.hypot(x-ax-vx*t, z-az-vz*t); };
+  for(let i=0;i<pos.count;i++){
+    const x = pos.getX(i), z = pos.getZ(i), y = heightAt2(x,z); pos.setY(i, y);
+    const n = noise(x*1.7,z*1.7)*0.5+0.5;
+    const e = Math.hypot(x/ISL.rx, z/ISL.rz);
+    const ld = Math.hypot(x-LAKE.x, z-LAKE.z);
+    if(y < -0.25) c.copy(ld<LAKE.r+3 ? bed : wet).lerp(deep, Math.min(1,(-y-0.25)/1.6));
+    else if(e > 0.9) c.copy(sand).lerp(grass, smooth(0.9, 0.84, e) * 0 + smooth(0.93,0.88,e));
+    else {
+      c.copy(grass).lerp(grass2, n);
+      if(z < -12) c.lerp(forest, smooth(-12,-22,z));
+      if(y > 1.2) c.lerp(hill, Math.min(1,(y-1.2)/1.5)*0.6);
+      const pd = Math.min(...paths.map(p=>segD(x,z,p)));
+      if(pd < 1.6) c.lerp(dirt, smooth(1.6, 0.6, pd)*0.85);
+      if(Math.hypot(x-VILLAGE.x,z-VILLAGE.z) < 4) c.lerp(dirt, 0.7);
+    }
+    cols.push(c.r, c.g, c.b);
+  }
+  geo.setAttribute('color', new THREE.Float32BufferAttribute(cols,3)); geo.computeVertexNormals();
+  const ground = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({vertexColors:true, roughness:.95})); ground.receiveShadow = true; add(ground);
+
+  // shore foam
+  { const pts = [];
+    for(let i=0;i<=220;i++){ const a = i/220*Math.PI*2; let lo=0, hi=80;
+      for(let k=0;k<22;k++){ const m=(lo+hi)/2; if(heightAt2(Math.cos(a)*m, Math.sin(a)*m) > -0.28) lo=m; else hi=m; }
+      pts.push(new THREE.Vector3(Math.cos(a)*lo, -0.12, Math.sin(a)*lo)); }
+    const foam = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts,true), 440, 0.35, 4, true), new THREE.MeshBasicMaterial({color:0xffffff, transparent:true, opacity:.7}));
+    foam.scale.y = 0.2; add(foam); P2.foam = foam; }
+  // lake
+  const lake = m2(new THREE.CircleGeometry(LAKE.r+1.6, 40), new THREE.MeshStandardMaterial({color:0x3fb2ea, roughness:.12, metalness:.1, transparent:true, opacity:.82}), LAKE.x, -0.15, LAKE.z);
+  lake.rotation.x = -Math.PI/2; lake.castShadow = false;
+  for(let i=0;i<6;i++){ const a = r()*6.28, d = r()*LAKE.r*0.8; const pad = m2(new THREE.CircleGeometry(0.4,10,0.4,5.6), M(0x5fae45), LAKE.x+Math.cos(a)*d, -0.12, LAKE.z+Math.sin(a)*d); pad.rotation.x = -Math.PI/2; pad.castShadow=false;
+    if(i%2===0) m2(new THREE.IcosahedronGeometry(0.12,0), M(0xf7b7d3), pad.position.x, -0.02, pad.position.z); }
+
+  // boat you arrive in
+  { const g = new THREE.Group(); g.position.set(-61,0,0); add(g);
+    m2(new THREE.BoxGeometry(5,1,2), M(0x8b4a1f), 0,0.1,0, g); m2(new THREE.CylinderGeometry(0.1,0.1,5), M(0x5a3815), 0,3,0, g);
+    const sail = m2(new THREE.PlaneGeometry(2.4,3), M(0xd7382f,{side:THREE.DoubleSide}), 0.6,3.3,0, g); sail.rotation.y = Math.PI/2; }
+
+  // grass, flowers, mushrooms (instanced)
+  function scatter2(count, geo, mat, place, colors){
+    const im = new THREE.InstancedMesh(geo, mat, count); im.receiveShadow = true;
+    const o = new THREE.Object3D(), cl = new THREE.Color(); let n=0, tries=0;
+    while(n<count && tries<count*20){ tries++; const p = place(); if(!p) continue;
+      const y = heightAt2(p.x,p.z); if(y < 0) continue;
+      o.position.set(p.x, y+(p.y||0), p.z); o.rotation.set(p.rx||0, r()*6.28, 0); o.scale.setScalar(p.s||1); o.updateMatrix(); im.setMatrixAt(n, o.matrix);
+      if(colors){ cl.setHex(colors[Math.floor(r()*colors.length)]); im.setColorAt(n, cl); } n++; }
+    im.count = n; add(im); return im;
+  }
+  const away = (x,z,dd=4)=> Math.hypot(x-VILLAGE.x,z-VILLAGE.z)>12 && CAMPS.every(cp=>Math.hypot(x-cp.x,z-cp.z)>7) && Math.hypot(x-LAKE.x,z-LAKE.z)>LAKE.r+1.5;
+  const rp = ()=>{ const a = r()*6.28, d = Math.sqrt(r())*0.9; return {x:Math.cos(a)*ISL.rx*d, z:Math.sin(a)*ISL.rz*d}; };
+  scatter2(4200, bladeGeo, M(0x6cbf4a), ()=>{ const p = rp(); return away(p.x,p.z) ? Object.assign(p,{s:.6+r()*.8, rx:(r()-.5)*.4}) : null; });
+  scatter2(420, flowerGeo, new THREE.MeshStandardMaterial({color:0xffffff, roughness:.6, flatShading:true}), ()=>{ const p = rp(); return away(p.x,p.z)?p:null; }, [0xd7382f,0xf28c28,0xfff2e0,0xf5c542,0xe85a9a,0x8fb8ff]);
+  const shroom = new THREE.Group();
+  scatter2(90, new THREE.SphereGeometry(0.22,10,6,0,Math.PI*2,0,Math.PI/2).translate(0,0.25,0), M(0xd7382f), ()=>{ const p = rp(); return p.z<-10 && away(p.x,p.z)?p:null; });
+  scatter2(160, new THREE.DodecahedronGeometry(0.3,0), M(0x9a9ca0), ()=>{ const p = rp(); return away(p.x,p.z)?Object.assign(p,{y:.1, s:.5+r()*1.4}):null; });
+
+  // trees: pines in the forest, round oaks elsewhere. Seeded so saves match.
+  const pineT = M(0x6b4a24), pineL = M(0x2f7a3a), pineL2 = M(0x3a8a42), oakL = M(0x4f9a3a), oakL2 = M(0x5fae45);
+  function tree(x,z,kind,choppable=true){
+    const g = new THREE.Group(); g.position.set(x, heightAt2(x,z), z); g.rotation.y = r()*6.28; add(g);
+    const s = 0.85 + r()*0.5; g.scale.setScalar(s);
+    if(kind==='pine'){
+      m2(new THREE.CylinderGeometry(0.22,0.32,1.6,7), pineT, 0,0.8,0, g);
+      for(let k=0;k<3;k++) m2(new THREE.ConeGeometry(1.7-k*0.4, 1.9, 8), k%2?pineL:pineL2, 0,1.9+k*1.05,0, g);
+    } else {
+      m2(new THREE.CylinderGeometry(0.25,0.38,2.2,7), pineT, 0,1.1,0, g);
+      [[0,3,0,1.4],[0.9,2.6,0.4,1],[-0.8,2.7,-0.3,1.05],[0.2,2.6,-0.9,0.95]].forEach(([a,b,c2,rr],k)=> m2(new THREE.IcosahedronGeometry(rr,0), k%2?oakL:oakL2, a,b,c2, g));
+    }
+    if(!choppable) return null;
+    const t = {g, x, z, hits:0, alive:true, col:col(x,z,0.7)}; P2.trees.push(t); return t;
+  }
+  let made = 0, tries = 0;
+  while(made < 46 && tries < 4000){ tries++;
+    const p = rp(); if(!away(p.x,p.z)) continue; if(Math.hypot(p.x+56,p.z)<8) continue;
+    const pd = Math.min(...paths.map(pp=>segD(p.x,p.z,pp))); if(pd < 2.5) continue;
+    if(P2.trees.some(t=>Math.hypot(t.x-p.x,t.z-p.z)<4)) continue;
+    tree(p.x, p.z, p.z < -10 || r()<0.3 ? 'pine' : 'oak'); made++;
+  }
+  // a few rocks to walk around
+  for(let i=0;i<14;i++){ const p = rp(); if(!away(p.x,p.z)) continue; const y = heightAt2(p.x,p.z);
+    const rk = m2(new THREE.DodecahedronGeometry(1.1,0), rockM, p.x, y+0.4, p.z); rk.scale.set(1,.7,1.2); rk.rotation.y = r()*6; col(p.x,p.z,1.2); }
+
+  // pickups: logs and potions
+  const pk = (kind,x,z)=>{ let m; const y = heightAt2(x,z);
+    if(kind==='wood'){ m = m2(new THREE.CylinderGeometry(0.28,0.28,1.3,8), M(0x8b5a2b), x,y+0.4,z); m.rotation.z=Math.PI/2; }
+    else { m = new THREE.Group(); m.position.set(x,y+0.6,z); add(m);
+      m2(new THREE.SphereGeometry(0.35,12,10), M(0x45e0b0,{emissive:0x1a6a50}), 0,0,0,m); m2(new THREE.CylinderGeometry(0.1,0.12,0.35), M(0xd8f8ff), 0,0.38,0,m); m2(new THREE.CylinderGeometry(0.13,0.13,0.12), M(0x8b5a2b), 0,0.6,0,m); }
+    const glow = new THREE.Mesh(new THREE.RingGeometry(0.45,0.75,20), new THREE.MeshBasicMaterial({color: kind==='potion'?0x6fffd2:0xffe08a, transparent:true, opacity:.4, side:THREE.DoubleSide}));
+    glow.rotation.x = -Math.PI/2; glow.position.set(x, y+0.06, z); add(glow);
+    P2.picks.push({kind,m,x,z,taken:false,base:m.position.y,glow}); };
+  [[-46,6],[-40,-10],[-20,14],[-14,-8],[-24,-16],[-8,6],[10,-8],[6,18]].forEach(([x,z])=>pk('wood',x,z));
+  [[-18,0],[14,-24],[50,-2],[20,32]].forEach(([x,z])=>pk('potion',x,z));
+
+  // goblin camps
+  CAMPS.forEach((cp,ci)=>{
+    const y = heightAt2(cp.x,cp.z);
+    const camp = {i:ci, x:cp.x, z:cp.z, cleared:false, gobs:[], cage:null, cageCol:null, seen:false};
+    // tents
+    [[-4,-3],[4,-3.5]].forEach(([dx,dz],k)=>{ const t = m2(new THREE.ConeGeometry(2,2.6,4), M(k?0x7a5a3a:0x6b4a2a), cp.x+dx, y+1.3, cp.z+dz); t.rotation.y = Math.PI/4;
+      m2(new THREE.ConeGeometry(0.6,1.4,3), M(0x2a1d10), cp.x+dx, y+0.7, cp.z+dz+1.3); col(cp.x+dx, cp.z+dz, 1.6); });
+    // campfire
+    const fire = new THREE.Group(); fire.position.set(cp.x, y, cp.z+2); add(fire);
+    for(let k=0;k<5;k++){ const lg = m2(new THREE.CylinderGeometry(0.1,0.1,1.1,6), M(0x5a3815), 0,0.15,0, fire); lg.rotation.set(Math.PI/2, k*1.26, 0.3); }
+    const fl = m2(new THREE.ConeGeometry(0.45,1.1,7), new THREE.MeshBasicMaterial({color:0xff7a1a}), 0,0.65,0, fire);
+    const fl2 = m2(new THREE.ConeGeometry(0.25,0.7,7), new THREE.MeshBasicMaterial({color:0xffd23a}), 0,0.55,0, fire);
+    P2.fires.push([fl,fl2]); col(cp.x, cp.z+2, 0.7);
+    // spiky fence posts
+    for(let k=0;k<9;k++){ const a = -0.6 + k*0.42 + Math.PI/2; const px = cp.x+Math.cos(a)*7.5, pz = cp.z+Math.sin(a)*7.5;
+      const post = m2(new THREE.CylinderGeometry(0.12,0.16,1.6,5), M(0x6b4a24), px, heightAt2(px,pz)+0.8, pz); post.rotation.z = Math.cos(a)*0.2; post.rotation.x = -Math.sin(a)*0.2;
+      m2(new THREE.ConeGeometry(0.12,0.4,5), M(0x6b4a24), px, heightAt2(px,pz)+1.8, pz); }
+    // the cage with a villager inside
+    const v = VILLAGERS[cp.vill];
+    const person = beaModel(v.look); person.position.set(cp.x, y, cp.z-1); add(person);
+    const cage = cageModel(); cage.position.set(cp.x, y, cp.z-1); add(cage);
+    camp.cage = cage; camp.cageCol = col(cp.x, cp.z-1, 1.4);
+    P2.vill[cp.vill] = {m:person, camp:ci, freed:false};
+    // goblins
+    const n = cp.gob + (cp.chief?1:0);
+    for(let k=0;k<n;k++){
+      const chief = cp.chief && k===n-1;
+      const a = k/n*Math.PI*2 + 0.5, hx = cp.x+Math.cos(a)*3.5, hz = cp.z+Math.sin(a)*3.5+1;
+      const gm = goblinModel(chief); add(gm);
+      const gob = {m:gm, camp:ci, chief, x:hx, z:hz, hx, hz, hp:chief?26:12, max:chief?26:12, state:'idle', t:r()*3, cd:0, flash:0, yaw:r()*6, bob:r()*6};
+      P2.gobs.push(gob); camp.gobs.push(gob);
+    }
+    P2.camps.push(camp);
+  });
+
+  // village: campfire, plots, Bea, signpost
+  { const y = heightAt2(VILLAGE.x, VILLAGE.z);
+    const fire = new THREE.Group(); fire.position.set(VILLAGE.x, y, VILLAGE.z); add(fire);
+    for(let k=0;k<10;k++){ const a = k/10*6.28; m2(new THREE.DodecahedronGeometry(0.3,0), rockM, Math.cos(a)*0.9, 0.15, Math.sin(a)*0.9, fire); }
+    for(let k=0;k<5;k++){ const lg = m2(new THREE.CylinderGeometry(0.1,0.1,1.1,6), M(0x5a3815), 0,0.15,0, fire); lg.rotation.set(Math.PI/2, k*1.26, 0.3); }
+    const fl = m2(new THREE.ConeGeometry(0.45,1.1,7), new THREE.MeshBasicMaterial({color:0xff7a1a}), 0,0.65,0, fire); fl.visible = false;
+    const fl2 = m2(new THREE.ConeGeometry(0.25,0.7,7), new THREE.MeshBasicMaterial({color:0xffd23a}), 0,0.55,0, fire); fl2.visible = false;
+    P2.villageFire = [fl, fl2]; P2.fires.push([fl,fl2]); col(VILLAGE.x, VILLAGE.z, 1.2);
+    PLOTS.forEach((pl,i)=>{
+      const py = heightAt2(pl.x,pl.z);
+      const mark = new THREE.Group(); mark.position.set(pl.x, py, pl.z); add(mark);
+      for(let k=0;k<4;k++){ const sd = m2(new THREE.BoxGeometry(k%2?0.2:4.2, 0.25, k%2?4.2:0.2), M(0x6b4a24), 0,0.12,0, mark); sd.position[k%2?'x':'z'] = (k<2?-2.1:2.1); }
+      [[-2.1,-2.1],[2.1,-2.1],[-2.1,2.1],[2.1,2.1]].forEach(([a,b])=> m2(new THREE.CylinderGeometry(0.06,0.06,1),M(0xf5c542),a,0.5,b,mark));
+      const cab = cabinModel([0xd7382f, 0x3f9a3a, 0xf28c28, 0x2f6fb5][i]); cab.position.set(pl.x, py, pl.z); cab.rotation.y = -pl.face; cab.visible = false; add(cab);
+      P2.plots.push({x:pl.x, z:pl.z, face:pl.face, mark, cab, col:null});
+    });
+    const bea2 = beaModel(); bea2.position.set(VILLAGE.x+3, y, VILLAGE.z+2.5); add(bea2); P2.bea = bea2;
+    // signpost
+    const sg = new THREE.Group(); sg.position.set(VILLAGE.x-14, heightAt2(VILLAGE.x-14, 3), 3); add(sg);
+    m2(new THREE.CylinderGeometry(0.1,0.1,2.2,6), M(0x6b4a24), 0,1.1,0, sg);
+    m2(new THREE.BoxGeometry(0.12,0.5,1.6), M(0xa8743f), 0,1.8,0, sg);
+    col(VILLAGE.x-14, 3, 0.4);
+  }
+  // Pip's farm (appears when his house is built)
+  { const farm = new THREE.Group(); farm.position.set(VILLAGE.x, heightAt2(VILLAGE.x, VILLAGE.z+19), VILLAGE.z+19); farm.visible = false; add(farm);
+    for(let k=0;k<5;k++){ m2(new THREE.BoxGeometry(7,0.25,0.8), M(0x6b4a24), 0,0.12,-2.4+k*1.2, farm);
+      for(let j=0;j<6;j++){ if((k+j)%3===0) m2(new THREE.SphereGeometry(0.32,10,8), M(0xf28c28), -3+j*1.2,0.4,-2.4+k*1.2, farm).scale.y = .8;
+        else m2(new THREE.ConeGeometry(0.22,0.8,6), M(0x5fae45), -3+j*1.2,0.6,-2.4+k*1.2, farm); } }
+    for(let k=0;k<8;k++){ m2(new THREE.BoxGeometry(0.12,0.9,0.12), M(0xa8743f), -4+k*(8/7),0.45,3.6, farm); }
+    m2(new THREE.BoxGeometry(8.2,0.1,0.1), M(0xa8743f), 0,0.7,3.6, farm);
+    P2.farm = farm; }
+  // Lin's dock + boat (appears when her house is built)
+  { const dock = new THREE.Group(); dock.position.set(-58, 0, 12); dock.visible = false; add(dock);
+    for(let k=0;k<9;k++) m2(new THREE.BoxGeometry(0.5,0.15,2), M(0x8a5a2b), -k*0.6,0.25,0, dock);
+    for(let k=0;k<3;k++){ [-1,1].forEach(s=> m2(new THREE.CylinderGeometry(0.1,0.1,1.6,6), M(0x5a3815), -k*2.2,-0.3,s*1, dock)); }
+    const boat = new THREE.Group(); boat.position.set(-4,0,2.6); dock.add(boat);
+    m2(new THREE.BoxGeometry(4,0.8,1.6), M(0x2a9d8f), 0,0.1,0, boat); m2(new THREE.CylinderGeometry(0.08,0.08,4), M(0x5a3815), 0,2.3,0, boat);
+    const sl = m2(new THREE.PlaneGeometry(2,2.6), M(0xf5c542,{side:THREE.DoubleSide}), 0.5,2.6,0, boat); sl.rotation.y = Math.PI/2;
+    P2.dock = dock; }
+}
+
+// ---------- Part 2 gameplay ----------
+function p2Start(fromSave){
+  if(!P2) buildPart2();
+  S.part = 2; showPart(2);
+  S.fight = false; D.gone = true; $('boss').classList.add('hidden');
+  S.freed = true; // Build button is unlocked from the start here
+  if(!fromSave){ S.x = -55; S.z = 0; S.yaw = 0; S.pitch = 0; S.hp = S.maxHp; S.wood = 0; S.stone = 0; }
+  updateHud();
+}
+function p2Reset(){ // fresh Part 2 state on the already-built world
+  if(!P2) return;
+  P2.trees.forEach(t=>{ t.alive=true; t.hits=0; t.g.visible=true; t.g.rotation.x=0; t.g.rotation.z=0; t.fall=0; if(!P2.cols.includes(t.col)) P2.cols.push(t.col); });
+  P2.picks.forEach(p=>{ p.taken=false; p.m.visible=true; });
+  P2.camps.forEach(c=>{ c.cleared=false; c.seen=false; c.cage.visible=true; if(!P2.cols.includes(c.cageCol)) P2.cols.push(c.cageCol); });
+  P2.gobs.forEach(g=>{ g.state='idle'; g.hp=g.max; g.x=g.hx; g.z=g.hz; g.m.visible=true; });
+  P2.vill.forEach((v,i)=>{ v.freed=false; const cp = CAMPS[v.camp]; v.m.position.set(cp.x, heightAt2(cp.x,cp.z), cp.z-1); });
+  P2.plots.forEach(p=>{ p.cab.visible=false; p.cab.scale.setScalar(1); p.mark.visible=true; if(p.col){ P2.cols.splice(P2.cols.indexOf(p.col),1); p.col=null; } });
+  P2.built=[false,false,false,false]; P2.home=[-1,-1,-1,-1]; P2.freed=[false,false,false,false]; P2.swordLvl=0; P2.done=false; P2.warned={};
+  P2.farm.visible=false; P2.dock.visible=false; P2.villageFire.forEach(f=>f.visible=false);
+}
+const freedCount = ()=> P2 ? P2.vill.filter(v=>v.freed).length : 0;
+const builtCount = ()=> P2 ? P2.built.filter(Boolean).length : 0;
+function p2Quest(){
+  const f = freedCount(), b = builtCount();
+  const homeless = P2.vill.filter((v,i)=>v.freed && P2.home[i]<0).length;
+  let q;
+  if(P2.done) q = 'The village is finished! 🎉';
+  else if(homeless && S.wood>=4) q = `You have wood! <b>Build 🔨</b> a house on a village plot.`;
+  else if(homeless) q = `Chop trees 🪓 to get <b>4 🪵</b> for the next house (${S.wood}/4).`;
+  else q = `Find the goblin camps, beat the guards, and <b>free the villagers</b>.`;
+  return `${q}<br><span style="font-size:14px">🙋 Freed ${f}/4 · 🏠 Houses ${b}/4</span>`;
+}
+function nearestCamp(){ let best=null, bd=1e9; P2.camps.forEach(c=>{ if(P2.vill[CAMPS[c.i].vill].freed) return; const d = dist(c.x,c.z); if(d<bd){bd=d; best=c;} }); return best; }
+function p2Objective(){
+  if(P2.done) return null;
+  const homeless = P2.vill.some((v,i)=>v.freed && P2.home[i]<0);
+  if(homeless && S.wood>=4){ const p = P2.plots.find((p,i)=>!p.cab.visible); if(p) return [p.x, heightAt2(p.x,p.z)+3, p.z]; }
+  if(homeless) return null;
+  const c = nearestCamp(); return c ? [c.x, heightAt2(c.x,c.z)+5, c.z] : null;
+}
+function p2NearTree(){ let best=null, bd=2.8; P2.trees.forEach(t=>{ if(!t.alive) return; const d=dist(t.x,t.z); if(d<bd){bd=d;best=t;} }); return best; }
+function p2NearPlot(){ let best=null, bd=4.9; P2.plots.forEach(p=>{ if(p.cab.visible) return; const d=dist(p.x,p.z); if(d<bd){bd=d;best=p;} }); return best; }
+function p2NearCage(){ return P2.camps.find(c=>c.cage.visible && dist(c.x,c.z-1)<3.2); }
+function p2NearPerson(){
+  if(dist(P2.bea.position.x,P2.bea.position.z)<3) return {who:'bea'};
+  for(let i=0;i<4;i++){ const v = P2.vill[i]; if(v.freed && dist(v.m.position.x, v.m.position.z)<3) return {who:i}; }
+  return null;
+}
+function p2Prompt(){
+  const cg = p2NearCage();
+  if(cg) return cg.gobs.some(g=>g.state!=='gone' && g.state!=='flee') ? '👺 Beat the goblin guards first!' : '👋 Use (E) to open the cage';
+  const pp = p2NearPerson(); if(pp) return pp.who==='bea' ? '👋 Use (E) to talk to Bea' : `👋 Use (E) to talk to ${VILLAGERS[pp.who].name}`;
+  if(p2NearPlot()) return '🔨 Build (5) a log cabin: 4 🪵';
+  if(p2NearTree()) return '🪓 Chop (4) the tree for wood';
+  return null;
+}
+function p2Use(){
+  const cg = p2NearCage();
+  if(cg){
+    if(cg.gobs.some(g=>g.state!=='gone' && g.state!=='flee')){ say([['Locked!','The goblin guards have the key. Beat them first! ⚔️']]); return; }
+    const vi = CAMPS[cg.i].vill, v = P2.vill[vi], info = VILLAGERS[vi];
+    swingStart(); cg.cage.visible = false; P2.cols.splice(P2.cols.indexOf(cg.cageCol),1);
+    spawnChips(cg.x, heightAt2(cg.x,cg.z)+1.2, cg.z-1, 0x4a2f12, 14);
+    v.freed = true;
+    // walk to the village (we just place them at the campfire)
+    const a = vi/4*Math.PI*2 + 0.4; v.m.position.set(VILLAGE.x+Math.cos(a)*4, heightAt2(VILLAGE.x,VILLAGE.z), VILLAGE.z+Math.sin(a)*4);
+    updateHud();
+    const lines = [[`${info.name} ${info.role}`, info.hello], [`${info.name} ${info.role}`, 'I\'ll wait for you at the village by the big campfire. 🔥']];
+    if(freedCount()===1) lines.push(['Bea the Builder', 'Every family needs a home! Chop 4 wood 🪵 and press Build 🔨 at one of the plots with yellow posts.']);
+    say(lines);
+    return;
+  }
+  const pp = p2NearPerson();
+  if(pp && pp.who==='bea'){
+    const f = freedCount(), b = builtCount();
+    if(!f) say([['Bea the Builder','This big island has villagers locked up by GOBLINS! 👺 The Dragon King pays them in gold to catch people and guard them.'],['Bea the Builder','Find their camps, beat the guards, and set the villagers free. Then we\'ll build them a village right here. Each log cabin takes 4 wood. 🪵']]);
+    else if(b < f) say([['Bea the Builder', `Build a house for everyone you saved. Each cabin needs 4 wood. You have ${S.wood}.`]]);
+    else say([['Bea the Builder', `${4-f} villager${4-f===1?' is':'s are'} still locked up. Look for smoke from the goblin campfires!`]]);
+    return;
+  }
+  if(pp){
+    const i = pp.who, info = VILLAGERS[i];
+    if(P2.home[i] < 0){ say([[`${info.name} ${info.role}`, 'Could you build me a house? 4 wood, at one of the plots. 🏠']]); return; }
+    if(i===1){ const before = S.pot; S.pot = Math.max(S.pot, 3); updateHud();
+      say([['Rosa the Healer', S.pot>before ? `Here you go! Fresh potions. You have ${S.pot} now. 🧪` : 'You already have plenty of potions. Come back when you need more!']]); return; }
+    if(i===0){ say([['Tom the Blacksmith','Your sword is the sharpest on the island now! ⚔️🔥']]); return; }
+    if(i===2){ say([['Pip the Farmer','Fresh pumpkins and carrots! Good food makes you stronger. 🎃']]); return; }
+    if(i===3){ say([['Lin the Fisher', P2.done ? 'My boat is ready when you are. Next stop: the Volcano! 🌋' : 'Free everyone first, and then we can talk about sailing!']]); return; }
+  }
+}
+function p2Build(){
+  const p = p2NearPlot();
+  if(!p){ say([['Build','Go to one of the plots with yellow posts in the village to build a house.']]); return; }
+  const who = P2.vill.findIndex((v,i)=>v.freed && P2.home[i]<0);
+  if(who<0){ say([['Build','Nobody needs a house yet. Free a villager from the goblins first!']]); return; }
+  if(S.wood < 4){ say([['Build',`A log cabin needs 4 🪵. You have ${S.wood}. Chop some trees!`]]); return; }
+  S.wood -= 4;
+  const pi = P2.plots.indexOf(p);
+  P2.home[who] = pi; P2.built[pi] = true;
+  placeHome(pi, who, true);
+  updateHud();
+  const info = VILLAGERS[who];
+  const lines = [[`${info.name} ${info.role}`, '*bang bang* *saw saw* ... My very own log cabin! Thank you! 🏠']];
+  if(who===0){ P2.swordLvl = 1; lines.push(['Tom the Blacksmith','Hand me that sword... *clang clang clang* There! It hits much harder now, and it glows! ⚔️🔥']); }
+  if(who===1){ S.pot = Math.max(S.pot,3); lines.push(['Rosa the Healer','I brewed you some potions! 🧪 Come talk to me any time to get more.']); }
+  if(who===2){ S.maxHp += 10; S.hp = S.maxHp; lines.push(['Pip the Farmer','I planted a farm behind the village! 🎃 Eat up! You can take more hits now. (Max health +10)']); }
+  if(who===3){ lines.push(['Lin the Fisher','I fixed up my dock and my boat on the beach. ⛵ Once the village is done, it can sail to the volcano!']); }
+  updateHud();
+  say(lines, ()=>{ if(builtCount()===4) p2Finish(); });
+}
+function placeHome(pi, who, animate){
+  const p = P2.plots[pi];
+  p.cab.visible = true; p.mark.visible = false; p.col = {x:p.x, z:p.z, r:2.6}; P2.cols.push(p.col);
+  if(dist(p.x,p.z)<3.4){ S.x = p.x + Math.cos(p.face)*-4.2; S.z = p.z + Math.sin(p.face)*-4.2; }
+  if(animate){ p.cab.scale.setScalar(0.01); p.grow = 0; spawnChips(p.x, heightAt2(p.x,p.z)+2, p.z, 0xa8743f, 20); }
+  const v = P2.vill[who]; const door = -p.face;
+  v.m.position.set(p.x - Math.cos(p.face)*3.2, heightAt2(p.x,p.z), p.z - Math.sin(p.face)*3.2);
+  if(who===0) [tpSword, fpSword].forEach(sw=>sw.children[0].material.emissive.setHex(0xaa3300));
+  if(who===2) P2.farm.visible = true;
+  if(who===3) P2.dock.visible = true;
+  if(P2.built.filter(Boolean).length===4) P2.villageFire.forEach(f=>f.visible=true);
+}
+function p2Finish(){
+  P2.done = true; updateHud(); saveNow();
+  P2.villageFire.forEach(f=>f.visible=true);
+  say([['Bea the Builder','Look at this! Four log cabins, a farm, a dock, and a campfire. We built a real village! 🎉'],
+       ['Everyone','HOORAY for ' + kn() + '! 🙌'],
+       ['Lin the Fisher','I heard the goblins bragging. The Dragon King keeps his gold on the Volcano, and Fire Dragons guard it. That\'s how he pays all his goblins.'],
+       ['Lin the Fisher','If we take his gold away, nobody will work for him anymore!'],
+       [kn(),'Then that\'s where I\'m going next. Get the boat ready, Lin!']],
+    ()=>{
+      $('endTitle').textContent = 'Part 2 Complete!';
+      $('endText').textContent = `${kn()} beat the goblins, freed Tom, Rosa, Pip and Lin, and built a whole village out of wood! The Dragon King is still out there...`;
+      $('endNext').innerHTML = 'Coming next: <b>Part 3: The Volcano</b> 🌋 and the Fire Dragons';
+      $('p2Btn').classList.add('hidden');
+      $('end').classList.remove('hidden'); paused = true;
+    });
+}
+function p2Chop(){
+  const t = p2NearTree(); if(!t) return;
+  t.hits++; spawnChips(t.x, heightAt2(t.x,t.z)+1.5, t.z, 0xc89060, 6);
+  if(t.hits>=3){ t.alive=false; P2.cols.splice(P2.cols.indexOf(t.col),1); t.fall=0; S.wood += 2; updateHud(); }
+}
+function p2Sword(){
+  const dmgBase = P2.swordLvl ? 6 : 4;
+  let best=null, bd=1e9;
+  P2.gobs.forEach(g=>{ if(g.state==='gone'||g.state==='flee') return;
+    const d = dist(g.x,g.z), ang = Math.abs(angDiff(Math.atan2(g.z-S.z, g.x-S.x), S.yaw));
+    if(d < (g.chief?3.6:3.0) && ang < 1.3 && d<bd){ bd=d; best=g; } });
+  if(!best) return;
+  let dmg = dmgBase + Math.floor(Math.random()*3);
+  best.hp -= dmg; best.flash = 0.2; best.state = best.state==='windup' && !best.chief ? 'chase' : best.state; // a hit can interrupt a small goblin
+  const a = Math.atan2(best.z-S.z, best.x-S.x), kb = best.chief?0.5:1.2;
+  const nx = best.x+Math.cos(a)*kb, nz = best.z+Math.sin(a)*kb; if(heightAt2(nx,nz)>-0.1){ best.x=nx; best.z=nz; }
+  spawnChips(best.x, heightAt2(best.x,best.z)+1.2, best.z, 0x8be05a, 6);
+  P2.focus = best;
+  if(best.hp<=0){
+    best.state='flee'; best.t=2.5; spawnChips(best.x, heightAt2(best.x,best.z)+1, best.z, 0xf5c542, 14);
+    const coins = best.chief ? 10 : 3; S.gold = (S.gold||0) + coins; updateHud();
+    const camp = P2.camps[best.camp];
+    if(camp.gobs.every(g=>g.state==='flee'||g.state==='gone')){
+      camp.cleared = true;
+      setTimeout(()=>{ if(S.part===2) say([best.chief
+          ? ['👺 Goblin Chief','You think you\'ve won? The Dragon King will hear about this, knight! He has more gold than you can dream of, and more goblins to spend it on! *runs off*']
+          : ['👺 Goblin','Ow ow OW! No dragon gold is worth this! *drops the key and the gold and runs into the woods*'],
+          [VILLAGERS[CAMPS[camp.i].vill].name, 'You did it! Quick, open the cage! 👋']]); }, 700);
+    }
+  }
+}
+function p2Lose(){
+  S.hp = S.maxHp; S.poison=0; S.mud=0; if(S.pot<1) S.pot=1;
+  S.x = VILLAGE.x+5; S.z = VILLAGE.z-3; S.yaw = 0;
+  P2.gobs.forEach(g=>{ if(g.state!=='gone' && g.state!=='flee'){ g.hp = g.max; g.x=g.hx; g.z=g.hz; g.state='idle'; } });
+  updateHud();
+  say([['Bea the Builder','Oof! The goblins got you. I pulled you back to the village to rest.'],['Bea the Builder','Hold your shield 🛡️ when a goblin lifts its club, then swing back! Here\'s a potion. 🧪']]);
+}
+function p2Update(dt){
+  // pickups
+  for(const p of P2.picks){ if(p.taken) continue;
+    if(dist(p.x,p.z)<1.6){ p.taken=true; p.m.visible=false; if(p.kind==='wood') S.wood++; else S.pot++; updateHud(); } }
+  // first look at a camp
+  P2.camps.forEach(c=>{ if(!c.seen && dist(c.x,c.z)<17 && !P2.vill[CAMPS[c.i].vill].freed){ c.seen=true;
+    const taunts = [
+      ['👺 Goblin','Hey! A knight! The Dragon King pays us GOLD to keep these villagers locked up. You\'re not taking them! GET THEM!'],
+      ['👺 Goblin','Heh heh. More gold for us if we squash a knight! Grab your clubs, boys!'],
+      ['👺 Goblin','These prisoners are worth a big bag of dragon gold. Go away, tin can!'],
+      ['👺 Goblin Chief','So YOU\'RE the knight who beat the Swamp Dragon. The Dragon King promised me a WHOLE CHEST of gold if I stop you. Goblins, ATTACK!']];
+    say([[VILLAGERS[CAMPS[c.i].vill].name, 'HELP! Over here! The goblins locked me up!'], taunts[CAMPS[c.i].chief ? 3 : c.i % 3]]); } });
+  // goblins
+  let engaged = null, ed = 1e9;
+  for(const g of P2.gobs){
+    if(g.state==='gone') continue;
+    g.t -= dt; g.cd -= dt; g.flash = Math.max(0, g.flash-dt);
+    const d = dist(g.x,g.z);
+    if(g.state==='flee'){ const a = Math.atan2(g.z-S.z, g.x-S.x); const nx=g.x+Math.cos(a)*6*dt, nz=g.z+Math.sin(a)*6*dt; if(heightAt2(nx,nz)>-0.1){g.x=nx; g.z=nz;} g.yaw=a;
+      if(g.t<=0){ g.state='gone'; g.m.visible=false; } continue; }
+    const fromHome = Math.hypot(g.x-g.hx, g.z-g.hz);
+    const sp = (g.chief?3.0:3.7)*dt;
+    const step = (tx,tz,spd)=>{ const a = Math.atan2(tz-g.z, tx-g.x); g.yaw = a; const nx=g.x+Math.cos(a)*spd, nz=g.z+Math.sin(a)*spd;
+      if(heightAt2(nx,nz)>-0.1 && !P2.cols.some(c=>Math.hypot(nx-c.x,nz-c.z)<c.r+0.3)){ g.x=nx; g.z=nz; } };
+    if(g.state==='idle'){
+      if(Math.hypot(g.x-g.hx,g.z-g.hz)>0.5) step(g.hx,g.hz,sp*0.6);
+      else g.yaw += Math.sin(time+g.bob)*dt;
+      if(d < 11) g.state='chase';
+    } else if(g.state==='chase'){
+      if(fromHome > 22 || d > 18){ g.state='idle'; continue; }
+      if(d > 1.9) step(S.x, S.z, sp);
+      else g.yaw = Math.atan2(S.z-g.z, S.x-g.x);
+      if(d < 2.4 && g.cd<=0){ g.state='windup'; g.t = g.chief?0.75:0.6; }
+    } else if(g.state==='windup'){
+      g.yaw = Math.atan2(S.z-g.z, S.x-g.x);
+      if(g.t<=0){ g.state='chase'; g.cd = g.chief?1.5:1.3; g.swing = 0.25;
+        if(d < (g.chief?3.2:2.8)) hurt(g.chief?5:3); }
+    }
+    // separation between goblins
+    for(const o of P2.gobs){ if(o===g||o.state==='gone'||o.state==='flee') continue; const dd = Math.hypot(o.x-g.x,o.z-g.z); if(dd<1.2 && dd>0.01){ g.x -= (o.x-g.x)/dd*0.03; g.z -= (o.z-g.z)/dd*0.03; } }
+    if(g.state!=='idle' && d<ed){ ed=d; engaged=g; }
+  }
+  // lock-on to the closest goblin you're fighting
+  const turning = Math.abs((keys.r?1:0)-(keys.l?1:0)+joyV.x) > 0.25;
+  if(engaged && ed<9 && !turning && (S.lookT||0)<=0) S.yaw += angDiff(Math.atan2(engaged.z-S.z, engaged.x-S.x), S.yaw)*Math.min(1,dt*4);
+  // health bar for the goblin you're fighting
+  const show = P2.focus && P2.focus.state!=='gone' && P2.focus.state!=='flee' && dist(P2.focus.x,P2.focus.z)<12 ? P2.focus : (engaged && ed<8 ? engaged : null);
+  if(show){ $('boss').classList.remove('hidden'); $('bossName').textContent = show.chief ? '👺 Goblin Chief' : '👺 Goblin'; $('bossfill').style.width = Math.max(0,show.hp/show.max*100)+'%'; }
+  else $('boss').classList.add('hidden');
+  // prompt + buttons
+  const p = paused ? null : p2Prompt();
+  const pr = $('prompt'); if(p){ pr.textContent=p; pr.classList.remove('hidden'); } else pr.classList.add('hidden');
+  $('sChop').classList.toggle('ready', !!p2NearTree());
+  $('sBuild').classList.toggle('ready', !!p2NearPlot() && P2.vill.some((v,i)=>v.freed && P2.home[i]<0));
+  $('sUse').classList.toggle('ready', !!p && p.startsWith('👋'));
+}
+function p2Animate(dt){
+  if(!P2) return;
+  for(const g of P2.gobs){
+    if(g.state==='gone') continue;
+    const y = heightAt2(g.x,g.z);
+    const moving = g.state==='chase' || g.state==='flee';
+    g.m.position.set(g.x, y + (moving ? Math.abs(Math.sin(time*12+g.bob))*0.15 : Math.abs(Math.sin(time*2+g.bob))*0.04), g.z);
+    g.m.rotation.y = -g.yaw;
+    const arm = g.m.userData.arm;
+    if(g.state==='windup') arm.rotation.z = Math.min(2.6, arm.rotation.z + dt*8);
+    else if(g.swing>0){ g.swing -= dt; arm.rotation.z = -0.9; }
+    else arm.rotation.z += (-0.3 - arm.rotation.z)*Math.min(1,dt*8);
+    g.m.userData.skin.color.setHex(g.flash>0 ? 0xff5a4a : (g.chief?0x4f8a3a:0x6aa84f));
+  }
+  P2.trees.forEach(t=>{ if(!t.alive && t.g.visible){ t.fall=(t.fall||0)+dt; t.g.rotation.z = -Math.min(1.5, t.fall*2); if(t.fall>1.4) t.g.visible=false; } });
+  P2.picks.forEach(p=>{ if(!p.taken){ p.m.position.y = p.base + Math.sin(time*3+p.x)*0.12; p.m.rotation.y += dt; } p.glow.visible = !p.taken; p.glow.material.opacity = 0.35 + Math.sin(time*4+p.x)*0.2; });
+  P2.fires.forEach(([a,b],i)=>{ a.scale.set(1, 0.85+Math.sin(time*13+i)*0.15, 1); b.scale.set(1, 0.8+Math.sin(time*17+i)*0.2, 1); });
+  P2.plots.forEach(p=>{ if(p.grow!==undefined && p.grow<1){ p.grow = Math.min(1, p.grow+dt*1.2); const s = p.grow<1 ? 1 - Math.pow(1-p.grow,3) : 1; p.cab.scale.set(1, s, 1); } });
+  P2.foam.material.opacity = 0.45 + Math.sin(time*1.6)*0.25;
+  // people turn to face you
+  const face = (m)=>{ if(Math.hypot(S.x-m.position.x,S.z-m.position.z)<14) m.rotation.y = -Math.atan2(S.z-m.position.z, S.x-m.position.x) + Math.PI/2; };
+  face(P2.bea); P2.vill.forEach(v=>{ face(v.m); const u = v.m.userData; if(!v.freed) u.armR.rotation.set(-2.6 + Math.sin(time*8)*0.4, 0, -0.3); else u.armR.rotation.set(-0.4 + Math.sin(time*2)*0.1, 0, -0.15); });
+}
+
 // ================= STATE =================
 let S, cam = 'tp', running = false, paused = true;
 const keys = {};
 function reset(name, title){
-  S = {name, title, x:-36, z:0, yaw:0, pitch:0, hp:30, maxHp:30, wood:0, stone:0, pot:0,
+  S = {name, title, part:1, gold:0, x:-36, z:0, yaw:0, pitch:0, hp:30, maxHp:30, wood:0, stone:0, pot:0,
        sword:false, shield:false, freed:false, house:false, bridge:false, fight:false, won:false,
        swing:0, swingCd:0, chop:0, blocking:false, poison:0, poisonTick:0, mud:0, hurtT:0, invuln:0};
   pickups.forEach(p=>{p.taken=false; p.m.visible=true;});
@@ -636,6 +1328,8 @@ function reset(name, title){
   house.visible=false; plotMark.visible=true; if(houseCol){ colliders.splice(colliders.indexOf(houseCol),1); houseCol=null; }
   bridge.visible=false; bridgeSpot.visible=true;
   resetDragon();
+  showPart(1); p2Reset();
+  [tpSword, fpSword].forEach(sw=>sw.children[0].material.emissive.setHex(0x333333));
   updateHud();
 }
 let D;
@@ -657,10 +1351,15 @@ function saveNow(){
     v:1, at:Date.now(), cam,
     s:{name:S.name, title:S.title, x:+S.x.toFixed(2), z:+S.z.toFixed(2), yaw:+S.yaw.toFixed(3), pitch:+S.pitch.toFixed(3),
        hp:Math.max(1,S.hp), wood:S.wood, stone:S.stone, pot:S.pot, sword:S.sword, shield:S.shield,
-       freed:S.freed, house:S.house, bridge:S.bridge, won:S.won, seenPot:!!S.seenPot},
+       freed:S.freed, house:S.house, bridge:S.bridge, won:S.won, seenPot:!!S.seenPot,
+       part:S.part||1, gold:S.gold||0, maxHp:S.maxHp},
     picks: pickups.map(p=>p.taken?1:0),
     trees: trees.map(t=>t.alive?t.hits:-1)
   };
+  if(S.part===2 && P2){
+    data.p2 = {trees:P2.trees.map(t=>t.alive?t.hits:-1), picks:P2.picks.map(p=>p.taken?1:0), freed:P2.vill.map(v=>v.freed?1:0),
+               home:P2.home.slice(), gobs:P2.gobs.map(g=>(g.state==='gone'||g.state==='flee')?1:0), seen:P2.camps.map(c=>c.seen?1:0), done:P2.done};
+  }
   try{ localStorage.setItem(SAVE_KEY, JSON.stringify(data)); }catch(e){}
 }
 function readSave(){ try{ const d = JSON.parse(localStorage.getItem(SAVE_KEY)||'null'); return d && d.v===1 && d.s ? d : null; }catch(e){ return null; } }
@@ -678,8 +1377,27 @@ function applySave(d){
   if(S.house){ house.visible=true; plotMark.visible=false; houseCol = addCol(PLOT.x,PLOT.z,2.4); }
   if(S.bridge){ bridge.visible=true; bridgeSpot.visible=false; }
   if(S.won){ D.gone = true; dragon.visible = false; }
+  S.gold = v.gold||0; S.maxHp = v.maxHp||30;
+  if(v.part===2){
+    p2Start(true);
+    const q = d.p2 || {};
+    (q.trees||[]).forEach((h,i)=>{ const t = P2.trees[i]; if(!t) return; if(h<0){ t.alive=false; t.g.visible=false; const k=P2.cols.indexOf(t.col); if(k>=0) P2.cols.splice(k,1); } else t.hits=h; });
+    (q.picks||[]).forEach((tk,i)=>{ const pp = P2.picks[i]; if(pp && tk){ pp.taken=true; pp.m.visible=false; } });
+    (q.gobs||[]).forEach((gone,i)=>{ const g = P2.gobs[i]; if(g && gone){ g.state='gone'; g.m.visible=false; } });
+    (q.seen||[]).forEach((sn,i)=>{ if(P2.camps[i]) P2.camps[i].seen = !!sn; });
+    P2.camps.forEach(c=>{ c.cleared = c.gobs.every(g=>g.state==='gone'); });
+    (q.freed||[]).forEach((f,i)=>{ if(!f) return; const vv = P2.vill[i]; vv.freed = true; const camp = P2.camps[vv.camp];
+      camp.cage.visible=false; const k=P2.cols.indexOf(camp.cageCol); if(k>=0) P2.cols.splice(k,1);
+      const a = i/4*Math.PI*2 + 0.4; vv.m.position.set(VILLAGE.x+Math.cos(a)*4, heightAt2(VILLAGE.x,VILLAGE.z), VILLAGE.z+Math.sin(a)*4); });
+    (q.home||[]).forEach((pi,who)=>{ if(pi>=0){ P2.home[who]=pi; P2.built[pi]=true; if(who===0) P2.swordLvl=1; placeHome(pi, who, false); } });
+    P2.done = !!q.done;
+    S.x = v.x; S.z = v.z;
+  }
   // never wake up stuck inside something
-  if(!canStand(S.x, S.z)){ S.x = S.freed ? bea.position.x-2 : -36; S.z = S.freed ? bea.position.z : 0; }
+  if(!canStand(S.x, S.z)){
+    if(S.part===2){ S.x = VILLAGE.x+5; S.z = VILLAGE.z-3; }
+    else { S.x = S.freed ? bea.position.x-2 : -36; S.z = S.freed ? bea.position.z : 0; }
+  }
   setCam(d.cam==='fp'?'fp':'tp');
   updateHud();
 }
@@ -690,7 +1408,10 @@ function showContinue(){
   if(d){
     const v = d.s;
     let where = 'just landed on the beach';
-    if(v.won) where = 'beat the Swamp Dragon!';
+    if(v.part===2){
+      const q = d.p2||{}; const f = (q.freed||[]).filter(Boolean).length, b = (q.home||[]).filter(h=>h>=0).length;
+      where = q.done ? 'Part 2 done! The village is built 🎉' : `Part 2, freed ${f}/4 villagers, built ${b}/4 houses`;
+    } else if(v.won) where = 'beat the Swamp Dragon! Ready for Part 2 ⛵';
     else if(v.bridge) where = 'ready to face the Swamp Dragon';
     else if(v.house) where = 'building the bridge';
     else if(v.freed) where = 'building Bea\'s house';
@@ -734,12 +1455,15 @@ function updateHud(){
   else if(!S.bridge) q = `Gather <b>3 🪵</b>, then <b>Build 🔨</b> a bridge at the river. (${S.wood}/3)`;
   else if(!S.won) q = 'Cross the bridge and defeat the <b>Swamp Dragon</b> 🐉';
   else q = 'You did it!';
+  if(S.part===2 && P2) q = p2Quest();
   $('quest').innerHTML = q;
+  $('gold').textContent = S.gold||0; $('goldBox').classList.toggle('hidden', !(S.gold>0)); $('stoneBox').classList.toggle('hidden', S.part===2);
   const st=[]; if(S.poison>0) st.push('☠️ Poisoned! Drink a potion'); if(S.mud>0) st.push('🟤 Mud in your eyes');
   $('status').textContent = st.join('   ');
-  if(S.fight){ $('bossfill').style.width = Math.max(0,D.hp/D.max*100)+'%'; }
+  if(S.fight && S.part!==2){ $('bossName').textContent = '🐉 Swamp Dragon'; $('bossfill').style.width = Math.max(0,D.hp/D.max*100)+'%'; }
 }
 function objective(){
+  if(S.part===2) return p2Objective();
   if(!S.sword) return [chest.position.x, 2.4, chest.position.z];
   if(!S.freed) return [0, 4, -12];
   if(!S.house){
@@ -766,6 +1490,7 @@ function currentPrompt(){
 }
 function useAct(){
   if(paused) return;
+  if(S.part===2) return p2Use();
   if(!S.sword && dist(chest.position.x,chest.position.z)<3){
     S.sword = true; S.shield = true; lid.rotation.x = -1.9; updateHud();
     say([['Treasure Chest','You found a shining Knight\'s Sword ⚔️ and a Green Shield 🛡️!'],
@@ -796,6 +1521,7 @@ function useAct(){
 }
 function buildAct(){
   if(paused || !S.freed) return;
+  if(S.part===2) return p2Build();
   if(!S.house && dist(PLOT.x,PLOT.z)<4){
     if(S.wood>=4 && S.stone>=3){
       S.wood-=4; S.stone-=3; S.house=true; house.visible=true; plotMark.visible=false; houseCol = addCol(PLOT.x,PLOT.z,2.4);
@@ -819,6 +1545,7 @@ function buildAct(){
 function chopAct(){
   if(paused || S.chop>0) return;
   S.chop = 0.4;
+  if(S.part===2) return p2Chop();
   const t = nearTree();
   if(!t) return;
   t.hits++; spawnChips(t.x,1.5,t.z,0xc89060,6);
@@ -839,6 +1566,7 @@ function swingStart(){
 function swordAct(){
   if(paused || !S.sword) return;
   if(!swingStart()) return;
+  if(S.part===2) return p2Sword();
   // hit dragon?
   if(S.fight && !D.gone){
     const dx = dragon.position.x - S.x, dz = dragon.position.z - S.z, d = Math.hypot(dx,dz);
@@ -881,12 +1609,16 @@ function win(){
          ['Swamp Dragon','*the collar glows again, and the dragon flies off toward the volcano*'],
          [kn(),'The Dragon King\'s crown is controlling them. If I take that crown, every dragon will be free!']],
       ()=>{
+        $('endTitle').textContent = 'Part 1 Complete!';
         $('endText').textContent = `${kn()} rescued Bea, built a house and a bridge, and beat the Swamp Dragon! But the Dragon King is still out there, at the top of Dragon Castle.`;
+        $('endNext').innerHTML = 'Next: <b>Part 2: The Big Island</b> 🏝️ Goblins, villagers, and a village to build!';
+        $('p2Btn').classList.remove('hidden');
         $('end').classList.remove('hidden'); paused = true;
       });
   }, 1600);
 }
 function lose(){
+  if(S.part===2) return p2Lose();
   S.hp = S.maxHp; S.poison=0; S.mud=0; flashFx('poisonfx',0); $('mud').style.opacity=0;
   S.x = bea.position.x - 2; S.z = bea.position.z; S.yaw = 0;
   if(S.pot<1) S.pot=1;
@@ -1027,6 +1759,7 @@ document.addEventListener('touchcancel', endTouch);
 
 // ================= PHYSICS =================
 function canStand(x,z){
+  if(S.part===2) return canStand2(x,z);
   if(x<LAND.x0+0.5 || x>LAND.x1-0.5 || z<LAND.z0+0.5 || z>LAND.z1-0.5) return false;
   const onBridge = S.bridge && Math.abs(z-BRIDGE_Z) < BRIDGE_HALF-0.4 && x > RIVER_X0-3.6 && x < RIVER_X1+3.6;
   if(!onBridge){
@@ -1083,6 +1816,7 @@ function update(dt){
     if(S.poisonTick<=0){ S.poisonTick=1; S.poison--; S.hp-=1; updateHud(); flashFx('hurt',0.15); if(S.hp<=0){ lose(); return; } }
     $('poisonfx').style.opacity = S.poison>0?1:0;
   }
+  if(S.part===2){ p2Update(dt); return; }
   // pickups
   for(const p of pickups){
     if(p.taken) continue;
@@ -1121,7 +1855,7 @@ function dragonAI(dt){
   if(D.state==='breath'){
     const a = -dragon.rotation.y;
     if(Math.random()<dt*14){
-      const mouth = new THREE.Vector3(dp.x+Math.cos(a)*4, 3.2, dp.z+Math.sin(a)*4);
+      const mouth = new THREE.Vector3(dp.x+Math.cos(a)*5.6, 4.3, dp.z+Math.sin(a)*5.6);
       const spread = (Math.random()-.5)*0.6;
       spawnCloud(mouth, new THREE.Vector3(Math.cos(a+spread)*7, -1.6, Math.sin(a+spread)*7));
     }
@@ -1142,7 +1876,7 @@ function dragonAI(dt){
   } else if(D.mudCd<=0 && d>6){
     D.mudCd = 4+Math.random()*2;
     const a = -dragon.rotation.y;
-    const from = new THREE.Vector3(dp.x+Math.cos(a)*4, 3, dp.z+Math.sin(a)*4);
+    const from = new THREE.Vector3(dp.x+Math.cos(a)*5.6, 4.3, dp.z+Math.sin(a)*5.6);
     const dir = new THREE.Vector3(S.x-from.x, 1.2-from.y, S.z-from.z).normalize();
     spawnMud(from, dir);
   }
@@ -1154,8 +1888,10 @@ function animate(dt){
   if(S){
     knight.rotation.y = -S.yaw;
     const moving = keys.f||keys.b||Math.abs(joyV.y)>0.1;
-    knight.position.y = moving ? Math.abs(Math.sin(time*10))*0.12 : 0;
-    cape.rotation.z = moving ? Math.sin(time*10)*0.15 : 0;
+    const gy = groundH(S.x,S.z);
+    knight.position.y = gy + (moving ? Math.abs(Math.sin(time*10))*0.12 : 0);
+    cape.rotation.z = moving ? -0.25 + Math.sin(time*10)*0.12 : -0.05 + Math.sin(time*1.5)*0.03;
+    plume.rotation.z = moving ? Math.sin(time*10)*0.12 : 0;
     tpSword.visible = S.sword; tpShield.visible = S.shield;
     tpArm.rotation.x = S.swing>0 ? -2.2*(1-S.swing/0.35) + 1 : 0;
     tpArm.rotation.z = S.swing>0 ? -0.8 : 0;
@@ -1175,36 +1911,39 @@ function animate(dt){
     fpShield.position.set(S.blocking?-0.15:-0.6, S.blocking?-0.25:-0.55, S.blocking?-0.8:-1.1);
     // camera
     if(fp){
-      camPos.set(S.x, 1.75, S.z);
+      camPos.set(S.x, gy+1.75, S.z);
       camera.position.copy(camPos);
       const cp = Math.cos(S.pitch);
-      camLook.set(S.x+Math.cos(S.yaw)*cp, 1.75+Math.sin(S.pitch), S.z+Math.sin(S.yaw)*cp);
+      camLook.set(S.x+Math.cos(S.yaw)*cp, gy+1.75+Math.sin(S.pitch), S.z+Math.sin(S.yaw)*cp);
       camera.lookAt(camLook);
     } else {
       // orbit: looking down raises the camera over the knight, looking up lowers it
       const back = 7.5, elev = Math.max(0.02, Math.min(1.45, 0.42 - S.pitch));
-      const target = new THREE.Vector3(S.x - Math.cos(S.yaw)*Math.cos(elev)*back, 1.4 + Math.sin(elev)*back, S.z - Math.sin(S.yaw)*Math.cos(elev)*back);
-      target.y = Math.max(target.y, heightAt(target.x, target.z) + 0.6);
+      const target = new THREE.Vector3(S.x - Math.cos(S.yaw)*Math.cos(elev)*back, gy + 1.4 + Math.sin(elev)*back, S.z - Math.sin(S.yaw)*Math.cos(elev)*back);
+      target.y = Math.max(target.y, (S.part===2 ? heightAt2(target.x, target.z) : heightAt(target.x, target.z)) + 0.6);
       camPos.lerp(target, Math.min(1, dt*8));
       if(camPos.lengthSq()===0) camPos.copy(target);
       camera.position.copy(camPos);
-      camera.lookAt(S.x + Math.cos(S.yaw)*3, 1.6 + Math.max(0,S.pitch)*6, S.z + Math.sin(S.yaw)*3);
+      camera.lookAt(S.x + Math.cos(S.yaw)*3, gy + 1.6 + Math.max(0,S.pitch)*6, S.z + Math.sin(S.yaw)*3);
     }
   }
   // dragon
   const flap = D && (D.state==='flee' || D.state==='roar' || D.state==='windup') ? 10 : 3;
-  wings.forEach(w=>{ w.piv.rotation.x = w.s*(0.3 + Math.sin(time*flap)*0.35); });
+  wings.forEach(w=>{ w.piv.rotation.x = w.s*(-0.15 + Math.sin(time*flap)*0.45); });
   if(D){
     dBody.position.y = D.state==='sleep' ? -0.3 : Math.sin(time*2)*0.1 + (D.state==='hop'?0.5:0);
     head.rotation.z = D.state==='windup' ? 0.6 : (D.state==='breath' ? -0.3 : Math.sin(time*1.5)*0.1);
     collar.material.color.setHex(Math.sin(time*6)>0 ? 0xf5c542 : 0xfff2a0);
     const red = D.flash>0; D.flash = Math.max(0, D.flash-dt);
-    dGreen.color.setHex(red ? 0xff5a4a : 0x5a8f3e);
+    dGreen.color.setHex(red ? 0xff5a4a : 0x4f8a36);
+    dJaw.rotation.z = (D.state==='breath'||D.state==='roar') ? -0.55 : (D.state==='windup' ? -0.25 : -0.03 + Math.sin(time*1.7)*0.03);
+    tailSegs.forEach((sg,i)=>{ sg.rotation.y = Math.sin(time*2.2 - i*0.55) * (0.05 + i*0.012); });
     if(D.state==='flee'){
       D.t += dt; dragon.position.y += dt*(3+D.t*2); dragon.position.x += dt*6;
       if(dragon.position.y>40) dragon.visible=false;
     }
   }
+  if(S && S.part===2) p2Animate(dt);
   // world life: sun + shadows follow the knight, sky, clouds, water, smoke
   if(S && S.x!==undefined){ sun.position.set(S.x+SUN_OFF.x, SUN_OFF.y, S.z+SUN_OFF.z); sun.target.position.set(S.x,0,S.z); }
   camera.userData.sky.position.copy(camera.position);
@@ -1283,8 +2022,22 @@ function continueGame(){
   camPos.set(0,0,0);
   $('title').classList.add('hidden'); $('end').classList.add('hidden'); $('hud').classList.remove('hidden');
   running = true;
-  say([['Welcome back!', S.won ? `${kn()}, the Swamp Dragon is gone. Explore the island as long as you like. Part 2 is coming soon!` : `Welcome back, ${kn()}! Your quest was saved right where you left it.`]]);
+  if(S.part!==2 && S.won){ sailToPart2(); return; }
+  say([['Welcome back!', S.part===2 && P2.done ? `${kn()}, the village is finished! Walk around and visit your villagers. Part 3 is coming soon!` : `Welcome back, ${kn()}! Your quest was saved right where you left it.`]]);
 }
+function sailToPart2(){
+  $('end').classList.add('hidden'); $('title').classList.add('hidden'); $('hud').classList.remove('hidden');
+  running = true; paused = true;
+  const keep = {pot:S.pot, gold:S.gold||0};
+  p2Start(false); S.pot = Math.max(1, keep.pot); S.gold = keep.gold;
+  camPos.set(0,0,0); updateHud(); saveNow();
+  say([['Part 2: The Big Island','You and Bea sail across the sea to the Big Island. ⛵🌊'],
+       ['Bea the Builder','Look at all those trees! This would be a perfect spot for a village...'],
+       ['Bea the Builder','But I see goblin campfires. 👺 The Dragon King pays the goblins in gold to catch villagers and keep them locked up.'],
+       [kn(),'Then I\'ll set them free! Bea, you find a good place to build.'],
+       ['Bea the Builder','I\'ll be at the big campfire in the middle of the village. Bring the villagers there, and we\'ll build them log cabins! 🏠']]);
+}
+$('p2Btn').onclick = sailToPart2;
 $('contBtn').onclick = continueGame;
 showContinue();
 $('againBtn').onclick = ()=>{ saveNow(); $('end').classList.add('hidden'); $('hud').classList.add('hidden'); $('title').classList.remove('hidden'); running=false; showContinue(); };
@@ -1294,7 +2047,7 @@ D = {state:'sleep', flash:0};
 camPos.set(-40, 8, 0);
 tick();
 // test hook
-window.__dk = { canStand, heightAt, saveNow, readSave, dragon, trees, get paused(){return paused;}, get S(){return S;}, get D(){return D;}, useAct, buildAct, chopAct, swordAct, potionAct, setCam, next };
+window.__dk = { sailToPart2, get P2(){return P2;}, canStand2: (x,z)=>canStand2(x,z), heightAt2, VILLAGE, PLOTS, CAMPS, canStand, heightAt, saveNow, readSave, dragon, trees, get paused(){return paused;}, get S(){return S;}, get D(){return D;}, useAct, buildAct, chopAct, swordAct, potionAct, setCam, next };
 })();
 </script>
 </body>
