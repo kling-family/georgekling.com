@@ -177,6 +177,13 @@
           <p>Catch and battle monsters across five islands. Beat the town leaders, find the secret worlds, design your own monster, and look for the torn map pieces.</p>
           <p><b>How to play:</b> arrow keys or WASD to walk, number keys in battle. Works on tablets too.</p>
         </article>
+        <article class="cart">
+          <a class="screen play" href="/games/dragon-kingdom/"><img src="/games/dragon-kingdom.jpg" alt="Dragon Kingdom map: a knight on a sandy beach, a river, and a dragon in the marsh" width="1200" height="900"><span>&#9654; Play</span></a>
+          <h3>Dragon Kingdom</h3>
+          <p class="made"><span class="stamp">MADE NOV 2026</span> <span class="plays" id="dk-plays" hidden></span></p>
+          <p>Dragons are attacking the kingdom, and the Dragon King's crown controls them all. Sail to Dragon Island, rescue villagers, build houses and bridges, and battle the Swamp Dragon. Part 1 is here, with more coming.</p>
+          <p><b>How to play:</b> arrow keys or WASD to walk, walk into things to use them. Works on tablets too.</p>
+        </article>
         <article class="cart soon">
           <div class="screen"><div><strong>Coming soon</strong>George's next game</div></div>
           <h3>Next game</h3>
@@ -193,6 +200,7 @@
   </footer>
 <script>
 fetch('https://georgekling.goatcounter.com/counter/'+encodeURIComponent('/games/monster-island/play')+'.json').then(r=>r.ok?r.json():null).then(d=>{const el=document.getElementById('mi-plays');if(!d||!d.count||!el)return;el.textContent=d.count==1?'Played once':'Played '+d.count+' times';el.hidden=false}).catch(()=>{});
+fetch('https://georgekling.goatcounter.com/counter/'+encodeURIComponent('/games/dragon-kingdom/play')+'.json').then(r=>r.ok?r.json():null).then(d=>{const el=document.getElementById('dk-plays');if(!d||!d.count||!el)return;el.textContent=d.count==1?'Played once':'Played '+d.count+' times';el.hidden=false}).catch(()=>{});
 </script>
 </body>
 </html>
