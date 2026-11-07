@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Dragon Kingdom | a game by George</title>
 <meta name="description" content="Dragon Kingdom: sail to Dragon Island, rescue villagers, build a bridge, and battle the Swamp Dragon. A game by George.">
 <meta property="og:title" content="Dragon Kingdom">
@@ -14,91 +14,98 @@
 <script data-goatcounter="https://georgekling.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --red:#d7382f; --orange:#f28c28; --green:#3f9a3a; --dark:#1e2a1c; --cream:#fff6e3; --gold:#f5c542;
-  }
+  :root{--red:#d7382f;--orange:#f28c28;--green:#3f9a3a;--cream:#fff6e3;--gold:#f5c542}
   *{box-sizing:border-box}
-  html,body{margin:0;height:100%}
-  body{
-    font-family:'Fredoka',system-ui,sans-serif;
-    background:radial-gradient(circle at 50% 0%, #2c4a2a 0%, #142013 70%);
-    color:var(--cream);
-    display:flex;justify-content:center;
-    -webkit-user-select:none;user-select:none;
-  }
-  #app{width:100%;max-width:820px;padding:10px;display:flex;flex-direction:column;align-items:center;gap:8px}
-  header{width:100%;display:flex;flex-direction:column;align-items:center;gap:6px}
-  h1{margin:0;font-size:28px;letter-spacing:1px;color:var(--orange);text-shadow:2px 2px 0 var(--red)}
-  #quest{background:rgba(0,0,0,.35);border:2px solid var(--orange);border-radius:12px;padding:6px 12px;font-size:16px;text-align:center;width:100%}
-  #quest b{color:var(--gold)}
-  #hud{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;font-size:17px;background:rgba(0,0,0,.3);padding:6px 14px;border-radius:12px}
-  canvas{border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.5);border:3px solid #6b4a24;touch-action:none}
-  #pad{display:grid;grid-template-columns:repeat(3,58px);grid-template-rows:repeat(2,52px);gap:6px}
-  #pad button{font-size:24px}
-  button{
-    font-family:inherit;font-weight:600;cursor:pointer;border:none;border-radius:12px;
-    background:var(--orange);color:#2a1300;box-shadow:0 4px 0 #a2540f;padding:8px 14px;font-size:18px;
-  }
-  button:active{transform:translateY(3px);box-shadow:0 1px 0 #a2540f}
-  button:disabled{opacity:.45;cursor:default}
-  .hint{font-size:13px;opacity:.7}
-  .screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;background:radial-gradient(circle at 50% 30%, #3a5c33 0%, #101a0f 75%);z-index:10}
+  html,body{margin:0;height:100%;overflow:hidden;background:#87c6ee;font-family:'Fredoka',system-ui,sans-serif;color:var(--cream);-webkit-user-select:none;user-select:none;touch-action:none}
+  #game{position:fixed;inset:0;display:block}
   .hidden{display:none !important}
+  button{font-family:inherit;font-weight:600;cursor:pointer;border:none;border-radius:12px;background:var(--orange);color:#2a1300;box-shadow:0 4px 0 #a2540f;padding:8px 14px;font-size:18px}
+  button:active{transform:translateY(3px);box-shadow:0 1px 0 #a2540f}
+  /* HUD */
+  #hud{position:fixed;inset:0;pointer-events:none}
+  #hud > *{pointer-events:auto}
+  #top{position:absolute;top:8px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:6px;width:min(calc(100vw - 200px),640px)}
+  @media (max-width:560px){#top{top:44px;width:94vw}#quest{font-size:14px}}
+  #quest{background:rgba(20,30,18,.78);border:2px solid var(--orange);border-radius:12px;padding:6px 12px;font-size:16px;text-align:center;width:100%}
+  #quest b{color:var(--gold)}
+  #stats{display:flex;gap:12px;background:rgba(20,30,18,.7);padding:4px 12px;border-radius:12px;font-size:16px;flex-wrap:wrap;justify-content:center}
+  #hpbar{width:120px;height:14px;background:#300;border-radius:7px;overflow:hidden;border:2px solid #000;display:inline-block;vertical-align:middle}
+  #hpfill{height:100%;background:linear-gradient(#5fd35a,#2f8f2a);transition:width .2s}
+  #boss{position:absolute;top:96px;left:50%;transform:translateX(-50%);width:min(80vw,420px);text-align:center;font-weight:700;text-shadow:0 2px 3px #000}
+  #bossbar{height:16px;background:#200;border:2px solid #000;border-radius:8px;overflow:hidden;margin-top:3px}
+  #bossfill{height:100%;background:linear-gradient(#ff6b5a,#b3241b);transition:width .2s}
+  #status{position:absolute;top:150px;left:50%;transform:translateX(-50%);font-size:17px;font-weight:700;text-shadow:0 2px 3px #000;color:#b8f08c;text-align:center}
+  #cams{position:absolute;top:38%;right:8px;display:flex;flex-direction:column;gap:6px}
+  #cams button{font-size:14px;padding:6px 10px;background:#4e6a45;color:var(--cream);box-shadow:0 3px 0 #2d3f28}
+  #cams button.on{background:var(--green);outline:3px solid var(--gold)}
+  #back{position:absolute;top:10px;left:10px;color:var(--cream);text-decoration:none;font-size:14px;background:rgba(20,30,18,.6);padding:4px 10px;border-radius:10px}
+  #prompt{position:absolute;bottom:118px;left:50%;transform:translateX(-50%);background:rgba(255,246,227,.95);color:#2a1d10;border:3px solid #6b4a24;border-radius:12px;padding:6px 14px;font-size:17px;font-weight:600;white-space:nowrap}
+  #bar{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);display:flex;gap:6px;flex-wrap:nowrap}
+  .slot{position:relative;width:62px;height:66px;border-radius:12px;background:rgba(30,42,26,.85);border:3px solid #6b4a24;color:var(--cream);box-shadow:none;padding:2px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:26px;line-height:1}
+  .slot small{font-size:11px;margin-top:3px;font-weight:600}
+  .slot .key{position:absolute;top:2px;left:5px;font-size:10px;opacity:.7}
+  .slot .cnt{position:absolute;top:1px;right:5px;font-size:13px;color:var(--gold)}
+  .slot.locked{opacity:.3}
+  .slot.ready{border-color:var(--gold);box-shadow:0 0 12px var(--gold)}
+  .slot.active{background:#5a3a14}
+  @media (max-width:520px){.slot{width:50px;height:58px;font-size:22px}.slot small{font-size:9px}#prompt{bottom:100px;font-size:14px}}
+  #joy{position:absolute;left:18px;bottom:96px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.15);border:3px solid rgba(255,255,255,.4)}
+  #knob{position:absolute;left:35px;top:35px;width:50px;height:50px;border-radius:50%;background:rgba(255,246,227,.8)}
+  #mud{position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity .4s;background:radial-gradient(circle at 30% 40%,rgba(96,62,22,.9) 0 12%,transparent 13%),radial-gradient(circle at 70% 30%,rgba(96,62,22,.85) 0 9%,transparent 10%),radial-gradient(circle at 55% 70%,rgba(96,62,22,.9) 0 14%,transparent 15%),radial-gradient(circle at 20% 80%,rgba(96,62,22,.8) 0 8%,transparent 9%)}
+  #hurt{position:fixed;inset:0;pointer-events:none;opacity:0;background:radial-gradient(circle,transparent 50%,rgba(200,0,0,.55));transition:opacity .25s}
+  #poisonfx{position:fixed;inset:0;pointer-events:none;opacity:0;background:radial-gradient(circle,transparent 45%,rgba(90,220,60,.45));transition:opacity .4s}
+  #help{position:absolute;bottom:84px;right:10px;font-size:12px;opacity:.85;text-align:right;text-shadow:0 1px 2px #000;line-height:1.35}
+  /* screens */
+  .screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;background:radial-gradient(circle at 50% 30%,rgba(58,92,51,.92) 0%,rgba(16,26,15,.96) 75%);z-index:10}
   .card{background:#24361f;border:3px solid var(--orange);border-radius:18px;padding:22px;max-width:520px;width:100%;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.6)}
   .card h2{margin:0 0 4px;font-size:40px;color:var(--orange);text-shadow:3px 3px 0 var(--red)}
-  .card .sub{margin:0 0 16px;color:#cfe8c4}
+  .card .sub{margin:0 0 14px;color:#cfe8c4}
   input{font-family:inherit;font-size:20px;padding:10px;border-radius:10px;border:3px solid var(--green);width:100%;text-align:center;margin:8px 0 12px}
-  .choice{display:flex;gap:10px;justify-content:center;margin-bottom:16px}
+  .choice{display:flex;gap:10px;justify-content:center;margin-bottom:14px}
   .choice button{background:#4e6a45;color:var(--cream);box-shadow:0 4px 0 #2d3f28}
   .choice button.on{background:var(--green);outline:3px solid var(--gold)}
-  .overlay{position:fixed;inset:0;display:flex;align-items:flex-end;justify-content:center;padding:18px;background:rgba(0,0,0,.35);z-index:20}
+  .hint{font-size:13px;opacity:.75}
+  .card a{color:#cfe8c4}
+  #dialog{position:fixed;inset:0;display:flex;align-items:flex-end;justify-content:center;padding:18px 18px 100px;background:rgba(0,0,0,.25);z-index:20}
   .box{background:var(--cream);color:#2a1d10;border:4px solid #6b4a24;border-radius:16px;padding:14px 18px;max-width:620px;width:100%;box-shadow:0 8px 24px rgba(0,0,0,.5)}
   #dlgWho{font-weight:700;color:var(--red);font-size:18px}
   #dlgText{font-size:19px;line-height:1.4;margin:6px 0 12px}
   .box .row{text-align:right}
-  /* battle */
-  #battle .card{max-width:600px}
-  .bars{display:flex;gap:14px;justify-content:space-between;margin:8px 0}
-  .bar{flex:1;text-align:left}
-  .bar .lbl{font-size:15px;margin-bottom:3px}
-  .meter{height:16px;background:#0e160c;border-radius:8px;overflow:hidden;border:2px solid #000}
-  .meter div{height:100%;transition:width .35s}
-  #dragonArt{width:240px;height:190px;margin:4px auto}
-  .shake{animation:shake .35s}
-  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-10px)}75%{transform:translateX(10px)}}
-  .flash{animation:flash .4s}
-  @keyframes flash{50%{background:#7a1f1a}}
-  #blog{min-height:54px;background:rgba(0,0,0,.35);border-radius:10px;padding:8px;font-size:17px;margin:8px 0}
-  .acts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-  .acts button small{display:block;font-weight:400;font-size:13px}
-  .homelink{display:block;width:100%;color:#cfe8c4;font-size:15px;text-decoration:none}.homelink:hover{color:#fff}
-  .status{font-size:14px;min-height:20px;color:#b8f08c}
 </style>
 </head>
 <body>
+<canvas id="game"></canvas>
 
-<div id="app" class="hidden">
-  <a class="homelink" href="/games/">&larr; George's games</a>
-  <header>
-    <h1>🐉 Dragon Kingdom</h1>
+<div id="hud" class="hidden">
+  <a id="back" href="/games/">&larr; Games</a>
+  <div id="top">
     <div id="quest"></div>
-  </header>
-  <div id="hud">
-    <span>❤️ <span id="hp"></span></span>
-    <span>🪵 <span id="wood"></span></span>
-    <span>🪨 <span id="stone"></span></span>
-    <span>🧪 <span id="pot"></span></span>
-    <span>⚔️ <span id="weapon"></span></span>
+    <div id="stats">
+      <span>❤️ <span id="hpbar"><span id="hpfill" style="display:block"></span></span></span>
+      <span>🪵 <b id="wood">0</b></span>
+      <span>🪨 <b id="stone">0</b></span>
+    </div>
   </div>
-  <canvas id="map"></canvas>
-  <div id="pad">
-    <span></span><button data-d="up">⬆️</button><span></span>
-    <button data-d="left">⬅️</button><button data-d="down">⬇️</button><button data-d="right">➡️</button>
+  <div id="boss" class="hidden">🐉 Swamp Dragon<div id="bossbar"><div id="bossfill"></div></div></div>
+  <div id="status"></div>
+  <div id="cams">
+    <button id="camFP">👁️ Knight's eyes</button>
+    <button id="camTP" class="on">🎥 Over shoulder</button>
   </div>
-  <div class="hint">Move with the arrow keys or W A S D. Walk into things to use them.</div>
+  <div id="prompt" class="hidden"></div>
+  <div id="joy" class="hidden"><div id="knob"></div></div>
+  <div id="help">W A S D or arrows to move<br>Drag the screen to look around<br>V switches the camera</div>
+  <div id="bar">
+    <button class="slot" id="sUse"><span class="key">E</span>👋<small>Use</small></button>
+    <button class="slot locked" id="sSword"><span class="key">1</span>⚔️<small>Sword</small></button>
+    <button class="slot locked" id="sShield"><span class="key">2</span>🛡️<small>Shield</small></button>
+    <button class="slot" id="sPot"><span class="key">3</span><span class="cnt" id="potCnt">0</span>🧪<small>Potion</small></button>
+    <button class="slot" id="sChop"><span class="key">4</span>🪓<small>Chop</small></button>
+    <button class="slot locked" id="sBuild"><span class="key">5</span>🔨<small>Build</small></button>
+  </div>
 </div>
+<div id="mud"></div><div id="hurt"></div><div id="poisonfx"></div>
 
-<!-- Title -->
 <div id="title" class="screen">
   <div class="card">
     <h2>Dragon Kingdom</h2>
@@ -111,12 +118,11 @@
     </div>
     <button id="startBtn">Begin the Quest ⚔️</button>
     <p class="hint" style="margin-top:14px">A game by George Kling</p>
-    <p style="margin:6px 0 0"><a class="homelink" style="text-align:center" href="/games/">&larr; George's games</a></p>
+    <p class="hint"><a href="/games/">&larr; George's games</a></p>
   </div>
 </div>
 
-<!-- Dialog -->
-<div id="dialog" class="overlay hidden">
+<div id="dialog" class="hidden">
   <div class="box">
     <div id="dlgWho"></div>
     <div id="dlgText"></div>
@@ -124,451 +130,827 @@
   </div>
 </div>
 
-<!-- Battle -->
-<div id="battle" class="screen hidden">
-  <div class="card" id="bcard">
-    <h2 style="font-size:30px">Swamp Dragon!</h2>
-    <svg id="dragonArt" viewBox="0 0 240 190" aria-label="Swamp dragon">
-      <!-- wings -->
-      <path d="M70 80 L10 30 L30 85 L5 95 L60 105 Z" fill="#3c6b2f" stroke="#1d3a16" stroke-width="3"/>
-      <path d="M170 80 L230 30 L210 85 L235 95 L180 105 Z" fill="#3c6b2f" stroke="#1d3a16" stroke-width="3"/>
-      <!-- tail -->
-      <path d="M150 150 Q210 170 225 135 Q215 160 160 140 Z" fill="#5a8f3e" stroke="#1d3a16" stroke-width="3"/>
-      <!-- body -->
-      <ellipse cx="120" cy="125" rx="58" ry="45" fill="#5a8f3e" stroke="#1d3a16" stroke-width="3"/>
-      <ellipse cx="120" cy="138" rx="34" ry="26" fill="#b9d98a"/>
-      <!-- spikes -->
-      <path d="M95 82 L102 66 L110 80 L118 62 L126 80 L134 66 L142 82" fill="#d7382f" stroke="#1d3a16" stroke-width="2"/>
-      <!-- head -->
-      <ellipse cx="120" cy="70" rx="36" ry="28" fill="#5a8f3e" stroke="#1d3a16" stroke-width="3"/>
-      <ellipse cx="120" cy="84" rx="22" ry="12" fill="#7bb055"/>
-      <circle cx="113" cy="85" r="3" fill="#1d3a16"/><circle cx="127" cy="85" r="3" fill="#1d3a16"/>
-      <circle cx="106" cy="64" r="8" fill="#fff59a"/><circle cx="134" cy="64" r="8" fill="#fff59a"/>
-      <ellipse cx="106" cy="65" rx="2.5" ry="6" fill="#1d1d1d"/><ellipse cx="134" cy="65" rx="2.5" ry="6" fill="#1d1d1d"/>
-      <!-- horns -->
-      <path d="M96 48 L86 28 L104 44 Z M144 48 L154 28 L136 44 Z" fill="#e8d9a8" stroke="#1d3a16" stroke-width="2"/>
-      <!-- glowing gold chain: the Dragon King's magic -->
-      <path d="M92 96 Q120 110 148 96" fill="none" stroke="#f5c542" stroke-width="4" stroke-dasharray="5 3"/>
-      <circle cx="120" cy="106" r="5" fill="#f5c542"/>
-      <!-- legs -->
-      <rect x="82" y="155" width="18" height="22" rx="6" fill="#4a7a33" stroke="#1d3a16" stroke-width="3"/>
-      <rect x="140" y="155" width="18" height="22" rx="6" fill="#4a7a33" stroke="#1d3a16" stroke-width="3"/>
-      <!-- poison bubbles -->
-      <g id="bubbles" opacity="0">
-        <circle cx="110" cy="105" r="8" fill="#9be15d" opacity=".8"/><circle cx="95" cy="118" r="11" fill="#9be15d" opacity=".7"/><circle cx="80" cy="132" r="14" fill="#9be15d" opacity=".6"/>
-      </g>
-    </svg>
-    <div class="bars">
-      <div class="bar"><div class="lbl" id="pLbl">You</div><div class="meter"><div id="pBar" style="background:var(--green)"></div></div></div>
-      <div class="bar"><div class="lbl">Swamp Dragon</div><div class="meter"><div id="dBar" style="background:var(--red)"></div></div></div>
-    </div>
-    <div class="status" id="bStatus"></div>
-    <div id="blog"></div>
-    <div class="acts">
-      <button id="aSword">⚔️ Sword<small>Steady hit</small></button>
-      <button id="aBig">💥 Big Swing<small>Huge hit, might miss</small></button>
-      <button id="aPot">🧪 Potion<small>Heal and cure poison</small></button>
-      <button id="aShield">🛡️ Shield<small>Block half the next attack</small></button>
-    </div>
-  </div>
-</div>
-
-<!-- End -->
 <div id="end" class="screen hidden">
   <div class="card">
     <h2 style="font-size:34px">Part 1 Complete!</h2>
     <p id="endText" style="font-size:19px;line-height:1.45"></p>
     <p style="font-size:17px;color:#cfe8c4">Coming next: <b>The Volcano</b> 🌋 and the Fire Dragons</p>
     <button id="againBtn">Play Again</button>
+    <p class="hint" style="margin-top:12px"><a href="/games/">&larr; George's games</a></p>
   </div>
 </div>
 
+<script src="../monster-island/three.min.js"></script>
 <script>
 (() => {
-  // ---------- MAP ----------
-  // ~ sea  . sand  , grass  T palm  R river  B bridge spot  M marsh
-  // b boat  X chest  C cage  P house plot  D swamp dragon
-  // w wood  s stone  p potion
-  const MAP = [
-    "~~~~~~~~~~~~~~~~~~",
-    "~b..w..T.,,,RMMMM~",
-    "~...T...,,s,RMwMM~",
-    "~.X.....,,,,RMMMM~",
-    "~..w..T..C,,RMMDM~",
-    "~...s...,,,,BMMMM~",
-    "~.T...w.,P,,RMMMM~",
-    "~..p....,,s,RMpMM~",
-    "~.w..T..w,,,RMMMM~",
-    "~...s.....w.RMMMM~",
-    "~~..w..T..,wR~~~~~",
-    "~~~~~~~~~~~~~~~~~~"
-  ];
-  const W = 18, H = 12;
-  const HOUSE_WOOD = 4, HOUSE_STONE = 3, BRIDGE_WOOD = 3;
-  const VILLAGER = {x:10, y:6};
+'use strict';
+// ================= SETUP =================
+const canvas = document.getElementById('game');
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
+renderer.shadowMap.enabled = true;
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x87c6ee);
+scene.fog = new THREE.Fog(0x87c6ee, 45, 110);
+const camera = new THREE.PerspectiveCamera(65, 1, 0.1, 300);
+scene.add(camera);
 
-  let grid, S;
+scene.add(new THREE.HemisphereLight(0xdff3ff, 0x6a7a3a, 0.75));
+const sun = new THREE.DirectionalLight(0xfff1d6, 0.85);
+sun.position.set(-30, 50, 20); sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, {left:-60,right:60,top:45,bottom:-45,near:1,far:150});
+scene.add(sun);
 
-  function baseAt(x){ return x >= 13 ? 'M' : (x >= 8 ? ',' : '.'); }
+function resize(){
+  const w = window.innerWidth, h = window.innerHeight;
+  renderer.setSize(w, h, false); camera.aspect = w/h; camera.updateProjectionMatrix();
+}
+window.addEventListener('resize', resize); resize();
 
-  function newGame(name, title){
-    grid = MAP.map(r => r.padEnd(W,'~').slice(0,W).split(''));
-    let sx=1, sy=1;
-    grid.forEach((row,y)=>row.forEach((c,x)=>{ if(c==='b'){sx=x;sy=y;} }));
-    S = {name, title, x:sx+1, y:sy, hp:30, maxHp:30, wood:0, stone:0, pot:0,
-         sword:false, freed:false, house:false, bridge:false, won:false};
+const M = (c, o={}) => new THREE.MeshLambertMaterial(Object.assign({color:c}, o));
+function mesh(geo, mat, x=0, y=0, z=0, parent=scene){
+  const m = new THREE.Mesh(geo, mat); m.position.set(x,y,z); m.castShadow = true; m.receiveShadow = true; parent.add(m); return m;
+}
+
+// ================= WORLD =================
+// x: west(-) to east(+). Beach x<-10, grass -10..10, river 10..14, marsh 14..38
+const RIVER_X0 = 10, RIVER_X1 = 14, BRIDGE_Z = 0, BRIDGE_HALF = 2.2;
+const LAND = {x0:-40, x1:38, z0:-24, z1:24};
+
+// sea
+const sea = mesh(new THREE.PlaneGeometry(400, 400), M(0x2f7fc1), 0, -0.3, 0); sea.rotation.x = -Math.PI/2; sea.castShadow=false;
+// land strips
+function strip(x0,x1,color,y=0){
+  const g = mesh(new THREE.BoxGeometry(x1-x0, 1, LAND.z1-LAND.z0), M(color), (x0+x1)/2, y-0.5, 0); g.castShadow=false; return g;
+}
+strip(LAND.x0, -10, 0xf3d79a);
+strip(-10, RIVER_X0, 0x8fcf6a);
+strip(RIVER_X1, LAND.x1, 0x5f8a48);
+// river
+const river = mesh(new THREE.BoxGeometry(RIVER_X1-RIVER_X0, 0.6, 60), M(0x3fa0e0, {transparent:true, opacity:.92}), (RIVER_X0+RIVER_X1)/2, -0.45, 0); river.castShadow=false;
+// sandy edge around the land
+const rim = mesh(new THREE.BoxGeometry(LAND.x1-LAND.x0+4, 0.8, LAND.z1-LAND.z0+4), M(0xe9c983), (LAND.x0+LAND.x1)/2, -0.75, 0); rim.castShadow=false;
+
+// marsh reeds + puddles
+const reedMat = M(0x3d6330);
+for(let i=0;i<70;i++){
+  const x = RIVER_X1+1+Math.random()*(LAND.x1-RIVER_X1-2), z = LAND.z0+1+Math.random()*(LAND.z1-LAND.z0-2);
+  if(Math.hypot(x-28,z)<6) continue;
+  const r = mesh(new THREE.CylinderGeometry(0.05,0.07,1+Math.random()*0.8,4), reedMat, x, 0.5, z); r.castShadow=false;
+}
+for(let i=0;i<8;i++){
+  const p = mesh(new THREE.CircleGeometry(1+Math.random()*1.5, 12), M(0x4a6e3a), RIVER_X1+3+Math.random()*20, 0.02, -20+Math.random()*40);
+  p.rotation.x = -Math.PI/2; p.castShadow=false;
+}
+
+// colliders: {x,z,r}
+const colliders = [];
+function addCol(x,z,r,obj){ const c={x,z,r,obj}; colliders.push(c); return c; }
+
+// palm trees (choppable)
+const trees = [];
+function palm(x,z){
+  const g = new THREE.Group(); g.position.set(x,0,z); scene.add(g);
+  const trunk = mesh(new THREE.CylinderGeometry(0.22,0.35,4,7), M(0x8b5a2b), 0.3,2,0, g); trunk.rotation.z = -0.12;
+  for(let i=0;i<6;i++){
+    const leaf = mesh(new THREE.ConeGeometry(0.5,3,4), M(0x2f8f3a), 0,0,0, g);
+    leaf.position.set(0.55+Math.cos(i)*1.1, 4, Math.sin(i*1.05)*1.1);
+    leaf.rotation.set(Math.sin(i*1.05)*1.2, 0, -Math.cos(i)*1.2 - 0.2);
   }
+  const t = {g, x, z, hits:0, alive:true, col:addCol(x,z,0.7)};
+  trees.push(t); return t;
+}
+[[-34,-12],[-27,8],[-20,-16],[-16,12],[-30,16],[-8,-18],[-12,4],[-24,-3],[-36,6],[4,18],[-4,14],[7,-18]].forEach(p=>palm(p[0],p[1]));
 
-  // ---------- DRAW ----------
-  const cv = document.getElementById('map');
-  const ctx = cv.getContext('2d');
-  let T = 40;
+// rocks (decor + collision)
+[[-18,-8],[-6,-6],[5,12],[-32,-18]].forEach(([x,z])=>{
+  const r = mesh(new THREE.DodecahedronGeometry(1.2), M(0x8d8f93), x, 0.6, z); r.scale.y=.7; addCol(x,z,1.2);
+});
 
-  function resize(){
-    T = Math.floor(Math.min((window.innerWidth-28)/W, (window.innerHeight-290)/H, 44));
-    T = Math.max(T, 18);
-    const dpr = window.devicePixelRatio || 1;
-    cv.width = W*T*dpr; cv.height = H*T*dpr;
-    cv.style.width = W*T+'px'; cv.style.height = H*T+'px';
-    ctx.setTransform(dpr,0,0,dpr,0,0);
-    draw();
+// boat
+(() => {
+  const g = new THREE.Group(); g.position.set(-42,0,0); scene.add(g);
+  mesh(new THREE.BoxGeometry(5,1,2), M(0x8b4a1f), 0,0.1,0, g);
+  mesh(new THREE.CylinderGeometry(0.1,0.1,5), M(0x5a3815), 0,3,0, g);
+  const sail = mesh(new THREE.PlaneGeometry(2.4,3), M(0xd7382f,{side:THREE.DoubleSide}), 0.6,3.3,0, g); sail.rotation.y = Math.PI/2;
+})();
+
+// chest
+const chest = new THREE.Group(); chest.position.set(-28,0,-8); scene.add(chest);
+mesh(new THREE.BoxGeometry(1.6,0.9,1),M(0x8b5a2b),0,0.45,0,chest);
+const lid = new THREE.Group(); lid.position.set(0,0.9,-0.5); chest.add(lid);
+mesh(new THREE.BoxGeometry(1.6,0.35,1),M(0xa0692f),0,0.17,0.5,lid);
+mesh(new THREE.BoxGeometry(0.25,0.35,0.1),M(0xf5c542),0,0.6,0.52,chest);
+addCol(-28,-8,1.1);
+
+// Bea the builder
+function person(shirt, hat){
+  const g = new THREE.Group();
+  mesh(new THREE.CylinderGeometry(0.35,0.45,1.1,8), M(shirt), 0,0.95,0, g);
+  mesh(new THREE.CylinderGeometry(0.12,0.12,0.6,6), M(0x3b4a6b), -0.17,0.3,0, g);
+  mesh(new THREE.CylinderGeometry(0.12,0.12,0.6,6), M(0x3b4a6b), 0.17,0.3,0, g);
+  mesh(new THREE.SphereGeometry(0.35,12,10), M(0xf0c9a0), 0,1.8,0, g);
+  if(hat){ mesh(new THREE.SphereGeometry(0.38,12,8,0,Math.PI*2,0,Math.PI/2), M(hat), 0,1.9,0, g); mesh(new THREE.CylinderGeometry(0.5,0.5,0.06,12), M(hat), 0,1.9,0, g); }
+  return g;
+}
+// Bea: built facing +z (her front), so rotation.y turns her toward the player
+function beaModel(){
+  const g = new THREE.Group();
+  const skin = M(0xe8b48a), denim = M(0x2f6fb5), shirt = M(0xf28c28), hair = M(0x7a3b1c), dark = M(0x2a1d10);
+  // boots + legs (overalls)
+  [-1,1].forEach(s=>{
+    mesh(new THREE.BoxGeometry(0.28,0.2,0.42), M(0x5a3815), s*0.17,0.1,0.05, g);
+    mesh(new THREE.CylinderGeometry(0.13,0.14,0.62,8), denim, s*0.17,0.5,0, g);
+  });
+  // body: orange shirt under denim overalls
+  mesh(new THREE.CylinderGeometry(0.36,0.4,0.85,12), shirt, 0,1.15,0, g);
+  mesh(new THREE.CylinderGeometry(0.37,0.41,0.5,12), denim, 0,0.95,0, g);
+  mesh(new THREE.BoxGeometry(0.42,0.38,0.08), denim, 0,1.28,0.34, g);       // bib
+  [-1,1].forEach(s=> mesh(new THREE.BoxGeometry(0.07,0.42,0.06), denim, s*0.15,1.42,0.3, g).rotation.x = -0.15); // straps
+  [-1,1].forEach(s=> mesh(new THREE.SphereGeometry(0.035,6,6), M(0xf5c542), s*0.15,1.27,0.39, g)); // buttons
+  // tool belt with pouch and wrench
+  mesh(new THREE.TorusGeometry(0.41,0.05,6,18), M(0x8b5a2b), 0,0.78,0, g).rotation.x = Math.PI/2;
+  mesh(new THREE.BoxGeometry(0.2,0.22,0.12), M(0x8b5a2b), 0.3,0.7,0.3, g);
+  mesh(new THREE.BoxGeometry(0.05,0.3,0.05), M(0xb8c0c8), -0.33,0.72,0.28, g);
+  // arms
+  const armL = new THREE.Group(); armL.position.set(-0.45,1.5,0); g.add(armL);
+  mesh(new THREE.CylinderGeometry(0.1,0.09,0.6,8), shirt, 0,-0.28,0, armL);
+  mesh(new THREE.SphereGeometry(0.1,8,8), skin, 0,-0.62,0, armL);
+  armL.rotation.z = 0.15;
+  const armR = new THREE.Group(); armR.position.set(0.45,1.5,0); g.add(armR);
+  mesh(new THREE.CylinderGeometry(0.1,0.09,0.6,8), shirt, 0,-0.28,0, armR);
+  mesh(new THREE.SphereGeometry(0.1,8,8), skin, 0,-0.62,0, armR);
+  // hammer in her right hand
+  const hammer = new THREE.Group(); hammer.position.set(0,-0.62,0.05); armR.add(hammer);
+  mesh(new THREE.CylinderGeometry(0.035,0.035,0.55,6), M(0x6b4a24), 0,0,0.2, hammer).rotation.x = Math.PI/2;
+  mesh(new THREE.BoxGeometry(0.12,0.12,0.28), M(0x8d8f93), 0,0,0.47, hammer).rotation.y = Math.PI/2;
+  armR.rotation.set(-0.5, 0, -0.15);
+  // head
+  mesh(new THREE.CylinderGeometry(0.12,0.13,0.15,8), skin, 0,1.65,0, g);
+  const head = new THREE.Group(); head.position.set(0,1.92,0); g.add(head);
+  mesh(new THREE.SphereGeometry(0.32,16,14), skin, 0,0,0, head);
+  [-1,1].forEach(s=>{
+    mesh(new THREE.SphereGeometry(0.055,8,8), M(0xffffff), s*0.11,0.04,0.28, head);
+    mesh(new THREE.SphereGeometry(0.032,8,8), dark, s*0.11,0.04,0.32, head);
+    mesh(new THREE.SphereGeometry(0.06,8,8), M(0xf29a8a), s*0.19,-0.07,0.24, head).scale.set(1,0.6,0.5); // rosy cheeks
+    mesh(new THREE.BoxGeometry(0.1,0.025,0.02), hair, s*0.11,0.13,0.3, head).rotation.z = s*-0.15; // eyebrows
+  });
+  mesh(new THREE.SphereGeometry(0.04,8,8), M(0xd9946c), 0,-0.03,0.32, head); // nose
+  const smile = mesh(new THREE.TorusGeometry(0.08,0.018,6,12,Math.PI), dark, 0,-0.1,0.29, head); smile.rotation.z = Math.PI;
+  // hair: back of head + ponytail
+  mesh(new THREE.SphereGeometry(0.335,16,12,0,Math.PI*2,0,Math.PI*0.55), hair, 0,0.02,-0.03, head).rotation.x = -0.35;
+  const pony = new THREE.Group(); pony.position.set(0,0.0,-0.32); head.add(pony);
+  mesh(new THREE.SphereGeometry(0.07,8,8), M(0xd7382f), 0,0,0, pony); // red hair tie
+  mesh(new THREE.ConeGeometry(0.12,0.5,8), hair, 0,-0.25,-0.05, pony).rotation.x = Math.PI + 0.2;
+  // yellow hard hat
+  mesh(new THREE.SphereGeometry(0.35,16,10,0,Math.PI*2,0,Math.PI/2), M(0xf5c542), 0,0.1,0, head);
+  mesh(new THREE.CylinderGeometry(0.43,0.43,0.04,16), M(0xf5c542), 0.0,0.1,0.06, head);
+  mesh(new THREE.BoxGeometry(0.06,0.18,0.5), M(0xe0ad2a), 0,0.32,0, head).rotation.x = 0;
+  g.userData = {armR, head, pony};
+  return g;
+}
+const bea = beaModel(); bea.position.set(0,0,-12); scene.add(bea);
+// cage around her
+const cage = new THREE.Group(); cage.position.set(0,0,-12); scene.add(cage);
+for(let i=0;i<10;i++){ const a=i/10*Math.PI*2; mesh(new THREE.CylinderGeometry(0.06,0.06,2.6,5), M(0x4a2f12), Math.cos(a)*1.1,1.3,Math.sin(a)*1.1, cage); }
+mesh(new THREE.CylinderGeometry(1.25,1.25,0.15,12), M(0x4a2f12), 0,2.6,0, cage);
+for(let i=0;i<3;i++){ const v = mesh(new THREE.TorusGeometry(1.15,0.08,5,16), M(0x2f7a2a), 0,0.6+i*0.7,0, cage); v.rotation.x=Math.PI/2; v.rotation.y=i*0.3; }
+let cageCol = addCol(0,-12,1.4);
+
+// house plot
+const PLOT = {x:2, z:6};
+const plotMark = new THREE.Group(); plotMark.position.set(PLOT.x,0,PLOT.z); scene.add(plotMark);
+for(let i=0;i<4;i++){ const s = mesh(new THREE.BoxGeometry(i%2?0.2:4, 0.25, i%2?4:0.2), M(0x6b4a24), 0,0.12,0, plotMark); s.position[i%2?'x':'z'] = (i<2?-2:2); }
+mesh(new THREE.CylinderGeometry(0.05,0.05,1.2), M(0x6b4a24), 2,0.6,2, plotMark);
+const house = new THREE.Group(); house.position.set(PLOT.x,0,PLOT.z); house.visible=false; scene.add(house);
+mesh(new THREE.BoxGeometry(3.6,2.4,3.6), M(0xf2e2c2), 0,1.2,0, house);
+const roof = mesh(new THREE.ConeGeometry(3,1.8,4), M(0xd7382f), 0,3.3,0, house); roof.rotation.y=Math.PI/4;
+mesh(new THREE.BoxGeometry(0.9,1.5,0.1), M(0x6b4a24), 0,0.75,1.81, house);
+mesh(new THREE.BoxGeometry(0.7,0.7,0.1), M(0x9fd7ff), -1.1,1.5,1.81, house);
+mesh(new THREE.BoxGeometry(0.5,1.2,0.5), M(0x8d8f93), 1,3.6,-0.8, house);
+let houseCol = null;
+
+// bridge
+const bridgeSpot = new THREE.Group(); bridgeSpot.position.set((RIVER_X0+RIVER_X1)/2,0,BRIDGE_Z); scene.add(bridgeSpot);
+[-1,1].forEach(s=>{ mesh(new THREE.CylinderGeometry(0.12,0.12,1.4), M(0xf5c542), -2.3,0.4,s*BRIDGE_HALF, bridgeSpot); });
+const bridge = new THREE.Group(); bridge.position.copy(bridgeSpot.position); bridge.visible=false; scene.add(bridge);
+for(let i=0;i<9;i++) mesh(new THREE.BoxGeometry(0.45,0.2,BRIDGE_HALF*2), M(0x8a5a2b), -2.2+i*0.55,0.05,0, bridge);
+[-1,1].forEach(s=>{ mesh(new THREE.BoxGeometry(5,0.15,0.15), M(0x5a3815), 0,0.9,s*BRIDGE_HALF, bridge);
+  for(let i=0;i<4;i++) mesh(new THREE.BoxGeometry(0.15,0.9,0.15), M(0x5a3815), -2.2+i*1.47,0.45,s*BRIDGE_HALF, bridge); });
+
+// pickups
+const pickups = [];
+function pickup(kind,x,z){
+  let m;
+  if(kind==='wood'){ m = mesh(new THREE.CylinderGeometry(0.28,0.28,1.3,8), M(0x8b5a2b), x,0.4,z); m.rotation.z=Math.PI/2; }
+  if(kind==='stone'){ m = mesh(new THREE.DodecahedronGeometry(0.45), M(0x9a9ca0), x,0.45,z); }
+  if(kind==='potion'){ m = new THREE.Group(); m.position.set(x,0.6,z); scene.add(m);
+    mesh(new THREE.SphereGeometry(0.35,12,10), M(0x45e0b0,{emissive:0x1a6a50}), 0,0,0,m);
+    mesh(new THREE.CylinderGeometry(0.1,0.12,0.35), M(0xd8f8ff), 0,0.38,0,m);
+    mesh(new THREE.CylinderGeometry(0.13,0.13,0.12), M(0x8b5a2b), 0,0.6,0,m); }
+  pickups.push({kind,m,x,z,taken:false,base:m.position.y});
+}
+[[-33,-4],[-22,10],[-14,-12],[-6,2],[6,-6],[-26,-18]].forEach(p=>pickup('wood',...p));
+[[-30,10],[-18,2],[-10,-14],[8,4]].forEach(p=>pickup('stone',...p));
+pickup('potion',-24,14); pickup('potion',22,-14); pickup('potion',-4,-20);
+
+// objective marker
+const marker = new THREE.Mesh(new THREE.OctahedronGeometry(0.45), new THREE.MeshBasicMaterial({color:0xf5c542}));
+scene.add(marker);
+
+// ================= KNIGHT =================
+const knight = new THREE.Group(); scene.add(knight);
+// built facing +x
+mesh(new THREE.CylinderGeometry(0.4,0.5,1.2,10), M(0xf28c28), 0,1.05,0, knight);
+mesh(new THREE.BoxGeometry(0.08,0.7,0.12), M(0x3f9a3a), 0.45,1.1,0, knight);
+mesh(new THREE.BoxGeometry(0.08,0.12,0.5), M(0x3f9a3a), 0.46,1.2,0, knight);
+const cape = mesh(new THREE.BoxGeometry(0.1,1.3,0.9), M(0xd7382f), -0.45,1.0,0, knight);
+mesh(new THREE.CylinderGeometry(0.13,0.13,0.6,6), M(0x6b6f75), 0,0.3,-0.2, knight);
+mesh(new THREE.CylinderGeometry(0.13,0.13,0.6,6), M(0x6b6f75), 0,0.3,0.2, knight);
+mesh(new THREE.SphereGeometry(0.38,14,12), M(0xc9d1d9), 0,1.95,0, knight);
+mesh(new THREE.BoxGeometry(0.1,0.08,0.45), M(0x2b3138), 0.36,1.95,0, knight);
+mesh(new THREE.SphereGeometry(0.13,8,8), M(0xd7382f), 0,2.38,0, knight).scale.set(0.7,1.4,0.7);
+// sword arm (right side = -z when facing +x)
+const tpArm = new THREE.Group(); tpArm.position.set(0.1,1.3,-0.55); knight.add(tpArm);
+function swordModel(){
+  const s = new THREE.Group();
+  mesh(new THREE.BoxGeometry(0.08,1.3,0.18), M(0xe6edf3,{emissive:0x333333}), 0,0.85,0, s);
+  mesh(new THREE.BoxGeometry(0.12,0.08,0.55), M(0xf5c542), 0,0.2,0, s);
+  mesh(new THREE.CylinderGeometry(0.06,0.06,0.35), M(0x6b4a24), 0,0,0, s);
+  return s;
+}
+const tpSword = swordModel(); tpSword.rotation.z = -0.6; tpArm.add(tpSword); tpSword.visible=false;
+const tpShield = new THREE.Group(); tpShield.position.set(0.35,1.15,0.5); knight.add(tpShield); tpShield.visible=false;
+mesh(new THREE.CylinderGeometry(0.5,0.5,0.1,16), M(0x3f9a3a), 0,0,0, tpShield).rotation.z=Math.PI/2;
+mesh(new THREE.CylinderGeometry(0.2,0.2,0.12,12), M(0xf5c542), 0.02,0,0, tpShield).rotation.z=Math.PI/2;
+// first-person hands (children of camera)
+const fpSword = swordModel(); fpSword.scale.setScalar(0.45); fpSword.position.set(0.55,-0.55,-1); fpSword.rotation.set(-0.3,0,-0.35); camera.add(fpSword); fpSword.visible=false;
+const fpShield = new THREE.Group(); fpShield.scale.setScalar(0.55); fpShield.position.set(-0.6,-0.55,-1.1); camera.add(fpShield); fpShield.visible=false;
+mesh(new THREE.CylinderGeometry(0.4,0.4,0.08,16), M(0x3f9a3a), 0,0,0, fpShield).rotation.x=Math.PI/2;
+mesh(new THREE.CylinderGeometry(0.15,0.15,0.1,12), M(0xf5c542), 0,0,0.02, fpShield).rotation.x=Math.PI/2;
+const fpAxe = new THREE.Group(); fpAxe.scale.setScalar(0.5); fpAxe.position.set(0.55,-0.6,-1); fpAxe.rotation.set(-0.3,0,-0.3); camera.add(fpAxe); fpAxe.visible=false;
+mesh(new THREE.CylinderGeometry(0.05,0.05,1.1), M(0x6b4a24), 0,0.3,0, fpAxe);
+mesh(new THREE.BoxGeometry(0.06,0.35,0.4), M(0xb8c0c8), 0,0.75,0.15, fpAxe);
+
+// ================= DRAGON =================
+const dragon = new THREE.Group(); scene.add(dragon);
+const dBody = new THREE.Group(); dragon.add(dBody);
+const dGreen = M(0x5a8f3e), dDark = M(0x3c6b2f), dBelly = M(0xb9d98a);
+mesh(new THREE.SphereGeometry(1.6,16,12), dGreen, 0,2,0, dBody).scale.set(1.5,1,1);
+mesh(new THREE.SphereGeometry(1.1,14,10), dBelly, 0.6,1.6,0, dBody).scale.set(1.3,0.9,0.9);
+const neck = mesh(new THREE.CylinderGeometry(0.5,0.7,1.8,10), dGreen, 2.1,3,0, dBody); neck.rotation.z=-0.8;
+const head = new THREE.Group(); head.position.set(3,3.8,0); dBody.add(head);
+mesh(new THREE.SphereGeometry(0.85,14,10), dGreen, 0,0,0, head).scale.set(1.3,0.9,1);
+mesh(new THREE.BoxGeometry(1,0.5,0.8), dGreen, 0.9,-0.2,0, head);
+[-1,1].forEach(s=>{
+  mesh(new THREE.SphereGeometry(0.2,8,8), M(0xfff59a,{emissive:0x666600}), 0.5,0.3,s*0.45, head);
+  mesh(new THREE.ConeGeometry(0.15,0.7,6), M(0xe8d9a8), -0.3,0.75,s*0.4, head).rotation.z=0.5;
+});
+const collar = mesh(new THREE.TorusGeometry(0.62,0.1,8,20), new THREE.MeshBasicMaterial({color:0xf5c542}), 1.7,2.7,0, dBody); collar.rotation.y=Math.PI/2; collar.rotation.x=0.7;
+for(let i=0;i<5;i++) mesh(new THREE.ConeGeometry(0.25,0.7,5), M(0xd7382f), -1.4+i*0.7,3.4-Math.abs(i-2)*0.15,0, dBody);
+const tail = mesh(new THREE.ConeGeometry(0.6,3.5,8), dGreen, -3.4,1.4,0, dBody); tail.rotation.z=Math.PI/2+0.3;
+[-1,1].forEach(s=>{
+  mesh(new THREE.CylinderGeometry(0.3,0.35,1.3,8), dDark, 0.9,0.6,s*0.9, dBody);
+  mesh(new THREE.CylinderGeometry(0.3,0.35,1.3,8), dDark, -0.9,0.6,s*0.9, dBody);
+});
+const wings = [];
+[-1,1].forEach(s=>{
+  const piv = new THREE.Group(); piv.position.set(0,3,s*0.9); dBody.add(piv);
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute([ 1.2,0,0, -1.6,0,0, 0.2,0,s*4.5, -1.2,0,s*3.8, 1.2,0,0, 0.2,0,s*4.5, -1.6,0,0, -1.2,0,s*3.8, 0.2,0,s*4.5 ],3));
+  geo.computeVertexNormals();
+  const w = new THREE.Mesh(geo, M(0x3c6b2f,{side:THREE.DoubleSide})); w.castShadow=true; piv.add(w);
+  wings.push({piv,s});
+});
+const DRAGON_HOME = new THREE.Vector3(28,0,0);
+dragon.position.copy(DRAGON_HOME);
+
+// ================= EFFECTS =================
+const clouds = [], mudBalls = [];
+const cloudMat = new THREE.MeshLambertMaterial({color:0x8fe06a, transparent:true, opacity:.55, emissive:0x2a6a10});
+function spawnCloud(pos, vel){
+  const m = new THREE.Mesh(new THREE.SphereGeometry(0.6,10,8), cloudMat.clone()); m.position.copy(pos); scene.add(m);
+  clouds.push({m, vel, life:2.2});
+}
+function spawnMud(pos, dir){
+  const m = mesh(new THREE.SphereGeometry(0.4,10,8), M(0x6b4a24), 0,0,0); m.position.copy(pos);
+  mudBalls.push({m, vel:dir.multiplyScalar(14), life:3});
+}
+const chips = [];
+function spawnChips(x,y,z,color,n=8){
+  for(let i=0;i<n;i++){
+    const m = mesh(new THREE.BoxGeometry(0.15,0.15,0.15), M(color), x,y,z);
+    chips.push({m, vel:new THREE.Vector3((Math.random()-.5)*6, 3+Math.random()*4, (Math.random()-.5)*6), life:0.9});
   }
+}
 
-  const COLORS = {'~':'#2f7fc1','.':'#f3d79a',',':'#8fcf6a','M':'#5f8a48','R':'#3fa0e0'};
+// ================= STATE =================
+let S, cam = 'tp', running = false, paused = true;
+const keys = {};
+function reset(name, title){
+  S = {name, title, x:-36, z:0, yaw:0, pitch:0, hp:30, maxHp:30, wood:0, stone:0, pot:0,
+       sword:false, shield:false, freed:false, house:false, bridge:false, fight:false, won:false,
+       swing:0, swingCd:0, chop:0, blocking:false, poison:0, poisonTick:0, mud:0, hurtT:0, invuln:0};
+  pickups.forEach(p=>{p.taken=false; p.m.visible=true;});
+  trees.forEach(t=>{t.alive=true; t.hits=0; t.g.visible=true; t.g.rotation.set(0,0,0); if(!colliders.includes(t.col)) colliders.push(t.col);});
+  lid.rotation.x = 0;
+  bea.position.set(0,0,-12); bea.rotation.y = 0; cage.visible = true; if(!colliders.includes(cageCol)) colliders.push(cageCol);
+  house.visible=false; plotMark.visible=true; if(houseCol){ colliders.splice(colliders.indexOf(houseCol),1); houseCol=null; }
+  bridge.visible=false; bridgeSpot.visible=true;
+  resetDragon();
+  updateHud();
+}
+let D;
+function resetDragon(){
+  D = {hp:40, max:40, state:'sleep', t:0, biteCd:0, breathCd:3, mudCd:5, flash:0, gone:false};
+  dragon.position.copy(DRAGON_HOME); dragon.visible = true; dragon.rotation.set(0,Math.PI,0);
+  clouds.forEach(c=>scene.remove(c.m)); clouds.length=0; mudBalls.forEach(b=>scene.remove(b.m)); mudBalls.length=0;
+  document.getElementById('boss').classList.add('hidden');
+}
 
-  function emoji(e, x, y, scale=0.72){
-    ctx.font = `${Math.floor(T*scale)}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
-    ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText(e, x*T+T/2, y*T+T/2+1);
+// ================= DIALOG =================
+const dlg = document.getElementById('dialog');
+let queue=[], after=null, dlgAt=0;
+function say(lines, then){ queue = lines.slice(); after = then||null; paused = true; Object.keys(keys).forEach(k=>keys[k]=false); next(); }
+function next(){
+  if(!queue.length){ dlg.classList.add('hidden'); paused=false; const f=after; after=null; if(f) f(); return; }
+  const [who,text] = queue.shift();
+  document.getElementById('dlgWho').textContent = who;
+  document.getElementById('dlgText').textContent = text;
+  dlg.classList.remove('hidden'); dlgAt = performance.now();
+}
+document.getElementById('dlgBtn').addEventListener('click', next);
+const kn = () => `${S.title} ${S.name}`;
+
+// ================= HUD =================
+const $ = id => document.getElementById(id);
+function updateHud(){
+  $('hpfill').style.width = Math.max(0,S.hp/S.maxHp*100)+'%';
+  $('wood').textContent = S.wood; $('stone').textContent = S.stone; $('potCnt').textContent = S.pot;
+  $('sSword').classList.toggle('locked', !S.sword);
+  $('sShield').classList.toggle('locked', !S.shield);
+  $('sBuild').classList.toggle('locked', !S.freed);
+  $('sPot').classList.toggle('locked', S.pot<1);
+  let q;
+  if(!S.sword) q = 'Find the <b>treasure chest</b> on the beach. Follow the gold marker ✨';
+  else if(!S.freed) q = 'Someone is calling for help! Find the <b>cage</b>.';
+  else if(!S.house) q = `Chop trees 🪓 and gather <b>4 🪵</b> and <b>3 🪨</b>, then <b>Build 🔨</b> Bea's house on the plot. (${S.wood}/4 wood, ${S.stone}/3 stone)`;
+  else if(!S.bridge) q = `Gather <b>3 🪵</b>, then <b>Build 🔨</b> a bridge at the river. (${S.wood}/3)`;
+  else if(!S.won) q = 'Cross the bridge and defeat the <b>Swamp Dragon</b> 🐉';
+  else q = 'You did it!';
+  $('quest').innerHTML = q;
+  const st=[]; if(S.poison>0) st.push('☠️ Poisoned! Drink a potion'); if(S.mud>0) st.push('🟤 Mud in your eyes');
+  $('status').textContent = st.join('   ');
+  if(S.fight){ $('bossfill').style.width = Math.max(0,D.hp/D.max*100)+'%'; }
+}
+function objective(){
+  if(!S.sword) return [chest.position.x, 2.4, chest.position.z];
+  if(!S.freed) return [0, 4, -12];
+  if(!S.house){
+    if(S.wood>=4 && S.stone>=3) return [PLOT.x, 3, PLOT.z];
+    return null;
   }
+  if(!S.bridge) return S.wood>=3 ? [12, 2.5, 0] : null;
+  if(!S.won) return [dragon.position.x, 7, dragon.position.z];
+  return null;
+}
 
-  function ground(c, x){
-    if(c==='~'||c==='R'||c==='B'||c==='=') return c==='~'?'#2f7fc1':'#3fa0e0';
-    if(c==='.'||c===',' ||c==='M') return COLORS[c];
-    if(c==='T'||c==='b'||c==='X'||c==='x') return COLORS['.'];
-    return COLORS[baseAt(x)];
+// ================= INTERACT =================
+function dist(x,z){ return Math.hypot(S.x-x, S.z-z); }
+function nearTree(){ let best=null, bd=2.6; trees.forEach(t=>{ if(!t.alive) return; const d=dist(t.x,t.z); if(d<bd){bd=d;best=t;} }); return best; }
+function nearBridge(){ return S.x>RIVER_X0-4 && S.x<RIVER_X0+0.5 && Math.abs(S.z-BRIDGE_Z)<4; }
+function currentPrompt(){
+  if(!S.sword && dist(chest.position.x,chest.position.z)<3) return '👋 Use (E) to open the chest';
+  if(!S.freed && dist(0,-12)<3.5) return S.sword ? '👋 Use (E) to cut the vines' : '👋 Use (E) to talk';
+  if(S.freed && dist(bea.position.x,bea.position.z)<3) return '👋 Use (E) to talk to Bea';
+  if(S.freed && !S.house && dist(PLOT.x,PLOT.z)<4) return '🔨 Build (5) a house: 4 🪵 + 3 🪨';
+  if(S.house && !S.bridge && nearBridge()) return '🔨 Build (5) a bridge: 3 🪵';
+  if(nearTree()) return '🪓 Chop (4) the tree for wood';
+  return null;
+}
+function useAct(){
+  if(paused) return;
+  if(!S.sword && dist(chest.position.x,chest.position.z)<3){
+    S.sword = true; S.shield = true; lid.rotation.x = -1.9; updateHud();
+    say([['Treasure Chest','You found a shining Knight\'s Sword ⚔️ and a Green Shield 🛡️!'],
+         ['How to fight','Press ⚔️ Sword (1, or click) to swing. Hold 🛡️ Shield (2) to block. Drink 🧪 Potion (3) to heal.'],
+         ['???','Help! Is somebody there? Please help me!']]);
+    return;
   }
-
-  function draw(){
-    if(!grid) return;
-    for(let y=0;y<H;y++) for(let x=0;x<W;x++){
-      const c = grid[y][x];
-      ctx.fillStyle = ground(c, x);
-      ctx.fillRect(x*T, y*T, T, T);
-      // texture
-      if(c==='~'){ ctx.strokeStyle='rgba(255,255,255,.35)'; ctx.lineWidth=1.5; ctx.beginPath();
-        ctx.arc(x*T+T*.3, y*T+T*.55, T*.15, Math.PI*1.1, Math.PI*1.9);
-        ctx.arc(x*T+T*.7, y*T+T*.4, T*.15, Math.PI*1.1, Math.PI*1.9); ctx.stroke(); }
-      if(c==='R'||c==='B'){ ctx.strokeStyle='rgba(255,255,255,.45)'; ctx.lineWidth=1.5; ctx.beginPath();
-        ctx.moveTo(x*T+T*.2,y*T+T*.3); ctx.lineTo(x*T+T*.5,y*T+T*.45);
-        ctx.moveTo(x*T+T*.5,y*T+T*.7); ctx.lineTo(x*T+T*.8,y*T+T*.85); ctx.stroke(); }
-      if(c==='M'||(baseAt(x)==='M'&&!'~RB='.includes(c))){ ctx.strokeStyle='#3d6330'; ctx.lineWidth=2; ctx.beginPath();
-        ctx.moveTo(x*T+T*.2,y*T+T*.85); ctx.lineTo(x*T+T*.25,y*T+T*.6);
-        ctx.moveTo(x*T+T*.75,y*T+T*.3); ctx.lineTo(x*T+T*.8,y*T+T*.08); ctx.stroke(); }
-      if(c==='B'){ ctx.setLineDash([4,3]); ctx.strokeStyle='#ffd27a'; ctx.lineWidth=2;
-        ctx.strokeRect(x*T+3,y*T+3,T-6,T-6); ctx.setLineDash([]); }
-      if(c==='='){ ctx.fillStyle='#8a5a2b'; ctx.fillRect(x*T, y*T+T*.15, T, T*.7);
-        ctx.strokeStyle='#5a3815'; ctx.lineWidth=2;
-        for(let i=1;i<4;i++){ ctx.beginPath(); ctx.moveTo(x*T+i*T/4, y*T+T*.15); ctx.lineTo(x*T+i*T/4, y*T+T*.85); ctx.stroke(); } }
-      // objects
-      if(c==='T') emoji('🌴',x,y,.85);
-      if(c==='w') emoji('🪵',x,y);
-      if(c==='s') emoji('🪨',x,y);
-      if(c==='p') emoji('🧪',x,y);
-      if(c==='b') emoji('⛵',x,y,.8);
-      if(c==='D') emoji('🐉',x,y,.85);
-      if(c==='H') emoji('🏠',x,y,.85);
-      if(c==='X'||c==='x') drawChest(x,y,c==='x');
-      if(c==='C'){ emoji('👷‍♀️',x,y,.6); ctx.strokeStyle='#4a2f12'; ctx.lineWidth=3;
-        for(let i=1;i<5;i++){ ctx.beginPath(); ctx.moveTo(x*T+i*T/5,y*T+3); ctx.lineTo(x*T+i*T/5,y*T+T-3); ctx.stroke(); }
-        ctx.strokeRect(x*T+3,y*T+3,T-6,T-6);
-        ctx.strokeStyle='#2f7a2a'; ctx.beginPath(); ctx.moveTo(x*T+4,y*T+T*.3); ctx.quadraticCurveTo(x*T+T/2,y*T+T*.7,x*T+T-4,y*T+T*.4); ctx.stroke(); }
-      if(c==='P'){ ctx.setLineDash([4,3]); ctx.strokeStyle='#6b4a24'; ctx.lineWidth=2;
-        ctx.strokeRect(x*T+4,y*T+4,T-8,T-8); ctx.setLineDash([]); emoji('🔨',x,y,.45); }
-      if(c==='V') emoji('👷‍♀️',x,y,.75);
+  if(!S.freed && dist(0,-12)<3.5){
+    if(!S.sword){ say([['Bea','Help! The dragons locked me in this cage with thick vines. You need something sharp to cut them!']]); return; }
+    swingStart();
+    S.freed = true; cage.visible=false; colliders.splice(colliders.indexOf(cageCol),1);
+    spawnChips(0,1.2,-12,0x2f7a2a,14);
+    bea.position.set(PLOT.x+3, 0, PLOT.z+3.2);
+    updateHud();
+    say([[kn(),'Hold on! *slash slash* The vines are cut!'],
+         ['Bea the Builder','Thank you, brave knight! I\'m Bea. The dragons carried me off from the kingdom and dropped me here.'],
+         ['Bea the Builder','I\'ll teach you how to build! 🔨 Bring 4 wood and 3 stone to the empty plot over there, and press Build.'],
+         ['Bea the Builder','Chop palm trees with your axe 🪓 for wood, and look for stones 🪨 on the ground.']]);
+    return;
+  }
+  if(S.freed && dist(bea.position.x,bea.position.z)<3){
+    if(!S.house) say([['Bea the Builder',`My house needs 4 wood and 3 stone. You have ${S.wood} wood and ${S.stone} stone.`]]);
+    else if(!S.bridge) say([['Bea the Builder','Get 3 wood, go to the yellow posts by the river, and press Build. Then you can cross to the marsh!']]);
+    else if(!S.won) say([['Bea the Builder','The Swamp Dragon breathes POISON. When it rears up its head, hold your shield or run away from the green cloud!']]);
+    else say([['Bea the Builder','You beat the Swamp Dragon! I knew you could do it.']]);
+    return;
+  }
+}
+function buildAct(){
+  if(paused || !S.freed) return;
+  if(!S.house && dist(PLOT.x,PLOT.z)<4){
+    if(S.wood>=4 && S.stone>=3){
+      S.wood-=4; S.stone-=3; S.house=true; house.visible=true; plotMark.visible=false; houseCol = addCol(PLOT.x,PLOT.z,2.4);
+      if(dist(PLOT.x,PLOT.z)<2.6){ S.x = PLOT.x; S.z = PLOT.z+3.2; }
+      spawnChips(PLOT.x,2,PLOT.z,0xf2e2c2,16); updateHud();
+      say([['Bea the Builder','*bang bang* *saw saw* ... Ta-da! My new house! 🏠'],
+           ['Bea the Builder','Now I can help YOU. The marsh is across the river. Get 3 more wood and build a bridge at the yellow posts!']]);
+    } else say([['Build',`A house needs 4 🪵 and 3 🪨. You have ${S.wood} wood and ${S.stone} stone.`]]);
+    return;
+  }
+  if(S.house && !S.bridge && nearBridge()){
+    if(S.wood>=3){
+      S.wood-=3; S.bridge=true; bridge.visible=true; bridgeSpot.visible=false; spawnChips(12,1,0,0x8a5a2b,16); updateHud();
+      say([['Bea the Builder','*hammer hammer hammer* The bridge is done!'],
+           ['Bea the Builder','Be careful. Every dragon wears a glowing gold collar. I think it\'s the Dragon King\'s magic controlling them.']]);
+    } else say([['Build',`A bridge needs 3 🪵. You have ${S.wood}.`]]);
+    return;
+  }
+  say([['Build','Nothing to build here. Find the empty plot or the yellow posts by the river.']]);
+}
+function chopAct(){
+  if(paused || S.chop>0) return;
+  S.chop = 0.4;
+  const t = nearTree();
+  if(!t) return;
+  t.hits++; spawnChips(t.x,1.5,t.z,0xc89060,6);
+  if(t.hits>=3){
+    t.alive=false; colliders.splice(colliders.indexOf(t.col),1); t.fall=0;
+    S.wood += 2; updateHud();
+  }
+}
+function potionAct(){
+  if(paused || S.pot<1) return;
+  S.pot--; S.hp = Math.min(S.maxHp, S.hp+15); S.poison=0; updateHud();
+  flashFx('poisonfx',0); spawnChips(S.x,1.5,S.z,0x45e0b0,8);
+}
+function swingStart(){
+  if(S.swingCd>0) return false;
+  S.swing = 0.35; S.swingCd = 0.45; return true;
+}
+function swordAct(){
+  if(paused || !S.sword) return;
+  if(!swingStart()) return;
+  // hit dragon?
+  if(S.fight && !D.gone){
+    const dx = dragon.position.x - S.x, dz = dragon.position.z - S.z, d = Math.hypot(dx,dz);
+    const ang = Math.abs(angDiff(Math.atan2(dz,dx), S.yaw));
+    if(d < 5.2 && ang < 1.1){
+      let dmg = 3 + Math.floor(Math.random()*3);
+      if(S.mud>0) dmg = Math.ceil(dmg/2);
+      D.hp -= dmg; D.flash = 0.2; spawnChips(dragon.position.x,2.5,dragon.position.z,0xff6b5a,6);
+      if(D.state!=='breath' && Math.random()<0.25){ D.state='hop'; D.t=0.5; }
+      updateHud();
+      if(D.hp<=0) win();
     }
-    drawKnight(S.x, S.y);
   }
+  // also chop trees with sword? no; sword only for dragons
+}
+function angDiff(a,b){ let d=a-b; while(d>Math.PI)d-=Math.PI*2; while(d<-Math.PI)d+=Math.PI*2; return d; }
 
-  function drawChest(x,y,open){
-    const px=x*T, py=y*T;
-    ctx.fillStyle = open ? '#a87443' : '#8b5a2b';
-    ctx.fillRect(px+T*.18, py+T*.38, T*.64, T*.42);
-    ctx.fillStyle = open ? '#6b4a24' : '#a0692f';
-    ctx.fillRect(px+T*.18, py+(open?T*.2:T*.26), T*.64, T*.14);
-    ctx.fillStyle='#f5c542';
-    ctx.fillRect(px+T*.46, py+T*.4, T*.08, T*.14);
-  }
+// ================= COMBAT HELPERS =================
+function hurt(amount, why){
+  if(S.invuln>0 || S.won) return;
+  if(S.blocking){ amount = Math.max(0, Math.round(amount*0.3)); spawnChips(S.x+Math.cos(S.yaw),1.3,S.z+Math.sin(S.yaw),0xf5c542,5); }
+  if(amount<=0) return;
+  S.hp -= amount; S.invuln = 0.5; flashFx('hurt', 0.3); updateHud();
+  if(S.hp<=0) lose();
+}
+const fxTimers = {};
+function flashFx(id, secs){ const el=$(id); el.style.opacity = secs>0 ? 1 : 0; clearTimeout(fxTimers[id]); if(secs>0) fxTimers[id]=setTimeout(()=>{ if(id!=='poisonfx'||S.poison<=0) el.style.opacity=0; }, secs*1000); }
 
-  function drawKnight(x,y){
-    const cx=x*T+T/2, cy=y*T+T/2;
-    // cape
-    ctx.fillStyle='#d7382f';
-    ctx.beginPath(); ctx.moveTo(cx-T*.22,cy-T*.05); ctx.lineTo(cx+T*.22,cy-T*.05); ctx.lineTo(cx+T*.3,cy+T*.42); ctx.lineTo(cx-T*.3,cy+T*.42); ctx.closePath(); ctx.fill();
-    // body
-    ctx.fillStyle='#f28c28';
-    ctx.fillRect(cx-T*.17, cy-T*.04, T*.34, T*.38);
-    ctx.fillStyle='#3f9a3a'; ctx.fillRect(cx-T*.04, cy, T*.08, T*.28); ctx.fillRect(cx-T*.12, cy+T*.08, T*.24, T*.07);
-    // helmet
-    ctx.fillStyle='#c9d1d9'; ctx.strokeStyle='#4b5560'; ctx.lineWidth=1.5;
-    ctx.beginPath(); ctx.arc(cx, cy-T*.2, T*.18, 0, Math.PI*2); ctx.fill(); ctx.stroke();
-    ctx.fillStyle='#2b3138'; ctx.fillRect(cx-T*.12, cy-T*.22, T*.24, T*.05);
-    // plume
-    ctx.fillStyle='#d7382f'; ctx.beginPath(); ctx.ellipse(cx, cy-T*.4, T*.06, T*.1, 0, 0, Math.PI*2); ctx.fill();
-    if(S.sword){ ctx.strokeStyle='#e6edf3'; ctx.lineWidth=2.5; ctx.beginPath(); ctx.moveTo(cx+T*.24,cy+T*.2); ctx.lineTo(cx+T*.36,cy-T*.22); ctx.stroke();
-      ctx.strokeStyle='#8b5a2b'; ctx.beginPath(); ctx.moveTo(cx+T*.18,cy+T*.12); ctx.lineTo(cx+T*.32,cy+T*.16); ctx.stroke(); }
-  }
-
-  // ---------- HUD ----------
-  function knightName(){ return `${S.title} ${S.name}`; }
-  function hud(){
-    document.getElementById('hp').textContent = `${S.hp}/${S.maxHp}`;
-    document.getElementById('wood').textContent = S.wood;
-    document.getElementById('stone').textContent = S.stone;
-    document.getElementById('pot').textContent = S.pot;
-    document.getElementById('weapon').textContent = S.sword ? 'Knight\'s Sword' : 'None';
-    let q;
-    if(!S.sword) q = 'Find the <b>treasure chest</b> on the beach.';
-    else if(!S.freed) q = 'Someone is calling for help! Find the <b>cage</b>.';
-    else if(!S.house) q = `Gather <b>${HOUSE_WOOD} 🪵</b> and <b>${HOUSE_STONE} 🪨</b>, then build Bea's house on the <b>empty plot</b>.`;
-    else if(!S.bridge) q = `Bring Bea <b>${BRIDGE_WOOD} 🪵</b> so she can build a bridge.`;
-    else q = 'Cross the bridge and find the <b>Swamp Dragon</b> 🐉 in the marsh.';
-    document.getElementById('quest').innerHTML = '🗺️ ' + q;
-  }
-
-  // ---------- DIALOG ----------
-  const dlg = document.getElementById('dialog');
-  let queue = [], dlgOpenedAt = 0, afterDialog = null;
-  function say(lines, then){
-    queue = lines.slice(); afterDialog = then || null; nextLine();
-  }
-  function nextLine(){
-    if(!queue.length){ dlg.classList.add('hidden'); const f=afterDialog; afterDialog=null; if(f) f(); return; }
-    const [who, text] = queue.shift();
-    document.getElementById('dlgWho').textContent = who;
-    document.getElementById('dlgText').textContent = text;
-    dlg.classList.remove('hidden'); dlgOpenedAt = Date.now();
-  }
-  document.getElementById('dlgBtn').onclick = nextLine;
-  function dialogOpen(){ return !dlg.classList.contains('hidden'); }
-
-  // ---------- MOVE + INTERACT ----------
-  const WALK = new Set(['.',',','M','b','w','s','p','=']);
-  function move(dx,dy){
-    if(dialogOpen() || !document.getElementById('battle').classList.contains('hidden')) return;
-    const nx=S.x+dx, ny=S.y+dy;
-    if(nx<0||ny<0||nx>=W||ny>=H) return;
-    const c = grid[ny][nx];
-    if(WALK.has(c)){
-      S.x=nx; S.y=ny;
-      pickup(c, nx, ny);
-    } else {
-      bump(c, nx, ny);
-    }
-    hud(); draw();
-  }
-
-  function pickup(c,x,y){
-    if(c==='w'){ S.wood++; grid[y][x]=baseAt(x); }
-    if(c==='s'){ S.stone++; grid[y][x]=baseAt(x); }
-    if(c==='p'){ S.pot++; grid[y][x]=baseAt(x);
-      say([['🧪 Potion!','You found a healing potion. It heals you AND cures poison. Save it for a dragon fight!']]); }
-  }
-
-  const ME = () => knightName();
-  function bump(c,x,y){
-    if(c==='X'){
-      grid[y][x]='x'; S.sword=true;
-      say([['Treasure Chest','You open the chest and find a shining Knight\'s Sword! ⚔️'],
-           [ME(),'Now I\'m ready for anything.'],
-           ['???','Help! Is somebody there? Please help me!']]);
-    } else if(c==='x'){
-      say([['Treasure Chest','It\'s empty now.']]);
-    } else if(c==='C'){
-      if(!S.sword){ say([['Bea','Help! The dragons locked me in this cage! Thick vines are wrapped around it. You\'ll need something sharp to cut them.']]); return; }
-      grid[y][x]=baseAt(x); S.freed=true; grid[VILLAGER.y][VILLAGER.x]='V';
-      say([[ME(),'Hold on! *slash slash* The vines are cut!'],
-           ['Bea the Builder','Thank you, brave knight! I\'m Bea. The dragons carried me off from the kingdom and dropped me here.'],
-           ['Bea the Builder','The dragons smashed my house. If you bring me 4 wood and 3 stone, I\'ll build a new one right here on the empty plot.'],
-           ['Bea the Builder','Look for driftwood 🪵 and stones 🪨 around the beach. Then walk into the plot with the hammer.']]);
-    } else if(c==='V'){
-      if(!S.house) say([['Bea the Builder',`I need ${HOUSE_WOOD} wood and ${HOUSE_STONE} stone for my house. You have ${S.wood} wood and ${S.stone} stone.`]]);
-      else if(!S.bridge){
-        if(S.wood>=BRIDGE_WOOD){
-          S.wood-=BRIDGE_WOOD; S.bridge=true;
-          grid.forEach((row,yy)=>row.forEach((cc,xx)=>{ if(cc==='B') grid[yy][xx]='='; }));
-          say([['Bea the Builder','Perfect! *hammer hammer hammer* The bridge is done!'],
-               ['Bea the Builder','Be careful in the marsh. A Swamp Dragon lives there. Its breath is POISON, so bring potions if you can.'],
-               ['Bea the Builder','And one more thing. Every dragon wears a little gold chain that glows. I think it\'s the Dragon King\'s magic controlling them.']]);
-        } else say([['Bea the Builder',`I can build a bridge across the river with ${BRIDGE_WOOD} wood. You have ${S.wood}. There's more driftwood on the beach!`]]);
-      } else if(!S.won) say([['Bea the Builder','You can do it! Use your shield when the dragon is about to breathe poison.']]);
-      else say([['Bea the Builder','You beat the Swamp Dragon! The whole island will hear about this.']]);
-    } else if(c==='P'){
-      if(!S.freed){ say([['Empty Plot','A flat spot of land. Someone could build a house here.']]); return; }
-      if(S.wood>=HOUSE_WOOD && S.stone>=HOUSE_STONE){
-        S.wood-=HOUSE_WOOD; S.stone-=HOUSE_STONE; S.house=true; grid[y][x]='H';
-        say([['Bea the Builder','*bang bang* *saw saw* ... Ta-da! My new house! 🏠'],
-             ['Bea the Builder','Thank you! Now I can help YOU. See that river? The marsh is on the other side.'],
-             ['Bea the Builder',`Bring me ${BRIDGE_WOOD} more wood and I'll build a bridge across it.`]]);
-      } else say([['Empty Plot',`To build Bea's house you need ${HOUSE_WOOD} wood and ${HOUSE_STONE} stone. You have ${S.wood} wood and ${S.stone} stone.`]]);
-    } else if(c==='H'){
-      say([['Bea\'s House','Bea\'s cozy new house. Smoke is curling out of the chimney.']]);
-    } else if(c==='B'){
-      say([['The River','The water is too fast and deep to cross. A builder could make a bridge here.']]);
-    } else if(c==='R'){
-      say([['The River','The river rushes by. You can\'t swim across here.']]);
-    } else if(c==='D'){
-      say([['Swamp Dragon','GRRRRAAAWWWR! 🐉'],
-           [ME(),'I\'m not afraid of you! I\'m here to stop the Dragon King!'],
-           ['Swamp Dragon','*the gold chain on its neck glows* Hsssss...']], startBattle);
-    }
-  }
-
-  // ---------- BATTLE ----------
-  const bEl = document.getElementById('battle');
-  let B;
-  const rnd = (a,b) => a + Math.floor(Math.random()*(b-a+1));
-
-  function startBattle(){
-    B = {hp:34, max:34, poison:0, mud:false, shield:false, busy:false};
-    bEl.classList.remove('hidden');
-    document.getElementById('pLbl').textContent = knightName();
-    blog('The Swamp Dragon rises out of the mud! What will you do?');
-    bUpdate();
-  }
-  function blog(t){ document.getElementById('blog').textContent = t; }
-  function bUpdate(){
-    document.getElementById('pBar').style.width = Math.max(0,S.hp/S.maxHp*100)+'%';
-    document.getElementById('dBar').style.width = Math.max(0,B.hp/B.max*100)+'%';
-    document.getElementById('pLbl').textContent = `${knightName()}  ❤️ ${Math.max(0,S.hp)}/${S.maxHp}`;
-    const st=[]; if(B.poison) st.push(`☠️ Poisoned (${B.poison} turns)`); if(B.mud) st.push('🟤 Mud in your eyes (next hit is weaker)'); if(B.shield) st.push('🛡️ Shield up');
-    document.getElementById('bStatus').textContent = st.join('   ');
-    document.getElementById('aPot').innerHTML = `🧪 Potion (${S.pot})<small>Heal and cure poison</small>`;
-    ['aSword','aBig','aShield'].forEach(id=>document.getElementById(id).disabled=B.busy);
-    document.getElementById('aPot').disabled = B.busy || S.pot<1;
-    hud();
-  }
-  function hitFx(el){ el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); }
-
-  function playerAct(kind){
-    if(B.busy) return;
-    B.busy = true;
-    let msg='';
-    if(kind==='sword'){
-      let d=rnd(5,8); if(B.mud){ d=Math.ceil(d/2); B.mud=false; }
-      B.hp-=d; msg=`You swing your sword! ${d} damage.`; hitFx(document.getElementById('dragonArt'));
-    } else if(kind==='big'){
-      if(Math.random()<0.6){ let d=rnd(11,15); if(B.mud){ d=Math.ceil(d/2); B.mud=false; }
-        B.hp-=d; msg=`💥 BIG SWING! It hits for ${d} damage!`; hitFx(document.getElementById('dragonArt')); }
-      else { B.mud=false; msg='You swing with all your might... and miss!'; }
-    } else if(kind==='pot'){
-      S.pot--; const before=S.hp; S.hp=Math.min(S.maxHp,S.hp+15); B.poison=0;
-      msg=`You drink a potion. +${S.hp-before} health, and the poison is gone!`;
-    } else if(kind==='shield'){
-      B.shield=true; msg='You raise your shield and get ready.';
-    }
-    blog(msg); bUpdate();
-    if(B.hp<=0){ setTimeout(win, 900); return; }
-    setTimeout(dragonTurn, 1100);
-  }
-
-  function dragonTurn(){
-    let msg, d;
-    const r=Math.random();
-    if(B.poison===0 && r<0.4){
-      d=3; msg='The Swamp Dragon breathes a cloud of POISON! ☠️';
-      const b=document.getElementById('bubbles'); b.setAttribute('opacity','1'); setTimeout(()=>b.setAttribute('opacity','0'),800);
-      if(B.shield){ d=1; msg+=' Your shield blocks most of it, but some gets through.'; B.poison=2; } else B.poison=3;
-    } else if(r<0.65){
-      d=2; B.mud=true; msg='The dragon flicks its tail and splashes MUD in your eyes!';
-      if(B.shield){ d=1; B.mud=false; msg+=' Your shield catches the mud!'; }
-    } else {
-      d=rnd(5,8); msg='The dragon CHOMPS at you!';
-      if(B.shield){ d=Math.ceil(d/2); msg+=' Your shield blocks half!'; }
-    }
-    B.shield=false;
-    S.hp-=d; msg+=` (-${d})`;
-    if(B.poison>0 && S.hp>0){ S.hp-=2; B.poison--; msg+=` The poison stings. (-2)`; }
-    hitFx(document.getElementById('bcard'));
-    blog(msg);
-    B.busy=false; bUpdate();
-    if(S.hp<=0){ B.busy=true; bUpdate(); setTimeout(lose, 1000); }
-  }
-
-  function win(){
-    bEl.classList.add('hidden');
-    S.won=true;
-    grid.forEach((row,y)=>row.forEach((c,x)=>{ if(c==='D') grid[y][x]='M'; }));
-    hud(); draw();
+function startFight(){
+  S.fight = true; D.state='roar'; D.t=1.2;
+  $('boss').classList.remove('hidden'); updateHud();
+  say([['Swamp Dragon','GRRRRAAAWWWR! 🐉'], [kn(),'I\'m not afraid of you! I\'m here to stop the Dragon King!']]);
+}
+function win(){
+  D.gone = true; D.state='flee'; D.t=0;
+  S.won = true; S.poison=0; flashFx('poisonfx',0); $('boss').classList.add('hidden'); updateHud();
+  setTimeout(()=>{
     say([['Swamp Dragon','*the dragon wobbles, too tired to fight*'],
-         [ME(),'Wait. The gold chain on its neck... it stopped glowing for a second. It looked scared, not mean.'],
-         ['Swamp Dragon','*the chain glows again, and the dragon flies off over the trees toward the volcano*'],
-         [ME(),'The Dragon King\'s crown is controlling them. If I take that crown, every dragon will be free!']],
+         [kn(),'Wait. The gold collar... it stopped glowing for a second. The dragon looked scared, not mean.'],
+         ['Swamp Dragon','*the collar glows again, and the dragon flies off toward the volcano*'],
+         [kn(),'The Dragon King\'s crown is controlling them. If I take that crown, every dragon will be free!']],
       ()=>{
-        document.getElementById('endText').textContent =
-          `${knightName()} rescued Bea, built a house and a bridge, and beat the Swamp Dragon! But the Dragon King is still out there, at the top of Dragon Castle.`;
-        document.getElementById('end').classList.remove('hidden');
+        $('endText').textContent = `${kn()} rescued Bea, built a house and a bridge, and beat the Swamp Dragon! But the Dragon King is still out there, at the top of Dragon Castle.`;
+        $('end').classList.remove('hidden'); paused = true;
       });
+  }, 1600);
+}
+function lose(){
+  S.hp = S.maxHp; S.poison=0; S.mud=0; flashFx('poisonfx',0); $('mud').style.opacity=0;
+  S.x = bea.position.x - 2; S.z = bea.position.z; S.yaw = 0;
+  if(S.pot<1) S.pot=1;
+  S.fight = false; resetDragon(); updateHud();
+  say([['Bea the Builder','You\'re awake! I pulled you out of the marsh. That dragon was tough!'],
+       ['Bea the Builder','Here, take this potion 🧪. When the dragon rears up, hold your shield or run away from the green cloud. You can do this!']]);
+}
+
+// ================= INPUT =================
+const KEYMAP = {ArrowUp:'f',KeyW:'f',ArrowDown:'b',KeyS:'b',ArrowLeft:'l',KeyA:'l',ArrowRight:'r',KeyD:'r'};
+window.addEventListener('keydown', e=>{
+  if(!$('title').classList.contains('hidden')){ if(e.key==='Enter') startGame(); return; }
+  if(!dlg.classList.contains('hidden')){
+    if((e.key==='Enter'||e.key===' '||e.code==='KeyE') && performance.now()-dlgAt>250){ e.preventDefault(); next(); }
+    return;
   }
+  if(KEYMAP[e.code]){ keys[KEYMAP[e.code]] = true; e.preventDefault(); }
+  if(e.repeat) return;
+  if(e.code==='KeyE') useAct();
+  if(e.code==='Digit1'||e.code==='KeyJ'||e.code==='Space'){ e.preventDefault(); swordAct(); }
+  if(e.code==='Digit2'||e.code==='KeyK') keys.block = true;
+  if(e.code==='Digit3') potionAct();
+  if(e.code==='Digit4') chopAct();
+  if(e.code==='Digit5') buildAct();
+  if(e.code==='KeyV') setCam(cam==='fp'?'tp':'fp');
+});
+window.addEventListener('keyup', e=>{
+  if(KEYMAP[e.code]) keys[KEYMAP[e.code]] = false;
+  if(e.code==='Digit2'||e.code==='KeyK') keys.block = false;
+});
+function bindBtn(id, fn){ const b=$(id); b.addEventListener('pointerdown', e=>{ e.preventDefault(); e.stopPropagation(); fn(); }); }
+bindBtn('sUse', useAct); bindBtn('sSword', swordAct); bindBtn('sPot', potionAct); bindBtn('sChop', chopAct); bindBtn('sBuild', buildAct);
+const shBtn = $('sShield');
+shBtn.addEventListener('pointerdown', e=>{ e.preventDefault(); e.stopPropagation(); keys.block = true; shBtn.classList.add('active'); });
+['pointerup','pointerleave','pointercancel'].forEach(ev=>shBtn.addEventListener(ev, ()=>{ keys.block=false; shBtn.classList.remove('active'); }));
 
-  function lose(){
-    bEl.classList.add('hidden');
-    S.hp=S.maxHp; S.x=VILLAGER.x; S.y=VILLAGER.y+1;
-    if(S.pot<1) S.pot=1;
-    hud(); draw();
-    say([['Bea the Builder','You\'re awake! I pulled you out of the marsh. That dragon was tough!'],
-         ['Bea the Builder','Here, take this potion. 🧪 Try your shield when it looks like it\'s about to breathe. You can do this!']]);
+function setCam(c){ cam = c; $('camFP').classList.toggle('on', c==='fp'); $('camTP').classList.toggle('on', c==='tp'); }
+$('camFP').addEventListener('click', ()=>setCam('fp'));
+$('camTP').addEventListener('click', ()=>setCam('tp'));
+
+// drag to look (mouse or touch on the 3D view), tap/click to swing
+let drag = null;
+canvas.addEventListener('pointerdown', e=>{ drag = {id:e.pointerId, x:e.clientX, y:e.clientY, moved:0}; });
+window.addEventListener('pointermove', e=>{
+  if(!drag || e.pointerId!==drag.id || paused) return;
+  const dx = e.clientX-drag.x, dy = e.clientY-drag.y; drag.x=e.clientX; drag.y=e.clientY; drag.moved += Math.abs(dx)+Math.abs(dy);
+  S.yaw += dx*0.006;
+  S.pitch = Math.max(-0.6, Math.min(0.5, S.pitch - dy*0.004));
+});
+window.addEventListener('pointerup', e=>{
+  if(drag && e.pointerId===drag.id){ if(drag.moved<8 && e.target===canvas) swordAct(); drag=null; }
+});
+
+// joystick for touch
+const joy = $('joy'), knob = $('knob'); let joyV = {x:0,y:0}, joyId=null;
+if(matchMedia('(pointer:coarse)').matches){ joy.classList.remove('hidden'); $('help').textContent = 'Drag the screen to look around'; }
+joy.addEventListener('pointerdown', e=>{ e.preventDefault(); e.stopPropagation(); joyId=e.pointerId; joy.setPointerCapture(e.pointerId); moveJoy(e); });
+joy.addEventListener('pointermove', e=>{ if(e.pointerId===joyId) moveJoy(e); });
+['pointerup','pointercancel'].forEach(ev=>joy.addEventListener(ev, e=>{ if(e.pointerId===joyId){ joyId=null; joyV={x:0,y:0}; knob.style.transform=''; } }));
+function moveJoy(e){
+  const r = joy.getBoundingClientRect(); let x = e.clientX-(r.left+r.width/2), y = e.clientY-(r.top+r.height/2);
+  const m = Math.hypot(x,y), max = 42; if(m>max){ x*=max/m; y*=max/m; }
+  knob.style.transform = `translate(${x}px,${y}px)`; joyV = {x:x/max, y:y/max};
+}
+
+// ================= PHYSICS =================
+function canStand(x,z){
+  if(x<LAND.x0+0.5 || x>LAND.x1-0.5 || z<LAND.z0+0.5 || z>LAND.z1-0.5) return false;
+  if(x>RIVER_X0-0.4 && x<RIVER_X1+0.4){
+    if(!(S.bridge && Math.abs(z-BRIDGE_Z)<BRIDGE_HALF-0.4)) return false;
   }
+  for(const c of colliders){ if(Math.hypot(x-c.x, z-c.z) < c.r+0.5) return false; }
+  if(!D.gone && S.fight && Math.hypot(x-dragon.position.x, z-dragon.position.z) < 2.6) return false;
+  return true;
+}
 
-  document.getElementById('aSword').onclick=()=>playerAct('sword');
-  document.getElementById('aBig').onclick=()=>playerAct('big');
-  document.getElementById('aPot').onclick=()=>playerAct('pot');
-  document.getElementById('aShield').onclick=()=>playerAct('shield');
-
-  // ---------- INPUT ----------
-  const KEYS = {ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0],w:[0,-1],s:[0,1],a:[-1,0],d:[1,0],W:[0,-1],S:[0,1],A:[-1,0],D:[1,0]};
-  window.addEventListener('keydown', e=>{
-    if(!document.getElementById('title').classList.contains('hidden')){
-      if(e.key==='Enter') startGame(); return;
+// ================= LOOP =================
+const clock = new THREE.Clock();
+const camPos = new THREE.Vector3(), camLook = new THREE.Vector3();
+let time = 0;
+function tick(){
+  requestAnimationFrame(tick);
+  const dt = Math.min(clock.getDelta(), 0.05); time += dt;
+  if(running && !paused) update(dt);
+  animate(dt);
+  renderer.render(scene, camera);
+}
+function update(dt){
+  // movement: forward/back + turn (keyboard), joystick: y=forward, x=turn
+  let fwd = (keys.f?1:0) - (keys.b?1:0) - joyV.y;
+  let turn = (keys.r?1:0) - (keys.l?1:0) + joyV.x;
+  S.yaw += turn * 2.4 * dt;
+  S.blocking = !!keys.block && S.shield;
+  const speed = (S.blocking ? 3.2 : 7.5) * (S.mud>0 ? 0.6 : 1);
+  if(Math.abs(fwd)>0.05){
+    fwd = Math.max(-1, Math.min(1, fwd));
+    const nx = S.x + Math.cos(S.yaw)*fwd*speed*dt, nz = S.z + Math.sin(S.yaw)*fwd*speed*dt;
+    if(canStand(nx,nz)){ S.x=nx; S.z=nz; }
+    else if(canStand(nx,S.z)) S.x=nx;
+    else if(canStand(S.x,nz)) S.z=nz;
+  }
+  // timers
+  S.swing = Math.max(0,S.swing-dt); S.swingCd = Math.max(0,S.swingCd-dt); S.chop=Math.max(0,S.chop-dt);
+  S.invuln = Math.max(0,S.invuln-dt);
+  if(S.mud>0){ S.mud-=dt; if(S.mud<=0){ $('mud').style.opacity=0; updateHud(); } }
+  if(S.poison>0){
+    S.poisonTick -= dt;
+    if(S.poisonTick<=0){ S.poisonTick=1; S.poison--; S.hp-=1; updateHud(); flashFx('hurt',0.15); if(S.hp<=0){ lose(); return; } }
+    $('poisonfx').style.opacity = S.poison>0?1:0;
+  }
+  // pickups
+  for(const p of pickups){
+    if(p.taken) continue;
+    if(dist(p.x,p.z)<1.6){
+      p.taken = true; p.m.visible=false;
+      if(p.kind==='wood') S.wood++;
+      if(p.kind==='stone') S.stone++;
+      if(p.kind==='potion'){ S.pot++; if(!S.seenPot){ S.seenPot=true; say([['🧪 Potion!','A healing potion! Press 🧪 Potion (3) to heal and cure poison. Save it for a dragon fight!']]); } }
+      updateHud();
     }
-    if(dialogOpen()){
-      if((e.key==='Enter'||e.key===' ') && Date.now()-dlgOpenedAt>250){ e.preventDefault(); nextLine(); }
-      return;
-    }
-    const k = KEYS[e.key];
-    if(k){ e.preventDefault(); move(k[0],k[1]); }
-  });
-  const DIRS={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]};
-  document.querySelectorAll('#pad button').forEach(b=>{
-    b.addEventListener('click', ()=>{ const d=DIRS[b.dataset.d]; move(d[0],d[1]); });
-  });
-
-  // ---------- TITLE ----------
-  let title='Sir';
-  const sirBtn=document.getElementById('sirBtn'), ladyBtn=document.getElementById('ladyBtn');
-  sirBtn.onclick=()=>{title='Sir';sirBtn.classList.add('on');ladyBtn.classList.remove('on');};
-  ladyBtn.onclick=()=>{title='Lady';ladyBtn.classList.add('on');sirBtn.classList.remove('on');};
-
-  function trackPlay(){if(trackPlay.done)return;trackPlay.done=1;try{const go=()=>window.goatcounter&&window.goatcounter.count&&window.goatcounter.count({path:'/games/dragon-kingdom/play',title:'Dragon Kingdom: someone started playing'});if(window.goatcounter&&window.goatcounter.count)go();else setTimeout(go,3000)}catch(e){}}
-  function startGame(){
-    trackPlay();
-    let name=document.getElementById('nameIn').value.trim() || 'Brave';
-    newGame(name, title);
-    document.getElementById('title').classList.add('hidden');
-    document.getElementById('app').classList.remove('hidden');
-    resize(); hud();
-    say([['The Kingdom','Dragons are attacking the kingdom! Fields are burning and everyone is scared. 🔥'],
-         ['The Old Wizard','The dragons are not choosing to be mean. The Dragon King wears a magic crown that controls every dragon.'],
-         ['The Old Wizard',`${knightName()}, you are the bravest knight we have. Sail to Dragon Island, climb Dragon Castle, and take that crown. Then the dragons will be free.`],
-         ['Dragon Island','Your boat lands on the beach. ⛵ Use the arrow keys or the buttons to move. Walk into things to use them.']]);
   }
-  document.getElementById('startBtn').onclick=startGame;
-  document.getElementById('againBtn').onclick=()=>{
-    document.getElementById('end').classList.add('hidden');
-    document.getElementById('app').classList.add('hidden');
-    document.getElementById('title').classList.remove('hidden');
-  };
-  window.addEventListener('resize', resize);
+  // start fight
+  if(S.bridge && !S.fight && !S.won && S.x > RIVER_X1+2) startFight();
+  if(S.fight && !D.gone) dragonAI(dt);
+  // prompt
+  const p = paused ? null : currentPrompt();
+  const pr = $('prompt'); if(p){ pr.textContent=p; pr.classList.remove('hidden'); } else pr.classList.add('hidden');
+  $('sChop').classList.toggle('ready', !!nearTree());
+  $('sBuild').classList.toggle('ready', S.freed && ((!S.house && dist(PLOT.x,PLOT.z)<4) || (S.house && !S.bridge && nearBridge())));
+  $('sUse').classList.toggle('ready', !!p && p.startsWith('👋'));
+}
+
+function dragonAI(dt){
+  const dp = dragon.position;
+  const dx = S.x-dp.x, dz = S.z-dp.z, d = Math.hypot(dx,dz);
+  const face = Math.atan2(dz,dx);
+  D.biteCd-=dt; D.breathCd-=dt; D.mudCd-=dt; D.t-=dt;
+  const turnTo = (a, rate)=>{ const cur = -dragon.rotation.y; dragon.rotation.y = -(cur + Math.max(-rate*dt, Math.min(rate*dt, angDiff(a,cur)))); };
+  if(D.state==='roar'){ turnTo(face,3); if(D.t<=0) D.state='chase'; return; }
+  if(D.state==='hop'){ if(D.t<=0) D.state='chase'; return; }
+  if(D.state==='windup'){
+    turnTo(face,1.5);
+    if(D.t<=0){ D.state='breath'; D.t=1.4; }
+    return;
+  }
+  if(D.state==='breath'){
+    const a = -dragon.rotation.y;
+    if(Math.random()<dt*14){
+      const mouth = new THREE.Vector3(dp.x+Math.cos(a)*4, 3.2, dp.z+Math.sin(a)*4);
+      const spread = (Math.random()-.5)*0.6;
+      spawnCloud(mouth, new THREE.Vector3(Math.cos(a+spread)*7, -1.6, Math.sin(a+spread)*7));
+    }
+    if(D.t<=0){ D.state='chase'; D.breathCd = 5+Math.random()*2; }
+    return;
+  }
+  // chase
+  turnTo(face, 2.2);
+  if(d>3.6){
+    const sp = 3.4*dt, nx = dp.x + dx/d*sp, nz = dp.z + dz/d*sp;
+    if(nx>RIVER_X1+2 && nx<LAND.x1-2 && Math.abs(nz)<LAND.z1-2){ dp.x=nx; dp.z=nz; }
+  }
+  if(d<4.6 && D.biteCd<=0){
+    D.biteCd = 1.6; D.state='hop'; D.t=0.35; D.bite=0.35;
+    hurt(4+Math.floor(Math.random()*3));
+  } else if(D.breathCd<=0 && d<14){
+    D.state='windup'; D.t=1.0;
+  } else if(D.mudCd<=0 && d>6){
+    D.mudCd = 4+Math.random()*2;
+    const a = -dragon.rotation.y;
+    const from = new THREE.Vector3(dp.x+Math.cos(a)*4, 3, dp.z+Math.sin(a)*4);
+    const dir = new THREE.Vector3(S.x-from.x, 1.2-from.y, S.z-from.z).normalize();
+    spawnMud(from, dir);
+  }
+}
+
+function animate(dt){
+  // knight
+  knight.position.set(S?S.x:0, 0, S?S.z:0);
+  if(S){
+    knight.rotation.y = -S.yaw;
+    const moving = keys.f||keys.b||Math.abs(joyV.y)>0.1;
+    knight.position.y = moving ? Math.abs(Math.sin(time*10))*0.12 : 0;
+    cape.rotation.z = moving ? Math.sin(time*10)*0.15 : 0;
+    tpSword.visible = S.sword; tpShield.visible = S.shield;
+    tpArm.rotation.x = S.swing>0 ? -2.2*(1-S.swing/0.35) + 1 : 0;
+    tpArm.rotation.z = S.swing>0 ? -0.8 : 0;
+    tpShield.position.set(S.blocking?0.7:0.35, S.blocking?1.4:1.15, S.blocking?0.15:0.5);
+    // first person hands
+    const fp = cam==='fp';
+    knight.visible = !fp;
+    const usingAxe = S.chop>0 || (!S.sword);
+    fpSword.visible = fp && S.sword && !usingAxe;
+    fpAxe.visible = fp && usingAxe;
+    fpShield.visible = fp && S.shield;
+    const sw = S.swing>0 ? S.swing/0.35 : 0;
+    fpSword.rotation.set(-0.3 - Math.sin(sw*Math.PI)*1.2, 0, -0.35 + Math.sin(sw*Math.PI)*0.9);
+    fpSword.position.x = 0.55 - Math.sin(sw*Math.PI)*0.4;
+    const ch = S.chop>0 ? S.chop/0.4 : 0;
+    fpAxe.rotation.set(-0.3 - Math.sin(ch*Math.PI)*1.3, 0, -0.3);
+    fpShield.position.set(S.blocking?-0.15:-0.6, S.blocking?-0.25:-0.55, S.blocking?-0.8:-1.1);
+    // camera
+    if(fp){
+      camPos.set(S.x, 1.75, S.z);
+      camera.position.copy(camPos);
+      camLook.set(S.x+Math.cos(S.yaw), 1.75+Math.sin(S.pitch), S.z+Math.sin(S.yaw));
+      camera.lookAt(camLook);
+    } else {
+      const back = 7, up = 4.2 - S.pitch*4;
+      const target = new THREE.Vector3(S.x - Math.cos(S.yaw)*back, up, S.z - Math.sin(S.yaw)*back);
+      camPos.lerp(target, Math.min(1, dt*8));
+      if(camPos.lengthSq()===0) camPos.copy(target);
+      camera.position.copy(camPos);
+      camera.lookAt(S.x + Math.cos(S.yaw)*3, 1.6, S.z + Math.sin(S.yaw)*3);
+    }
+  }
+  // dragon
+  const flap = D && (D.state==='flee' || D.state==='roar' || D.state==='windup') ? 10 : 3;
+  wings.forEach(w=>{ w.piv.rotation.x = w.s*(0.3 + Math.sin(time*flap)*0.35); });
+  if(D){
+    dBody.position.y = D.state==='sleep' ? -0.3 : Math.sin(time*2)*0.1 + (D.state==='hop'?0.5:0);
+    head.rotation.z = D.state==='windup' ? 0.6 : (D.state==='breath' ? -0.3 : Math.sin(time*1.5)*0.1);
+    collar.material.color.setHex(Math.sin(time*6)>0 ? 0xf5c542 : 0xfff2a0);
+    const red = D.flash>0; D.flash = Math.max(0, D.flash-dt);
+    dGreen.color.setHex(red ? 0xff5a4a : 0x5a8f3e);
+    if(D.state==='flee'){
+      D.t += dt; dragon.position.y += dt*(3+D.t*2); dragon.position.x += dt*6;
+      if(dragon.position.y>40) dragon.visible=false;
+    }
+  }
+  // clouds
+  for(let i=clouds.length-1;i>=0;i--){
+    const c = clouds[i]; c.life-=dt; c.m.position.addScaledVector(c.vel, dt); c.vel.multiplyScalar(0.97);
+    if(c.m.position.y<0.8){ c.m.position.y=0.8; c.vel.y=0; }
+    const s = 1 + (2.2-c.life)*1.3; c.m.scale.setScalar(s); c.m.material.opacity = Math.max(0, c.life/2.2*0.55);
+    if(S && running && !paused && Math.hypot(c.m.position.x-S.x, c.m.position.z-S.z) < 0.8*s && c.life>0.4){
+      if(S.blocking && Math.abs(angDiff(Math.atan2(c.m.position.z-S.z, c.m.position.x-S.x), S.yaw))<1.2){ /* shield blocks the cloud */ }
+      else if(S.poison<=0 && S.invuln<=0){ S.poison=5; S.poisonTick=1; hurt(2); updateHud(); }
+    }
+    if(c.life<=0){ scene.remove(c.m); clouds.splice(i,1); }
+  }
+  // mud
+  for(let i=mudBalls.length-1;i>=0;i--){
+    const b = mudBalls[i]; b.life-=dt; b.m.position.addScaledVector(b.vel, dt);
+    let hit = false;
+    if(S && Math.hypot(b.m.position.x-S.x, b.m.position.z-S.z)<1 && b.m.position.y<2.6){
+      hit = true;
+      const blocked = S.blocking && Math.abs(angDiff(Math.atan2(b.m.position.z-S.z, b.m.position.x-S.x), S.yaw))<1.2;
+      if(!blocked && !paused){ S.mud = 3; $('mud').style.opacity = 0.85; hurt(2); updateHud(); }
+      spawnChips(b.m.position.x,b.m.position.y,b.m.position.z,0x6b4a24,6);
+    }
+    if(hit || b.life<=0 || b.m.position.y<0){ scene.remove(b.m); mudBalls.splice(i,1); }
+  }
+  // chips
+  for(let i=chips.length-1;i>=0;i--){
+    const c=chips[i]; c.life-=dt; c.vel.y-=14*dt; c.m.position.addScaledVector(c.vel,dt); c.m.rotation.x+=dt*8;
+    if(c.life<=0){ scene.remove(c.m); chips.splice(i,1); }
+  }
+  // trees falling
+  trees.forEach(t=>{ if(!t.alive && t.g.visible){ t.fall=(t.fall||0)+dt; t.g.rotation.z = -Math.min(1.5, t.fall*2); if(t.fall>1.4) t.g.visible=false; } });
+  // pickups bob
+  pickups.forEach(p=>{ if(!p.taken){ p.m.position.y = p.base + Math.sin(time*3+p.x)*0.12; p.m.rotation.y += dt; } });
+  // marker
+  const o = S && running ? objective() : null;
+  marker.visible = !!o;
+  if(o){ marker.position.set(o[0], o[1]+Math.sin(time*3)*0.3, o[2]); marker.rotation.y += dt*2; }
+  // Bea faces player
+  if(S && S.x!==undefined && Math.hypot(S.x-bea.position.x,S.z-bea.position.z)<18) bea.rotation.y = -Math.atan2(S.z-bea.position.z, S.x-bea.position.x) + Math.PI/2;
+  { const u = bea.userData;
+    if(S && !S.freed){ u.armR.rotation.set(-2.6 + Math.sin(time*8)*0.4, 0, -0.3); }   // waving for help
+    else { u.armR.rotation.set(-0.5 + Math.max(0,Math.sin(time*3))*-0.7, 0, -0.15); } // tap tap with the hammer
+    u.head.rotation.z = Math.sin(time*1.3)*0.08; u.pony.rotation.x = Math.sin(time*2.5)*0.25; }
+}
+
+// ================= START =================
+let title='Sir';
+$('sirBtn').onclick=()=>{title='Sir';$('sirBtn').classList.add('on');$('ladyBtn').classList.remove('on');};
+$('ladyBtn').onclick=()=>{title='Lady';$('ladyBtn').classList.add('on');$('sirBtn').classList.remove('on');};
+function trackPlay(){if(trackPlay.done)return;trackPlay.done=1;try{const go=()=>window.goatcounter&&window.goatcounter.count&&window.goatcounter.count({path:'/games/dragon-kingdom/play',title:'Dragon Kingdom: someone started playing'});if(window.goatcounter&&window.goatcounter.count)go();else setTimeout(go,3000)}catch(e){}}
+function startGame(){
+  trackPlay();
+  reset(($('nameIn').value.trim() || 'Brave'), title);
+  camPos.set(0,0,0);
+  $('title').classList.add('hidden'); $('end').classList.add('hidden'); $('hud').classList.remove('hidden');
+  running = true;
+  say([['The Kingdom','Dragons are attacking the kingdom! Fields are burning and everyone is scared. 🔥'],
+       ['The Old Wizard','The dragons are not choosing to be mean. The Dragon King wears a magic crown that controls every dragon.'],
+       ['The Old Wizard',`${kn()}, you are the bravest knight we have. Sail to Dragon Island, climb Dragon Castle, and take that crown. Then the dragons will be free.`],
+       ['Dragon Island','Your boat lands on the beach. ⛵ Walk with W A S D or the arrow keys. Use the buttons at the bottom for everything you can do.'],
+       ['Dragon Island','Want to see through your knight\'s eyes? Press 👁️ Knight\'s eyes at the top right (or V). 🎥 Over shoulder switches back.']]);
+}
+$('startBtn').onclick = startGame;
+$('againBtn').onclick = ()=>{ $('end').classList.add('hidden'); $('hud').classList.add('hidden'); $('title').classList.remove('hidden'); running=false; };
+// idle camera for title screen
+S = {x:-30,z:0,yaw:0,pitch:0,sword:false,shield:false,swing:0,chop:0,blocking:false};
+D = {state:'sleep', flash:0};
+camPos.set(-40, 8, 0);
+tick();
+// test hook
+window.__dk = { dragon, trees, get paused(){return paused;}, get S(){return S;}, get D(){return D;}, useAct, buildAct, chopAct, swordAct, potionAct, setCam, next };
 })();
 </script>
 </body>
