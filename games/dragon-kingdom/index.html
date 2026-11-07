@@ -128,6 +128,10 @@
       <button id="sirBtn" class="on">Sir</button>
       <button id="ladyBtn">Lady</button>
     </div>
+    <div id="contBox" class="hidden" style="margin-bottom:14px">
+      <button id="contBtn" style="font-size:20px;background:var(--green);color:var(--cream);box-shadow:0 4px 0 #24561f">▶ Continue</button>
+      <div class="hint" id="contInfo" style="margin-top:6px"></div>
+    </div>
     <button id="startBtn">Begin the Quest ⚔️</button>
     <p class="hint" style="margin-top:14px">A game by George Kling</p>
     <p class="hint"><a href="/games/">&larr; George's games</a></p>
@@ -505,9 +509,10 @@ let houseCol = null;
 const bridgeSpot = new THREE.Group(); bridgeSpot.position.set((RIVER_X0+RIVER_X1)/2,0,BRIDGE_Z); scene.add(bridgeSpot);
 [-1,1].forEach(s=>{ mesh(new THREE.CylinderGeometry(0.12,0.12,1.4), M(0xf5c542), -2.3,0.4,s*BRIDGE_HALF, bridgeSpot); });
 const bridge = new THREE.Group(); bridge.position.copy(bridgeSpot.position); bridge.visible=false; scene.add(bridge);
-for(let i=0;i<9;i++) mesh(new THREE.BoxGeometry(0.45,0.2,BRIDGE_HALF*2), M(0x8a5a2b), -2.2+i*0.55,0.05,0, bridge);
-[-1,1].forEach(s=>{ mesh(new THREE.BoxGeometry(5,0.15,0.15), M(0x5a3815), 0,0.9,s*BRIDGE_HALF, bridge);
-  for(let i=0;i<4;i++) mesh(new THREE.BoxGeometry(0.15,0.9,0.15), M(0x5a3815), -2.2+i*1.47,0.45,s*BRIDGE_HALF, bridge); });
+for(let i=0;i<13;i++) mesh(new THREE.BoxGeometry(0.45,0.2,BRIDGE_HALF*2), M(i%2?0x8a5a2b:0x7d5126), -3.3+i*0.55,0.05,0, bridge);
+for(const sx of [-3.4,3.4]) mesh(new THREE.BoxGeometry(0.6,1.2,BRIDGE_HALF*2+0.4), M(0x6b4a24), sx,-0.45,0, bridge);
+[-1,1].forEach(s=>{ mesh(new THREE.BoxGeometry(7,0.15,0.15), M(0x5a3815), 0,0.9,s*BRIDGE_HALF, bridge);
+  for(let i=0;i<5;i++) mesh(new THREE.BoxGeometry(0.15,0.9,0.15), M(0x5a3815), -3.3+i*1.65,0.45,s*BRIDGE_HALF, bridge); });
 
 // pickups
 const pickups = [];
@@ -641,6 +646,63 @@ function resetDragon(){
   document.getElementById('boss').classList.add('hidden');
 }
 
+// ================= SAVE =================
+// Saves to this browser on this device, so George picks up right where he left off.
+const SAVE_KEY = 'dragonKingdom.save.v1';
+let saveTimer = null;
+function queueSave(){ if(!running || !S || !S.name) return; clearTimeout(saveTimer); saveTimer = setTimeout(saveNow, 400); }
+function saveNow(){
+  if(!running || !S || !S.name) return;
+  const data = {
+    v:1, at:Date.now(), cam,
+    s:{name:S.name, title:S.title, x:+S.x.toFixed(2), z:+S.z.toFixed(2), yaw:+S.yaw.toFixed(3), pitch:+S.pitch.toFixed(3),
+       hp:Math.max(1,S.hp), wood:S.wood, stone:S.stone, pot:S.pot, sword:S.sword, shield:S.shield,
+       freed:S.freed, house:S.house, bridge:S.bridge, won:S.won, seenPot:!!S.seenPot},
+    picks: pickups.map(p=>p.taken?1:0),
+    trees: trees.map(t=>t.alive?t.hits:-1)
+  };
+  try{ localStorage.setItem(SAVE_KEY, JSON.stringify(data)); }catch(e){}
+}
+function readSave(){ try{ const d = JSON.parse(localStorage.getItem(SAVE_KEY)||'null'); return d && d.v===1 && d.s ? d : null; }catch(e){ return null; } }
+function clearSave(){ try{ localStorage.removeItem(SAVE_KEY); }catch(e){} }
+function applySave(d){
+  const v = d.s;
+  reset(v.name, v.title);
+  Object.assign(S, {x:v.x, z:v.z, yaw:v.yaw, pitch:v.pitch||0, hp:v.hp, wood:v.wood, stone:v.stone, pot:v.pot,
+    sword:v.sword, shield:v.shield, freed:v.freed, house:v.house, bridge:v.bridge, won:v.won, seenPot:v.seenPot});
+  (d.picks||[]).forEach((t,i)=>{ const p = pickups[i]; if(p && t){ p.taken=true; p.m.visible=false; } });
+  (d.trees||[]).forEach((h,i)=>{ const t = trees[i]; if(!t) return;
+    if(h<0){ t.alive=false; t.g.visible=false; const k = colliders.indexOf(t.col); if(k>=0) colliders.splice(k,1); } else t.hits = h; });
+  if(S.sword) lid.rotation.x = -1.9;
+  if(S.freed){ cage.visible=false; const k = colliders.indexOf(cageCol); if(k>=0) colliders.splice(k,1); bea.position.set(PLOT.x+3, 0, PLOT.z+3.2); }
+  if(S.house){ house.visible=true; plotMark.visible=false; houseCol = addCol(PLOT.x,PLOT.z,2.4); }
+  if(S.bridge){ bridge.visible=true; bridgeSpot.visible=false; }
+  if(S.won){ D.gone = true; dragon.visible = false; }
+  // never wake up stuck inside something
+  if(!canStand(S.x, S.z)){ S.x = S.freed ? bea.position.x-2 : -36; S.z = S.freed ? bea.position.z : 0; }
+  setCam(d.cam==='fp'?'fp':'tp');
+  updateHud();
+}
+function showContinue(){
+  const d = readSave();
+  $('contBox').classList.toggle('hidden', !d);
+  $('startBtn').textContent = d ? 'Start a New Quest ⚔️' : 'Begin the Quest ⚔️';
+  if(d){
+    const v = d.s;
+    let where = 'just landed on the beach';
+    if(v.won) where = 'beat the Swamp Dragon!';
+    else if(v.bridge) where = 'ready to face the Swamp Dragon';
+    else if(v.house) where = 'building the bridge';
+    else if(v.freed) where = 'building Bea\'s house';
+    else if(v.sword) where = 'looking for the cage';
+    $('contInfo').textContent = `${v.title} ${v.name}: ${where}`;
+  }
+}
+window.addEventListener('pagehide', saveNow);
+window.addEventListener('beforeunload', saveNow);
+document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='hidden') saveNow(); });
+setInterval(saveNow, 5000);
+
 // ================= DIALOG =================
 const dlg = document.getElementById('dialog');
 let queue=[], after=null, dlgAt=0;
@@ -658,6 +720,7 @@ const kn = () => `${S.title} ${S.name}`;
 // ================= HUD =================
 const $ = id => document.getElementById(id);
 function updateHud(){
+  queueSave();
   $('hpfill').style.width = Math.max(0,S.hp/S.maxHp*100)+'%';
   $('wood').textContent = S.wood; $('stone').textContent = S.stone; $('potCnt').textContent = S.pot;
   $('sSword').classList.toggle('locked', !S.sword);
@@ -835,7 +898,7 @@ function lose(){
 // ================= INPUT =================
 const KEYMAP = {ArrowUp:'f',KeyW:'f',ArrowDown:'b',KeyS:'b',ArrowLeft:'l',KeyA:'l',ArrowRight:'r',KeyD:'r',KeyR:'lu',KeyF:'ld',PageUp:'lu',PageDown:'ld'};
 window.addEventListener('keydown', e=>{
-  if(!$('title').classList.contains('hidden')){ if(e.key==='Enter') startGame(); return; }
+  if(!$('title').classList.contains('hidden')){ if(e.key==='Enter' && document.activeElement!==$('nameIn') && readSave()) continueGame(); else if(e.key==='Enter') startGame(); return; }
   if(!dlg.classList.contains('hidden')){
     if((e.key==='Enter'||e.key===' '||e.code==='KeyE') && performance.now()-dlgAt>250){ e.preventDefault(); next(); }
     return;
@@ -965,9 +1028,13 @@ document.addEventListener('touchcancel', endTouch);
 // ================= PHYSICS =================
 function canStand(x,z){
   if(x<LAND.x0+0.5 || x>LAND.x1-0.5 || z<LAND.z0+0.5 || z>LAND.z1-0.5) return false;
-  if(x>RIVER_X0-0.4 && x<RIVER_X1+0.4){
-    if(!(S.bridge && Math.abs(z-BRIDGE_Z)<BRIDGE_HALF-0.4)) return false;
-  } else if(heightAt(x,z) < -0.12) return false;
+  const onBridge = S.bridge && Math.abs(z-BRIDGE_Z) < BRIDGE_HALF-0.4 && x > RIVER_X0-3.6 && x < RIVER_X1+3.6;
+  if(!onBridge){
+    if(x>RIVER_X0-0.4 && x<RIVER_X1+0.4) return false;
+    // the banks slope into the river: only real water stops you
+    const rd = Math.abs(x-(RIVER_X0+RIVER_X1)/2);
+    if(heightAt(x,z) < (rd<3.2 ? -0.45 : -0.12)) return false;
+  }
   for(const c of colliders){ if(Math.hypot(x-c.x, z-c.z) < c.r+0.5) return false; }
   if(!D.gone && S.fight && Math.hypot(x-dragon.position.x, z-dragon.position.z) < 2.6) return false;
   return true;
@@ -1209,14 +1276,25 @@ function startGame(){
        ['Dragon Island','Want to see through your knight\'s eyes? Press 👁️ Knight\'s eyes on the right (or V). 🎥 Over shoulder switches back. Drag the screen (or press R and F) to look up and down.']]);
 }
 $('startBtn').onclick = startGame;
-$('againBtn').onclick = ()=>{ $('end').classList.add('hidden'); $('hud').classList.add('hidden'); $('title').classList.remove('hidden'); running=false; };
+function continueGame(){
+  const d = readSave(); if(!d){ showContinue(); return; }
+  trackPlay();
+  applySave(d);
+  camPos.set(0,0,0);
+  $('title').classList.add('hidden'); $('end').classList.add('hidden'); $('hud').classList.remove('hidden');
+  running = true;
+  say([['Welcome back!', S.won ? `${kn()}, the Swamp Dragon is gone. Explore the island as long as you like. Part 2 is coming soon!` : `Welcome back, ${kn()}! Your quest was saved right where you left it.`]]);
+}
+$('contBtn').onclick = continueGame;
+showContinue();
+$('againBtn').onclick = ()=>{ saveNow(); $('end').classList.add('hidden'); $('hud').classList.add('hidden'); $('title').classList.remove('hidden'); running=false; showContinue(); };
 // idle camera for title screen
 S = {x:-30,z:0,yaw:0,pitch:0,sword:false,shield:false,swing:0,chop:0,blocking:false};
 D = {state:'sleep', flash:0};
 camPos.set(-40, 8, 0);
 tick();
 // test hook
-window.__dk = { dragon, trees, get paused(){return paused;}, get S(){return S;}, get D(){return D;}, useAct, buildAct, chopAct, swordAct, potionAct, setCam, next };
+window.__dk = { canStand, heightAt, saveNow, readSave, dragon, trees, get paused(){return paused;}, get S(){return S;}, get D(){return D;}, useAct, buildAct, chopAct, swordAct, potionAct, setCam, next };
 })();
 </script>
 </body>
