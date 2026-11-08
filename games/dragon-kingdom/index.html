@@ -57,6 +57,9 @@
   .big small{font-size:11px;margin-top:2px}
   .big.sword{width:104px;height:104px;font-size:46px;background:rgba(215,56,47,.92);color:#fff6e3;box-shadow:0 5px 0 #8a1f19}
   .big.on{transform:scale(.92);filter:brightness(1.2)}
+  #sBolt, #bBolt{ background: linear-gradient(to top, rgba(120,160,255,.85) var(--charge,100%), rgba(30,42,26,.85) var(--charge,100%)); }
+  #bBolt{ color:#fff6e3; box-shadow:0 5px 0 #26307a; }
+  #sBolt.ready, #bBolt.ready{ box-shadow:0 0 16px #bfe8ff; border-color:#bfe8ff; }
   body.touch #help{display:none}
   body.touch #cams{top:auto;bottom:250px}
   #mud{position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity .4s;background:radial-gradient(circle at 30% 40%,rgba(96,62,22,.9) 0 12%,transparent 13%),radial-gradient(circle at 70% 30%,rgba(96,62,22,.85) 0 9%,transparent 10%),radial-gradient(circle at 55% 70%,rgba(96,62,22,.9) 0 14%,transparent 15%),radial-gradient(circle at 20% 80%,rgba(96,62,22,.8) 0 8%,transparent 9%)}
@@ -73,7 +76,7 @@
   .divider{font-family:'Grenze Gotisch',Georgia,serif;color:var(--gold);opacity:.8;letter-spacing:6px;margin:2px 0 12px}
   #dlgWho{font-family:'Grenze Gotisch',Georgia,serif !important;font-size:23px !important;letter-spacing:.3px}
   #bossName{font-family:'Grenze Gotisch',Georgia,serif;font-size:22px;letter-spacing:.5px}
-  #startBtn,#contBtn,#p2Btn,#p3Btn,#againBtn{font-family:'Grenze Gotisch',Georgia,serif;font-size:22px;letter-spacing:.5px}
+  #startBtn,#contBtn,#p2Btn,#p3Btn,#p4Btn,#againBtn{font-family:'Grenze Gotisch',Georgia,serif;font-size:22px;letter-spacing:.5px}
   .card .sub{margin:0 0 14px;color:#e8d9b0}
   input{font-family:inherit;font-size:20px;padding:10px;border-radius:10px;border:3px solid var(--green);width:100%;text-align:center;margin:8px 0 12px}
   .choice{display:flex;gap:10px;justify-content:center;margin-bottom:14px}
@@ -112,6 +115,7 @@
   <div id="joy" class="hidden"><div id="knob"></div></div>
   <div id="help">W A S D or arrows to move<br>Drag the screen, or R and F, to look up and down<br>V switches the camera</div>
   <div id="tact" class="hidden">
+    <button class="big hidden" id="bBolt" data-act="bolt">⚡<small>strike</small></button>
     <button class="big" id="bShield" data-act="shield">🛡️<small>hold</small></button>
     <button class="big sword" id="bSword" data-act="sword">⚔️<small>hold</small></button>
   </div>
@@ -124,6 +128,7 @@
     <button class="slot locked" id="sStr" data-act="strength"><span class="key">7</span><span class="cnt" id="strCnt">0</span>💪<small>Strength</small></button>
     <button class="slot locked" id="sCarrot" data-act="carrot"><span class="key">8</span><span class="cnt" id="carCnt">0</span>🥕<small>Carrot</small></button>
     <button class="slot locked" id="sPie" data-act="pie"><span class="key">9</span><span class="cnt" id="pieCnt">0</span>🥧<small>Pie</small></button>
+    <button class="slot hidden" id="sBolt" data-act="bolt"><span class="key">L</span>⚡<small>Lightning</small></button>
     <button class="slot" id="sChop" data-act="chop"><span class="key">4</span>🪓<small>Chop</small></button>
     <button class="slot locked" id="sBuild" data-act="build"><span class="key">5</span>🔨<small>Build</small></button>
   </div>
@@ -166,6 +171,7 @@
     <p style="font-size:17px;color:#cfe8c4" id="endNext">Next: <b>Part 2: The Big Island</b> 🏝️ Goblins, villagers, and a village to build!</p>
     <button id="p2Btn" style="font-size:20px;background:var(--green);color:var(--cream);box-shadow:0 4px 0 #24561f;margin-bottom:10px">⛵ Sail to Part 2</button><br>
     <button id="p3Btn" class="hidden" style="font-size:20px;background:var(--green);color:var(--cream);box-shadow:0 4px 0 #24561f;margin-bottom:10px">⛵ Sail to Part 3</button><br>
+    <button id="p4Btn" class="hidden" style="font-size:20px;background:#3b52c4;color:#fff6e3;box-shadow:0 4px 0 #26307a;margin-bottom:10px">🐉 Fly to Dragon Castle (Part 4)</button><br>
     <button id="againBtn">Back to Title</button>
     <p class="hint" style="margin-top:12px"><a href="/games/">&larr; George's games</a></p>
   </div>
@@ -834,16 +840,17 @@ const L2root = new THREE.Group(); L2root.visible = false; scene.add(L2root);
 let P2 = null;              // Part 2 world + state, built the first time you sail there
 let P3 = null; let heightAt3 = (x,z)=>0;
 const PART3_READY = true;
-function groundH(x,z){ return S && S.part===2 ? heightAt2(x,z) : (S && S.part===3 ? heightAt3(x,z) : 0); }
+function groundH(x,z){ return S && S.part===2 ? heightAt2(x,z) : (S && S.part===3 ? heightAt3(x,z) : (S && S.part===4 ? heightAt4(x,z) : 0)); }
 function showPart(n){
-  L1root.visible = n===1; L2root.visible = n===2; if(typeof L3root!=='undefined') L3root.visible = n===3;
-  scene.children.forEach(o=>{ if(o.name==='far') o.visible = n!==3; });
+  L1root.visible = n===1; L2root.visible = n===2; if(typeof L3root!=='undefined') L3root.visible = n===3; if(typeof L4root!=='undefined') L4root.visible = n===4;
+  scene.children.forEach(o=>{ if(o.name==='far') o.visible = n<3; });
   // Volcano Island has a red, smoky sky
-  const u = camera.userData.sky.material.uniforms, hot = n===3;
-  u.top.value.setHex(hot?0x3a2a4a:0x3b8be0); u.mid.value.setHex(hot?0x9a5a50:0x8cc8f5); u.bot.value.setHex(hot?0xd89a7a:HORIZON);
-  scene.fog.color.setHex(hot?0xd89a7a:HORIZON); scene.background.setHex(hot?0xd89a7a:HORIZON);
-  sun.color.setHex(hot?0xffb890:0xfff0d0); hemi.color.setHex(hot?0xffd0c0:0xe4f4ff);
-  sea.material.color.setHex(hot?0x2a5a7a:0x2a8fd0);
+  const u = camera.userData.sky.material.uniforms, hot = n===3, storm = n===4;
+  u.top.value.setHex(storm?0x22224a:hot?0x3a2a4a:0x3b8be0); u.mid.value.setHex(storm?0x6a5a8a:hot?0x9a5a50:0x8cc8f5); u.bot.value.setHex(storm?0xb09ab8:hot?0xd89a7a:HORIZON);
+  const fogC = storm?0xb09ab8:hot?0xd89a7a:HORIZON; scene.fog.color.setHex(fogC); scene.background.setHex(fogC);
+  sun.color.setHex(storm?0xe0d0ff:hot?0xffb890:0xfff0d0); hemi.color.setHex(storm?0xd8d0f0:hot?0xffd0c0:0xe4f4ff);
+  sea.material.color.setHex(storm?0x2a4a6a:hot?0x2a5a7a:0x2a8fd0);
+  if($('sBolt')){ $('sBolt').classList.toggle('hidden', n!==4); $('bBolt').classList.toggle('hidden', n!==4 || $('tact').classList.contains('hidden')); }
 }
 
 // ================= PART 2: THE BIG ISLAND =================
@@ -1310,7 +1317,7 @@ function p2Finish(){
       $('endTitle').textContent = 'Part 2 Complete!';
       $('endText').textContent = `${kn()} beat the goblins, freed Tom, Rosa, Pip and Lin, and built a whole village out of wood! The Dragon King is still out there...`;
       $('endNext').innerHTML = 'Coming next: <b>Part 3: The Volcano</b> 🌋 and the Fire Dragons';
-      $('p2Btn').classList.add('hidden'); $('p3Btn').classList.toggle('hidden', !PART3_READY);
+      $('p2Btn').classList.add('hidden'); $('p3Btn').classList.toggle('hidden', !PART3_READY); $('p4Btn').classList.add('hidden');
       $('end').classList.remove('hidden'); paused = true;
     });
 }
@@ -1683,10 +1690,12 @@ function p3Objective(){
   return null;
 }
 function p3Prompt(){
+  if(P3.done && dist(P3.boss.x, P3.boss.z) < 9) return '👋 Use (E) to climb on the Thunder Dragon 🐉';
   if(dist(P3.boat.position.x, P3.boat.position.z) < 4.5) return '👋 Use (E) to sail back to the village';
   return null;
 }
 function p3Use(){
+  if(P3.done && dist(P3.boss.x, P3.boss.z) < 9){ ask('⚡ Thunder Dragon', 'Ready to fly to Dragon Castle and stop the Dragon King for good?', 'Fly! 🐉', 'Not yet', ()=>sailToPart4()); return; }
   if(dist(P3.boat.position.x, P3.boat.position.z) < 4.5){
     ask('Lin\'s Boat', 'Sail back to the village? Rosa can heal you and refill your potions, but Volcano Island will start over from the beginning.', 'Sail home ⛵', 'Stay and fight', ()=>{ backToVillage(); });
   }
@@ -1748,8 +1757,8 @@ function p3FreeDragon(){
       ()=>{
         $('endTitle').textContent = 'Part 3 Complete!';
         $('endText').textContent = `${kn()} fought through the goblin army, crossed the lava bridge, and freed the Thunder Dragon! The Dragon King's treasure is gone, and so is his goblin army.`;
-        $('endNext').innerHTML = 'Coming next: <b>Part 4: Dragon Castle</b> 🏰 Fly there on the Thunder Dragon!';
-        $('p2Btn').classList.add('hidden'); $('p3Btn').classList.add('hidden');
+        $('endNext').innerHTML = 'Next: <b>Part 4: Dragon Castle</b> 🏰 Fly there on the Thunder Dragon!';
+        $('p2Btn').classList.add('hidden'); $('p3Btn').classList.add('hidden'); $('p4Btn').classList.remove('hidden');
         $('end').classList.remove('hidden'); paused = true;
       });
   }, 1500);
@@ -2024,6 +2033,680 @@ function p3Animate(dt){
   if(!b.freed && b.state!=='sleep' && Math.random() < dt*6) spawnChips(b.x + (Math.random()-.5)*4, 2 + flyY + Math.random()*4, b.z + (Math.random()-.5)*4, 0xfff27a, 2);
 }
 
+// ================= PART 4: DRAGON CASTLE =================
+// Fly in on the Thunder Dragon, call down lightning (⚡ button, recharges in about 5 seconds),
+// fight through the Outer Wall, the Courtyard and the Great Hall (lightning only through roof cracks),
+// then face the evil sorcerer who turns himself into a dragon with the Dragon Crown.
+const L4root = new THREE.Group(); L4root.visible = false; scene.add(L4root);
+let P4 = null; let heightAt4 = (x,z)=>0;
+const G4 = [-18, 9.5, 35.5];                        // gate / door walls: outer gate, hall door, throne door
+const HALL_CRACKS = [{x:14,z:-4},{x:20,z:4},{x:26,z:-3},{x:31,z:4}];
+const THRONE = {x:46, z:0, hole:7.5};
+const BOLT_RECHARGE = 5;
+function p4AreaOf(x){ return x < G4[0] ? 0 : x < G4[1] ? 1 : x < G4[2] ? 2 : 3; }
+function p4HalfWidth(x){ if(x < G4[0]-1) return 99; if(x < G4[1]) return 14; if(x < G4[2]) return 8.6; if(x < 57) return 13; return 0; }
+function heightAt4Raw(x,z){
+  const e = Math.hypot((x+4)/68, z/42);
+  const d = (e - 1 - Math.sin(Math.atan2(z,x)*5)*0.02) * 48;
+  let y = d < 0 ? 0.4 * smooth(0, -6, d) + noise(x*0.6,z*0.6)*0.05 : -d*0.32;
+  if(x > -20 && x < 58 && Math.abs(z) < 16) y = 0.4;   // castle floors are flat
+  return Math.max(y, -4);
+}
+function p4SkyOpen(x,z){                              // can lightning reach this spot?
+  const a = p4AreaOf(x);
+  if(a <= 1) return true;
+  if(a === 2) return HALL_CRACKS.some(c=>Math.hypot(x-c.x, z-c.z) < 2.4);
+  return Math.hypot(x-THRONE.x, z-THRONE.z) < THRONE.hole;
+}
+function p4WallBetween(x1,z1,x2,z2){
+  for(let i=0;i<G4.length;i++){ const gx = G4[i];
+    if((x1-gx)*(x2-gx) >= 0) continue;
+    const t = (gx-x1)/(x2-x1), zc = z1 + (z2-z1)*t;
+    if(!P4.gates[i].open || Math.abs(zc) > 2.2) return true; }
+  return false;
+}
+function canStand4(x,z){
+  const y = heightAt4(x,z); if(y < -0.1) return false;
+  if(Math.abs(z) > p4HalfWidth(x) - 0.6) return false;
+  if(x > 56.3) return false;
+  for(let i=0;i<G4.length;i++){ if(Math.abs(x-G4[i]) < 1.1 && (!P4.gates[i].open || Math.abs(z) > 2.2)) return false; }
+  for(const c of P4.cols){ if(Math.hypot(x-c.x, z-c.z) < c.r+0.5) return false; }
+  for(const e of P4.enemies){ if(e.state!=='gone' && e.state!=='flee' && Math.hypot(x-e.x, z-e.z) < (e.big?1.6:1.1)) return false; }
+  const b = P4.boss; if(b && b.form==='dragon' && b.fly < 0.5 && Math.hypot(x-b.x, z-b.z) < 4.2) return false;
+  return true;
+}
+function enemyCan4(x,z){
+  if(heightAt4(x,z) < -0.1 || Math.abs(z) > p4HalfWidth(x) - 0.8 || x > 56) return false;
+  for(let i=0;i<G4.length;i++){ if(Math.abs(x-G4[i]) < 1.1 && (!P4.gates[i].open || Math.abs(z) > 2.2)) return false; }
+  return !P4.cols.some(c=>Math.hypot(x-c.x,z-c.z)<c.r+0.3);
+}
+
+function sorcererModel(){
+  const g = new THREE.Group();
+  const robe = M(0x4a2a6a, {flatShading:false}), robe2 = M(0x2a1a3e, {flatShading:false}), gold = M(0xf5c542, {metalness:.5, roughness:.3});
+  mesh(new THREE.ConeGeometry(0.75, 2.0, 16, 1, true), robe, 0, 1.0, 0, g);
+  mesh(new THREE.CylinderGeometry(0.76, 0.76, 0.08, 16), gold, 0, 0.06, 0, g);
+  mesh(new THREE.CylinderGeometry(0.32, 0.42, 0.6, 12), robe2, 0, 1.75, 0, g);
+  [-1,1].forEach(s=>{ const sl = mesh(new THREE.ConeGeometry(0.22, 0.8, 10), robe, 0.1, 1.55, s*0.42, g); sl.rotation.x = s*0.5; });
+  const head = new THREE.Group(); head.position.set(0, 2.25, 0); g.add(head);
+  mesh(new THREE.SphereGeometry(0.28, 16, 12), M(0xd9b08c, {flatShading:false}), 0, 0, 0, head);
+  const beard = mesh(new THREE.ConeGeometry(0.22, 0.75, 10), M(0xe8e8ee), 0.18, -0.38, 0, head); beard.rotation.z = Math.PI + 0.2;
+  [-1,1].forEach(s=>{ mesh(new THREE.SphereGeometry(0.05, 8, 6), M(0xb026ff, {emissive:0x8a10cc}), 0.24, 0.06, s*0.1, head);
+    const brow = mesh(new THREE.BoxGeometry(0.04, 0.04, 0.14), M(0xe8e8ee), 0.25, 0.14, s*0.1, head); brow.rotation.x = s*0.5; });
+  mesh(new THREE.ConeGeometry(0.06, 0.18, 6), M(0xd9b08c), 0.3, -0.02, 0, head).rotation.z = -Math.PI/2;
+  const crown = new THREE.Group(); crown.position.set(0, 0.24, 0); head.add(crown);
+  mesh(new THREE.CylinderGeometry(0.26, 0.28, 0.16, 16, 1, true), gold, 0, 0, 0, crown);
+  for(let k=0;k<6;k++){ const a = k/6*Math.PI*2; mesh(new THREE.ConeGeometry(0.06, 0.2, 5), gold, Math.cos(a)*0.25, 0.16, Math.sin(a)*0.25, crown);
+    if(k%2===0) mesh(new THREE.OctahedronGeometry(0.05), M(0xd7382f, {emissive:0x600000}), Math.cos(a)*0.27, 0.02, Math.sin(a)*0.27, crown); }
+  const staff = new THREE.Group(); staff.position.set(0.35, 1.2, -0.5); g.add(staff);
+  mesh(new THREE.CylinderGeometry(0.05, 0.06, 2.3, 8), M(0x3a2a1a), 0, 0.2, 0, staff);
+  const orb = mesh(new THREE.SphereGeometry(0.2, 14, 10), new THREE.MeshBasicMaterial({color:0xc070ff}), 0, 1.45, 0, staff);
+  g.userData = {head, crown, staff, orb};
+  return g;
+}
+function knightGoblin(kind){
+  const big = kind==='captain';
+  const m = goblinModel(false);
+  m.userData.skin.color.setHex(0x6aa84f);
+  const steel = M(0x8d96a0, {metalness:.4, roughness:.35, flatShading:false});
+  mesh(new THREE.SphereGeometry(0.36, 14, 10, 0, Math.PI*2, 0, Math.PI/2), steel, 0.05, 1.45, 0, m);                // helmet
+  mesh(new THREE.CylinderGeometry(0.42, 0.44, 0.5, 12), steel, 0, 0.95, 0, m);                                         // chest armor
+  const sh = new THREE.Group(); sh.position.set(0.35, 0.95, 0.42); m.add(sh);
+  const board = mesh(new THREE.BoxGeometry(0.1, 0.95, 0.7), M(big?0x6b2a5a:0x5a3a6a), 0, 0, 0, sh);
+  mesh(new THREE.TorusGeometry(0.2, 0.05, 6, 12), M(0xf5c542), 0.06, 0, 0, sh).rotation.y = Math.PI/2;
+  if(big){ m.scale.setScalar(1.6); mesh(new THREE.ConeGeometry(0.1,0.4,6), M(0xd7382f), 0.05, 1.95, 0, m); }
+  m.userData.shield = sh;
+  return m;
+}
+function p4Enemy(kind, x, z, area){
+  let m;
+  if(kind==='knight' || kind==='captain') m = knightGoblin(kind);
+  else { m = goblinModel(false);
+    if(kind==='archer'){ const arm = m.userData.arm; arm.children.slice(1).forEach(c=>arm.remove(c));
+      const bow = new THREE.Group(); bow.position.set(0.15,-0.45,0); arm.add(bow);
+      const curve = new THREE.Mesh(new THREE.TorusGeometry(0.45,0.035,6,16,Math.PI), M(0x6b4a24)); curve.rotation.y = Math.PI/2; curve.rotation.x = Math.PI/2; bow.add(curve);
+      m.userData.skin.color.setHex(0x8ab86a); } }
+  L4root.add(m);
+  const hp = {goblin:14, archer:10, knight:20, captain:50}[kind];
+  const shieldHP = {knight:4, captain:8}[kind] || 0;
+  return {m, kind, area, x, z, hx:x, hz:z, hp, max:hp, shieldHP, shieldMax:shieldHP, big:kind==='captain', state:'idle', t:Math.random()*2, cd:Math.random()*1.5, flash:0, yaw:Math.PI, bob:Math.random()*6, swing:0};
+}
+
+function buildPart4(){
+  const R = L4root, r = rng(4242);
+  const add = (o)=>{ R.add(o); return o; };
+  const m4 = (geo, mat, x, y, z, parent=R)=> mesh(geo, mat, x, y, z, parent);
+  P4 = {occ:[], enemies:[], arrows:[], fx:[], gates:[], picks:[], cols:[], boss:null, done:false, flying:false, landed:false, fires:[], clouds:[], rings:[]};
+  const col = (x,z,rad)=>{ const c={x,z,r:rad}; P4.cols.push(c); return c; };
+  // ground
+  const W = 150, D = 100, SX = 210, SZ = 140;
+  const geo = new THREE.PlaneGeometry(W, D, SX, SZ); geo.rotateX(-Math.PI/2);
+  heightAt4 = gridSampler(heightAt4Raw, W, D, SX, SZ, 0);
+  const pos = geo.attributes.position, cols = [];
+  const c = new THREE.Color(), grass = new THREE.Color(0x5e8a48), grass2 = new THREE.Color(0x4a7a3a), stoneF = new THREE.Color(0x8a8690), stoneF2 = new THREE.Color(0x7a7680), sand = new THREE.Color(0x9a8a6a), wet = new THREE.Color(0x3a4a4a);
+  for(let i=0;i<pos.count;i++){
+    const x = pos.getX(i), z = pos.getZ(i), y = heightAt4Raw(x,z); pos.setY(i, y);
+    const n = noise(x*1.9,z*1.9)*0.5+0.5;
+    if(y < -0.2) c.copy(wet);
+    else if(x > -19 && x < 57 && Math.abs(z) < p4HalfWidth(x)) c.copy(stoneF).lerp(stoneF2, (Math.floor(x/2)+Math.floor(z/2))%2===0 ? 0.6 : n*0.3);
+    else if(y < 0.15) c.copy(sand);
+    else c.copy(grass).lerp(grass2, n);
+    cols.push(c.r, c.g, c.b);
+  }
+  geo.setAttribute('color', new THREE.Float32BufferAttribute(cols,3)); geo.computeVertexNormals();
+  const ground = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({vertexColors:true, roughness:.95, flatShading:true})); ground.receiveShadow = true; add(ground);
+
+  const stone = M(0x7a7684), stone2 = M(0x6a6674), dark = M(0x3a3644), roofM = M(0x5a2a4a), banner = M(0x4a2a6a, {side:THREE.DoubleSide});
+  const wallSeg = (x1,z1,x2,z2,h=7,th=1.6)=>{ const len = Math.hypot(x2-x1,z2-z1), w = m4(new THREE.BoxGeometry(len, h, th), stone, (x1+x2)/2, 0.4+h/2, (z1+z2)/2); w.rotation.y = -Math.atan2(z2-z1, x2-x1); P4.occ.push(w);
+    for(let k=0;k<Math.floor(len/2.4);k++){ const t = (k+0.5)/Math.floor(len/2.4); m4(new THREE.BoxGeometry(1.1, 0.9, th+0.1), stone2, x1+(x2-x1)*t, 0.4+h+0.45, z1+(z2-z1)*t).rotation.y = w.rotation.y; } return w; };
+  const tower = (x,z,rad=2.4,h=12)=>{ const t = m4(new THREE.CylinderGeometry(rad, rad*1.1, h, 12), stone, x, 0.4+h/2, z); P4.occ.push(t);
+    m4(new THREE.ConeGeometry(rad*1.3, rad*1.6, 12), roofM, x, 0.4+h+rad*0.8, z); const fl = m4(new THREE.PlaneGeometry(1.6,1), banner, x+0.8, 0.4+h+rad*1.6+0.6, z); m4(new THREE.CylinderGeometry(.06,.06,1.8), M(0x222222), x, 0.4+h+rad*1.6+0.4, z); return t; };
+  // gate walls (with a gate/door in the middle that rises)
+  G4.forEach((gx,gi)=>{
+    const hw = gi===0 ? 22 : (gi===1 ? 14 : 13), h = gi===0 ? 8 : 7;
+    [-1,1].forEach(sd=>{ wallSeg(gx, sd*2.4, gx, sd*hw, h); });
+    m4(new THREE.BoxGeometry(1.8, 2.2, 5.4), stone2, gx, 0.4+h-1.1, 0);               // arch over the gate
+    const port = new THREE.Group(); port.position.set(gx, 0.4, 0); add(port);
+    for(let k=0;k<6;k++) m4(new THREE.BoxGeometry(0.18, h-2.2, 0.18), M(0x2a2a2e,{metalness:.4}), 0, (h-2.2)/2, -1.9+k*0.76, port);
+    for(let k=0;k<3;k++) m4(new THREE.BoxGeometry(0.2, 0.18, 4.2), M(0x2a2a2e,{metalness:.4}), 0, 0.8+k*1.4, 0, port);
+    P4.gates.push({x:gx, open:false, port, lift:0, h});
+    [-1,1].forEach(sd=>{ const torch = m4(new THREE.ConeGeometry(0.25,0.6,6), new THREE.MeshBasicMaterial({color:0xffa23a}), gx-1, 3.6, sd*3.2); P4.fires.push(torch); });
+  });
+  // outer castle: big front wall towers + side walls around the courtyard
+  [[-18,-22],[-18,22]].forEach(([x,z])=>tower(x,z,3,13));
+  [-1,1].forEach(sd=>{ wallSeg(-18, sd*14, 9.5, sd*14, 7); });
+  [[9.5,-14],[9.5,14]].forEach(([x,z])=>tower(x,z,2.4,11));
+  // the Great Hall: walls, a roof with cracks that let light (and lightning) in
+  [-1,1].forEach(sd=>{ wallSeg(9.5, sd*9, 35.5, sd*9, 7.5); });
+  for(let x=10.5; x<35.5; x+=2) for(let z=-8; z<9; z+=2){
+    if(HALL_CRACKS.some(cr=>Math.hypot(x-cr.x, z-cr.z) < 2.0)) continue;
+    const tile = m4(new THREE.BoxGeometry(2.02, 0.5, 2.02), roofM, x, 8.1 + (x%4===0?0.05:0), z); tile.castShadow = true; P4.occ.push(tile);
+  }
+  P4.shafts = HALL_CRACKS.map(cr=>{ const sh = m4(new THREE.CylinderGeometry(1.7, 2.2, 7.8, 16, 1, true), new THREE.MeshBasicMaterial({color:0xfff4c0, transparent:true, opacity:.16, side:THREE.DoubleSide, depthWrite:false}), cr.x, 4.3, cr.z); sh.castShadow = false;
+    const spot = m4(new THREE.CircleGeometry(2.2, 24), new THREE.MeshBasicMaterial({color:0xfff4c0, transparent:true, opacity:.28, depthWrite:false}), cr.x, 0.43, cr.z); spot.rotation.x = -Math.PI/2; spot.castShadow = false; return sh; });
+  for(let k=0;k<6;k++){ const x = 12 + k*4.4; [-1,1].forEach(sd=>{ const pil = m4(new THREE.CylinderGeometry(0.45,0.55,7.5,10), stone2, x, 4.15, sd*6.4); col(x, sd*6.4, 0.6);
+    const fl = m4(new THREE.ConeGeometry(0.22,0.5,6), new THREE.MeshBasicMaterial({color:0xffa23a}), x, 5.2, sd*5.8); P4.fires.push(fl); }); }
+  for(let k=0;k<5;k++){ const ban = m4(new THREE.PlaneGeometry(1.4, 3), banner, 12+k*5.5, 4.6, 8.15); ban.rotation.y = Math.PI; m4(new THREE.TorusGeometry(0.35,0.08,6,14), M(0xf5c542), 12+k*5.5, 5.2, 8.1).rotation.y = Math.PI; }
+  // throne room: round walls, a broken roof with a big hole in the middle
+  { const n = 20; for(let k=0;k<n;k++){ const a1 = k/n*Math.PI*2, a2 = (k+1)/n*Math.PI*2, rr = 12.5;
+      const x1 = THRONE.x+Math.cos(a1)*rr, z1 = Math.sin(a1)*rr, x2 = THRONE.x+Math.cos(a2)*rr, z2 = Math.sin(a2)*rr;
+      if(Math.min(x1,x2) < G4[2]+0.5 && Math.abs(z1) < 3 && Math.abs(z2) < 3) continue;
+      wallSeg(x1, z1, x2, z2, 9, 1.4); } }
+  for(let k=0;k<26;k++){ const a = k/26*Math.PI*2, rr = THRONE.hole + 1.2 + (k%3)*1.4;
+    if(rr > 12) continue; const tile = m4(new THREE.BoxGeometry(2.4, 0.5, 2.4), roofM, THRONE.x+Math.cos(a)*rr, 9.8+(k%2)*0.2, Math.sin(a)*rr); tile.rotation.y = a; tile.rotation.z = (k%4-1.5)*0.08; P4.occ.push(tile); }
+  m4(new THREE.CylinderGeometry(4.5, 5, 0.5, 20), M(0x4a2a6a), THRONE.x+7, 0.65, 0);         // dais
+  const throne = new THREE.Group(); throne.position.set(THRONE.x+8.6, 0.9, 0); add(throne);
+  m4(new THREE.BoxGeometry(1.4, 1, 1.6), M(0xf5c542,{metalness:.5}), 0, 0.5, 0, throne); m4(new THREE.BoxGeometry(0.3, 3.4, 1.8), M(0xf5c542,{metalness:.5}), 0.6, 1.7, 0, throne);
+  m4(new THREE.BoxGeometry(0.1, 2.4, 1.2), M(0xd7382f), 0.44, 1.6, 0, throne);
+  col(THRONE.x+8.6, 0, 1.2);
+  // the dungeon cage the sorcerer ends up in
+  P4.cage = cageModel(); P4.cage.position.set(THRONE.x+6, 0.4, -8); P4.cage.visible = false; add(P4.cage);
+  // pickups
+  const pk = (x,z,kind)=>{ const y = heightAt4(x,z); const m = itemModel(kind, R); m.position.set(x,y+0.6,z);
+    const glow = new THREE.Mesh(new THREE.RingGeometry(0.45,0.75,20), new THREE.MeshBasicMaterial({color:itemRing(kind), transparent:true, opacity:.4, side:THREE.DoubleSide})); glow.rotation.x = -Math.PI/2; glow.position.set(x,y+0.06,z); add(glow);
+    P4.picks.push({kind, m, x, z, taken:false, base:m.position.y, glow}); };
+  pk(-34,10,'potion'); pk(-34,-10,'pie'); pk(-6,11,'potion'); pk(4,-11,'strength'); pk(16,7,'potion'); pk(30,-7,'carrot'); pk(33,6,'speed');
+  // enemies
+  [['goblin',-30,-6],['goblin',-28,5],['goblin',-25,-1],['goblin',-23,8],['archer',-21,-12],['archer',-21,12],['goblin',-26,-12],['goblin',-24,13]].forEach(([k,x,z])=>P4.enemies.push(p4Enemy(k,x,z,0)));
+  [['knight',-8,-5],['knight',-6,5],['goblin',-2,-9],['goblin',0,9],['knight',4,0],['archer',7,-11],['archer',7,11]].forEach(([k,x,z])=>P4.enemies.push(p4Enemy(k,x,z,1)));
+  [['goblin',16,-5],['goblin',18,5],['captain',26,0],['goblin',30,-5],['goblin',31,5]].forEach(([k,x,z])=>P4.enemies.push(p4Enemy(k,x,z,2)));
+  // the Thunder Dragon (your friend) and the sorcerer
+  const TD = buildDragon({main:0x3b52c4, dark:0x26307a, belly:0xc4d2ff, spike:0xf5d020, spikeGlow:true, wing:0x7a8ff0, wingGlow:0x1a2a8a, eye:0xe8f8ff, eyeGlow:0x6aa8ff});
+  TD.dragon.scale.setScalar(1.35); add(TD.dragon); TD.collar.visible = false; P4.td = TD;
+  const sorc = sorcererModel(); add(sorc);
+  const DK = buildDragon({main:0x2a2230, dark:0x15101c, belly:0x8a6a3a, spike:0xf5c542, spikeGlow:true, wing:0x4a2a5a, wingGlow:0x2a0a3a, eye:0xff3a3a, eyeGlow:0xaa0000});
+  DK.dragon.scale.setScalar(1.65); DK.dragon.visible = false; add(DK.dragon); DK.collar.visible = false;
+  const dkCrown = new THREE.Group(); dkCrown.position.set(-0.1, 0.62, 0); DK.head.add(dkCrown);
+  mesh(new THREE.CylinderGeometry(0.42, 0.46, 0.25, 16, 1, true), M(0xf5c542,{metalness:.5,roughness:.3}), 0,0,0, dkCrown);
+  for(let k=0;k<6;k++){ const a = k/6*Math.PI*2; mesh(new THREE.ConeGeometry(0.09,0.3,5), M(0xf5c542,{metalness:.5}), Math.cos(a)*0.42, 0.24, Math.sin(a)*0.42, dkCrown); }
+  P4.boss = {sorc, dk:DK, dkCrown, form:'sorcerer', state:'wait', x:THRONE.x+5, z:0, yaw:Math.PI, hp:50, max:50, t:0, castCd:2, tpCd:5, biteCd:0, strikeCd:4, breathCd:6, skyCd:0, phase:1, flash:0, fly:0};
+  // flight: storm clouds to dodge and gold rings to fly through, over the sea west of the castle
+  for(let k=0;k<16;k++){ const x = -230 + k*11 + r()*4, z = (r()-.5)*30;
+    const cl = new THREE.Group(); cl.position.set(x, 16 + (r()-.5)*3, z); add(cl);
+    for(let j=0;j<4;j++) mesh(new THREE.IcosahedronGeometry(2+r()*1.4, 1), M(0x3a3a48, {transparent:true, opacity:.92}), (r()-.5)*3, (r()-.5)*1.4, (r()-.5)*3, cl);
+    P4.clouds.push({g:cl, x, z, hit:false}); }
+  for(let k=0;k<7;k++){ const x = -224 + k*26, z = Math.sin(k*1.7)*10;
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(2.4, 0.25, 8, 24), new THREE.MeshBasicMaterial({color:0xf5c542})); ring.position.set(x, 16, z); ring.rotation.y = Math.PI/2; add(ring);
+    P4.rings.push({m:ring, x, z, got:false}); }
+}
+
+// ---------- Part 4 helpers ----------
+function p4Area(){ return P4.gates.filter(g=>g.open).length; }
+function p4Left(a){ return P4.enemies.filter(e=>e.area===a && e.state!=='gone' && e.state!=='flee').length; }
+function sailToPart4(){
+  $('end').classList.add('hidden'); $('title').classList.add('hidden'); $('hud').classList.remove('hidden');
+  running = true; paused = true;
+  p4Start(true);
+  S.hp = S.maxHp; camPos.set(0,0,0); updateHud(); saveNow();
+  say([['Part 4: Dragon Castle','You climb onto the Thunder Dragon\'s back. With a CRACK of thunder, you fly into the sky! 🐉⚡'],
+       ['⚡ Thunder Dragon','Hold on tight, little knight! Steer me around the storm clouds. The Dragon King sends them to knock us down.'],
+       ['⚡ Thunder Dragon','Fly through the gold rings if you can. They are made from the Dragon King\'s stolen treasure!']]);
+}
+function p4Start(fresh){
+  if(!P4) buildPart4();
+  S.part = 4; showPart(4);
+  S.fight = false; D.gone = true; $('boss').classList.add('hidden');
+  S.freed = true; S.bolt = 1;
+  if(fresh) p4Reset(0, true);
+  $('sBolt').classList.remove('hidden'); $('bBolt').classList.toggle('hidden', $('tact').classList.contains('hidden'));
+  updateHud();
+}
+function p4Reset(openGates, fly){
+  P4.done = false;
+  P4.gates.forEach((g,i)=>{ g.open = i < openGates; g.lift = g.open ? 1 : 0; g.port.position.y = g.open ? g.h-1.5 : 0; });
+  P4.enemies.forEach(e=>{ const cleared = e.area < openGates; e.state = cleared ? 'gone' : 'idle'; e.hp = e.max; e.shieldHP = e.shieldMax; e.x = e.hx; e.z = e.hz; e.m.visible = !cleared; e.cd = Math.random()*1.5; e.swing = 0;
+    if(e.m.userData.shield) e.m.userData.shield.visible = true; });
+  P4.picks.forEach(p=>{ p.taken=false; p.m.visible=true; });
+  [...P4.arrows, ...P4.fx].forEach(o=>{ L4root.remove(o.m); if(o.fill) L4root.remove(o.fill); if(o.beam) L4root.remove(o.beam); }); P4.arrows=[]; P4.fx=[];
+  const b = P4.boss; Object.assign(b, {form:'sorcerer', state:'wait', x:THRONE.x+5, z:0, yaw:Math.PI, hp:50, max:50, t:0, castCd:2, tpCd:5, biteCd:0, strikeCd:4, breathCd:6, skyCd:0, phase:1, flash:0, fly:0});
+  b.sorc.visible = true; b.sorc.scale.setScalar(1); b.sorc.userData.crown.visible = true; b.dk.dragon.visible = false; b.dkCrown.visible = true; P4.cage.visible = false;
+  P4.flying = !!fly; P4.landed = !fly;
+  P4.helper = {active: openGates===0, cd: 2};
+  P4.td.dragon.visible = true;
+  P4.clouds.forEach(c=>c.hit=false); P4.rings.forEach(rg=>{ rg.got=false; rg.m.visible=true; });
+  if(fly){ P4.fly = {x:-240, z:0, y:16, roll:0, t:0}; }
+  const starts = [[-40,0],[-15,0],[12,0],[38,0]];
+  const st = starts[openGates] || starts[0]; S.x = st[0]; S.z = st[1]; S.yaw = 0; S.pitch = 0;
+  S.bolt = 1;
+}
+function p4Quest(){
+  if(P4.done) return 'The Dragon King is in prison and every dragon is free! 🎉';
+  if(P4.flying) return '🐉 Steer the Thunder Dragon around the storm clouds! Fly through the gold rings. 🪙';
+  const a = p4Area(), b = P4.boss;
+  if(a===3) return b.form==='dragon' ? '<b>Knock the Dragon Crown off!</b> Strike him with ⚡ when he is under the hole in the roof!' : '<b>Defeat the evil sorcerer!</b> ⚡ works under the big hole in the roof.';
+  const names = ['the Outer Wall','the Courtyard','the Great Hall'];
+  const tip = a===2 ? '⚡ only works in the beams of light from the roof cracks!' : (a===1 ? 'Armored guards block your sword. Break their shields with ⚡!' : 'The Thunder Dragon is helping! Press ⚡ to call lightning.');
+  return `Beat every guard at <b>${names[a]}</b> (${p4Left(a)} left)<br><span style="font-size:14px">${tip}</span>`;
+}
+function p4Objective(){
+  if(P4.done || P4.flying) return null;
+  const a = p4Area();
+  if(a===3){ const b = P4.boss; return [b.x, (b.form==='dragon'?11:4) + b.fly*9, b.z]; }
+  const e = P4.enemies.filter(e=>e.area===a && e.state!=='gone' && e.state!=='flee').sort((p,q)=>dist(p.x,p.z)-dist(q.x,q.z))[0];
+  if(e) return [e.x, heightAt4(e.x,e.z)+3.4, e.z];
+  return [G4[a]+3, 3, 0];
+}
+function p4Sword(){
+  const dmgBase = (S.swordUp || (P2 && P2.swordLvl)) ? 6 : 4;
+  const b = P4.boss;
+  if(p4Area()===3 && b.state!=='wait' && b.state!=='done' && b.fly < 0.5){
+    const reach = b.form==='dragon' ? 7.2 : 3.2;
+    const d = dist(b.x,b.z), ang = Math.abs(angDiff(Math.atan2(b.z-S.z, b.x-S.x), S.yaw));
+    if(d < reach && ang < 1.2 && b.state!=='tp'){
+      const dmg = Math.round((dmgBase + Math.floor(Math.random()*3)) * dmgMul());
+      p4HurtBoss(dmg); return;
+    }
+  }
+  let best=null, bd=1e9;
+  P4.enemies.forEach(e=>{ if(e.state==='gone'||e.state==='flee') return;
+    const reach = e.big ? 3.9 : 3.0, d = dist(e.x,e.z), ang = Math.abs(angDiff(Math.atan2(e.z-S.z, e.x-S.x), S.yaw));
+    if(d < reach && ang < 1.3 && d < bd){ bd=d; best=e; } });
+  if(!best) return;
+  P4.focus = best;
+  if(best.shieldHP > 0){
+    best.shieldHP--; spawnChips(best.x, heightAt4(best.x,best.z)+1.3, best.z, 0xf5c542, 7);
+    if(best.shieldHP <= 0){ best.m.userData.shield.visible = false; spawnChips(best.x, 1.4, best.z, 0x8b5a2b, 12); }
+    else if(!P4.warnedShield){ P4.warnedShield = true; $('status').textContent = '🛡️ CLANG! Their shield blocks. Keep hitting, or use ⚡!'; }
+    return;
+  }
+  const dmg = Math.round((dmgBase + Math.floor(Math.random()*3)) * dmgMul());
+  p4HurtEnemy(best, dmg, 0.35);
+}
+function p4HurtEnemy(e, dmg, kb){
+  e.hp -= dmg; e.flash = 0.2;
+  const a = Math.atan2(e.z-S.z, e.x-S.x); kb = e.big ? kb*0.3 : kb;
+  if(enemyCan4(e.x+Math.cos(a)*kb, e.z+Math.sin(a)*kb)){ e.x += Math.cos(a)*kb; e.z += Math.sin(a)*kb; }
+  spawnChips(e.x, heightAt4(e.x,e.z)+1.2, e.z, 0x8be05a, 6);
+  if(e.hp <= 0){
+    e.state='flee'; e.t=2.5; spawnChips(e.x, 1.4, e.z, 0xf5c542, 14);
+    S.gold = (S.gold||0) + (e.big ? 10 : 3); if(e.big) S.potStr = (S.potStr||0)+1;
+    p4CheckArea(e.area);
+  }
+  updateHud();
+}
+function p4CheckArea(a){
+  if(a > 2 || p4Left(a) > 0) return;
+  const g = P4.gates[a]; if(g.open) return;
+  g.open = true; saveNow();
+  const lines = [
+    [['⚡ Thunder Dragon','The outer wall is ours! But the castle is full of the Dragon King\'s dark magic. I can\'t fly inside.'], ['⚡ Thunder Dragon','I will circle above. Wherever there is open sky, press ⚡ and I will strike!']],
+    [['⚙️ *CLANK*','The doors to the Great Hall open. It\'s dark inside... but beams of light shine down through cracks in the roof.'], ['⚡ Thunder Dragon','I can only reach you through those cracks! Lure the guards into the light, then call me.']],
+    [['⚙️ *BOOM*','The throne room doors swing open. Someone is laughing inside...']]][a];
+  setTimeout(()=>{ if(S.part===4) say(lines); }, 600);
+}
+function boltAct(){
+  if(paused || S.part!==4 || P4.flying) return;
+  if((S.bolt||0) < 1){ $('status').textContent = '⚡ Recharging...'; return; }
+  // aim: the nearest enemy in front of you, or a spot ahead
+  let tx = S.x + Math.cos(S.yaw)*8, tz = S.z + Math.sin(S.yaw)*8, target = null, bd = 22;
+  P4.enemies.forEach(e=>{ if(e.state==='gone'||e.state==='flee') return; const d = dist(e.x,e.z), ang = Math.abs(angDiff(Math.atan2(e.z-S.z,e.x-S.x), S.yaw));
+    if(d < bd && ang < 0.9 && !p4WallBetween(S.x,S.z,e.x,e.z)){ bd = d; target = e; } });
+  const b = P4.boss;
+  if(p4Area()===3 && b.state!=='wait' && b.state!=='done'){ const d = dist(b.x,b.z), ang = Math.abs(angDiff(Math.atan2(b.z-S.z,b.x-S.x), S.yaw)); if(d < 26 && ang < 1.0){ target = {boss:true, x:b.x, z:b.z}; } }
+  if(target){ tx = target.x; tz = target.z; }
+  if(!p4SkyOpen(tx, tz)){ $('status').textContent = '🏰 The roof is too thick there! Lure them into the light.'; spawnChips(tx, 1, tz, 0x888888, 4); return; }
+  S.bolt = 0; p4Strike(tx, tz, true); updateHud();
+}
+function p4Strike(x, z, fromPlayer){
+  const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.8, 34, 8), new THREE.MeshBasicMaterial({color:0xffffff, transparent:true, opacity:.95}));
+  beam.position.set(x, 17, z); L4root.add(beam);
+  const glow = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.8, 34, 12, 1, true), new THREE.MeshBasicMaterial({color:0xbfe8ff, transparent:true, opacity:.35, depthWrite:false})); glow.position.copy(beam.position); L4root.add(glow);
+  P4.fx.push({m:beam, beam:glow, life:0.4, kind:'strike'});
+  spawnChips(x, 0.7, z, 0xfff27a, 16);
+  P4.enemies.forEach(e=>{ if(e.state==='gone'||e.state==='flee') return;
+    if(Math.hypot(e.x-x, e.z-z) < 2.6){ if(e.shieldHP>0){ e.shieldHP = 0; e.m.userData.shield.visible = false; } p4HurtEnemy(e, fromPlayer ? 16 : 30, 1.4); } });
+  const b = P4.boss;
+  if(fromPlayer && p4Area()===3 && b.state!=='wait' && b.state!=='done' && Math.hypot(b.x-x, b.z-z) < (b.form==='dragon'?4.5:2.6)) p4HurtBoss(b.form==='dragon' ? 18 : 12, true);
+}
+function p4HurtBoss(dmg, lightning){
+  const b = P4.boss; if(b.state==='tp' || b.state==='transform' || b.state==='done') return;
+  b.hp -= dmg; b.flash = 0.25; spawnChips(b.x, b.form==='dragon'?4:2, b.z, lightning?0xfff27a:0xc070ff, 8);
+  if(b.hp <= 0){
+    if(b.form==='sorcerer'){ b.state = 'transform'; b.t = 2.4; [...P4.fx].forEach(o=>{ if(o.kind==='orb'){ L4root.remove(o.m); P4.fx.splice(P4.fx.indexOf(o),1); } });
+      say([['🧙 The Sorcerer','ENOUGH! You want to see the power of the DRAGON CROWN? *the crown blazes with dark fire*'],
+           ['🧙 The Sorcerer','I made myself the KING of all dragons... and now I will BECOME one! *his body twists and grows... scales, wings, horns...*'],
+           ['🐲 The Dragon King','ROOOOAAAR! Now face me, tiny knight!'],
+           ['Tip','Knock the crown off his head! ⚡ Lightning hits him hard when he stands under the big hole in the roof.']]); }
+    else p4WinBoss();
+  }
+  updateHud();
+}
+function p4WinBoss(){
+  const b = P4.boss; b.state = 'done'; b.fly = 0;
+  [...P4.fx].forEach(o=>{ L4root.remove(o.m); if(o.fill) L4root.remove(o.fill); if(o.beam) L4root.remove(o.beam); }); P4.fx = [];
+  b.dkCrown.visible = false; spawnChips(b.x, 6, b.z, 0xf5c542, 40);
+  $('boss').classList.add('hidden');
+  setTimeout(()=>{
+    if(S.part!==4) return;
+    b.dk.dragon.visible = false; b.form = 'sorcerer'; b.sorc.visible = true; b.sorc.scale.setScalar(0.85); b.sorc.userData.crown.visible = false;
+    spawnChips(b.x, 2, b.z, 0xc070ff, 30);
+    say([['👑 *CLANG!*','The Dragon Crown flies off his head, bounces across the floor... and SHATTERS into a thousand pieces!'],
+         ['🧙 The Sorcerer','*he shrinks back into a skinny old man* No... NO! My dragon powers! My CROWN!'],
+         [kn(),'Your dragon days are over. Guards are gone, gold is gone, and now your crown is gone too.'],
+         [kn(),'For everything you did to the dragons and the villagers, you are going to PRISON. For one thousand years!'],
+         ['🧙 The Sorcerer','A THOUSAND YEARS?! *grumble grumble*']],
+      ()=>{
+        b.sorc.position.set(P4.cage.position.x, 0.4, P4.cage.position.z); b.x = P4.cage.position.x; b.z = P4.cage.position.z; P4.cage.visible = true;
+        spawnChips(b.x, 1.5, b.z, 0x4a2f12, 14);
+        P4.done = true; S.part4done = true; updateHud(); saveNow();
+        say([['🔒 *CLICK*','The old sorcerer is locked in his own dungeon. A sign on the door says: "OPEN IN 1,000 YEARS."'],
+             ['⚡ Thunder Dragon','*the Thunder Dragon lands in the throne room* Can you feel it? Every dragon in the world is free!'],
+             ['🐉 Swamp Dragon','*flies in through the roof* Thank you, knight. My head is clear for the first time in years!'],
+             ['⚡ Thunder Dragon','Climb on, ' + kn() + '. Everyone is waiting for you back at the village!'],
+             ['🎉 The Village','You fly home over the sea. Bea, Tom, Rosa, Pip and Lin are cheering, and dragons fill the sky with fireworks of lightning and swamp bubbles!']],
+          ()=>{
+            $('endTitle').textContent = 'The End';
+            $('endText').textContent = `${kn()} flew to Dragon Castle, beat the evil sorcerer, broke the Dragon Crown, and locked him in prison for 1,000 years. Every dragon is free, and the kingdom is safe!`;
+            $('endNext').innerHTML = '⚔️ <b>Dragon Kingdom</b>, a game by George Kling. Thanks for playing! 🐉';
+            ['p2Btn','p3Btn','p4Btn'].forEach(id=>$(id).classList.add('hidden'));
+            $('end').classList.remove('hidden'); paused = true;
+          });
+      });
+  }, 1400);
+}
+function p4Lose(){
+  const open = p4Area(), hpFull = S.maxHp;
+  p4Reset(open, false);
+  S.hp = hpFull; S.poison = 0; S.mud = 0; if(S.pot < 1) S.pot = 1;
+  updateHud();
+  say([['💥 Ouch!', open===0 ? 'The guards knocked you down! You wake up where the Thunder Dragon landed.' : 'You wake up by the last door you opened. Everything past it starts over.'],
+       ['Tip','Hold your shield when enemies wind up. Save ⚡ for armored guards and big groups. Eat food and drink potions before the big fights!']]);
+}
+
+// ---------- the flight ----------
+function p4Fly(dt){
+  const f = P4.fly; f.t += dt;
+  const steer = (keys.r?1:0) - (keys.l?1:0) + joyV.x;
+  f.z = Math.max(-16, Math.min(16, f.z + steer*9*dt));
+  f.roll += (steer*0.5 - f.roll) * Math.min(1, dt*4);
+  f.x += 11*dt;
+  f.y = 16 + Math.sin(f.t*1.5)*0.6;
+  P4.clouds.forEach(c=>{ if(!c.hit && Math.abs(c.x-f.x) < 3 && Math.abs(c.z-f.z) < 3.4){ c.hit = true; const inv = S.invuln; S.invuln = 0; S.blocking = false; hurt(2); if(S.invuln===0) S.invuln = inv;
+    spawnChips(f.x, f.y+1, f.z, 0xfff27a, 10); $('status').textContent = '⚡ ZAP! Storm cloud!'; } });
+  P4.rings.forEach(rg=>{ if(!rg.got && Math.abs(rg.x-f.x) < 1.5 && Math.abs(rg.z-f.z) < 2.4){ rg.got = true; rg.m.visible = false; S.gold = (S.gold||0)+2; spawnChips(rg.x, f.y, rg.z, 0xf5c542, 14); updateHud(); } });
+  if(f.x > -46){
+    P4.flying = false; P4.landed = true; S.x = -40; S.z = 0; S.yaw = 0; S.pitch = 0; camPos.set(0,0,0);
+    P4.helper.active = true; updateHud(); saveNow();
+    say([['🏰 Dragon Castle','The Thunder Dragon swoops down and lands in the field outside the castle walls. Guards come running out of the gate!'],
+         ['⚡ Thunder Dragon','I\'ll help you with the first wave! Press ⚡ Lightning (L) and I will strike where you aim. It recharges in a few seconds.']]);
+  }
+}
+
+// ---------- update ----------
+function p4Update(dt){
+  // lightning recharge
+  if((S.bolt||0) < 1){ const before = Math.floor(S.bolt*10); S.bolt = Math.min(1, (S.bolt||0) + dt/BOLT_RECHARGE); if(Math.floor(S.bolt*10)!==before) p4BoltUI(); }
+  if(P4.flying){ p4Fly(dt); return; }
+  for(const p of P4.picks){ if(p.taken) continue; if(dist(p.x,p.z)<1.6){ p.taken=true; p.m.visible=false; collectPotion(p.kind); } }
+  P4.gates.forEach(g=>{ if(g.open && g.lift<1){ g.lift = Math.min(1, g.lift+dt*0.6); g.port.position.y = g.lift*(g.h-1.5); } });
+  const area = p4Area(), myArea = p4AreaOf(S.x);
+  // the Thunder Dragon helps at the outer wall
+  if(P4.helper.active && area===0 && myArea===0){
+    P4.helper.cd -= dt;
+    if(P4.helper.cd <= 0){
+      const t = P4.enemies.filter(e=>e.area===0 && e.state!=='gone' && e.state!=='flee' && e.state!=='idle').sort((p,q)=>dist(p.x,p.z)-dist(q.x,q.z))[0];
+      if(t){ P4.helper.cd = 3.2; p4Strike(t.x, t.z, false); }
+    }
+  }
+  if(area>0) P4.helper.active = false;
+  // enemies
+  let engaged=null, ed=1e9;
+  for(const e of P4.enemies){
+    if(e.state==='gone') continue;
+    e.t -= dt; e.cd -= dt; e.flash = Math.max(0, e.flash-dt);
+    const d = dist(e.x,e.z);
+    if(e.state==='flee'){ const a = Math.atan2(e.z-S.z, e.x-S.x); const nx=e.x+Math.cos(a)*6*dt, nz=e.z+Math.sin(a)*6*dt; if(enemyCan4(nx,nz)){e.x=nx; e.z=nz;} e.yaw=a; if(e.t<=0){ e.state='gone'; e.m.visible=false; } continue; }
+    if(e.area > area){ e.state='idle'; continue; }
+    const here = myArea === e.area && !p4WallBetween(e.x, e.z, S.x, S.z);
+    if(!here && e.state!=='idle') e.state = 'idle';
+    const archer = e.kind==='archer', heavy = e.kind==='knight' || e.big;
+    const sp = (e.big ? 2.4 : heavy ? 3.0 : archer ? 3.0 : 4.0) * dt;
+    const step = (tx,tz,spd)=>{ const a = Math.atan2(tz-e.z, tx-e.x); e.yaw = a; const nx=e.x+Math.cos(a)*spd, nz=e.z+Math.sin(a)*spd; if(enemyCan4(nx,nz)){ e.x=nx; e.z=nz; } };
+    if(e.state==='idle'){
+      if(here && d < 15) e.state='chase';
+      else if(Math.hypot(e.x-e.hx, e.z-e.hz) > 0.6) step(e.hx, e.hz, sp*0.7);
+    } else if(e.state==='chase'){
+      if(archer){
+        e.yaw = Math.atan2(S.z-e.z, S.x-e.x);
+        if(d < 6) step(e.x-(S.x-e.x), e.z-(S.z-e.z), sp); else if(d > 15) step(S.x, S.z, sp);
+        if(e.cd<=0 && d < 20 && !p4WallBetween(e.x,e.z,S.x,S.z)){ e.state='windup'; e.t = 0.9; }
+      } else {
+        if(d > (e.big?2.6:1.9)) step(S.x, S.z, sp); else e.yaw = Math.atan2(S.z-e.z, S.x-e.x);
+        if(d < (e.big?3.6:2.9) && e.cd<=0){ e.state='windup'; e.t = e.big ? 0.8 : 0.55; }
+      }
+    } else if(e.state==='windup'){
+      e.yaw = Math.atan2(S.z-e.z, S.x-e.x);
+      if(e.t<=0){
+        e.state='chase'; e.swing = 0.25;
+        if(archer){ e.cd = 2.0 + Math.random()*0.8; p4Arrow(e); }
+        else { e.cd = e.big ? 1.6 : 1.15;
+          if(d < (e.big?4.6:3.4)){ const before = S.hp; hurt(e.big ? 9 : heavy ? 6 : 5, e.x, e.z);
+            if(S.hp < before){ const a = Math.atan2(S.z-e.z, S.x-e.x), kb = e.big ? 2.2 : 0.9; if(canStand4(S.x+Math.cos(a)*kb, S.z+Math.sin(a)*kb)){ S.x += Math.cos(a)*kb; S.z += Math.sin(a)*kb; } } } }
+      }
+    }
+    for(const o of P4.enemies){ if(o===e||o.state==='gone'||o.state==='flee') continue; const dd = Math.hypot(o.x-e.x,o.z-e.z); if(dd<1.3 && dd>0.01){ e.x -= (o.x-e.x)/dd*0.03; e.z -= (o.z-e.z)/dd*0.03; } }
+    if(e.state!=='idle' && d<ed){ ed=d; engaged=e; }
+  }
+  // arrows
+  for(let i=P4.arrows.length-1;i>=0;i--){
+    const a = P4.arrows[i]; a.life -= dt; a.m.position.addScaledVector(a.vel, dt);
+    let gone = a.life<=0;
+    if(a.px !== undefined && p4WallBetween(a.px, a.pz, a.m.position.x, a.m.position.z)) gone = true;
+    a.px = a.m.position.x; a.pz = a.m.position.z;
+    if(!gone && Math.hypot(a.m.position.x-S.x, a.m.position.z-S.z) < 0.8 && a.m.position.y < 2.6){
+      gone = true; if(shieldCovers(S.x - a.vel.x, S.z - a.vel.z)) spawnChips(S.x+Math.cos(S.yaw), 1.4, S.z+Math.sin(S.yaw), 0xf5c542, 6); else hurt(4); }
+    if(gone){ L4root.remove(a.m); P4.arrows.splice(i,1); }
+  }
+  p4Boss(dt);
+  // effects (strikes, orbs, meteors)
+  for(let i=P4.fx.length-1;i>=0;i--){
+    const o = P4.fx[i]; o.life -= dt;
+    if(o.kind==='strike'){ o.m.material.opacity = Math.max(0, o.life/0.4); o.beam.material.opacity = Math.max(0, o.life/0.4)*0.35; }
+    else if(o.kind==='orb'){
+      // homes in a little on the knight
+      const to = new THREE.Vector3(S.x - o.m.position.x, 0, S.z - o.m.position.z).normalize();
+      o.vel.x += to.x*dt*6; o.vel.z += to.z*dt*6; o.vel.setLength(o.speed);
+      o.m.position.addScaledVector(o.vel, dt); o.m.rotation.x += dt*8;
+      if(Math.hypot(o.m.position.x-S.x, o.m.position.z-S.z) < 1.0){ o.life = 0; if(shieldCovers(S.x - o.vel.x, S.z - o.vel.z)) spawnChips(S.x+Math.cos(S.yaw), 1.4, S.z+Math.sin(S.yaw), 0xc070ff, 8); else hurt(o.dmg); }
+    } else if(o.kind==='fire'){
+      o.m.position.addScaledVector(o.vel, dt); if(o.m.position.y < 0.9) o.m.position.y = 0.9;
+      if(Math.hypot(o.m.position.x-S.x, o.m.position.z-S.z) < 1.1){ o.life = 0; if(shieldCovers(S.x - o.vel.x, S.z - o.vel.z)) spawnChips(S.x+Math.cos(S.yaw), 1.4, S.z+Math.sin(S.yaw), 0xff8a3a, 8); else hurt(7); }
+    } else if(o.kind==='meteor'){
+      o.t -= dt; o.m.material.opacity = 0.5 + Math.sin(time*20)*0.3; o.m.scale.setScalar(0.4 + (1-Math.min(1, Math.max(0,o.t)/1.1))*0.6);
+      if(o.t<=0 && !o.struck){ o.struck = true; o.rock.visible = true; spawnChips(o.x, 0.6, o.z, 0xff6a1a, 14);
+        if(Math.hypot(S.x-o.x, S.z-o.z) < 1.9){ S.blocking = false; const inv = S.invuln; S.invuln = 0; hurt(8); if(S.invuln===0) S.invuln = inv; } }
+      if(o.rock){ o.rock.position.y = Math.max(0.6, 0.6 + Math.max(0,o.t)*20); }
+    }
+    if(o.life<=0){ L4root.remove(o.m); if(o.fill) L4root.remove(o.fill); if(o.beam) L4root.remove(o.beam); if(o.rock) L4root.remove(o.rock); P4.fx.splice(i,1); }
+  }
+  // lock-on
+  const b = P4.boss;
+  const turning = Math.abs((keys.r?1:0)-(keys.l?1:0)+joyV.x) > 0.25;
+  let lx=null, lz=null;
+  if(area===3 && b.state!=='wait' && b.state!=='done' && b.state!=='tp' && b.fly<0.5 && dist(b.x,b.z) < 20){ lx=b.x; lz=b.z; }
+  else if(P4.focus && P4.focus.state!=='gone' && P4.focus.state!=='flee' && dist(P4.focus.x,P4.focus.z) < 9){ lx=P4.focus.x; lz=P4.focus.z; }
+  else if(engaged && ed<9){ lx=engaged.x; lz=engaged.z; }
+  if(lx!==null && !turning && (S.lookT||0)<=0) S.yaw += angDiff(Math.atan2(lz-S.z, lx-S.x), S.yaw)*Math.min(1,dt*5);
+  // health bars
+  if(area===3 && b.state!=='wait' && b.state!=='done'){ $('boss').classList.remove('hidden'); $('bossName').textContent = b.form==='dragon' ? '🐲 The Dragon King' : '🧙 The Evil Sorcerer'; $('bossfill').style.width = Math.max(0,b.hp/b.max*100)+'%'; }
+  else {
+    const f = P4.focus && P4.focus.state!=='gone' && P4.focus.state!=='flee' && dist(P4.focus.x,P4.focus.z)<14 ? P4.focus : (engaged && ed<9 ? engaged : null);
+    if(f){ $('boss').classList.remove('hidden'); $('bossName').textContent = {goblin:'👺 Castle Goblin', archer:'🏹 Goblin Archer', knight:'🛡️ Armored Guard', captain:'🛡️ Guard Captain'}[f.kind] + (f.shieldHP>0 ? ' (shield up)' : ''); $('bossfill').style.width = Math.max(0,f.hp/f.max*100)+'%'; }
+    else $('boss').classList.add('hidden');
+  }
+  // the ⚡ button glows when the target in front of you is under open sky
+  $('prompt').classList.add('hidden');
+  $('sChop').classList.remove('ready'); $('sBuild').classList.remove('ready'); $('sUse').classList.remove('ready');
+}
+function p4BoltUI(){
+  const pct = Math.round((S.bolt||0)*100);
+  ['sBolt','bBolt'].forEach(id=>{ const el = $(id); if(!el) return; el.style.setProperty('--charge', pct+'%'); el.classList.toggle('ready', pct>=100); });
+}
+function p4Arrow(e){
+  const from = new THREE.Vector3(e.x + Math.cos(e.yaw)*0.6, heightAt4(e.x,e.z)+1.3, e.z + Math.sin(e.yaw)*0.6);
+  const dir = new THREE.Vector3(S.x, groundH(S.x,S.z)+1.2, S.z).sub(from).normalize();
+  const m = new THREE.Group(); m.position.copy(from); L4root.add(m);
+  const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.03,0.9,5), M(0x8b5a2b)); shaft.rotation.z = Math.PI/2; m.add(shaft);
+  m.rotation.y = -Math.atan2(dir.z, dir.x);
+  P4.arrows.push({m, vel:dir.multiplyScalar(17), life:2});
+}
+function p4Meteor(x,z,delay){
+  const ring = new THREE.Mesh(new THREE.RingGeometry(1.5, 1.9, 28), new THREE.MeshBasicMaterial({color:0xff6a1a, transparent:true, opacity:.8, side:THREE.DoubleSide}));
+  ring.rotation.x = -Math.PI/2; ring.position.set(x, 0.48, z); L4root.add(ring);
+  const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(0.8,0), new THREE.MeshBasicMaterial({color:0xff7a2a})); rock.position.set(x, 20, z); rock.visible = true; L4root.add(rock);
+  P4.fx.push({kind:'meteor', m:ring, rock, x, z, t:delay, life:delay+0.3});
+}
+function p4Boss(dt){
+  const b = P4.boss;
+  if(b.state==='wait'){
+    if(p4Area()>=3 && S.x > G4[2]+1.5){
+      b.state = 'intro';
+      say([['🧙 The Sorcerer','*a skinny old man in purple robes sits on the golden throne, wearing a glowing crown*'],
+           ['🧙 The Sorcerer','So, the little knight has come all this way. You freed my dragons. You took my gold. You chased off my goblins.'],
+           ['🧙 The Sorcerer','But I still have the DRAGON CROWN! Bow before the Dragon King! *his staff crackles with purple magic*'],
+           ['Tip','He teleports around and throws magic. Block with your shield, then hit him! ⚡ works under the hole in the roof.']], ()=>{ b.state = 'fight'; b.castCd = 1.5; b.tpCd = 4; });
+    }
+    return;
+  }
+  if(b.state==='intro' || b.state==='done') return;
+  b.t -= dt; b.flash = Math.max(0, b.flash-dt);
+  const d = dist(b.x,b.z), face = Math.atan2(S.z-b.z, S.x-b.x);
+  const turnTo = (a,rate)=>{ b.yaw += Math.max(-rate*dt, Math.min(rate*dt, angDiff(a, b.yaw))); };
+  if(b.state==='transform'){
+    const k = 1 - Math.max(0, b.t)/2.4;
+    b.sorc.scale.setScalar(1 + k*1.2); b.sorc.rotation.y += dt*8;
+    if(Math.random() < dt*20) spawnChips(b.x + (Math.random()-.5)*3, 1 + Math.random()*4, b.z + (Math.random()-.5)*3, 0x8a3aff, 2);
+    if(b.t <= 0 && !paused){
+      b.form = 'dragon'; b.sorc.visible = false; b.dk.dragon.visible = true; b.hp = 200; b.max = 200; b.state = 'roar'; b.t = 1.4; b.strikeCd = 3; b.breathCd = 5; b.biteCd = 1; b.skyCd = 0; b.phase = 1;
+      b.x = THRONE.x; b.z = 0; spawnChips(b.x, 4, b.z, 0x8a3aff, 40);
+    }
+    return;
+  }
+  if(b.form==='sorcerer'){
+    turnTo(face, 4);
+    b.castCd -= dt; b.tpCd -= dt;
+    if(b.state==='tp'){ if(b.t<=0){ b.state='fight'; b.sorc.visible = true; spawnChips(b.x, 1.5, b.z, 0xc070ff, 16); } return; }
+    if(b.tpCd <= 0 || (d < 2.6 && Math.random() < dt*1.2)){
+      // vanish and reappear somewhere else in the throne room
+      spawnChips(b.x, 1.5, b.z, 0xc070ff, 16);
+      let nx, nz, tries = 0;
+      do { const a = Math.random()*6.28, rr = 2 + Math.random()*8; nx = THRONE.x + Math.cos(a)*rr; nz = Math.sin(a)*rr; tries++; } while((Math.hypot(nx-S.x, nz-S.z) < 6 || nx < G4[2]+3) && tries < 20);
+      b.x = nx; b.z = nz; b.state = 'tp'; b.t = 0.7; b.sorc.visible = false; b.tpCd = 5 + Math.random()*2;
+      return;
+    }
+    if(b.castCd <= 0){
+      b.castCd = b.hp < b.max*0.5 ? 1.6 : 2.3;
+      const n = b.hp < b.max*0.5 ? 4 : 3;
+      for(let k=0;k<n;k++){ const a = face + (k-(n-1)/2)*0.35;
+        const orb = new THREE.Mesh(new THREE.IcosahedronGeometry(0.38,1), new THREE.MeshBasicMaterial({color:0xc070ff}));
+        orb.position.set(b.x + Math.cos(face)*0.8, 2.2, b.z + Math.sin(face)*0.8); L4root.add(orb);
+        P4.fx.push({kind:'orb', m:orb, vel:new THREE.Vector3(Math.cos(a), -0.08, Math.sin(a)).multiplyScalar(8), speed:8, dmg:5, life:3.2}); }
+    }
+    return;
+  }
+  // ---- dragon form ----
+  b.biteCd -= dt; b.strikeCd -= dt; b.breathCd -= dt; b.skyCd -= dt;
+  if(b.phase===1 && b.hp < b.max*0.5){
+    b.phase = 2; b.state = 'sky'; b.t = 6; b.skyCd = 20;
+    say([['🐲 The Dragon King','You will NOT take my crown! *he bursts up through the hole in the roof* Rain, FIRE, RAIN!']]);
+  }
+  if(b.state==='roar'){ turnTo(face,3); if(b.t<=0) b.state='chase'; }
+  else if(b.state==='sky'){
+    b.fly = Math.min(1, b.fly + dt*0.8); turnTo(face, 2);
+    if(Math.random() < dt*1.6) p4Meteor(S.x + (Math.random()-.5)*3, S.z + (Math.random()-.5)*3, 1.0);
+    if(b.t<=0) b.state='land';
+  } else if(b.state==='land'){
+    b.fly = Math.max(0, b.fly - dt*0.9);
+    // he lands back in the middle, right under the hole: a great time for lightning!
+    b.x += (THRONE.x - b.x)*Math.min(1, dt*2); b.z += (0 - b.z)*Math.min(1, dt*2);
+    if(b.fly<=0){ b.state='stunned'; b.t = 2.2; }
+  } else if(b.state==='stunned'){ if(b.t<=0) b.state='chase'; }
+  else if(b.state==='windup'){ turnTo(face, 1.4); if(b.t<=0){ b.state='breath'; b.t = 1.0; b.shots = 0; } }
+  else if(b.state==='breath'){
+    b.shotT = (b.shotT||0) - dt;
+    if(b.shotT<=0 && b.shots < 7){
+      b.shotT = 0.13; b.shots++;
+      const a = b.yaw + (b.shots-4)*0.13, sc = 1.65;
+      const from = new THREE.Vector3(b.x+Math.cos(b.yaw)*5.6*sc, 4.3*sc*0.8, b.z+Math.sin(b.yaw)*5.6*sc);
+      const orb = new THREE.Mesh(new THREE.IcosahedronGeometry(0.5,1), new THREE.MeshBasicMaterial({color:0xff7a2a}));
+      orb.position.copy(from); L4root.add(orb);
+      P4.fx.push({kind:'fire', m:orb, vel:new THREE.Vector3(Math.cos(a), (1.2-from.y)/Math.max(4,d), Math.sin(a)).normalize().multiplyScalar(15), life:2.2});
+    }
+    if(b.shots>=7 && b.shotT<=0){ b.state='chase'; b.breathCd = b.phase===2 ? 4.5 : 6; }
+  } else if(b.state==='hop'){ if(b.t<=0) b.state='chase'; }
+  else {
+    turnTo(face, 2.2);
+    if(d > 7.2){ const sp = (b.phase===2?4.2:3.4)*dt, nx = b.x+Math.cos(b.yaw)*sp, nz = b.z+Math.sin(b.yaw)*sp;
+      if(Math.hypot(nx-THRONE.x, nz-THRONE.z) < 7.5){ b.x=nx; b.z=nz; } }
+    if(d < 7.6 && b.biteCd<=0){
+      b.biteCd = b.phase===2 ? 1.4 : 1.8; b.state='hop'; b.t=0.35;
+      const before = S.hp; hurt(9, b.x, b.z);
+      if(S.hp < before){ const kb = 1.8; if(canStand4(S.x+Math.cos(face)*kb, S.z+Math.sin(face)*kb)){ S.x += Math.cos(face)*kb; S.z += Math.sin(face)*kb; } }
+    } else if(b.strikeCd<=0){
+      b.strikeCd = b.phase===2 ? 4.5 : 6;
+      p4Meteor(S.x, S.z, 1.1);
+      for(let k=0;k<(b.phase===2?4:3);k++){ const a = Math.random()*6.28, rr = 3+Math.random()*4; p4Meteor(S.x+Math.cos(a)*rr, S.z+Math.sin(a)*rr, 1.1+k*0.15); }
+      b.state='hop'; b.t=0.6;
+    } else if(b.breathCd<=0 && d < 18){ b.state='windup'; b.t = 0.9; }
+    else if(b.phase===2 && b.skyCd<=0){ b.state='sky'; b.t=6; b.skyCd = 20; }
+  }
+}
+
+// ---------- animate ----------
+function p4Animate(dt){
+  if(!P4) return;
+  for(const e of P4.enemies){
+    if(e.state==='gone') continue;
+    const y = heightAt4(e.x,e.z), moving = e.state==='chase' || e.state==='flee';
+    e.m.position.set(e.x, y + (moving ? Math.abs(Math.sin(time*12+e.bob))*0.15 : 0), e.z);
+    e.m.rotation.y = -e.yaw;
+    const arm = e.m.userData.arm;
+    if(e.kind==='archer'){ arm.rotation.z = e.state==='windup' ? -1.5 : -0.4; }
+    else if(e.state==='windup') arm.rotation.z = Math.min(2.6, arm.rotation.z + dt*8);
+    else if(e.swing>0){ e.swing -= dt; arm.rotation.z = -0.9; }
+    else arm.rotation.z += (-0.3 - arm.rotation.z)*Math.min(1,dt*8);
+    e.m.userData.skin.color.setHex(e.flash>0 ? 0xff5a4a : (e.kind==='archer' ? 0x8ab86a : 0x6aa84f));
+  }
+  P4.picks.forEach(p=>{ if(!p.taken){ p.m.position.y = p.base + Math.sin(time*3+p.x)*0.12; p.m.rotation.y += dt; } p.glow.visible = !p.taken; });
+  P4.fires.forEach((f,i)=>{ f.scale.set(1, 0.85+Math.sin(time*13+i)*0.18, 1); });
+  P4.shafts.forEach((sh,i)=>{ sh.material.opacity = 0.13 + Math.sin(time*1.5+i)*0.04; });
+  P4.rings.forEach(rg=>{ rg.m.rotation.x += dt*2; });
+  // the Thunder Dragon: carrying you, helping at the wall, or circling high above
+  const TD = P4.td, flap = 8;
+  TD.wings.forEach(w=>{ w.piv.rotation.x = w.s*(-0.15 + Math.sin(time*flap)*0.5); });
+  TD.tailSegs.forEach((sg,i)=>{ sg.rotation.y = Math.sin(time*2.4 - i*0.55) * (0.05 + i*0.012); });
+  if(P4.flying){
+    const f = P4.fly;
+    TD.dragon.position.set(f.x, f.y, f.z); TD.dragon.rotation.set(f.roll*0.6, 0, 0); TD.dBody.position.y = 0;
+    knight.visible = true; knight.position.set(f.x + 0.4, f.y + 4.3, f.z); knight.rotation.set(f.roll*0.6, 0, 0);
+    camera.position.set(f.x - 14, f.y + 7, f.z*0.7); camera.lookAt(f.x + 10, f.y + 1, f.z);
+    camPos.copy(camera.position);
+  } else if(P4.helper && P4.helper.active){
+    const a = time*0.5; TD.dragon.position.set(-30 + Math.cos(a)*10, 14 + Math.sin(time)*0.8, Math.sin(a)*14); TD.dragon.rotation.set(0, -(a + Math.PI/2), 0);
+  } else {
+    const a = time*0.3; TD.dragon.position.set(THRONE.x - 20 + Math.cos(a)*40, 28, Math.sin(a)*30); TD.dragon.rotation.set(0, -(a + Math.PI/2), 0.15);
+  }
+  if(!P4.flying) knight.rotation.x = 0;
+  // the boss
+  const b = P4.boss;
+  b.sorc.position.set(b.x, heightAt4(b.x,b.z) + (b.state==='fight' ? Math.sin(time*3)*0.08 : 0), b.z);
+  if(b.state!=='transform') b.sorc.rotation.y = -b.yaw;
+  b.sorc.userData.orb.material.color.setHex(b.flash>0 ? 0xffffff : 0xc070ff);
+  b.sorc.userData.staff.rotation.z = b.castCd < 0.4 ? -0.8 : 0;
+  const DK = b.dk;
+  if(DK.dragon.visible){
+    DK.dragon.position.set(b.x, 0.4 + b.fly*10, b.z); DK.dragon.rotation.y = -b.yaw;
+    const fl = (b.state==='sky'||b.state==='land'||b.state==='roar'||b.fly>0) ? 9 : 3;
+    DK.wings.forEach(w=>{ w.piv.rotation.x = w.s*(-0.15 + Math.sin(time*fl)*0.45); });
+    DK.dBody.position.y = Math.sin(time*2)*0.1 + (b.state==='hop'?0.5:0) + (b.state==='stunned'?-0.4:0);
+    DK.head.rotation.z = b.state==='windup' ? 0.6 : (b.state==='breath' ? -0.3 : (b.state==='stunned' ? -0.6 : Math.sin(time*1.5)*0.1));
+    DK.dJaw.rotation.z = (b.state==='breath'||b.state==='roar') ? -0.6 : -0.03;
+    DK.tailSegs.forEach((sg,i)=>{ sg.rotation.y = Math.sin(time*2.4 - i*0.55) * (0.05 + i*0.012); });
+    DK.dGreen.color.setHex(b.flash>0 ? 0xffffff : 0x2a2230);
+    if(b.state==='stunned' && Math.random() < dt*10) spawnChips(b.x + (Math.random()-.5)*3, 6, b.z + (Math.random()-.5)*3, 0xfff27a, 2);
+  }
+}
+
 // ================= STATE =================
 let S, cam = 'tp', running = false, paused = true;
 const keys = {};
@@ -2062,11 +2745,12 @@ function saveNow(){
     s:{name:S.name, title:S.title, x:+S.x.toFixed(2), z:+S.z.toFixed(2), yaw:+S.yaw.toFixed(3), pitch:+S.pitch.toFixed(3),
        hp:Math.max(1,S.hp), wood:S.wood, stone:S.stone, pot:S.pot, sword:S.sword, shield:S.shield,
        freed:S.freed, house:S.house, bridge:S.bridge, won:S.won, seenPot:!!S.seenPot,
-       part:S.part||1, gold:S.gold||0, maxHp:S.maxHp, part3done:!!S.part3done, potSpeed:S.potSpeed||0, potStr:S.potStr||0, seenSpeed:!!S.seenSpeed, seenStr:!!S.seenStr, carrot:S.carrot||0, pie:S.pie||0, seenFood:!!S.seenFood, seenPumpkin:!!S.seenPumpkin},
+       part:S.part||1, gold:S.gold||0, maxHp:S.maxHp, part3done:!!S.part3done, part4done:!!S.part4done, potSpeed:S.potSpeed||0, potStr:S.potStr||0, seenSpeed:!!S.seenSpeed, seenStr:!!S.seenStr, carrot:S.carrot||0, pie:S.pie||0, seenFood:!!S.seenFood, seenPumpkin:!!S.seenPumpkin},
     picks: pickups.map(p=>p.taken?1:0),
     trees: trees.map(t=>t.alive?t.hits:-1)
   };
   if(S.part===3 && P3){ data.p3 = {gates: p3Area(), done: P3.done}; }
+  if(S.part===4 && P4){ data.p4 = {gates: p4Area(), landed: !P4.flying, done: P4.done}; }
   if(S.part===2 && P2){
     data.p2 = {trees:P2.trees.map(t=>t.alive?t.hits:-1), picks:P2.picks.map(p=>p.taken?1:0), freed:P2.vill.map(v=>v.freed?1:0),
                home:P2.home.slice(), gobs:P2.gobs.map(g=>(g.state==='gone'||g.state==='flee')?1:0), seen:P2.camps.map(c=>c.seen?1:0), done:P2.done};
@@ -2089,6 +2773,9 @@ function applySave(d){
   if(S.bridge){ bridge.visible=true; bridgeSpot.visible=false; }
   if(S.won){ D.gone = true; dragon.visible = false; }
   S.gold = v.gold||0; S.maxHp = v.maxHp||30; S.part3done = !!v.part3done; S.potSpeed = v.potSpeed||0; S.potStr = v.potStr||0; S.seenSpeed = !!v.seenSpeed; S.seenStr = !!v.seenStr; S.carrot = v.carrot||0; S.pie = v.pie||0; S.seenFood = !!v.seenFood; S.seenPumpkin = !!v.seenPumpkin;
+  S.part4done = !!v.part4done;
+  if(v.part===4){ const q = d.p4 || {}; p4Start(false); p4Reset(q.gates||0, !q.landed);
+    if(q.done){ P4.done = true; const b = P4.boss; b.state='done'; b.dk.dragon.visible=false; b.sorc.visible=true; b.sorc.userData.crown.visible=false; b.sorc.scale.setScalar(0.85); b.x = P4.cage.position.x; b.z = P4.cage.position.z; P4.cage.visible = true; } }
   if(v.part===3){ p2Start(true); p2SetDone(); p3Start(false); p3Reset((d.p3&&d.p3.gates)||0); if(d.p3&&d.p3.done){ P3.done = true; P3.boss.freed = true; P3.boss.state='freed'; P3.boss.td.collar.visible=false; } }
   if(v.part===2){
     p2Start(true);
@@ -2109,6 +2796,7 @@ function applySave(d){
   if(!canStand(S.x, S.z)){
     if(S.part===2){ S.x = VILLAGE.x+5; S.z = VILLAGE.z-3; }
     else if(S.part===3){ S.x = -48; S.z = 0; }
+    else if(S.part===4){ S.x = -40; S.z = 0; }
     else { S.x = S.freed ? bea.position.x-2 : -36; S.z = S.freed ? bea.position.z : 0; }
   }
   setCam(d.cam==='fp'?'fp':'tp');
@@ -2121,7 +2809,8 @@ function showContinue(){
   if(d){
     const v = d.s;
     let where = 'just landed on the beach';
-    if(v.part===3){ const g = (d.p3&&d.p3.gates)||0; where = (d.p3&&d.p3.done) ? 'Part 3 done! The Thunder Dragon is free ⚡' : `Part 3, the Dragon's Treasury (${g}/2 gates open)`; }
+    if(v.part===4){ const q = d.p4||{}; where = q.done ? 'You won! The Dragon King is in prison 🏰🎉' : `Part 4, Dragon Castle (${q.gates||0}/3 doors open)`; }
+    else if(v.part===3){ const g = (d.p3&&d.p3.gates)||0; where = (d.p3&&d.p3.done) ? 'Part 3 done! The Thunder Dragon is free ⚡' : `Part 3, the Dragon's Treasury (${g}/2 gates open)`; }
     else if(v.part===2){
       const q = d.p2||{}; const f = (q.freed||[]).filter(Boolean).length, b = (q.home||[]).filter(h=>h>=0).length;
       where = q.done ? 'Part 2 done! The village is built 🎉' : `Part 2, freed ${f}/4 villagers, built ${b}/4 houses`;
@@ -2184,6 +2873,7 @@ function updateHud(){
   else q = 'You did it!';
   if(S.part===2 && P2) q = p2Quest();
   if(S.part===3 && P3) q = p3Quest();
+  if(S.part===4 && P4){ q = p4Quest(); p4BoltUI(); }
   $('quest').innerHTML = q;
   $('gold').textContent = S.gold||0; $('goldBox').classList.toggle('hidden', !(S.gold>0)); $('stoneBox').classList.toggle('hidden', S.part>=2);
   const st=[]; if(S.poison>0) st.push('☠️ Poisoned! Drink a potion'); if(S.mud>0) st.push('🟤 Mud in your eyes');
@@ -2195,6 +2885,7 @@ function updateHud(){
 function objective(){
   if(S.part===2) return p2Objective();
   if(S.part===3) return p3Objective();
+  if(S.part===4) return p4Objective();
   if(!S.sword) return [chest.position.x, 2.4, chest.position.z];
   if(!S.freed) return [0, 4, -12];
   if(!S.house){
@@ -2223,6 +2914,7 @@ function useAct(){
   if(paused) return;
   if(S.part===2) return p2Use();
   if(S.part===3) return p3Use();
+  if(S.part===4) return;
   if(!S.sword && dist(chest.position.x,chest.position.z)<3){
     S.sword = true; S.shield = true; lid.rotation.x = -1.9; updateHud();
     say([['Treasure Chest','You found a shining Knight\'s Sword ⚔️ and a Green Shield 🛡️!'],
@@ -2254,7 +2946,7 @@ function useAct(){
 function buildAct(){
   if(paused || !S.freed) return;
   if(S.part===2) return p2Build();
-  if(S.part===3) return say([['Build','There is nothing to build here. This is a battle!']]);
+  if(S.part>=3) return say([['Build','There is nothing to build here. This is a battle!']]);
   if(!S.house && dist(PLOT.x,PLOT.z)<4){
     if(S.wood>=4 && S.stone>=3){
       S.wood-=4; S.stone-=3; S.house=true; house.visible=true; plotMark.visible=false; houseCol = addCol(PLOT.x,PLOT.z,2.4);
@@ -2279,7 +2971,7 @@ function chopAct(){
   if(paused || S.chop>0) return;
   S.chop = 0.4;
   if(S.part===2) return p2Chop();
-  if(S.part===3) return;
+  if(S.part>=3) return;
   const t = nearTree();
   if(!t) return;
   t.hits++; spawnChips(t.x,1.5,t.z,0xc89060,6);
@@ -2309,6 +3001,7 @@ function swordAct(){
   if(!swingStart()) return;
   if(S.part===2) return p2Sword();
   if(S.part===3) return p3Sword();
+  if(S.part===4) return p4Sword();
   // hit dragon?
   if(S.fight && !D.gone){
     const dx = dragon.position.x - S.x, dz = dragon.position.z - S.z, d = Math.hypot(dx,dz);
@@ -2359,7 +3052,7 @@ function win(){
         $('endTitle').textContent = 'Part 1 Complete!';
         $('endText').textContent = `${kn()} rescued Bea, built a house and a bridge, and beat the Swamp Dragon! But the Dragon King is still out there, at the top of Dragon Castle.`;
         $('endNext').innerHTML = 'Next: <b>Part 2: The Big Island</b> 🏝️ Goblins, villagers, and a village to build!';
-        $('p2Btn').classList.remove('hidden'); $('p3Btn').classList.add('hidden');
+        $('p2Btn').classList.remove('hidden'); $('p3Btn').classList.add('hidden'); $('p4Btn').classList.add('hidden');
         $('end').classList.remove('hidden'); paused = true;
       });
   }, 1600);
@@ -2367,6 +3060,7 @@ function win(){
 function lose(){
   if(S.part===2) return p2Lose();
   if(S.part===3) return p3Lose();
+  if(S.part===4) return p4Lose();
   S.hp = S.maxHp; S.poison=0; S.mud=0; flashFx('poisonfx',0); $('mud').style.opacity=0;
   S.x = bea.position.x - 2; S.z = bea.position.z; S.yaw = 0;
   if(S.pot<1) S.pot=1;
@@ -2393,6 +3087,7 @@ window.addEventListener('keydown', e=>{
   if(e.code==='Digit7') strengthAct();
   if(e.code==='Digit8') carrotAct();
   if(e.code==='Digit9') pieAct();
+  if(e.code==='KeyL') boltAct();
   if(e.code==='Digit4') chopAct();
   if(e.code==='Digit5') buildAct();
   if(e.code==='KeyV') setCam(cam==='fp'?'tp':'fp');
@@ -2410,6 +3105,7 @@ const ACT = {
   speed: {down:speedAct},
   strength:{down:strengthAct},
   carrot:{down:carrotAct},
+  bolt:  {down:boltAct},
   pie:   {down:pieAct},
   chop:  {down:chopAct},
   build: {down:buildAct},
@@ -2468,7 +3164,7 @@ function touchRole(t){
   if(a) return 'act:'+a.dataset.act;
   // a thumb that lands just outside the big round buttons still presses them
   if(!$('tact').classList.contains('hidden')){
-    for(const id of ['bSword','bShield']){
+    for(const id of ['bSword','bShield','bBolt']){ if($(id).classList.contains('hidden')) continue;
       const r = $(id).getBoundingClientRect(), cx = r.left+r.width/2, cy = r.top+r.height/2;
       if(Math.hypot(t.clientX-cx, t.clientY-cy) < r.width/2 + 34) return 'act:'+$(id).dataset.act;
     }
@@ -2525,6 +3221,7 @@ document.addEventListener('touchcancel', endTouch);
 function canStand(x,z){
   if(S.part===2) return canStand2(x,z);
   if(S.part===3) return canStand3(x,z);
+  if(S.part===4) return canStand4(x,z);
   if(x<LAND.x0+0.5 || x>LAND.x1-0.5 || z<LAND.z0+0.5 || z>LAND.z1-0.5) return false;
   const onBridge = S.bridge && Math.abs(z-BRIDGE_Z) < BRIDGE_HALF-0.4 && x > RIVER_X0-3.6 && x < RIVER_X1+3.6;
   if(!onBridge){
@@ -2589,6 +3286,7 @@ function update(dt){
   }
   if(S.part===2){ p2Update(dt); return; }
   if(S.part===3){ p3Update(dt); return; }
+  if(S.part===4){ p4Update(dt); return; }
   // pickups
   for(const p of pickups){
     if(p.taken) continue;
@@ -2701,11 +3399,11 @@ function animate(dt){
       const dir = new THREE.Vector3(-Math.cos(S.yaw)*Math.cos(elev), Math.sin(elev), -Math.sin(S.yaw)*Math.cos(elev));
       let dCam = back;
       camRay.set(headP, dir); camRay.far = back;
-      const occ = (S.part===2 && P2 ? P2.occ : (S.part===3 && P3 ? P3.occ : L1occ)).filter(o=>o.visible && o.parent && o.parent.visible !== false);
+      const occ = (S.part===2 && P2 ? P2.occ : (S.part===3 && P3 ? P3.occ : (S.part===4 && P4 ? P4.occ : L1occ))).filter(o=>o.visible && o.parent && o.parent.visible !== false);
       const hit = camRay.intersectObjects(occ, true)[0];
       if(hit) dCam = Math.max(1.3, hit.distance - 0.4);
       const target = headP.clone().addScaledVector(dir, dCam);
-      const gh = S.part===2 ? heightAt2(target.x, target.z) : (S.part===3 && P3 ? heightAt3(target.x, target.z) : heightAt(target.x, target.z));
+      const gh = S.part===2 ? heightAt2(target.x, target.z) : (S.part===3 && P3 ? heightAt3(target.x, target.z) : (S.part===4 && P4 ? heightAt4(target.x, target.z) : heightAt(target.x, target.z)));
       target.y = Math.max(target.y, gh + 0.6);
       if(camPos.lengthSq()===0 || hit) camPos.copy(target); else camPos.lerp(target, Math.min(1, dt*8));
       camera.position.copy(camPos);
@@ -2731,6 +3429,7 @@ function animate(dt){
   }
   if(S && S.part===2) p2Animate(dt);
   if(S && S.part===3) p3Animate(dt);
+  if(S && S.part===4) p4Animate(dt);
   // world life: sun + shadows follow the knight, sky, clouds, water, smoke
   if(S && S.x!==undefined){ sun.position.set(S.x+SUN_OFF.x, SUN_OFF.y, S.z+SUN_OFF.z); sun.target.position.set(S.x,0,S.z); }
   camera.userData.sky.position.copy(camera.position);
@@ -2826,6 +3525,7 @@ function sailToPart2(){
 }
 $('p2Btn').onclick = sailToPart2;
 $('p3Btn').onclick = sailToPart3;
+$('p4Btn').onclick = sailToPart4;
 $('contBtn').onclick = continueGame;
 showContinue();
 $('againBtn').onclick = ()=>{ saveNow(); $('end').classList.add('hidden'); $('hud').classList.add('hidden'); $('title').classList.remove('hidden'); running=false; showContinue(); };
@@ -2835,7 +3535,7 @@ D = {state:'sleep', flash:0};
 camPos.set(-40, 8, 0);
 tick();
 // test hook
-window.__dk = { kit:{THREE, scene, camera, renderer, buildDragon, shieldModel, swordModel, M, mesh, L1root, L2root, L3root, knight, marker, sun, hemi, sea}, carrotAct, pieAct, p3WallBetween:(a,b,c,d)=>p3WallBetween(a,b,c,d), speedAct, strengthAct, potionAct, step:(n)=>{ for(let i=0;i<n;i++){ if(!paused) update(0.05); time+=0.05; animate(0.05); } }, sailToPart3, get P3(){return P3;}, canStand3:(x,z)=>canStand3(x,z), sailToPart2, get P2(){return P2;}, canStand2: (x,z)=>canStand2(x,z), heightAt2, VILLAGE, PLOTS, CAMPS, canStand, heightAt, saveNow, readSave, dragon, trees, get paused(){return paused;}, get S(){return S;}, get D(){return D;}, useAct, buildAct, chopAct, swordAct, potionAct, setCam, next };
+window.__dk = { sailToPart4, boltAct, get P4(){return P4;}, canStand4:(x,z)=>canStand4(x,z), kit:{THREE, scene, camera, renderer, buildDragon, shieldModel, swordModel, M, mesh, L1root, L2root, L3root, knight, marker, sun, hemi, sea}, carrotAct, pieAct, p3WallBetween:(a,b,c,d)=>p3WallBetween(a,b,c,d), speedAct, strengthAct, potionAct, step:(n)=>{ for(let i=0;i<n;i++){ if(!paused) update(0.05); time+=0.05; animate(0.05); } }, sailToPart3, get P3(){return P3;}, canStand3:(x,z)=>canStand3(x,z), sailToPart2, get P2(){return P2;}, canStand2: (x,z)=>canStand2(x,z), heightAt2, VILLAGE, PLOTS, CAMPS, canStand, heightAt, saveNow, readSave, dragon, trees, get paused(){return paused;}, get S(){return S;}, get D(){return D;}, useAct, buildAct, chopAct, swordAct, potionAct, setCam, next };
 })();
 </script>
 </body>
