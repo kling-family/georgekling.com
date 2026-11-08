@@ -840,7 +840,7 @@ const L2root = new THREE.Group(); L2root.visible = false; scene.add(L2root);
 let P2 = null;              // Part 2 world + state, built the first time you sail there
 let P3 = null; let heightAt3 = (x,z)=>0;
 const PART3_READY = true;
-const PART4_READY = false;   // the preview turns this on
+const PART4_READY = true;
 function groundH(x,z){ return S && S.part===2 ? heightAt2(x,z) : (S && S.part===3 ? heightAt3(x,z) : (S && S.part===4 ? heightAt4(x,z) : 0)); }
 function showPart(n){
   L1root.visible = n===1; L2root.visible = n===2; if(typeof L3root!=='undefined') L3root.visible = n===3; if(typeof L4root!=='undefined') L4root.visible = n===4;
