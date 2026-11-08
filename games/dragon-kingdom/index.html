@@ -48,7 +48,7 @@
   .slot.locked{opacity:.3}
   .slot.ready{border-color:var(--gold);box-shadow:0 0 12px var(--gold)}
   .slot.active{background:#5a3a14}
-  @media (max-width:520px){.slot{width:50px;height:58px;font-size:22px}.slot small{font-size:9px}#prompt{bottom:100px;font-size:14px}}
+  @media (max-width:620px){.slot{width:44px;height:54px;font-size:20px}.slot small{font-size:8px}#prompt{bottom:96px;font-size:14px}#bar{gap:3px}}
   #joy{position:absolute;left:24px;bottom:110px;width:140px;height:140px;margin:0;border-radius:50%;background:rgba(255,255,255,.15);border:3px solid rgba(255,255,255,.45);pointer-events:none;transition:opacity .2s}
   #joy.idle{opacity:.55}
   #knob{position:absolute;left:42px;top:42px;width:56px;height:56px;border-radius:50%;background:rgba(255,246,227,.85)}
@@ -113,6 +113,8 @@
     <button class="slot locked" id="sSword" data-act="sword"><span class="key">1</span>⚔️<small>Sword</small></button>
     <button class="slot locked" id="sShield" data-act="shield"><span class="key">2</span>🛡️<small>Shield</small></button>
     <button class="slot" id="sPot" data-act="pot"><span class="key">3</span><span class="cnt" id="potCnt">0</span>🧪<small>Potion</small></button>
+    <button class="slot locked" id="sSpeed" data-act="speed"><span class="key">6</span><span class="cnt" id="spdCnt">0</span>⚡<small>Speed</small></button>
+    <button class="slot locked" id="sStr" data-act="strength"><span class="key">7</span><span class="cnt" id="strCnt">0</span>💪<small>Strength</small></button>
     <button class="slot" id="sChop" data-act="chop"><span class="key">4</span>🪓<small>Chop</small></button>
     <button class="slot locked" id="sBuild" data-act="build"><span class="key">5</span>🔨<small>Build</small></button>
   </div>
@@ -553,21 +555,37 @@ for(const sx of [-3.4,3.4]) mesh(new THREE.BoxGeometry(0.6,1.2,BRIDGE_HALF*2+0.4
 
 // pickups
 const pickups = [];
+// Potions: 🧪 healing (teal), ⚡ speed (yellow), 💪 strength (red)
+const POTION = {potion:{c:0x45e0b0, e:0x1a6a50, ring:0x6fffd2}, speed:{c:0xffd23a, e:0x6a5000, ring:0xfff27a}, strength:{c:0xe0402a, e:0x5a1000, ring:0xff8a6a}};
+function potionModel(kind, parent){
+  const P = POTION[kind], g = new THREE.Group(); parent.add(g);
+  mesh(new THREE.SphereGeometry(0.35,12,10), M(P.c,{emissive:P.e}), 0,0,0, g);
+  mesh(new THREE.CylinderGeometry(0.1,0.12,0.35), M(0xd8f8ff), 0,0.38,0, g);
+  mesh(new THREE.CylinderGeometry(0.13,0.13,0.12), M(0x8b5a2b), 0,0.6,0, g);
+  if(kind==='speed'){ const z1 = mesh(new THREE.BoxGeometry(0.06,0.32,0.05), new THREE.MeshBasicMaterial({color:0xffffff}), 0.02,0.02,0.34, g); z1.rotation.z = 0.5; }
+  if(kind==='strength'){ mesh(new THREE.BoxGeometry(0.22,0.06,0.05), new THREE.MeshBasicMaterial({color:0xffffff}), 0,0.02,0.34, g); mesh(new THREE.BoxGeometry(0.06,0.22,0.05), new THREE.MeshBasicMaterial({color:0xffffff}), 0,0.02,0.34, g); }
+  return g;
+}
+const isPotion = k => k==='potion' || k==='speed' || k==='strength';
+function collectPotion(kind){
+  if(kind==='speed'){ S.potSpeed = (S.potSpeed||0)+1; if(!S.seenSpeed){ S.seenSpeed = true; say([['⚡ Speed Potion!','A yellow Speed Potion! Press ⚡ Speed (6) to run super fast and swing faster for 20 seconds.']]); } }
+  else if(kind==='strength'){ S.potStr = (S.potStr||0)+1; if(!S.seenStr){ S.seenStr = true; say([['💪 Strength Potion!','A red Strength Potion! Press 💪 Strength (7) and every hit does DOUBLE damage for 20 seconds.']]); } }
+  else { S.pot++; if(!S.seenPot){ S.seenPot=true; say([['🧪 Potion!','A healing potion! Press 🧪 Potion (3) to heal and cure poison. Save it for a dragon fight!']]); } }
+  updateHud();
+}
 function pickup(kind,x,z){
   let m;
   if(kind==='wood'){ m = mesh(new THREE.CylinderGeometry(0.28,0.28,1.3,8), M(0x8b5a2b), x,0.4,z); m.rotation.z=Math.PI/2; }
   if(kind==='stone'){ m = mesh(new THREE.DodecahedronGeometry(0.45), M(0x9a9ca0), x,0.45,z); }
-  if(kind==='potion'){ m = new THREE.Group(); m.position.set(x,0.6,z); scene.add(m);
-    mesh(new THREE.SphereGeometry(0.35,12,10), M(0x45e0b0,{emissive:0x1a6a50}), 0,0,0,m);
-    mesh(new THREE.CylinderGeometry(0.1,0.12,0.35), M(0xd8f8ff), 0,0.38,0,m);
-    mesh(new THREE.CylinderGeometry(0.13,0.13,0.12), M(0x8b5a2b), 0,0.6,0,m); }
-  const glow = new THREE.Mesh(new THREE.RingGeometry(0.45,0.75,20), new THREE.MeshBasicMaterial({color: kind==='potion'?0x6fffd2:0xffe08a, transparent:true, opacity:.4, side:THREE.DoubleSide}));
+  if(isPotion(kind)){ m = potionModel(kind, scene); m.position.set(x,0.6,z); }
+  const glow = new THREE.Mesh(new THREE.RingGeometry(0.45,0.75,20), new THREE.MeshBasicMaterial({color: isPotion(kind)?POTION[kind].ring:0xffe08a, transparent:true, opacity:.4, side:THREE.DoubleSide}));
   glow.rotation.x = -Math.PI/2; glow.position.set(x, 0.06, z); scene.add(glow);
   pickups.push({kind,m,x,z,taken:false,base:m.position.y,glow});
 }
 [[-33,-4],[-22,10],[-14,-12],[-6,2],[6,-6],[-26,-18]].forEach(p=>pickup('wood',...p));
 [[-30,10],[-18,2],[-10,-14],[8,4]].forEach(p=>pickup('stone',...p));
 pickup('potion',-24,14); pickup('potion',22,-14); pickup('potion',-4,-20);
+pickup('speed',-36,-16); pickup('strength',8,16);
 
 // objective marker
 const marker = new THREE.Mesh(new THREE.OctahedronGeometry(0.45), new THREE.MeshBasicMaterial({color:0xf5c542}));
@@ -635,6 +653,8 @@ function shieldModel(){
   return g;
 }
 const tpShield = new THREE.Group(); tpShield.position.set(0.35,1.15,0.5); knight.add(tpShield); tpShield.visible=false;
+const aura = new THREE.Mesh(new THREE.RingGeometry(0.55, 0.85, 28), new THREE.MeshBasicMaterial({color:0xffd23a, transparent:true, opacity:.6, side:THREE.DoubleSide}));
+aura.rotation.x = -Math.PI/2; aura.position.y = 0.06; aura.visible = false; knight.add(aura);
 { const sm = shieldModel(); sm.rotation.y = Math.PI/2; sm.scale.setScalar(0.95); tpShield.add(sm); }
 // first-person hands (children of camera)
 const fpSword = swordModel(); fpSword.scale.setScalar(0.45); fpSword.position.set(0.55,-0.55,-1); fpSword.rotation.set(-0.3,0,-0.35); camera.add(fpSword); fpSword.visible=false;
@@ -789,7 +809,7 @@ const L1root = new THREE.Group();
 const L2root = new THREE.Group(); L2root.visible = false; scene.add(L2root);
 let P2 = null;              // Part 2 world + state, built the first time you sail there
 let P3 = null; let heightAt3 = (x,z)=>0;
-const PART3_READY = false;   // the preview turns this on
+const PART3_READY = true;
 function groundH(x,z){ return S && S.part===2 ? heightAt2(x,z) : (S && S.part===3 ? heightAt3(x,z) : 0); }
 function showPart(n){
   L1root.visible = n===1; L2root.visible = n===2; if(typeof L3root!=='undefined') L3root.visible = n===3;
@@ -1016,13 +1036,13 @@ function buildPart2(){
   // pickups: logs and potions
   const pk = (kind,x,z)=>{ let m; const y = heightAt2(x,z);
     if(kind==='wood'){ m = m2(new THREE.CylinderGeometry(0.28,0.28,1.3,8), M(0x8b5a2b), x,y+0.4,z); m.rotation.z=Math.PI/2; }
-    else { m = new THREE.Group(); m.position.set(x,y+0.6,z); add(m);
-      m2(new THREE.SphereGeometry(0.35,12,10), M(0x45e0b0,{emissive:0x1a6a50}), 0,0,0,m); m2(new THREE.CylinderGeometry(0.1,0.12,0.35), M(0xd8f8ff), 0,0.38,0,m); m2(new THREE.CylinderGeometry(0.13,0.13,0.12), M(0x8b5a2b), 0,0.6,0,m); }
-    const glow = new THREE.Mesh(new THREE.RingGeometry(0.45,0.75,20), new THREE.MeshBasicMaterial({color: kind==='potion'?0x6fffd2:0xffe08a, transparent:true, opacity:.4, side:THREE.DoubleSide}));
+    else { m = potionModel(kind, R); m.position.set(x,y+0.6,z); }
+    const glow = new THREE.Mesh(new THREE.RingGeometry(0.45,0.75,20), new THREE.MeshBasicMaterial({color: isPotion(kind)?POTION[kind].ring:0xffe08a, transparent:true, opacity:.4, side:THREE.DoubleSide}));
     glow.rotation.x = -Math.PI/2; glow.position.set(x, y+0.06, z); add(glow);
     P2.picks.push({kind,m,x,z,taken:false,base:m.position.y,glow}); };
   [[-46,6],[-40,-10],[-20,14],[-14,-8],[-24,-16],[-8,6],[10,-8],[6,18]].forEach(([x,z])=>pk('wood',x,z));
   [[-18,0],[14,-24],[50,-2],[20,32]].forEach(([x,z])=>pk('potion',x,z));
+  pk('speed',-6,-20); pk('speed',30,6); pk('strength',44,-26); pk('strength',-16,30);
 
   // goblin camps
   CAMPS.forEach((cp,ci)=>{
@@ -1189,7 +1209,10 @@ function p2Use(){
     const i = pp.who, info = VILLAGERS[i];
     if(P2.home[i] < 0){ say([[`${info.name} ${info.role}`, 'Could you build me a house? 4 wood, at one of the plots. 🏠']]); return; }
     if(i===1){ const before = S.pot; S.pot = Math.max(S.pot, 3); updateHud();
-      say([['Rosa the Healer', S.pot>before ? `Here you go! Fresh potions. You have ${S.pot} now. 🧪` : 'You already have plenty of potions. Come back when you need more!']]); return; }
+      const shop = ()=> ask('Rosa the Healer', `I brew special potions too! ⚡ Speed costs 5 gold, 💪 Strength costs 8 gold. You have ${S.gold||0} gold 🪙. Which one?`, '⚡ Speed (5🪙)', '💪 Strength (8🪙)',
+        ()=>{ if((S.gold||0) >= 5){ S.gold -= 5; S.potSpeed = (S.potSpeed||0)+1; updateHud(); say([['Rosa the Healer','One Speed Potion! Zoom zoom! ⚡ Press ⚡ Speed (6) to use it.']]); } else say([['Rosa the Healer','Oh dear, you need 5 gold for that one. Beat some goblins!']]); },
+        ()=>{ if((S.gold||0) >= 8){ S.gold -= 8; S.potStr = (S.potStr||0)+1; updateHud(); say([['Rosa the Healer','One Strength Potion! Double damage! 💪 Press 💪 Strength (7) to use it.']]); } else say([['Rosa the Healer','Oh dear, you need 8 gold for that one. Beat some goblins!']]); });
+      say([['Rosa the Healer', S.pot>before ? `Here you go! Fresh healing potions. You have ${S.pot} now. 🧪` : 'Your healing potions are full!']], ()=> ask('Rosa the Healer', 'Would you like to buy a special potion?', 'Yes please!', 'No thanks', shop)); return; }
     if(i===0){ say([['Tom the Blacksmith','Your sword is the sharpest on the island now! ⚔️🔥']]); return; }
     if(i===2){ say([['Pip the Farmer','Fresh pumpkins and carrots! Good food makes you stronger. 🎃']]); return; }
     if(i===3){ say([['Lin the Fisher', P2.done ? 'My boat is ready when you are. Next stop: the Volcano! 🌋' : 'Free everyone first, and then we can talk about sailing!']]); return; }
@@ -1265,7 +1288,7 @@ function p2Sword(){
     const d = dist(g.x,g.z), ang = Math.abs(angDiff(Math.atan2(g.z-S.z, g.x-S.x), S.yaw));
     if(d < (g.chief?3.6:3.0) && ang < 1.3 && d<bd){ bd=d; best=g; } });
   if(!best) return;
-  let dmg = dmgBase + Math.floor(Math.random()*3);
+  let dmg = (dmgBase + Math.floor(Math.random()*3)) * dmgMul();
   best.hp -= dmg; best.flash = 0.2; // hitting a goblin does NOT stop its swing: block with the shield!
   const a = Math.atan2(best.z-S.z, best.x-S.x), kb = best.chief?0.15:0.35;
   const nx = best.x+Math.cos(a)*kb, nz = best.z+Math.sin(a)*kb; if(heightAt2(nx,nz)>-0.1){ best.x=nx; best.z=nz; }
@@ -1273,7 +1296,7 @@ function p2Sword(){
   P2.focus = best;
   if(best.hp<=0){
     best.state='flee'; best.t=2.5; spawnChips(best.x, heightAt2(best.x,best.z)+1, best.z, 0xf5c542, 14);
-    const coins = best.chief ? 10 : 3; S.gold = (S.gold||0) + coins; updateHud();
+    const coins = best.chief ? 10 : 3; S.gold = (S.gold||0) + coins; if(best.chief) S.potStr = (S.potStr||0) + 1; updateHud();
     const camp = P2.camps[best.camp];
     if(camp.gobs.every(g=>g.state==='flee'||g.state==='gone')){
       camp.cleared = true;
@@ -1294,7 +1317,7 @@ function p2Lose(){
 function p2Update(dt){
   // pickups
   for(const p of P2.picks){ if(p.taken) continue;
-    if(dist(p.x,p.z)<1.6){ p.taken=true; p.m.visible=false; if(p.kind==='wood') S.wood++; else S.pot++; updateHud(); } }
+    if(dist(p.x,p.z)<1.6){ p.taken=true; p.m.visible=false; if(p.kind==='wood'){ S.wood++; updateHud(); } else collectPotion(p.kind); } }
   // first look at a camp
   P2.camps.forEach(c=>{ if(!c.seen && dist(c.x,c.z)<17 && !P2.vill[CAMPS[c.i].vill].freed){ c.seen=true;
     const taunts = [
@@ -1530,11 +1553,10 @@ function buildPart3(){
     P3.boat = g; }
 
   // pickups: only a few potions here. This level is hard!
-  const pk = (x,z)=>{ const m = new THREE.Group(); const y = heightAt3(x,z); m.position.set(x,y+0.6,z); add(m);
-    m3(new THREE.SphereGeometry(0.35,12,10), M(0x45e0b0,{emissive:0x1a6a50}), 0,0,0,m); m3(new THREE.CylinderGeometry(0.1,0.12,0.35), M(0xd8f8ff), 0,0.38,0,m); m3(new THREE.CylinderGeometry(0.13,0.13,0.12), M(0x8b5a2b), 0,0.6,0,m);
-    const glow = new THREE.Mesh(new THREE.RingGeometry(0.45,0.75,20), new THREE.MeshBasicMaterial({color:0x6fffd2, transparent:true, opacity:.4, side:THREE.DoubleSide})); glow.rotation.x = -Math.PI/2; glow.position.set(x,y+0.06,z); add(glow);
-    P3.picks.push({kind:'potion', m, x, z, taken:false, base:m.position.y, glow}); };
-  pk(-44,-6); pk(-12,11); pk(12,-10);
+  const pk = (x,z,kind='potion')=>{ const y = heightAt3(x,z); const m = potionModel(kind, R); m.position.set(x,y+0.6,z);
+    const glow = new THREE.Mesh(new THREE.RingGeometry(0.45,0.75,20), new THREE.MeshBasicMaterial({color:POTION[kind].ring, transparent:true, opacity:.4, side:THREE.DoubleSide})); glow.rotation.x = -Math.PI/2; glow.position.set(x,y+0.06,z); add(glow);
+    P3.picks.push({kind, m, x, z, taken:false, base:m.position.y, glow}); };
+  pk(-44,-6); pk(-12,11); pk(12,-10); pk(-46,8,'speed'); pk(-6,-11,'strength');
 
   // enemies by area. Area 0: outer yard. Area 1: lava bridge. Area 2: the treasury.
   [['goblin',-28,-3],['goblin',-24,4],['goblin',-17,1],['archer',-14,-9],['archer',-14,9]].forEach(([k,x,z])=>P3.enemies.push(p3Enemy(k,x,z,0)));
@@ -1551,6 +1573,15 @@ function buildPart3(){
 }
 
 // ---------- Part 3 helpers ----------
+function p3AreaOf(x){ return x < GATES[0] ? 0 : (x < GATES[1] ? 1 : 2); }   // which walled area a spot is in
+function p3WallBetween(x1,z1,x2,z2){                        // true if a gate wall blocks the straight line between two spots
+  for(const g of P3.gates){
+    if((x1-g.x)*(x2-g.x) >= 0) continue;                    // both on the same side of this wall
+    const t = (g.x-x1)/(x2-x1), zc = z1 + (z2-z1)*t;
+    if(!g.open || Math.abs(zc) > 1.9) return true;          // hits stone (or the closed gate)
+  }
+  return false;
+}
 function p3Area(){ return P3.gates.filter(g=>g.open).length; }      // 0, 1, 2 = which area you can reach
 function p3AreaEnemiesLeft(a){ return P3.enemies.filter(e=>e.area===a && e.state!=='gone' && e.state!=='flee').length; }
 function canStand3(x,z){
@@ -1628,7 +1659,7 @@ function p3Sword(){
   if(b.state!=='sleep' && !b.freed && b.fly < 0.5){
     const d = dist(b.x,b.z), ang = Math.abs(angDiff(Math.atan2(b.z-S.z, b.x-S.x), S.yaw));
     if(d < 6.4 && ang < 1.2){
-      const dmg = dmgBase + Math.floor(Math.random()*3);
+      const dmg = (dmgBase + Math.floor(Math.random()*3)) * dmgMul();
       b.hp -= dmg; b.flash = 0.2; spawnChips(b.x, 3.5, b.z, 0xbfe0ff, 8);
       if(b.hp <= 0) p3FreeDragon();
       updateHud(); return;
@@ -1640,7 +1671,7 @@ function p3Sword(){
     const d = dist(e.x,e.z), ang = Math.abs(angDiff(Math.atan2(e.z-S.z, e.x-S.x), S.yaw));
     if(d < reach && ang < 1.3 && d < bd){ bd=d; best=e; } });
   if(!best) return;
-  const dmg = dmgBase + Math.floor(Math.random()*3);
+  const dmg = (dmgBase + Math.floor(Math.random()*3)) * dmgMul();
   best.hp -= dmg; best.flash = 0.2;
   const a = Math.atan2(best.z-S.z, best.x-S.x), kb = best.kind==='brute' ? 0.1 : 0.35;
   if(enemyCan(best.x+Math.cos(a)*kb, best.z+Math.sin(a)*kb)){ best.x += Math.cos(a)*kb; best.z += Math.sin(a)*kb; }
@@ -1648,7 +1679,7 @@ function p3Sword(){
   P3.focus = best;
   if(best.hp <= 0){
     best.state='flee'; best.t=2.5; spawnChips(best.x, 1.4, best.z, 0xf5c542, 14);
-    S.gold = (S.gold||0) + (best.kind==='brute' ? 8 : 3);
+    S.gold = (S.gold||0) + (best.kind==='brute' ? 8 : 3); if(best.kind==='brute') S.potStr = (S.potStr||0) + 1;
     p3CheckArea(best.area);
   }
   updateHud();
@@ -1716,7 +1747,7 @@ function sailToPart3(){
 // ---------- Part 3 update ----------
 function p3Update(dt){
   // pickups
-  for(const p of P3.picks){ if(p.taken) continue; if(dist(p.x,p.z)<1.6){ p.taken=true; p.m.visible=false; S.pot++; updateHud(); } }
+  for(const p of P3.picks){ if(p.taken) continue; if(dist(p.x,p.z)<1.6){ p.taken=true; p.m.visible=false; collectPotion(p.kind); } }
   // lava pools
   for(const lp of LAVA_POOLS){ if(Math.hypot(S.x-lp.x, S.z-lp.z) < lp.r && S.invuln<=0){ S.blocking=false; hurt(4); if(!P3.warned.lava){ P3.warned.lava=1; $('status').textContent='🔥 LAVA! Get out!'; } } }
   // gates rise
@@ -1730,16 +1761,22 @@ function p3Update(dt){
     const d = dist(e.x,e.z);
     if(e.state==='flee'){ const a = Math.atan2(e.z-S.z, e.x-S.x); const nx=e.x+Math.cos(a)*6*dt, nz=e.z+Math.sin(a)*6*dt; if(enemyCan(nx,nz)){e.x=nx; e.z=nz;} e.yaw=a; if(e.t<=0){ e.state='gone'; e.m.visible=false; } continue; }
     if(e.area > area) { e.state='idle'; continue; }   // still behind a closed gate
+    const here = p3AreaOf(S.x) === e.area && !p3WallBetween(e.x, e.z, S.x, S.z);
+    if(!here && e.state!=='idle'){ e.state='idle'; }         // you left their area: they go back to their post
     const brute = e.kind==='brute', archer = e.kind==='archer';
     const sp = (brute ? 2.6 : archer ? 3.0 : 4.0) * dt;
     const step = (tx,tz,spd)=>{ const a = Math.atan2(tz-e.z, tx-e.x); e.yaw = a; const nx=e.x+Math.cos(a)*spd, nz=e.z+Math.sin(a)*spd; if(enemyCan(nx,nz)){ e.x=nx; e.z=nz; } };
-    if(e.state==='idle'){ if(d < 14) e.state='chase'; else e.yaw += Math.sin(time+e.bob)*dt; }
+    if(e.state==='idle'){
+      if(here && d < 14) e.state='chase';
+      else if(Math.hypot(e.x-e.hx, e.z-e.hz) > 0.6) step(e.hx, e.hz, sp*0.7);
+      else e.yaw += Math.sin(time+e.bob)*dt;
+    }
     else if(e.state==='chase'){
       if(archer){
         e.yaw = Math.atan2(S.z-e.z, S.x-e.x);
         if(d < 6) step(e.x-(S.x-e.x), e.z-(S.z-e.z), sp);          // back away
         else if(d > 15) step(S.x, S.z, sp);
-        if(e.cd<=0 && d < 22){ e.state='windup'; e.t = 0.9; }
+        if(e.cd<=0 && d < 20 && !p3WallBetween(e.x, e.z, S.x, S.z)){ e.state='windup'; e.t = 0.9; }
       } else {
         if(d > (brute?2.6:1.9)) step(S.x, S.z, sp); else e.yaw = Math.atan2(S.z-e.z, S.x-e.x);
         if(d < (brute?3.6:2.9) && e.cd<=0){ e.state='windup'; e.t = brute ? 0.8 : 0.5; }
@@ -1768,7 +1805,9 @@ function p3Update(dt){
     const a = P3.arrows[i]; a.life -= dt; a.m.position.addScaledVector(a.vel, dt);
     const dx = a.m.position.x-S.x, dz = a.m.position.z-S.z;
     let gone = a.life<=0;
-    if(Math.hypot(dx,dz) < 0.8 && a.m.position.y < 2.6){
+    if(a.px !== undefined && p3WallBetween(a.px, a.pz, a.m.position.x, a.m.position.z)){ gone = true; spawnChips(a.m.position.x, a.m.position.y, a.m.position.z, 0x8b5a2b, 4); }
+    a.px = a.m.position.x; a.pz = a.m.position.z;
+    if(!gone && Math.hypot(dx,dz) < 0.8 && a.m.position.y < 2.6){
       gone = true;
       const blocked = shieldCovers(S.x - a.vel.x, S.z - a.vel.z);
       if(blocked) spawnChips(S.x+Math.cos(S.yaw), 1.4, S.z+Math.sin(S.yaw), 0xf5c542, 6); else hurt(4);
@@ -1952,7 +1991,7 @@ function p3Animate(dt){
 let S, cam = 'tp', running = false, paused = true;
 const keys = {};
 function reset(name, title){
-  S = {name, title, part:1, gold:0, x:-36, z:0, yaw:0, pitch:0, hp:30, maxHp:30, wood:0, stone:0, pot:0,
+  S = {name, title, part:1, gold:0, potSpeed:0, potStr:0, speedT:0, strT:0, x:-36, z:0, yaw:0, pitch:0, hp:30, maxHp:30, wood:0, stone:0, pot:0,
        sword:false, shield:false, freed:false, house:false, bridge:false, fight:false, won:false,
        swing:0, swingCd:0, chop:0, blocking:false, poison:0, poisonTick:0, mud:0, hurtT:0, invuln:0};
   pickups.forEach(p=>{p.taken=false; p.m.visible=true;});
@@ -1986,7 +2025,7 @@ function saveNow(){
     s:{name:S.name, title:S.title, x:+S.x.toFixed(2), z:+S.z.toFixed(2), yaw:+S.yaw.toFixed(3), pitch:+S.pitch.toFixed(3),
        hp:Math.max(1,S.hp), wood:S.wood, stone:S.stone, pot:S.pot, sword:S.sword, shield:S.shield,
        freed:S.freed, house:S.house, bridge:S.bridge, won:S.won, seenPot:!!S.seenPot,
-       part:S.part||1, gold:S.gold||0, maxHp:S.maxHp, part3done:!!S.part3done},
+       part:S.part||1, gold:S.gold||0, maxHp:S.maxHp, part3done:!!S.part3done, potSpeed:S.potSpeed||0, potStr:S.potStr||0, seenSpeed:!!S.seenSpeed, seenStr:!!S.seenStr},
     picks: pickups.map(p=>p.taken?1:0),
     trees: trees.map(t=>t.alive?t.hits:-1)
   };
@@ -2012,7 +2051,7 @@ function applySave(d){
   if(S.house){ house.visible=true; plotMark.visible=false; houseCol = addCol(PLOT.x,PLOT.z,2.4); }
   if(S.bridge){ bridge.visible=true; bridgeSpot.visible=false; }
   if(S.won){ D.gone = true; dragon.visible = false; }
-  S.gold = v.gold||0; S.maxHp = v.maxHp||30; S.part3done = !!v.part3done;
+  S.gold = v.gold||0; S.maxHp = v.maxHp||30; S.part3done = !!v.part3done; S.potSpeed = v.potSpeed||0; S.potStr = v.potStr||0; S.seenSpeed = !!v.seenSpeed; S.seenStr = !!v.seenStr;
   if(v.part===3){ p2Start(true); p2SetDone(); p3Start(false); p3Reset((d.p3&&d.p3.gates)||0); if(d.p3&&d.p3.done){ P3.done = true; P3.boss.freed = true; P3.boss.state='freed'; P3.boss.td.collar.visible=false; } }
   if(v.part===2){
     p2Start(true);
@@ -2073,13 +2112,14 @@ function next(){
   document.getElementById('dlgText').textContent = text;
   dlg.classList.remove('hidden'); dlgAt = performance.now();
 }
-document.getElementById('dlgBtn').addEventListener('click', ()=>{ if(askYes){ const f = askYes; askYes = null; $('dlgNo').classList.add('hidden'); $('dlgBtn').textContent = 'OK ▶'; dlg.classList.add('hidden'); paused = false; f(); } else next(); });
+document.getElementById('dlgBtn').addEventListener('click', ()=>{ if(askYes){ const f = askYes; askYes = null; askNo = null; $('dlgNo').classList.add('hidden'); $('dlgBtn').textContent = 'OK ▶'; dlg.classList.add('hidden'); paused = false; f(); } else next(); });
 let askYes = null;
-function ask(who, text, yes, no, onYes){
+let askNo = null;
+function ask(who, text, yes, no, onYes, onNo){
   say([[who, text]]);
-  askYes = onYes; $('dlgBtn').textContent = yes; $('dlgNo').textContent = no; $('dlgNo').classList.remove('hidden');
+  askYes = onYes; askNo = onNo || null; $('dlgBtn').textContent = yes; $('dlgNo').textContent = no; $('dlgNo').classList.remove('hidden');
 }
-document.getElementById('dlgNo').addEventListener('click', ()=>{ askYes = null; $('dlgNo').classList.add('hidden'); $('dlgBtn').textContent = 'OK ▶'; queue = []; next(); });
+document.getElementById('dlgNo').addEventListener('click', ()=>{ const f = askNo; askYes = null; askNo = null; $('dlgNo').classList.add('hidden'); $('dlgBtn').textContent = 'OK ▶'; queue = []; after = null; dlg.classList.add('hidden'); paused = false; if(f) f(); });
 const kn = () => `${S.title} ${S.name}`;
 
 // ================= HUD =================
@@ -2092,6 +2132,9 @@ function updateHud(){
   $('sShield').classList.toggle('locked', !S.shield);
   $('sBuild').classList.toggle('locked', !S.freed);
   $('sPot').classList.toggle('locked', S.pot<1);
+  $('spdCnt').textContent = S.potSpeed||0; $('strCnt').textContent = S.potStr||0;
+  $('sSpeed').classList.toggle('locked', !(S.potSpeed>0) && !(S.speedT>0)); $('sStr').classList.toggle('locked', !(S.potStr>0) && !(S.strT>0));
+  $('sSpeed').classList.toggle('ready', S.speedT>0); $('sStr').classList.toggle('ready', S.strT>0);
   let q;
   if(!S.sword) q = 'Find the <b>treasure chest</b> on the beach. Follow the gold marker ✨';
   else if(!S.freed) q = 'Someone is calling for help! Find the <b>cage</b>.';
@@ -2104,6 +2147,7 @@ function updateHud(){
   $('quest').innerHTML = q;
   $('gold').textContent = S.gold||0; $('goldBox').classList.toggle('hidden', !(S.gold>0)); $('stoneBox').classList.toggle('hidden', S.part>=2);
   const st=[]; if(S.poison>0) st.push('☠️ Poisoned! Drink a potion'); if(S.mud>0) st.push('🟤 Mud in your eyes');
+  if(S.speedT>0) st.push(`⚡ Speed ${Math.ceil(S.speedT)}s`); if(S.strT>0) st.push(`💪 Strength ${Math.ceil(S.strT)}s`);
   $('status').textContent = st.join('   ');
   if(S.fight && S.part!==2){ $('bossName').textContent = '🐉 Swamp Dragon'; $('bossfill').style.width = Math.max(0,D.hp/D.max*100)+'%'; }
 }
@@ -2203,6 +2247,10 @@ function chopAct(){
     S.wood += 2; updateHud();
   }
 }
+const BOOST_TIME = 20;
+function speedAct(){ if(paused || !(S.potSpeed>0) || S.speedT>0) return; S.potSpeed--; S.speedT = BOOST_TIME; spawnChips(S.x, groundH(S.x,S.z)+1.5, S.z, 0xffd23a, 12); updateHud(); }
+function strengthAct(){ if(paused || !(S.potStr>0) || S.strT>0) return; S.potStr--; S.strT = BOOST_TIME; spawnChips(S.x, groundH(S.x,S.z)+1.5, S.z, 0xe0402a, 12); updateHud(); }
+const dmgMul = () => (S.strT>0 ? 2 : 1);
 function potionAct(){
   if(paused || S.pot<1) return;
   S.pot--; S.hp = Math.min(S.maxHp, S.hp+15); S.poison=0; updateHud();
@@ -2210,7 +2258,7 @@ function potionAct(){
 }
 function swingStart(){
   if(S.swingCd>0) return false;
-  S.swing = 0.35; S.swingCd = 0.45; return true;
+  S.swing = 0.35; S.swingCd = S.speedT>0 ? 0.28 : 0.45; return true;
 }
 function swordAct(){
   if(paused || !S.sword) return;
@@ -2222,7 +2270,7 @@ function swordAct(){
     const dx = dragon.position.x - S.x, dz = dragon.position.z - S.z, d = Math.hypot(dx,dz);
     const ang = Math.abs(angDiff(Math.atan2(dz,dx), S.yaw));
     if(d < 5.4 && ang < 1.3){
-      let dmg = 3 + Math.floor(Math.random()*3);
+      let dmg = (3 + Math.floor(Math.random()*3)) * dmgMul();
       if(S.mud>0) dmg = Math.ceil(dmg/2);
       D.hp -= dmg; D.flash = 0.2; spawnChips(dragon.position.x,2.5,dragon.position.z,0xff6b5a,6);
       if(D.state!=='breath' && Math.random()<0.25){ D.state='hop'; D.t=0.5; }
@@ -2288,7 +2336,7 @@ const KEYMAP = {ArrowUp:'f',KeyW:'f',ArrowDown:'b',KeyS:'b',ArrowLeft:'l',KeyA:'
 window.addEventListener('keydown', e=>{
   if(!$('title').classList.contains('hidden')){ if(e.key==='Enter' && document.activeElement!==$('nameIn') && readSave()) continueGame(); else if(e.key==='Enter') startGame(); return; }
   if(!dlg.classList.contains('hidden')){
-    if((e.key==='Enter'||e.key===' '||e.code==='KeyE') && performance.now()-dlgAt>250){ e.preventDefault(); next(); }
+    if((e.key==='Enter'||e.key===' '||e.code==='KeyE') && performance.now()-dlgAt>250){ e.preventDefault(); $('dlgBtn').click(); }
     return;
   }
   if(KEYMAP[e.code]){ keys[KEYMAP[e.code]] = true; e.preventDefault(); }
@@ -2297,6 +2345,8 @@ window.addEventListener('keydown', e=>{
   if(e.code==='Digit1'||e.code==='KeyJ'||e.code==='Space'){ e.preventDefault(); swordAct(); }
   if(e.code==='Digit2'||e.code==='KeyK') keys.block = true;
   if(e.code==='Digit3') potionAct();
+  if(e.code==='Digit6') speedAct();
+  if(e.code==='Digit7') strengthAct();
   if(e.code==='Digit4') chopAct();
   if(e.code==='Digit5') buildAct();
   if(e.code==='KeyV') setCam(cam==='fp'?'tp':'fp');
@@ -2311,6 +2361,8 @@ const ACT = {
   sword: {down:()=>{ keys.swordHeld = true; swordAct(); }, up:()=>{ keys.swordHeld = false; }},
   shield:{down:()=>{ keys.block = true; }, up:()=>{ keys.block = false; }},
   pot:   {down:potionAct},
+  speed: {down:speedAct},
+  strength:{down:strengthAct},
   chop:  {down:chopAct},
   build: {down:buildAct},
 };
@@ -2464,7 +2516,12 @@ function update(dt){
   const look = (keys.lu?1:0) - (keys.ld?1:0);
   if(look) S.pitch = Math.max(-1.3, Math.min(1.0, S.pitch + look*1.4*dt));
   S.blocking = !!keys.block && S.shield;
-  const speed = (S.blocking ? 3.2 : 7.5) * (S.mud>0 ? 0.6 : 1);
+  const speed = (S.blocking ? 3.2 : 7.5) * (S.mud>0 ? 0.6 : 1) * (S.speedT>0 ? 1.65 : 1);
+  if(S.speedT>0 || S.strT>0){
+    const before = Math.ceil(S.speedT||0) + ',' + Math.ceil(S.strT||0);
+    S.speedT = Math.max(0, (S.speedT||0)-dt); S.strT = Math.max(0, (S.strT||0)-dt);
+    if(before !== Math.ceil(S.speedT) + ',' + Math.ceil(S.strT)) updateHud();
+  }
   if(Math.abs(fwd)>0.05){
     fwd = Math.max(-1, Math.min(1, fwd));
     const nx = S.x + Math.cos(S.yaw)*fwd*speed*dt, nz = S.z + Math.sin(S.yaw)*fwd*speed*dt;
@@ -2490,7 +2547,7 @@ function update(dt){
       p.taken = true; p.m.visible=false;
       if(p.kind==='wood') S.wood++;
       if(p.kind==='stone') S.stone++;
-      if(p.kind==='potion'){ S.pot++; if(!S.seenPot){ S.seenPot=true; say([['🧪 Potion!','A healing potion! Press 🧪 Potion (3) to heal and cure poison. Save it for a dragon fight!']]); } }
+      if(isPotion(p.kind)) collectPotion(p.kind);
       updateHud();
     }
   }
@@ -2559,6 +2616,11 @@ function animate(dt){
     cape.rotation.z = moving ? -0.25 + Math.sin(time*10)*0.12 : -0.05 + Math.sin(time*1.5)*0.03;
     plume.rotation.z = moving ? Math.sin(time*10)*0.12 : 0;
     tpSword.visible = S.sword; tpShield.visible = S.shield;
+    aura.visible = (S.speedT>0 || S.strT>0);
+    if(aura.visible){ aura.material.color.setHex(S.strT>0 && (S.speedT<=0 || Math.sin(time*6)>0) ? 0xff5a3a : 0xffd23a); aura.scale.setScalar(1 + Math.sin(time*8)*0.12); }
+    const baseGlow = (S.swordUp || (P2 && P2.swordLvl)) ? 0xaa3300 : 0x333333;
+    const glowNow = S.strT>0 ? (Math.sin(time*10)>0 ? 0xff2200 : 0xcc1100) : baseGlow;
+    if(tpSword.children[0].material.emissive.getHex() !== glowNow) [tpSword, fpSword].forEach(sw=>sw.children[0].material.emissive.setHex(glowNow));
     tpArm.rotation.x = S.swing>0 ? -2.2*(1-S.swing/0.35) + 1 : 0;
     tpArm.rotation.z = S.swing>0 ? -0.8 : 0;
     tpShield.position.set(S.blocking?0.7:0.35, S.blocking?1.4:1.15, S.blocking?0.15:0.5);
@@ -2724,7 +2786,7 @@ D = {state:'sleep', flash:0};
 camPos.set(-40, 8, 0);
 tick();
 // test hook
-window.__dk = { step:(n)=>{ for(let i=0;i<n;i++){ if(!paused) update(0.05); time+=0.05; animate(0.05); } }, sailToPart3, get P3(){return P3;}, canStand3:(x,z)=>canStand3(x,z), sailToPart2, get P2(){return P2;}, canStand2: (x,z)=>canStand2(x,z), heightAt2, VILLAGE, PLOTS, CAMPS, canStand, heightAt, saveNow, readSave, dragon, trees, get paused(){return paused;}, get S(){return S;}, get D(){return D;}, useAct, buildAct, chopAct, swordAct, potionAct, setCam, next };
+window.__dk = { p3WallBetween:(a,b,c,d)=>p3WallBetween(a,b,c,d), speedAct, strengthAct, potionAct, step:(n)=>{ for(let i=0;i<n;i++){ if(!paused) update(0.05); time+=0.05; animate(0.05); } }, sailToPart3, get P3(){return P3;}, canStand3:(x,z)=>canStand3(x,z), sailToPart2, get P2(){return P2;}, canStand2: (x,z)=>canStand2(x,z), heightAt2, VILLAGE, PLOTS, CAMPS, canStand, heightAt, saveNow, readSave, dragon, trees, get paused(){return paused;}, get S(){return S;}, get D(){return D;}, useAct, buildAct, chopAct, swordAct, potionAct, setCam, next };
 })();
 </script>
 </body>
