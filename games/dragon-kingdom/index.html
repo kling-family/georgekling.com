@@ -76,7 +76,7 @@
   .divider{font-family:'Grenze Gotisch',Georgia,serif;color:var(--gold);opacity:.8;letter-spacing:6px;margin:2px 0 12px}
   #dlgWho{font-family:'Grenze Gotisch',Georgia,serif !important;font-size:23px !important;letter-spacing:.3px}
   #bossName{font-family:'Grenze Gotisch',Georgia,serif;font-size:22px;letter-spacing:.5px}
-  #startBtn,#contBtn,#p2Btn,#p3Btn,#p4Btn,#againBtn{font-family:'Grenze Gotisch',Georgia,serif;font-size:22px;letter-spacing:.5px}
+  #startBtn,#contBtn,#p2Btn,#p3Btn,#p4Btn,#keepBtn,#againBtn{font-family:'Grenze Gotisch',Georgia,serif;font-size:22px;letter-spacing:.5px}
   .card .sub{margin:0 0 14px;color:#e8d9b0}
   input{font-family:inherit;font-size:20px;padding:10px;border-radius:10px;border:3px solid var(--green);width:100%;text-align:center;margin:8px 0 12px}
   .choice{display:flex;gap:10px;justify-content:center;margin-bottom:14px}
@@ -172,6 +172,7 @@
     <button id="p2Btn" style="font-size:20px;background:var(--green);color:var(--cream);box-shadow:0 4px 0 #24561f;margin-bottom:10px">⛵ Sail to Part 2</button><br>
     <button id="p3Btn" class="hidden" style="font-size:20px;background:var(--green);color:var(--cream);box-shadow:0 4px 0 #24561f;margin-bottom:10px">⛵ Sail to Part 3</button><br>
     <button id="p4Btn" class="hidden" style="font-size:20px;background:#3b52c4;color:#fff6e3;box-shadow:0 4px 0 #26307a;margin-bottom:10px">🐉 Fly to Dragon Castle (Part 4)</button><br>
+    <button id="keepBtn" style="font-size:20px;background:#8a6a2a;color:#fff6e3;box-shadow:0 4px 0 #5a4418;margin-bottom:10px">🧭 Keep Exploring</button><br>
     <button id="againBtn">Back to Title</button>
     <p class="hint" style="margin-top:12px"><a href="/games/">&larr; George's games</a></p>
   </div>
@@ -1180,7 +1181,7 @@ function p2Quest(){
   const f = freedCount(), b = builtCount();
   const homeless = P2.vill.filter((v,i)=>v.freed && P2.home[i]<0).length;
   let q;
-  if(P2.done) q = 'The village is finished! 🎉';
+  if(P2.done) q = 'The village is finished! 🎉 Explore, or sail from Lin\'s dock ⛵ to Volcano Island.';
   else if(homeless && S.wood>=4) q = `You have wood! <b>Build 🔨</b> a house on a village plot.`;
   else if(homeless) q = `Chop trees 🪓 to get <b>4 🪵</b> for the next house (${S.wood}/4).`;
   else q = `Find the goblin camps, beat the guards, and <b>free the villagers</b>.`;
@@ -1674,7 +1675,7 @@ function p3Reset(openGates){
 }
 function p3Quest(){
   const a = p3Area(), b = P3.boss;
-  if(P3.done) return 'You freed the Thunder Dragon! 🎉';
+  if(P3.done) return 'You freed the Thunder Dragon! 🎉 Explore, or walk up to the dragon 🐉 to fly to Dragon Castle.';
   if(b.state!=='sleep' && !b.freed) return `<b>Defeat the Thunder Dragon!</b> ⚡ Move out of the glowing circles!`;
   const left = p3AreaEnemiesLeft(a);
   if(a===2) return 'Enter the <b>Treasury</b>. Something huge is sleeping on the gold... ⚡';
@@ -2085,9 +2086,10 @@ function enemyCan4(x,z){
   return !P4.cols.some(c=>Math.hypot(x-c.x,z-c.z)<c.r+0.3);
 }
 
-function sorcererModel(){
+function sorcererModel(o={}){
+  const good = !!o.good;   // the Old Wizard: his good brother, in blue robes with a starry hat
   const g = new THREE.Group();
-  const robe = M(0x4a2a6a, {flatShading:false}), robe2 = M(0x2a1a3e, {flatShading:false}), gold = M(0xf5c542, {metalness:.5, roughness:.3});
+  const robe = M(good?0x2f5fb5:0x4a2a6a, {flatShading:false}), robe2 = M(good?0x1d3a7a:0x2a1a3e, {flatShading:false}), gold = M(0xf5c542, {metalness:.5, roughness:.3});
   mesh(new THREE.ConeGeometry(0.75, 2.0, 16, 1, true), robe, 0, 1.0, 0, g);
   mesh(new THREE.CylinderGeometry(0.76, 0.76, 0.08, 16), gold, 0, 0.06, 0, g);
   mesh(new THREE.CylinderGeometry(0.32, 0.42, 0.6, 12), robe2, 0, 1.75, 0, g);
@@ -2095,16 +2097,21 @@ function sorcererModel(){
   const head = new THREE.Group(); head.position.set(0, 2.25, 0); g.add(head);
   mesh(new THREE.SphereGeometry(0.28, 16, 12), M(0xd9b08c, {flatShading:false}), 0, 0, 0, head);
   const beard = mesh(new THREE.ConeGeometry(0.22, 0.75, 10), M(0xe8e8ee), 0.18, -0.38, 0, head); beard.rotation.z = Math.PI + 0.2;
-  [-1,1].forEach(s=>{ mesh(new THREE.SphereGeometry(0.05, 8, 6), M(0xb026ff, {emissive:0x8a10cc}), 0.24, 0.06, s*0.1, head);
+  [-1,1].forEach(s=>{ mesh(new THREE.SphereGeometry(0.05, 8, 6), good ? M(0x3a7aff, {emissive:0x1a3aaa}) : M(0xb026ff, {emissive:0x8a10cc}), 0.24, 0.06, s*0.1, head);
     const brow = mesh(new THREE.BoxGeometry(0.04, 0.04, 0.14), M(0xe8e8ee), 0.25, 0.14, s*0.1, head); brow.rotation.x = s*0.5; });
   mesh(new THREE.ConeGeometry(0.06, 0.18, 6), M(0xd9b08c), 0.3, -0.02, 0, head).rotation.z = -Math.PI/2;
-  const crown = new THREE.Group(); crown.position.set(0, 0.24, 0); head.add(crown);
+  if(good){
+    const hat = mesh(new THREE.ConeGeometry(0.36, 1.0, 16), robe, 0, 0.62, 0, head); hat.rotation.z = -0.15;
+    mesh(new THREE.CylinderGeometry(0.46, 0.46, 0.05, 18), robe, 0, 0.16, 0, head);
+    for(let k=0;k<5;k++) mesh(new THREE.OctahedronGeometry(0.05), new THREE.MeshBasicMaterial({color:0xfff27a}), Math.cos(k*1.3)*0.24, 0.35+k*0.12, Math.sin(k*1.3)*0.24*(1-k*0.15), head);
+  }
+  const crown = new THREE.Group(); crown.position.set(0, 0.24, 0); head.add(crown); crown.visible = !good;
   mesh(new THREE.CylinderGeometry(0.26, 0.28, 0.16, 16, 1, true), gold, 0, 0, 0, crown);
   for(let k=0;k<6;k++){ const a = k/6*Math.PI*2; mesh(new THREE.ConeGeometry(0.06, 0.2, 5), gold, Math.cos(a)*0.25, 0.16, Math.sin(a)*0.25, crown);
     if(k%2===0) mesh(new THREE.OctahedronGeometry(0.05), M(0xd7382f, {emissive:0x600000}), Math.cos(a)*0.27, 0.02, Math.sin(a)*0.27, crown); }
   const staff = new THREE.Group(); staff.position.set(0.35, 1.2, -0.5); g.add(staff);
   mesh(new THREE.CylinderGeometry(0.05, 0.06, 2.3, 8), M(0x3a2a1a), 0, 0.2, 0, staff);
-  const orb = mesh(new THREE.SphereGeometry(0.2, 14, 10), new THREE.MeshBasicMaterial({color:0xc070ff}), 0, 1.45, 0, staff);
+  const orb = mesh(new THREE.SphereGeometry(0.2, 14, 10), new THREE.MeshBasicMaterial({color: good ? 0xfff4c0 : 0xc070ff}), 0, 1.45, 0, staff);
   g.userData = {head, crown, staff, orb};
   return g;
 }
@@ -2319,7 +2326,7 @@ function p4Reset(openGates, fly){
   P4.picks.forEach(p=>{ p.taken=false; p.m.visible=true; });
   [...P4.arrows, ...P4.fx].forEach(o=>{ L4root.remove(o.m); if(o.fill) L4root.remove(o.fill); if(o.beam) L4root.remove(o.beam); }); P4.arrows=[]; P4.fx=[];
   const b = P4.boss; Object.assign(b, {form:'sorcerer', state:'wait', x:THRONE.x+3, z:0, yaw:Math.PI, hp:50, max:50, t:0, castCd:2, tpCd:5, biteCd:0, strikeCd:4, breathCd:6, skyCd:0, phase:1, flash:0, fly:0});
-  b.sorc.visible = true; b.sorc.scale.setScalar(1); b.sorc.userData.crown.visible = true; b.dk.dragon.visible = false; b.dkCrown.visible = true; P4.cage.visible = false;
+  b.sorc.visible = true; b.sorc.scale.setScalar(1); b.sorc.userData.crown.visible = true; b.dk.dragon.visible = false; b.dkCrown.visible = true; P4.cage.visible = false; if(P4.wizard) P4.wizard.visible = false;
   P4.flying = !!fly; P4.landed = !fly;
   P4.helper = {active: openGates===0, cd: 2};
   P4.td.dragon.visible = true;
@@ -2330,7 +2337,7 @@ function p4Reset(openGates, fly){
   S.bolt = 1;
 }
 function p4Quest(){
-  if(P4.done) return 'The Dragon King is in prison and every dragon is free! 🎉';
+  if(P4.done) return 'The Dragon King is in prison and every dragon is free! 🎉 Explore the castle.';
   if(P4.flying) return '🐉 Steer the Thunder Dragon around the storm clouds! Fly through the gold rings. 🪙';
   const a = p4Area(), b = P4.boss;
   if(a===3) return b.form==='dragon' ? '<b>Knock the Dragon Crown off!</b> Strike him with ⚡ when he is under the hole in the roof!' : '<b>Defeat the evil sorcerer!</b> ⚡ works under the big hole in the roof.';
@@ -2450,7 +2457,15 @@ function p4WinBoss(){
         b.sorc.position.set(P4.cage.position.x, 0.4, P4.cage.position.z); b.x = P4.cage.position.x; b.z = P4.cage.position.z; P4.cage.visible = true;
         spawnChips(b.x, 1.5, b.z, 0x4a2f12, 14);
         P4.done = true; S.part4done = true; updateHud(); saveNow();
+        // the Old Wizard, the sorcerer's good brother, appears in a flash of light
+        if(!P4.wizard){ P4.wizard = sorcererModel({good:true}); L4root.add(P4.wizard); }
+        P4.wizard.visible = true; P4.wizard.position.set(P4.cage.position.x + 3.2, 0.4, P4.cage.position.z + 1.5); P4.wizard.rotation.y = -Math.atan2(P4.cage.position.z - P4.wizard.position.z, P4.cage.position.x - P4.wizard.position.x);
+        spawnChips(P4.wizard.position.x, 2, P4.wizard.position.z, 0xfff4c0, 30);
         say([['🔒 *CLICK*','The old sorcerer is locked in his own dungeon. A sign on the door says: "OPEN IN 1,000 YEARS."'],
+             ['✨ *FLASH*','A burst of white light fills the throne room... and the Old Wizard steps out of it, his starry hat glowing!'],
+             ['🧙‍♂️ The Old Wizard','Brother, your magic may have stopped me from coming here before, but now you\'ll be locked away for 1,000 years.'],
+             ['🧙 The Sorcerer','BROTHER?! Hmph. You always were the goody-goody one. *grumble grumble*'],
+             ['🧙‍♂️ The Old Wizard', 'Thank you, ' + kn() + '. When the crown broke, so did his spell that kept me out of this castle. The kingdom owes you everything.'],
              ['⚡ Thunder Dragon','*the Thunder Dragon lands in the throne room* Can you feel it? Every dragon in the world is free!'],
              ['🐉 Swamp Dragon','*flies in through the roof* Thank you, knight. My head is clear for the first time in years!'],
              ['⚡ Thunder Dragon','Climb on, ' + kn() + '. Everyone is waiting for you back at the village!'],
@@ -2860,7 +2875,8 @@ function applySave(d){
   S.gold = v.gold||0; S.maxHp = v.maxHp||30; S.part3done = !!v.part3done; S.potSpeed = v.potSpeed||0; S.potStr = v.potStr||0; S.seenSpeed = !!v.seenSpeed; S.seenStr = !!v.seenStr; S.carrot = v.carrot||0; S.pie = v.pie||0; S.seenFood = !!v.seenFood; S.seenPumpkin = !!v.seenPumpkin;
   S.part4done = !!v.part4done;
   if(v.part===4){ const q = d.p4 || {}; p4Start(false); p4Reset(q.gates||0, !q.landed);
-    if(q.done){ P4.done = true; const b = P4.boss; b.state='done'; b.dk.dragon.visible=false; b.sorc.visible=true; b.sorc.userData.crown.visible=false; b.sorc.scale.setScalar(0.85); b.x = P4.cage.position.x; b.z = P4.cage.position.z; P4.cage.visible = true; } }
+    if(q.done){ P4.done = true; const b = P4.boss; b.state='done'; b.dk.dragon.visible=false; b.sorc.visible=true; b.sorc.userData.crown.visible=false; b.sorc.scale.setScalar(0.85); b.x = P4.cage.position.x; b.z = P4.cage.position.z; P4.cage.visible = true;
+      if(!P4.wizard){ P4.wizard = sorcererModel({good:true}); L4root.add(P4.wizard); } P4.wizard.visible = true; P4.wizard.position.set(P4.cage.position.x + 3.2, 0.4, P4.cage.position.z + 1.5); } }
   if(v.part===3){ p2Start(true); p2SetDone(); p3Start(false); p3Reset((d.p3&&d.p3.gates)||0); if(d.p3&&d.p3.done){ P3.done = true; P3.boss.freed = true; P3.boss.state='freed'; P3.boss.td.collar.visible=false; } }
   if(v.part===2){
     p2Start(true);
@@ -2955,7 +2971,7 @@ function updateHud(){
   else if(!S.house) q = `Chop trees 🪓 and gather <b>4 🪵</b> and <b>3 🪨</b>, then <b>Build 🔨</b> Bea's house on the plot. (${S.wood}/4 wood, ${S.stone}/3 stone)`;
   else if(!S.bridge) q = `Gather <b>3 🪵</b>, then <b>Build 🔨</b> a bridge at the river. (${S.wood}/3)`;
   else if(!S.won) q = 'Cross the bridge and defeat the <b>Swamp Dragon</b> 🐉';
-  else q = 'You did it!';
+  else q = 'You beat the Swamp Dragon! 🎉 Explore, or take the boat ⛵ on the beach to the Big Island.';
   if(S.part===2 && P2) q = p2Quest();
   if(S.part===3 && P3) q = p3Quest();
   if(S.part===4 && P4){ q = p4Quest(); p4BoltUI(); }
@@ -2987,6 +3003,7 @@ function dist(x,z){ return Math.hypot(S.x-x, S.z-z); }
 function nearTree(){ let best=null, bd=2.6; trees.forEach(t=>{ if(!t.alive) return; const d=dist(t.x,t.z); if(d<bd){bd=d;best=t;} }); return best; }
 function nearBridge(){ return S.x>RIVER_X0-4 && S.x<RIVER_X0+0.5 && Math.abs(S.z-BRIDGE_Z)<4; }
 function currentPrompt(){
+  if(S.won && dist(-42,0) < 7) return '👋 Use (E) to sail to the Big Island ⛵';
   if(!S.sword && dist(chest.position.x,chest.position.z)<3) return '👋 Use (E) to open the chest';
   if(!S.freed && dist(0,-12)<3.5) return S.sword ? '👋 Use (E) to cut the vines' : '👋 Use (E) to talk';
   if(S.freed && dist(bea.position.x,bea.position.z)<3) return '👋 Use (E) to talk to Bea';
@@ -2997,6 +3014,7 @@ function currentPrompt(){
 }
 function useAct(){
   if(paused) return;
+  if((S.part||1)===1 && S.won && dist(-42,0) < 7){ ask('Bea the Builder', 'Ready to sail to the Big Island? I heard there are villagers there who need help.', 'Sail ⛵', 'Not yet', ()=>sailToPart2()); return; }
   if(S.part===2) return p2Use();
   if(S.part===3) return p3Use();
   if(S.part===4) return;
@@ -3582,6 +3600,7 @@ function startGame(){
   running = true;
   say([['The Kingdom','Dragons are attacking the kingdom! Fields are burning and everyone is scared. 🔥'],
        ['The Old Wizard','The dragons are not choosing to be mean. The Dragon King wears a magic crown that controls every dragon.'],
+       ['The Old Wizard','His dark magic keeps me out of his castle, so I cannot stop him myself. But you can.'],
        ['The Old Wizard',`${kn()}, you are the bravest knight we have. Sail to Dragon Island, climb Dragon Castle, and take that crown. Then the dragons will be free.`],
        ['Dragon Island','Your boat lands on the beach. ⛵ Walk with W A S D or the arrow keys. Use the buttons at the bottom for everything you can do.'],
        ['Dragon Island','Want to see through your knight\'s eyes? Press 👁️ Knight\'s eyes on the right (or V). 🎥 Over shoulder switches back. Drag the screen (or press R and F) to look up and down.']]);
@@ -3612,6 +3631,16 @@ function sailToPart2(){
 $('p2Btn').onclick = sailToPart2;
 $('p3Btn').onclick = sailToPart3;
 $('p4Btn').onclick = sailToPart4;
+// Keep Exploring: stay on the island you just finished and look around
+$('keepBtn').onclick = ()=>{
+  $('end').classList.add('hidden'); $('hud').classList.remove('hidden'); running = true; paused = false;
+  updateHud(); saveNow();
+  const where = {1:'Take your time on Dragon Island. When you are ready, Bea\'s boat ⛵ on the beach sails to the Big Island.',
+                 2:'Visit your villagers, pick pumpkins, and explore. When you are ready, Lin\'s boat at the dock ⛵ sails to Volcano Island.',
+                 3:'Look around the treasury. When you are ready, walk up to the Thunder Dragon 🐉 to fly to Dragon Castle.',
+                 4:'The castle is yours! Look around as long as you like. 🏰'}[S.part||1];
+  say([['🧭 Keep Exploring', where]]);
+};
 $('contBtn').onclick = continueGame;
 showContinue();
 $('againBtn').onclick = ()=>{ saveNow(); $('end').classList.add('hidden'); $('hud').classList.add('hidden'); $('title').classList.remove('hidden'); running=false; showContinue(); };
