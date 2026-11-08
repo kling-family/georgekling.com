@@ -2395,7 +2395,8 @@ function p4HurtBoss(dmg, lightning){
       say([['🧙 The Sorcerer','ENOUGH! You want to see the power of the DRAGON CROWN? *the crown blazes with dark fire*'],
            ['🧙 The Sorcerer','I made myself the KING of all dragons... and now I will BECOME one! *his body twists and grows... scales, wings, horns...*'],
            ['🐲 The Dragon King','ROOOOAAAR! Now face me, tiny knight!'],
-           ['Tip','Knock the crown off his head! ⚡ Lightning hits him hard when he stands under the big hole in the roof.']]); }
+           ['⚡ Thunder Dragon','*from high above* Little knight! Take my strength! *your health and lightning are fully restored* I will strike him through the hole whenever I can!'],
+           ['Tip','Knock the crown off his head! ⚡ Lightning hits him hard when he stands under the big hole in the roof. If he knocks you out, you will start again right here.']]); }
     else p4WinBoss();
   }
   updateHud();
@@ -2434,8 +2435,16 @@ function p4WinBoss(){
   }, 1400);
 }
 function p4Lose(){
-  const open = p4Area(), hpFull = S.maxHp;
+  const open = p4Area(), hpFull = S.maxHp, atDragon = open===3 && P4.boss.reachedDragon;
   p4Reset(open, false);
+  if(atDragon){
+    const b = P4.boss; Object.assign(b, {form:'dragon', state:'roar', t:1.4, x:THRONE.x, z:0, hp:140, max:140, strikeCd:4, breathCd:6, biteCd:1.5, skyCd:0, phase:1, fly:0, reachedDragon:true, allyCd:6});
+    b.sorc.visible = false; b.dk.dragon.visible = true; b.dkCrown.visible = true;
+    S.x = G4[2] + 3; S.z = 0; S.hp = hpFull; S.bolt = 1; S.poison = 0; if(S.pot < 1) S.pot = 1; updateHud();
+    say([['💥 Ouch!','The Dragon King knocked you down! But the Thunder Dragon gives you its strength. Back on your feet!'],
+         ['Tip','Stay away from the glowing orange circles. Hold your shield against his fire breath. Strike with ⚡ when he lands under the hole!']]);
+    return;
+  }
   S.hp = hpFull; S.poison = 0; S.mud = 0; if(S.pot < 1) S.pot = 1;
   updateHud();
   say([['💥 Ouch!', open===0 ? 'The guards knocked you down! You wake up where the Thunder Dragon landed.' : 'You wake up by the last door you opened. Everything past it starts over.'],
@@ -2539,11 +2548,11 @@ function p4Update(dt){
       if(Math.hypot(o.m.position.x-S.x, o.m.position.z-S.z) < 1.0){ o.life = 0; if(shieldCovers(S.x - o.vel.x, S.z - o.vel.z)) spawnChips(S.x+Math.cos(S.yaw), 1.4, S.z+Math.sin(S.yaw), 0xc070ff, 8); else hurt(o.dmg); }
     } else if(o.kind==='fire'){
       o.m.position.addScaledVector(o.vel, dt); if(o.m.position.y < 0.9) o.m.position.y = 0.9;
-      if(Math.hypot(o.m.position.x-S.x, o.m.position.z-S.z) < 1.1){ o.life = 0; if(shieldCovers(S.x - o.vel.x, S.z - o.vel.z)) spawnChips(S.x+Math.cos(S.yaw), 1.4, S.z+Math.sin(S.yaw), 0xff8a3a, 8); else hurt(7); }
+      if(Math.hypot(o.m.position.x-S.x, o.m.position.z-S.z) < 1.1){ o.life = 0; if(shieldCovers(S.x - o.vel.x, S.z - o.vel.z)) spawnChips(S.x+Math.cos(S.yaw), 1.4, S.z+Math.sin(S.yaw), 0xff8a3a, 8); else hurt(4); }
     } else if(o.kind==='meteor'){
       o.t -= dt; o.m.material.opacity = 0.5 + Math.sin(time*20)*0.3; o.m.scale.setScalar(0.4 + (1-Math.min(1, Math.max(0,o.t)/1.1))*0.6);
       if(o.t<=0 && !o.struck){ o.struck = true; o.rock.visible = true; spawnChips(o.x, 0.6, o.z, 0xff6a1a, 14);
-        if(Math.hypot(S.x-o.x, S.z-o.z) < 1.9){ S.blocking = false; const inv = S.invuln; S.invuln = 0; hurt(8); if(S.invuln===0) S.invuln = inv; } }
+        if(Math.hypot(S.x-o.x, S.z-o.z) < 1.9){ S.blocking = false; const inv = S.invuln; S.invuln = 0; hurt(5); if(S.invuln===0) S.invuln = inv; } }
       if(o.rock){ o.rock.position.y = Math.max(0.6, 0.6 + Math.max(0,o.t)*20); }
     }
     if(o.life<=0){ L4root.remove(o.m); if(o.fill) L4root.remove(o.fill); if(o.beam) L4root.remove(o.beam); if(o.rock) L4root.remove(o.rock); P4.fx.splice(i,1); }
@@ -2606,7 +2615,8 @@ function p4Boss(dt){
     b.sorc.scale.setScalar(1 + k*1.2); b.sorc.rotation.y += dt*8;
     if(Math.random() < dt*20) spawnChips(b.x + (Math.random()-.5)*3, 1 + Math.random()*4, b.z + (Math.random()-.5)*3, 0x8a3aff, 2);
     if(b.t <= 0 && !paused){
-      b.form = 'dragon'; b.sorc.visible = false; b.dk.dragon.visible = true; b.hp = 200; b.max = 200; b.state = 'roar'; b.t = 1.4; b.strikeCd = 3; b.breathCd = 5; b.biteCd = 1; b.skyCd = 0; b.phase = 1;
+      b.form = 'dragon'; b.sorc.visible = false; b.dk.dragon.visible = true; b.hp = 140; b.max = 140; b.reachedDragon = true;
+      S.hp = S.maxHp; S.poison = 0; S.bolt = 1; $('poisonfx').style.opacity = 0; spawnChips(S.x, groundH(S.x,S.z)+1.5, S.z, 0x6fffd2, 16); updateHud(); b.state = 'roar'; b.t = 1.4; b.strikeCd = 3; b.breathCd = 5; b.biteCd = 1; b.skyCd = 0; b.phase = 1;
       b.x = THRONE.x; b.z = 0; spawnChips(b.x, 4, b.z, 0x8a3aff, 40);
     }
     return;
@@ -2624,17 +2634,21 @@ function p4Boss(dt){
       return;
     }
     if(b.castCd <= 0){
-      b.castCd = b.hp < b.max*0.5 ? 1.6 : 2.3;
-      const n = b.hp < b.max*0.5 ? 4 : 3;
+      b.castCd = b.hp < b.max*0.5 ? 2.2 : 2.8;
+      const n = b.hp < b.max*0.5 ? 3 : 2;
       for(let k=0;k<n;k++){ const a = face + (k-(n-1)/2)*0.35;
         const orb = new THREE.Mesh(new THREE.IcosahedronGeometry(0.38,1), new THREE.MeshBasicMaterial({color:0xc070ff}));
         orb.position.set(b.x + Math.cos(face)*0.8, 2.2, b.z + Math.sin(face)*0.8); L4root.add(orb);
-        P4.fx.push({kind:'orb', m:orb, vel:new THREE.Vector3(Math.cos(a), -0.08, Math.sin(a)).multiplyScalar(8), speed:8, dmg:5, life:3.2}); }
+        P4.fx.push({kind:'orb', m:orb, vel:new THREE.Vector3(Math.cos(a), -0.08, Math.sin(a)).multiplyScalar(7), speed:7, dmg:3, life:3.2}); }
     }
     return;
   }
   // ---- dragon form ----
   b.biteCd -= dt; b.strikeCd -= dt; b.breathCd -= dt; b.skyCd -= dt;
+  b.allyCd = (b.allyCd===undefined ? 6 : b.allyCd) - dt;
+  if(b.allyCd <= 0 && b.fly < 0.3 && Math.hypot(b.x-THRONE.x, b.z-THRONE.z) < THRONE.hole){
+    b.allyCd = 9; p4Strike(b.x, b.z, false); b.hp -= 8; b.flash = 0.25; $('status').textContent = '⚡ The Thunder Dragon strikes from above!'; if(b.hp <= 0){ p4WinBoss(); return; } updateHud();
+  }
   if(b.phase===1 && b.hp < b.max*0.5){
     b.phase = 2; b.state = 'sky'; b.t = 6; b.skyCd = 20;
     say([['🐲 The Dragon King','You will NOT take my crown! *he bursts up through the hole in the roof* Rain, FIRE, RAIN!']]);
@@ -2642,7 +2656,7 @@ function p4Boss(dt){
   if(b.state==='roar'){ turnTo(face,3); if(b.t<=0) b.state='chase'; }
   else if(b.state==='sky'){
     b.fly = Math.min(1, b.fly + dt*0.8); turnTo(face, 2);
-    if(Math.random() < dt*1.6) p4Meteor(S.x + (Math.random()-.5)*3, S.z + (Math.random()-.5)*3, 1.0);
+    if(Math.random() < dt*0.9) p4Meteor(S.x + (Math.random()-.5)*3, S.z + (Math.random()-.5)*3, 1.2);
     if(b.t<=0) b.state='land';
   } else if(b.state==='land'){
     b.fly = Math.max(0, b.fly - dt*0.9);
@@ -2661,20 +2675,20 @@ function p4Boss(dt){
       orb.position.copy(from); L4root.add(orb);
       P4.fx.push({kind:'fire', m:orb, vel:new THREE.Vector3(Math.cos(a), (1.2-from.y)/Math.max(4,d), Math.sin(a)).normalize().multiplyScalar(15), life:2.2});
     }
-    if(b.shots>=7 && b.shotT<=0){ b.state='chase'; b.breathCd = b.phase===2 ? 4.5 : 6; }
+    if(b.shots>=7 && b.shotT<=0){ b.state='chase'; b.breathCd = b.phase===2 ? 6.5 : 8; }
   } else if(b.state==='hop'){ if(b.t<=0) b.state='chase'; }
   else {
     turnTo(face, 2.2);
     if(d > 7.2){ const sp = (b.phase===2?4.2:3.4)*dt, nx = b.x+Math.cos(b.yaw)*sp, nz = b.z+Math.sin(b.yaw)*sp;
       if(Math.hypot(nx-THRONE.x, nz-THRONE.z) < 5.5){ b.x=nx; b.z=nz; } }
     if(d < 7.6 && b.biteCd<=0){
-      b.biteCd = b.phase===2 ? 1.4 : 1.8; b.state='hop'; b.t=0.35;
-      const before = S.hp; hurt(9, b.x, b.z);
-      if(S.hp < before){ const kb = 1.8; if(canStand4(S.x+Math.cos(face)*kb, S.z+Math.sin(face)*kb)){ S.x += Math.cos(face)*kb; S.z += Math.sin(face)*kb; } }
+      b.biteCd = b.phase===2 ? 2.0 : 2.4; b.state='hop'; b.t=0.35;
+      const before = S.hp; hurt(5, b.x, b.z);
+      if(S.hp < before){ const kb = 1.2; if(canStand4(S.x+Math.cos(face)*kb, S.z+Math.sin(face)*kb)){ S.x += Math.cos(face)*kb; S.z += Math.sin(face)*kb; } }
     } else if(b.strikeCd<=0){
-      b.strikeCd = b.phase===2 ? 4.5 : 6;
-      p4Meteor(S.x, S.z, 1.1);
-      for(let k=0;k<(b.phase===2?4:3);k++){ const a = Math.random()*6.28, rr = 3+Math.random()*4; p4Meteor(S.x+Math.cos(a)*rr, S.z+Math.sin(a)*rr, 1.1+k*0.15); }
+      b.strikeCd = b.phase===2 ? 6.5 : 8;
+      p4Meteor(S.x, S.z, 1.3);
+      for(let k=0;k<(b.phase===2?3:2);k++){ const a = Math.random()*6.28, rr = 3+Math.random()*4; p4Meteor(S.x+Math.cos(a)*rr, S.z+Math.sin(a)*rr, 1.1+k*0.15); }
       b.state='hop'; b.t=0.6;
     } else if(b.breathCd<=0 && d < 18){ b.state='windup'; b.t = 0.9; }
     else if(b.phase===2 && b.skyCd<=0){ b.state='sky'; b.t=6; b.skyCd = 20; }
