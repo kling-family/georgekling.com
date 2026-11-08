@@ -2679,8 +2679,17 @@ function p4Animate(dt){
   if(P4.flying){
     const f = P4.fly;
     TD.dragon.position.set(f.x, f.y, f.z); TD.dragon.rotation.set(f.roll*0.6, 0, 0); TD.dBody.position.y = 0;
-    knight.visible = true; knight.position.set(f.x + 0.4, f.y + 4.3, f.z); knight.rotation.set(f.roll*0.6, 0, 0);
-    camera.position.set(f.x - 14, f.y + 7, f.z*0.7); camera.lookAt(f.x + 10, f.y + 1, f.z);
+    knight.position.set(f.x + 0.4, f.y + 4.3, f.z); knight.rotation.set(f.roll*0.6, 0, 0);
+    if(cam==='fp'){
+      // knight's eyes: sitting on the dragon's back, looking past its horns down the flight path
+      knight.visible = false; [fpSword, fpShield, fpAxe].forEach(o=>o.visible=false);
+      camera.position.set(f.x - 1.5, f.y + 9.6, f.z);
+      camera.up.set(0, 1, 0); camera.lookAt(f.x + 30, f.y + 2.5 + S.pitch*8, f.z + f.roll*6);
+      camera.rotateZ(-f.roll*0.35);
+    } else {
+      knight.visible = true;
+      camera.position.set(f.x - 14, f.y + 7, f.z*0.7); camera.lookAt(f.x + 10, f.y + 1, f.z);
+    }
     camPos.copy(camera.position);
   } else if(P4.helper && P4.helper.active){
     const a = time*0.5; TD.dragon.position.set(-30 + Math.cos(a)*10, 14 + Math.sin(time)*0.8, Math.sin(a)*14); TD.dragon.rotation.set(0, -(a + Math.PI/2), 0);
