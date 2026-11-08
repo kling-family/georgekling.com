@@ -19,7 +19,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Special+Elite&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Special+Elite&family=UnifrakturCook:wght@700&display=swap" rel="stylesheet">
 <style>
   :root {
     --page: #F4F6F1;
@@ -214,6 +214,12 @@
   .welcome .letter { margin: 20px auto 0; }
   .welcome .sign { text-align: right; }
   .plate img.photo { display: block; width: 100%; height: auto; object-fit: cover; padding: 0; }
+
+  /* Dragon Kingdom: knightly blackletter title over its cover art */
+  .dk-title { position:absolute; left:0; right:0; top:5%; text-align:center; font-family:"UnifrakturCook", "Young Serif", Georgia, serif; font-weight:700;
+    font-size:clamp(1.5rem, 3.2vw, 2.2rem); line-height:1; white-space:nowrap; color:#f5c542; text-shadow:2px 2px 0 #7a1f1a, 0 0 14px rgba(0,0,0,.35); pointer-events:none; }
+  h3.dk, figcaption .dk { font-family:"UnifrakturCook", "Young Serif", Georgia, serif; font-weight:700; font-size:1.7rem; letter-spacing:.5px; }
+  figcaption .dk { font-size:1.3rem; }
 </style>
 <script data-goatcounter="https://georgekling.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 </head>
@@ -358,8 +364,8 @@
           <figcaption>Monster Island <span>catch monsters, battle trainers, explore five islands</span></figcaption>
         </figure>
         <figure>
-          <a class="screen play" href="games/dragon-kingdom/"><img src="games/dragon-kingdom.jpg" alt="Dragon Kingdom in 3D: a knight with a sword looking across the river at the Swamp Dragon in the marsh" width="1200" height="900" loading="lazy"><span>&#9654; Play Dragon Kingdom</span></a>
-          <figcaption>Dragon Kingdom <span>a 3D adventure: sail to Dragon Island and free the dragons</span></figcaption>
+          <a class="screen play" href="games/dragon-kingdom/"><b class="dk-title">Dragon Kingdom</b><img src="games/dragon-kingdom.jpg" alt="Dragon Kingdom: a green dragon and a blue dragon face each other over a shield and crossed swords, with fields and a castle behind them" width="1200" height="900" loading="lazy"><span>&#9654; Play Dragon Kingdom</span></a>
+          <figcaption><span class="dk" style="color:inherit">Dragon Kingdom</span> <span>a 3D adventure: sail to Dragon Island and free the dragons</span></figcaption>
         </figure>
       </div>
       <p class="more"><a href="games/">See all of George's games &rarr;</a></p>
