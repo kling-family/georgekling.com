@@ -960,7 +960,7 @@ function buildPart2(){
   const add = (o)=>{ R.add(o); return o; };
   const m2 = (geo, mat, x, y, z, parent=R)=> mesh(geo, mat, x, y, z, parent);
   P2 = {cols:[], trees:[], picks:[], gobs:[], camps:[], vill:[], plots:[], built:[false,false,false,false], home:[-1,-1,-1,-1], freed:[false,false,false,false],
-        swordLvl:0, farm:null, dock:null, fires:[], chimneys:[], done:false, warned:{}, occ:[]};
+        swordLvl:0, farm:null, dock:null, fires:[], chimneys:[], done:false, warned:{}, occ:[], pumpkins:[]};
   const col = (x,z,rad)=>{ const c={x,z,r:rad}; P2.cols.push(c); return c; };
 
   // ground
@@ -1127,7 +1127,11 @@ function buildPart2(){
   // Pip's farm (appears when his house is built)
   { const farm = new THREE.Group(); farm.position.set(VILLAGE.x, heightAt2(VILLAGE.x, VILLAGE.z+19), VILLAGE.z+19); farm.visible = false; add(farm);
     for(let k=0;k<5;k++){ m2(new THREE.BoxGeometry(7,0.25,0.8), M(0x6b4a24), 0,0.12,-2.4+k*1.2, farm);
-      for(let j=0;j<6;j++){ if((k+j)%3===0) m2(new THREE.SphereGeometry(0.32,10,8), M(0xf28c28), -3+j*1.2,0.4,-2.4+k*1.2, farm).scale.y = .8;
+      for(let j=0;j<6;j++){ if((k+j)%3===0){
+          const pg = new THREE.Group(); pg.position.set(-3+j*1.2, 0.4, -2.4+k*1.2); farm.add(pg);
+          m2(new THREE.SphereGeometry(0.32,12,8), M(0xf28c28), 0,0,0, pg).scale.y = .8;
+          m2(new THREE.CylinderGeometry(0.04,0.06,0.18,6), M(0x5a7a2a), 0,0.3,0, pg);
+          P2.pumpkins.push({m:pg, x:VILLAGE.x + (-3+j*1.2), z:VILLAGE.z+19 + (-2.4+k*1.2), regrow:0}); }
         else m2(new THREE.ConeGeometry(0.22,0.8,6), M(0x5fae45), -3+j*1.2,0.6,-2.4+k*1.2, farm); } }
     for(let k=0;k<8;k++){ m2(new THREE.BoxGeometry(0.12,0.9,0.12), M(0xa8743f), -4+k*(8/7),0.45,3.6, farm); }
     m2(new THREE.BoxGeometry(8.2,0.1,0.1), M(0xa8743f), 0,0.7,3.6, farm);
@@ -1183,6 +1187,14 @@ function p2Objective(){
   const c = nearestCamp(); return c ? [c.x, heightAt2(c.x,c.z)+5, c.z] : null;
 }
 function p2NearTree(){ let best=null, bd=2.8; P2.trees.forEach(t=>{ if(!t.alive) return; const d=dist(t.x,t.z); if(d<bd){bd=d;best=t;} }); return best; }
+function p2NearPumpkin(){ if(!P2.farm.visible) return null; let best=null, bd=1.9; P2.pumpkins.forEach(pk=>{ if(!pk.m.visible) return; const d = dist(pk.x,pk.z); if(d<bd){ bd=d; best=pk; } }); return best; }
+function p2PickPumpkin(pk){
+  pk.m.visible = false; pk.regrow = 60;
+  spawnChips(pk.x, heightAt2(pk.x,pk.z)+0.5, pk.z, 0xf28c28, 10);
+  S.pie = (S.pie||0) + 1; updateHud();
+  if(!S.seenPumpkin){ S.seenPumpkin = true;
+    say([['Pip the Farmer','You picked a pumpkin! 🎃 I\'ll bake it into a pumpkin pie for you. 🥧'], ['Pip the Farmer','Pumpkins grow back in about a minute, so come pick more any time! Eat pie (9) to hit harder for 90 seconds.']]); }
+}
 function p2NearPlot(){ let best=null, bd=4.9; P2.plots.forEach(p=>{ if(p.cab.visible) return; const d=dist(p.x,p.z); if(d<bd){bd=d;best=p;} }); return best; }
 function p2NearCage(){ return P2.camps.find(c=>c.cage.visible && dist(c.x,c.z-1)<3.2); }
 function p2NearPerson(){
@@ -1194,6 +1206,7 @@ function p2Prompt(){
   if(PART3_READY && P2.done && dist(-61, 14.6) < 5) return '👋 Use (E) to sail with Lin ⛵';
   const cg = p2NearCage();
   if(cg) return cg.gobs.some(g=>g.state!=='gone' && g.state!=='flee') ? '👺 Beat the goblin guards first!' : '👋 Use (E) to open the cage';
+  if(p2NearPumpkin()) return '👋 Use (E) to pick the pumpkin 🎃';
   const pp = p2NearPerson(); if(pp) return pp.who==='bea' ? '👋 Use (E) to talk to Bea' : `👋 Use (E) to talk to ${VILLAGERS[pp.who].name}`;
   if(p2NearPlot()) return '🔨 Build (5) a log cabin: 4 🪵';
   if(p2NearTree()) return '🪓 Chop (4) the tree for wood';
@@ -1219,6 +1232,7 @@ function p2Use(){
     say(lines);
     return;
   }
+  const pk = p2NearPumpkin(); if(pk){ p2PickPumpkin(pk); return; }
   const pp = p2NearPerson();
   if(pp && pp.who==='bea'){
     const f = freedCount(), b = builtCount();
@@ -1419,6 +1433,7 @@ function p2Animate(dt){
   }
   P2.trees.forEach(t=>{ if(!t.alive && t.g.visible){ t.fall=(t.fall||0)+dt; t.g.rotation.z = -Math.min(1.5, t.fall*2); if(t.fall>1.4) t.g.visible=false; } });
   P2.picks.forEach(p=>{ if(!p.taken){ p.m.position.y = p.base + Math.sin(time*3+p.x)*0.12; p.m.rotation.y += dt; } p.glow.visible = !p.taken; p.glow.material.opacity = 0.35 + Math.sin(time*4+p.x)*0.2; });
+  P2.pumpkins.forEach(pk=>{ if(!pk.m.visible){ pk.regrow -= dt; if(pk.regrow<=0){ pk.m.visible = true; pk.m.scale.setScalar(0.01); pk.grow = 0; } } else if(pk.grow!==undefined && pk.grow<1){ pk.grow = Math.min(1, pk.grow+dt*1.5); pk.m.scale.setScalar(Math.max(0.01, pk.grow)); } });
   P2.fires.forEach(([a,b],i)=>{ a.scale.set(1, 0.85+Math.sin(time*13+i)*0.15, 1); b.scale.set(1, 0.8+Math.sin(time*17+i)*0.2, 1); });
   P2.plots.forEach(p=>{ if(p.grow!==undefined && p.grow<1){ p.grow = Math.min(1, p.grow+dt*1.2); const s = p.grow<1 ? 1 - Math.pow(1-p.grow,3) : 1; p.cab.scale.set(1, s, 1); } });
   P2.foam.material.opacity = 0.45 + Math.sin(time*1.6)*0.25;
@@ -2047,7 +2062,7 @@ function saveNow(){
     s:{name:S.name, title:S.title, x:+S.x.toFixed(2), z:+S.z.toFixed(2), yaw:+S.yaw.toFixed(3), pitch:+S.pitch.toFixed(3),
        hp:Math.max(1,S.hp), wood:S.wood, stone:S.stone, pot:S.pot, sword:S.sword, shield:S.shield,
        freed:S.freed, house:S.house, bridge:S.bridge, won:S.won, seenPot:!!S.seenPot,
-       part:S.part||1, gold:S.gold||0, maxHp:S.maxHp, part3done:!!S.part3done, potSpeed:S.potSpeed||0, potStr:S.potStr||0, seenSpeed:!!S.seenSpeed, seenStr:!!S.seenStr, carrot:S.carrot||0, pie:S.pie||0, seenFood:!!S.seenFood},
+       part:S.part||1, gold:S.gold||0, maxHp:S.maxHp, part3done:!!S.part3done, potSpeed:S.potSpeed||0, potStr:S.potStr||0, seenSpeed:!!S.seenSpeed, seenStr:!!S.seenStr, carrot:S.carrot||0, pie:S.pie||0, seenFood:!!S.seenFood, seenPumpkin:!!S.seenPumpkin},
     picks: pickups.map(p=>p.taken?1:0),
     trees: trees.map(t=>t.alive?t.hits:-1)
   };
@@ -2073,7 +2088,7 @@ function applySave(d){
   if(S.house){ house.visible=true; plotMark.visible=false; houseCol = addCol(PLOT.x,PLOT.z,2.4); }
   if(S.bridge){ bridge.visible=true; bridgeSpot.visible=false; }
   if(S.won){ D.gone = true; dragon.visible = false; }
-  S.gold = v.gold||0; S.maxHp = v.maxHp||30; S.part3done = !!v.part3done; S.potSpeed = v.potSpeed||0; S.potStr = v.potStr||0; S.seenSpeed = !!v.seenSpeed; S.seenStr = !!v.seenStr; S.carrot = v.carrot||0; S.pie = v.pie||0; S.seenFood = !!v.seenFood;
+  S.gold = v.gold||0; S.maxHp = v.maxHp||30; S.part3done = !!v.part3done; S.potSpeed = v.potSpeed||0; S.potStr = v.potStr||0; S.seenSpeed = !!v.seenSpeed; S.seenStr = !!v.seenStr; S.carrot = v.carrot||0; S.pie = v.pie||0; S.seenFood = !!v.seenFood; S.seenPumpkin = !!v.seenPumpkin;
   if(v.part===3){ p2Start(true); p2SetDone(); p3Start(false); p3Reset((d.p3&&d.p3.gates)||0); if(d.p3&&d.p3.done){ P3.done = true; P3.boss.freed = true; P3.boss.state='freed'; P3.boss.td.collar.visible=false; } }
   if(v.part===2){
     p2Start(true);
