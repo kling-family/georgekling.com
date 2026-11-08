@@ -12,7 +12,7 @@
 <link rel="icon" href="/favicon.png" type="image/png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <script data-goatcounter="https://georgekling.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=UnifrakturCook:wght@700&family=Grenze+Gotisch:wght@500;700&display=swap" rel="stylesheet">
 <style>
   :root{--red:#d7382f;--orange:#f28c28;--green:#3f9a3a;--cream:#fff6e3;--gold:#f5c542}
   *{box-sizing:border-box}
@@ -48,7 +48,7 @@
   .slot.locked{opacity:.3}
   .slot.ready{border-color:var(--gold);box-shadow:0 0 12px var(--gold)}
   .slot.active{background:#5a3a14}
-  @media (max-width:620px){.slot{width:44px;height:54px;font-size:20px}.slot small{font-size:8px}#prompt{bottom:96px;font-size:14px}#bar{gap:3px}}
+  @media (max-width:760px){.slot{width:40px;height:52px;font-size:19px}.slot small{font-size:7px}.slot .key{display:none}#prompt{bottom:94px;font-size:14px}#bar{gap:2px}}
   #joy{position:absolute;left:24px;bottom:110px;width:140px;height:140px;margin:0;border-radius:50%;background:rgba(255,255,255,.15);border:3px solid rgba(255,255,255,.45);pointer-events:none;transition:opacity .2s}
   #joy.idle{opacity:.55}
   #knob{position:absolute;left:42px;top:42px;width:56px;height:56px;border-radius:50%;background:rgba(255,246,227,.85)}
@@ -64,10 +64,17 @@
   #poisonfx{position:fixed;inset:0;pointer-events:none;opacity:0;background:radial-gradient(circle,transparent 45%,rgba(90,220,60,.45));transition:opacity .4s}
   #help{position:absolute;bottom:84px;right:10px;font-size:12px;opacity:.85;text-align:right;text-shadow:0 1px 2px #000;line-height:1.35}
   /* screens */
-  .screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;background:radial-gradient(circle at 50% 30%,rgba(58,92,51,.92) 0%,rgba(16,26,15,.96) 75%);z-index:10}
+  .screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;background:radial-gradient(circle at 50% 30%,rgba(70,46,24,.9) 0%,rgba(14,9,6,.97) 75%);z-index:10}
   .card{background:#24361f;border:3px solid var(--orange);border-radius:18px;padding:22px;max-width:520px;width:100%;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.6)}
-  .card h2{margin:0 0 4px;font-size:40px;color:var(--orange);text-shadow:3px 3px 0 var(--red)}
-  .card .sub{margin:0 0 14px;color:#cfe8c4}
+  /* old knightly lettering for titles and names */
+  .card h2{margin:0 0 6px;font-family:'UnifrakturCook','Grenze Gotisch',Georgia,serif;font-weight:700;font-size:52px;line-height:1.05;letter-spacing:1px;color:var(--gold);text-shadow:3px 3px 0 #7a1f1a, 0 0 18px rgba(245,197,66,.35)}
+  .card .sub{font-family:'Grenze Gotisch',Georgia,serif;font-size:22px;letter-spacing:.5px}
+  .card{background:linear-gradient(#2a2016,#1c1610);border:3px solid var(--gold);box-shadow:0 0 0 6px #1c1610, 0 0 0 8px #7a5a22, 0 14px 40px rgba(0,0,0,.7)}
+  .divider{font-family:'Grenze Gotisch',Georgia,serif;color:var(--gold);opacity:.8;letter-spacing:6px;margin:2px 0 12px}
+  #dlgWho{font-family:'Grenze Gotisch',Georgia,serif !important;font-size:23px !important;letter-spacing:.3px}
+  #bossName{font-family:'Grenze Gotisch',Georgia,serif;font-size:22px;letter-spacing:.5px}
+  #startBtn,#contBtn,#p2Btn,#p3Btn,#againBtn{font-family:'Grenze Gotisch',Georgia,serif;font-size:22px;letter-spacing:.5px}
+  .card .sub{margin:0 0 14px;color:#e8d9b0}
   input{font-family:inherit;font-size:20px;padding:10px;border-radius:10px;border:3px solid var(--green);width:100%;text-align:center;margin:8px 0 12px}
   .choice{display:flex;gap:10px;justify-content:center;margin-bottom:14px}
   .choice button{background:#4e6a45;color:var(--cream);box-shadow:0 4px 0 #2d3f28}
@@ -115,6 +122,8 @@
     <button class="slot" id="sPot" data-act="pot"><span class="key">3</span><span class="cnt" id="potCnt">0</span>🧪<small>Potion</small></button>
     <button class="slot locked" id="sSpeed" data-act="speed"><span class="key">6</span><span class="cnt" id="spdCnt">0</span>⚡<small>Speed</small></button>
     <button class="slot locked" id="sStr" data-act="strength"><span class="key">7</span><span class="cnt" id="strCnt">0</span>💪<small>Strength</small></button>
+    <button class="slot locked" id="sCarrot" data-act="carrot"><span class="key">8</span><span class="cnt" id="carCnt">0</span>🥕<small>Carrot</small></button>
+    <button class="slot locked" id="sPie" data-act="pie"><span class="key">9</span><span class="cnt" id="pieCnt">0</span>🥧<small>Pie</small></button>
     <button class="slot" id="sChop" data-act="chop"><span class="key">4</span>🪓<small>Chop</small></button>
     <button class="slot locked" id="sBuild" data-act="build"><span class="key">5</span>🔨<small>Build</small></button>
   </div>
@@ -124,7 +133,8 @@
 <div id="title" class="screen">
   <div class="card">
     <h2>Dragon Kingdom</h2>
-    <p class="sub">Part 1: The Beach</p>
+    <div class="divider">⚔ ⚔ ⚔</div>
+    <p class="sub">A Knight's Quest to Free the Dragons</p>
     <div>What is your knight's name?</div>
     <input id="nameIn" maxlength="16" placeholder="Type a name">
     <div class="choice">
@@ -561,7 +571,26 @@ function potionModel(kind, parent){
   return g;
 }
 const isPotion = k => k==='potion' || k==='speed' || k==='strength';
+// Food: a smaller boost that lasts much longer. 🥕 carrot = a bit faster, 🥧 pumpkin pie = a bit stronger
+const FOOD = {carrot:{ring:0xffa24a}, pie:{ring:0xf2c48a}};
+const isFood = k => k==='carrot' || k==='pie';
+function foodModel(kind, parent){
+  const g = new THREE.Group(); parent.add(g);
+  if(kind==='carrot'){
+    const c = mesh(new THREE.ConeGeometry(0.16, 0.7, 8), M(0xf28c28), 0,0,0, g); c.rotation.z = Math.PI;
+    for(let k=0;k<3;k++){ const l = mesh(new THREE.ConeGeometry(0.05, 0.35, 5), M(0x3f9a3a), Math.cos(k*2.1)*0.05, 0.48, Math.sin(k*2.1)*0.05, g); l.rotation.z = (k-1)*0.35; }
+  } else {
+    mesh(new THREE.CylinderGeometry(0.4,0.34,0.18,16), M(0xc98a4a), 0,0,0, g);
+    mesh(new THREE.CylinderGeometry(0.36,0.36,0.05,16), M(0xe8862a), 0,0.1,0, g);
+    for(let k=0;k<6;k++) mesh(new THREE.BoxGeometry(0.04,0.03,0.3), M(0xd9a05a), Math.cos(k*1.05)*0.12, 0.13, Math.sin(k*1.05)*0.12, g).rotation.y = k*1.05;
+  }
+  return g;
+}
+function itemModel(kind, parent){ return isFood(kind) ? foodModel(kind, parent) : potionModel(kind, parent); }
+function itemRing(kind){ return isFood(kind) ? FOOD[kind].ring : POTION[kind].ring; }
 function collectPotion(kind){
+  if(kind==='carrot'){ S.carrot = (S.carrot||0)+1; if(!S.seenFood){ S.seenFood = true; say([['🥕 Food!','Food gives a smaller boost than a potion, but it lasts much longer (90 seconds). Press 🥕 Carrot (8) to run a bit faster, or 🥧 Pie (9) to hit a bit harder.']]); } updateHud(); return; }
+  if(kind==='pie'){ S.pie = (S.pie||0)+1; if(!S.seenFood){ S.seenFood = true; say([['🥧 Food!','Food gives a smaller boost than a potion, but it lasts much longer (90 seconds). Press 🥧 Pie (9) to hit a bit harder, or 🥕 Carrot (8) to run a bit faster.']]); } updateHud(); return; }
   if(kind==='speed'){ S.potSpeed = (S.potSpeed||0)+1; if(!S.seenSpeed){ S.seenSpeed = true; say([['⚡ Speed Potion!','A yellow Speed Potion! Press ⚡ Speed (6) to run super fast and swing faster for 20 seconds.']]); } }
   else if(kind==='strength'){ S.potStr = (S.potStr||0)+1; if(!S.seenStr){ S.seenStr = true; say([['💪 Strength Potion!','A red Strength Potion! Press 💪 Strength (7) and every hit does DOUBLE damage for 20 seconds.']]); } }
   else { S.pot++; if(!S.seenPot){ S.seenPot=true; say([['🧪 Potion!','A healing potion! Press 🧪 Potion (3) to heal and cure poison. Save it for a dragon fight!']]); } }
@@ -571,8 +600,8 @@ function pickup(kind,x,z){
   let m;
   if(kind==='wood'){ m = mesh(new THREE.CylinderGeometry(0.28,0.28,1.3,8), M(0x8b5a2b), x,0.4,z); m.rotation.z=Math.PI/2; }
   if(kind==='stone'){ m = mesh(new THREE.DodecahedronGeometry(0.45), M(0x9a9ca0), x,0.45,z); }
-  if(isPotion(kind)){ m = potionModel(kind, scene); m.position.set(x,0.6,z); }
-  const glow = new THREE.Mesh(new THREE.RingGeometry(0.45,0.75,20), new THREE.MeshBasicMaterial({color: isPotion(kind)?POTION[kind].ring:0xffe08a, transparent:true, opacity:.4, side:THREE.DoubleSide}));
+  if(isPotion(kind) || isFood(kind)){ m = itemModel(kind, scene); m.position.set(x,0.6,z); }
+  const glow = new THREE.Mesh(new THREE.RingGeometry(0.45,0.75,20), new THREE.MeshBasicMaterial({color: (isPotion(kind)||isFood(kind))?itemRing(kind):0xffe08a, transparent:true, opacity:.4, side:THREE.DoubleSide}));
   glow.rotation.x = -Math.PI/2; glow.position.set(x, 0.06, z); scene.add(glow);
   pickups.push({kind,m,x,z,taken:false,base:m.position.y,glow});
 }
@@ -580,6 +609,7 @@ function pickup(kind,x,z){
 [[-30,10],[-18,2],[-10,-14],[8,4]].forEach(p=>pickup('stone',...p));
 pickup('potion',-24,14); pickup('potion',22,-14); pickup('potion',-4,-20);
 pickup('speed',-36,-16); pickup('strength',8,16);
+pickup('carrot',-12,-20); pickup('pie',6,10);
 
 // objective marker
 const marker = new THREE.Mesh(new THREE.OctahedronGeometry(0.45), new THREE.MeshBasicMaterial({color:0xf5c542}));
@@ -1027,13 +1057,14 @@ function buildPart2(){
   // pickups: logs and potions
   const pk = (kind,x,z)=>{ let m; const y = heightAt2(x,z);
     if(kind==='wood'){ m = m2(new THREE.CylinderGeometry(0.28,0.28,1.3,8), M(0x8b5a2b), x,y+0.4,z); m.rotation.z=Math.PI/2; }
-    else { m = potionModel(kind, R); m.position.set(x,y+0.6,z); }
-    const glow = new THREE.Mesh(new THREE.RingGeometry(0.45,0.75,20), new THREE.MeshBasicMaterial({color: isPotion(kind)?POTION[kind].ring:0xffe08a, transparent:true, opacity:.4, side:THREE.DoubleSide}));
+    else { m = itemModel(kind, R); m.position.set(x,y+0.6,z); }
+    const glow = new THREE.Mesh(new THREE.RingGeometry(0.45,0.75,20), new THREE.MeshBasicMaterial({color: (isPotion(kind)||isFood(kind))?itemRing(kind):0xffe08a, transparent:true, opacity:.4, side:THREE.DoubleSide}));
     glow.rotation.x = -Math.PI/2; glow.position.set(x, y+0.06, z); add(glow);
     P2.picks.push({kind,m,x,z,taken:false,base:m.position.y,glow}); };
   [[-46,6],[-40,-10],[-20,14],[-14,-8],[-24,-16],[-8,6],[10,-8],[6,18]].forEach(([x,z])=>pk('wood',x,z));
   [[-18,0],[14,-24],[50,-2],[20,32]].forEach(([x,z])=>pk('potion',x,z));
   pk('speed',-6,-20); pk('speed',30,6); pk('strength',44,-26); pk('strength',-16,30);
+  pk('carrot',-36,14); pk('pie',-22,-12); pk('carrot',18,-30); pk('pie',30,30);
 
   // goblin camps
   CAMPS.forEach((cp,ci)=>{
@@ -1205,7 +1236,9 @@ function p2Use(){
         ()=>{ if((S.gold||0) >= 8){ S.gold -= 8; S.potStr = (S.potStr||0)+1; updateHud(); say([['Rosa the Healer','One Strength Potion! Double damage! 💪 Press 💪 Strength (7) to use it.']]); } else say([['Rosa the Healer','Oh dear, you need 8 gold for that one. Beat some goblins!']]); });
       say([['Rosa the Healer', `Here you go! ${S.pot-before} fresh healing potion${S.pot-before===1?'':'s'}. You have ${S.pot} now. 🧪`]], ()=> ask('Rosa the Healer', 'Would you like to buy a special potion?', 'Yes please!', 'No thanks', shop)); return; }
     if(i===0){ say([['Tom the Blacksmith','Your sword is the sharpest on the island now! ⚔️🔥']]); return; }
-    if(i===2){ say([['Pip the Farmer','Fresh pumpkins and carrots! Good food makes you stronger. 🎃']]); return; }
+    if(i===2){ const c0 = S.carrot||0, p0 = S.pie||0; S.carrot = Math.max(c0+1, 2); S.pie = Math.max(p0+1, 2); updateHud();
+      say([['Pip the Farmer', `Fresh from my farm! Here's ${S.carrot-c0} carrot${S.carrot-c0===1?'':'s'} 🥕 and ${S.pie-p0} pumpkin pie${S.pie-p0===1?'':'s'} 🥧. Food lasts a long time!`],
+           ['Pip the Farmer','🥕 Carrots make you a little faster. 🥧 Pie makes your sword hit a little harder. Eat them before a big fight!']]); return; }
     if(i===3){ say([['Lin the Fisher', P2.done ? 'My boat is ready when you are. Next stop: the Volcano! 🌋' : 'Free everyone first, and then we can talk about sailing!']]); return; }
   }
 }
@@ -1224,7 +1257,7 @@ function p2Build(){
   const lines = [[`${info.name} ${info.role}`, '*bang bang* *saw saw* ... My very own log cabin! Thank you! 🏠']];
   if(who===0){ P2.swordLvl = 1; lines.push(['Tom the Blacksmith','Hand me that sword... *clang clang clang* There! It hits much harder now, and it glows! ⚔️🔥']); }
   if(who===1){ S.pot = Math.max(S.pot,5); lines.push(['Rosa the Healer','I brewed you some potions! 🧪 Come talk to me any time to get more.']); }
-  if(who===2){ S.maxHp += 10; S.hp = S.maxHp; lines.push(['Pip the Farmer','I planted a farm behind the village! 🎃 Eat up! You can take more hits now. (Max health +10)']); }
+  if(who===2){ S.maxHp += 10; S.hp = S.maxHp; S.carrot = (S.carrot||0)+2; S.pie = (S.pie||0)+2; lines.push(['Pip the Farmer','I planted a farm behind the village! 🎃 Eat up! You can take more hits now. (Max health +10)'], ['Pip the Farmer','Take some carrots 🥕 and pumpkin pies 🥧 too. Come back any time for more!']); }
   if(who===3){ lines.push(['Lin the Fisher','I fixed up my dock and my boat on the beach. ⛵ Once the village is done, it can sail to the volcano!']); }
   updateHud();
   say(lines, ()=>{ if(builtCount()===4) p2Finish(); });
@@ -1279,7 +1312,7 @@ function p2Sword(){
     const d = dist(g.x,g.z), ang = Math.abs(angDiff(Math.atan2(g.z-S.z, g.x-S.x), S.yaw));
     if(d < (g.chief?3.6:3.0) && ang < 1.3 && d<bd){ bd=d; best=g; } });
   if(!best) return;
-  let dmg = (dmgBase + Math.floor(Math.random()*3)) * dmgMul();
+  let dmg = (dmgBase + Math.floor(Math.random()*3)) * dmgMul(); dmg = Math.round(dmg);
   best.hp -= dmg; best.flash = 0.2; // hitting a goblin does NOT stop its swing: block with the shield!
   const a = Math.atan2(best.z-S.z, best.x-S.x), kb = best.chief?0.15:0.35;
   const nx = best.x+Math.cos(a)*kb, nz = best.z+Math.sin(a)*kb; if(heightAt2(nx,nz)>-0.1){ best.x=nx; best.z=nz; }
@@ -1542,10 +1575,11 @@ function buildPart3(){
     P3.boat = g; }
 
   // pickups: only a few potions here. This level is hard!
-  const pk = (x,z,kind='potion')=>{ const y = heightAt3(x,z); const m = potionModel(kind, R); m.position.set(x,y+0.6,z);
-    const glow = new THREE.Mesh(new THREE.RingGeometry(0.45,0.75,20), new THREE.MeshBasicMaterial({color:POTION[kind].ring, transparent:true, opacity:.4, side:THREE.DoubleSide})); glow.rotation.x = -Math.PI/2; glow.position.set(x,y+0.06,z); add(glow);
+  const pk = (x,z,kind='potion')=>{ const y = heightAt3(x,z); const m = itemModel(kind, R); m.position.set(x,y+0.6,z);
+    const glow = new THREE.Mesh(new THREE.RingGeometry(0.45,0.75,20), new THREE.MeshBasicMaterial({color:itemRing(kind), transparent:true, opacity:.4, side:THREE.DoubleSide})); glow.rotation.x = -Math.PI/2; glow.position.set(x,y+0.06,z); add(glow);
     P3.picks.push({kind, m, x, z, taken:false, base:m.position.y, glow}); };
   pk(-44,-6); pk(-12,11); pk(12,-10); pk(-46,8,'speed'); pk(-6,-11,'strength');
+  pk(-49,-3,'carrot'); pk(-49,-1,'pie');   // Lin's lunch basket on the beach
 
   // enemies by area. Area 0: outer yard. Area 1: lava bridge. Area 2: the treasury.
   [['goblin',-28,-3],['goblin',-24,4],['goblin',-17,1],['archer',-14,-9],['archer',-14,9]].forEach(([k,x,z])=>P3.enemies.push(p3Enemy(k,x,z,0)));
@@ -1649,7 +1683,7 @@ function p3Sword(){
   if(b.state!=='sleep' && !b.freed && b.fly < 0.5){
     const d = dist(b.x,b.z), ang = Math.abs(angDiff(Math.atan2(b.z-S.z, b.x-S.x), S.yaw));
     if(d < 6.4 && ang < 1.2){
-      const dmg = (dmgBase + Math.floor(Math.random()*3)) * dmgMul();
+      const dmg = Math.round((dmgBase + Math.floor(Math.random()*3)) * dmgMul());
       b.hp -= dmg; b.flash = 0.2; spawnChips(b.x, 3.5, b.z, 0xbfe0ff, 8);
       if(b.hp <= 0) p3FreeDragon();
       updateHud(); return;
@@ -1661,7 +1695,7 @@ function p3Sword(){
     const d = dist(e.x,e.z), ang = Math.abs(angDiff(Math.atan2(e.z-S.z, e.x-S.x), S.yaw));
     if(d < reach && ang < 1.3 && d < bd){ bd=d; best=e; } });
   if(!best) return;
-  const dmg = (dmgBase + Math.floor(Math.random()*3)) * dmgMul();
+  const dmg = Math.round((dmgBase + Math.floor(Math.random()*3)) * dmgMul());
   best.hp -= dmg; best.flash = 0.2;
   const a = Math.atan2(best.z-S.z, best.x-S.x), kb = best.kind==='brute' ? 0.1 : 0.35;
   if(enemyCan(best.x+Math.cos(a)*kb, best.z+Math.sin(a)*kb)){ best.x += Math.cos(a)*kb; best.z += Math.sin(a)*kb; }
@@ -1979,7 +2013,7 @@ function p3Animate(dt){
 let S, cam = 'tp', running = false, paused = true;
 const keys = {};
 function reset(name, title){
-  S = {name, title, part:1, gold:0, potSpeed:0, potStr:0, speedT:0, strT:0, x:-36, z:0, yaw:0, pitch:0, hp:30, maxHp:30, wood:0, stone:0, pot:0,
+  S = {name, title, part:1, gold:0, potSpeed:0, potStr:0, speedT:0, strT:0, carrot:0, pie:0, carrotT:0, pieT:0, x:-36, z:0, yaw:0, pitch:0, hp:30, maxHp:30, wood:0, stone:0, pot:0,
        sword:false, shield:false, freed:false, house:false, bridge:false, fight:false, won:false,
        swing:0, swingCd:0, chop:0, blocking:false, poison:0, poisonTick:0, mud:0, hurtT:0, invuln:0};
   pickups.forEach(p=>{p.taken=false; p.m.visible=true;});
@@ -2013,7 +2047,7 @@ function saveNow(){
     s:{name:S.name, title:S.title, x:+S.x.toFixed(2), z:+S.z.toFixed(2), yaw:+S.yaw.toFixed(3), pitch:+S.pitch.toFixed(3),
        hp:Math.max(1,S.hp), wood:S.wood, stone:S.stone, pot:S.pot, sword:S.sword, shield:S.shield,
        freed:S.freed, house:S.house, bridge:S.bridge, won:S.won, seenPot:!!S.seenPot,
-       part:S.part||1, gold:S.gold||0, maxHp:S.maxHp, part3done:!!S.part3done, potSpeed:S.potSpeed||0, potStr:S.potStr||0, seenSpeed:!!S.seenSpeed, seenStr:!!S.seenStr},
+       part:S.part||1, gold:S.gold||0, maxHp:S.maxHp, part3done:!!S.part3done, potSpeed:S.potSpeed||0, potStr:S.potStr||0, seenSpeed:!!S.seenSpeed, seenStr:!!S.seenStr, carrot:S.carrot||0, pie:S.pie||0, seenFood:!!S.seenFood},
     picks: pickups.map(p=>p.taken?1:0),
     trees: trees.map(t=>t.alive?t.hits:-1)
   };
@@ -2039,7 +2073,7 @@ function applySave(d){
   if(S.house){ house.visible=true; plotMark.visible=false; houseCol = addCol(PLOT.x,PLOT.z,2.4); }
   if(S.bridge){ bridge.visible=true; bridgeSpot.visible=false; }
   if(S.won){ D.gone = true; dragon.visible = false; }
-  S.gold = v.gold||0; S.maxHp = v.maxHp||30; S.part3done = !!v.part3done; S.potSpeed = v.potSpeed||0; S.potStr = v.potStr||0; S.seenSpeed = !!v.seenSpeed; S.seenStr = !!v.seenStr;
+  S.gold = v.gold||0; S.maxHp = v.maxHp||30; S.part3done = !!v.part3done; S.potSpeed = v.potSpeed||0; S.potStr = v.potStr||0; S.seenSpeed = !!v.seenSpeed; S.seenStr = !!v.seenStr; S.carrot = v.carrot||0; S.pie = v.pie||0; S.seenFood = !!v.seenFood;
   if(v.part===3){ p2Start(true); p2SetDone(); p3Start(false); p3Reset((d.p3&&d.p3.gates)||0); if(d.p3&&d.p3.done){ P3.done = true; P3.boss.freed = true; P3.boss.state='freed'; P3.boss.td.collar.visible=false; } }
   if(v.part===2){
     p2Start(true);
@@ -2123,6 +2157,9 @@ function updateHud(){
   $('spdCnt').textContent = S.potSpeed||0; $('strCnt').textContent = S.potStr||0;
   $('sSpeed').classList.toggle('locked', !(S.potSpeed>0) && !(S.speedT>0)); $('sStr').classList.toggle('locked', !(S.potStr>0) && !(S.strT>0));
   $('sSpeed').classList.toggle('ready', S.speedT>0); $('sStr').classList.toggle('ready', S.strT>0);
+  $('carCnt').textContent = S.carrot||0; $('pieCnt').textContent = S.pie||0;
+  $('sCarrot').classList.toggle('locked', !(S.carrot>0) && !(S.carrotT>0)); $('sPie').classList.toggle('locked', !(S.pie>0) && !(S.pieT>0));
+  $('sCarrot').classList.toggle('ready', S.carrotT>0); $('sPie').classList.toggle('ready', S.pieT>0);
   let q;
   if(!S.sword) q = 'Find the <b>treasure chest</b> on the beach. Follow the gold marker ✨';
   else if(!S.freed) q = 'Someone is calling for help! Find the <b>cage</b>.';
@@ -2136,6 +2173,7 @@ function updateHud(){
   $('gold').textContent = S.gold||0; $('goldBox').classList.toggle('hidden', !(S.gold>0)); $('stoneBox').classList.toggle('hidden', S.part>=2);
   const st=[]; if(S.poison>0) st.push('☠️ Poisoned! Drink a potion'); if(S.mud>0) st.push('🟤 Mud in your eyes');
   if(S.speedT>0) st.push(`⚡ Speed ${Math.ceil(S.speedT)}s`); if(S.strT>0) st.push(`💪 Strength ${Math.ceil(S.strT)}s`);
+  if(S.carrotT>0) st.push(`🥕 ${Math.ceil(S.carrotT)}s`); if(S.pieT>0) st.push(`🥧 ${Math.ceil(S.pieT)}s`);
   $('status').textContent = st.join('   ');
   if(S.fight && S.part!==2){ $('bossName').textContent = '🐉 Swamp Dragon'; $('bossfill').style.width = Math.max(0,D.hp/D.max*100)+'%'; }
 }
@@ -2238,7 +2276,10 @@ function chopAct(){
 const BOOST_TIME = 20;
 function speedAct(){ if(paused || !(S.potSpeed>0) || S.speedT>0) return; S.potSpeed--; S.speedT = BOOST_TIME; spawnChips(S.x, groundH(S.x,S.z)+1.5, S.z, 0xffd23a, 12); updateHud(); }
 function strengthAct(){ if(paused || !(S.potStr>0) || S.strT>0) return; S.potStr--; S.strT = BOOST_TIME; spawnChips(S.x, groundH(S.x,S.z)+1.5, S.z, 0xe0402a, 12); updateHud(); }
-const dmgMul = () => (S.strT>0 ? 2 : 1);
+const FOOD_TIME = 90;
+function carrotAct(){ if(paused || !(S.carrot>0) || S.carrotT>0) return; S.carrot--; S.carrotT = FOOD_TIME; spawnChips(S.x, groundH(S.x,S.z)+1.5, S.z, 0xf28c28, 8); updateHud(); }
+function pieAct(){ if(paused || !(S.pie>0) || S.pieT>0) return; S.pie--; S.pieT = FOOD_TIME; spawnChips(S.x, groundH(S.x,S.z)+1.5, S.z, 0xe8862a, 8); updateHud(); }
+const dmgMul = () => (S.strT>0 ? 2 : 1) * (S.pieT>0 ? 1.3 : 1);
 function potionAct(){
   if(paused || S.pot<1) return;
   S.pot--; S.hp = Math.min(S.maxHp, S.hp+15); S.poison=0; updateHud();
@@ -2258,7 +2299,7 @@ function swordAct(){
     const dx = dragon.position.x - S.x, dz = dragon.position.z - S.z, d = Math.hypot(dx,dz);
     const ang = Math.abs(angDiff(Math.atan2(dz,dx), S.yaw));
     if(d < 5.4 && ang < 1.3){
-      let dmg = (3 + Math.floor(Math.random()*3)) * dmgMul();
+      let dmg = (3 + Math.floor(Math.random()*3)) * dmgMul(); dmg = Math.round(dmg);
       if(S.mud>0) dmg = Math.ceil(dmg/2);
       D.hp -= dmg; D.flash = 0.2; spawnChips(dragon.position.x,2.5,dragon.position.z,0xff6b5a,6);
       if(D.state!=='breath' && Math.random()<0.25){ D.state='hop'; D.t=0.5; }
@@ -2335,6 +2376,8 @@ window.addEventListener('keydown', e=>{
   if(e.code==='Digit3') potionAct();
   if(e.code==='Digit6') speedAct();
   if(e.code==='Digit7') strengthAct();
+  if(e.code==='Digit8') carrotAct();
+  if(e.code==='Digit9') pieAct();
   if(e.code==='Digit4') chopAct();
   if(e.code==='Digit5') buildAct();
   if(e.code==='KeyV') setCam(cam==='fp'?'tp':'fp');
@@ -2351,6 +2394,8 @@ const ACT = {
   pot:   {down:potionAct},
   speed: {down:speedAct},
   strength:{down:strengthAct},
+  carrot:{down:carrotAct},
+  pie:   {down:pieAct},
   chop:  {down:chopAct},
   build: {down:buildAct},
 };
@@ -2504,11 +2549,12 @@ function update(dt){
   const look = (keys.lu?1:0) - (keys.ld?1:0);
   if(look) S.pitch = Math.max(-1.3, Math.min(1.0, S.pitch + look*1.4*dt));
   S.blocking = !!keys.block && S.shield;
-  const speed = (S.blocking ? 3.2 : 7.5) * (S.mud>0 ? 0.6 : 1) * (S.speedT>0 ? 1.65 : 1);
-  if(S.speedT>0 || S.strT>0){
-    const before = Math.ceil(S.speedT||0) + ',' + Math.ceil(S.strT||0);
-    S.speedT = Math.max(0, (S.speedT||0)-dt); S.strT = Math.max(0, (S.strT||0)-dt);
-    if(before !== Math.ceil(S.speedT) + ',' + Math.ceil(S.strT)) updateHud();
+  const speed = (S.blocking ? 3.2 : 7.5) * (S.mud>0 ? 0.6 : 1) * (S.speedT>0 ? 1.65 : 1) * (S.carrotT>0 ? 1.25 : 1);
+  if(S.speedT>0 || S.strT>0 || S.carrotT>0 || S.pieT>0){
+    const tick = () => [S.speedT, S.strT, S.carrotT, S.pieT].map(v=>Math.ceil(v||0)).join(',');
+    const before = tick();
+    S.speedT = Math.max(0, (S.speedT||0)-dt); S.strT = Math.max(0, (S.strT||0)-dt); S.carrotT = Math.max(0, (S.carrotT||0)-dt); S.pieT = Math.max(0, (S.pieT||0)-dt);
+    if(before !== tick()) updateHud();
   }
   if(Math.abs(fwd)>0.05){
     fwd = Math.max(-1, Math.min(1, fwd));
@@ -2535,7 +2581,7 @@ function update(dt){
       p.taken = true; p.m.visible=false;
       if(p.kind==='wood') S.wood++;
       if(p.kind==='stone') S.stone++;
-      if(isPotion(p.kind)) collectPotion(p.kind);
+      if(isPotion(p.kind) || isFood(p.kind)) collectPotion(p.kind);
       updateHud();
     }
   }
@@ -2774,7 +2820,7 @@ D = {state:'sleep', flash:0};
 camPos.set(-40, 8, 0);
 tick();
 // test hook
-window.__dk = { p3WallBetween:(a,b,c,d)=>p3WallBetween(a,b,c,d), speedAct, strengthAct, potionAct, step:(n)=>{ for(let i=0;i<n;i++){ if(!paused) update(0.05); time+=0.05; animate(0.05); } }, sailToPart3, get P3(){return P3;}, canStand3:(x,z)=>canStand3(x,z), sailToPart2, get P2(){return P2;}, canStand2: (x,z)=>canStand2(x,z), heightAt2, VILLAGE, PLOTS, CAMPS, canStand, heightAt, saveNow, readSave, dragon, trees, get paused(){return paused;}, get S(){return S;}, get D(){return D;}, useAct, buildAct, chopAct, swordAct, potionAct, setCam, next };
+window.__dk = { carrotAct, pieAct, p3WallBetween:(a,b,c,d)=>p3WallBetween(a,b,c,d), speedAct, strengthAct, potionAct, step:(n)=>{ for(let i=0;i<n;i++){ if(!paused) update(0.05); time+=0.05; animate(0.05); } }, sailToPart3, get P3(){return P3;}, canStand3:(x,z)=>canStand3(x,z), sailToPart2, get P2(){return P2;}, canStand2: (x,z)=>canStand2(x,z), heightAt2, VILLAGE, PLOTS, CAMPS, canStand, heightAt, saveNow, readSave, dragon, trees, get paused(){return paused;}, get S(){return S;}, get D(){return D;}, useAct, buildAct, chopAct, swordAct, potionAct, setCam, next };
 })();
 </script>
 </body>
