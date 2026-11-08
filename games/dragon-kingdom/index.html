@@ -2122,18 +2122,49 @@ function knightGoblin(kind){
   m.userData.shield = sh;
   return m;
 }
+// Stone gargoyles: statues the sorcerer woke up with the Dragon Crown (they don't need gold)
+function gargoyleModel(kind){
+  const g = new THREE.Group(), big = kind==='great', fly = kind==='flyer';
+  const stone = M(big ? 0x6a6a74 : 0x8a8a92), dark = M(0x5c5c66), eyeM = new THREE.MeshBasicMaterial({color:0xc070ff});
+  if(!fly) [-1,1].forEach(sd=>{ mesh(new THREE.CylinderGeometry(0.16,0.2,0.6,7), dark, 0,0.35,sd*0.22, g);
+    for(let k=-1;k<=1;k++){ const c = mesh(new THREE.ConeGeometry(0.05,0.2,5), dark, 0.25,0.06,sd*0.22+k*0.08, g); c.rotation.z = -Math.PI/2; } });
+  const body = mesh(new THREE.SphereGeometry(0.55, 12, 10), stone, 0, fly?1.0:1.05, 0, g); body.scale.set(0.95,1.15,0.85); body.rotation.z = -0.35;
+  mesh(new THREE.SphereGeometry(0.36, 10, 8), dark, 0.25, 0.95, 0, g).scale.set(0.8,1,0.9);                    // belly
+  const head = new THREE.Group(); head.position.set(0.38, fly?1.6:1.7, 0); g.add(head);
+  mesh(new THREE.SphereGeometry(0.32, 12, 10), stone, 0,0,0, head);
+  mesh(new THREE.BoxGeometry(0.34,0.2,0.3), stone, 0.27,-0.08,0, head);                                         // snout
+  [-1,1].forEach(sd=>{
+    mesh(new THREE.SphereGeometry(0.07,8,6), eyeM, 0.24,0.08,sd*0.13, head);
+    const horn = mesh(new THREE.ConeGeometry(0.07,0.42,6), dark, -0.12,0.3,sd*0.16, head); horn.rotation.z = 0.7; horn.rotation.x = sd*-0.3;
+    const ear = mesh(new THREE.ConeGeometry(0.08,0.25,4), stone, -0.05,0.12,sd*0.3, head); ear.rotation.x = sd*-1.2;
+    mesh(new THREE.ConeGeometry(0.03,0.1,4), M(0xe8e8ee), 0.4,-0.2,sd*0.08, head).rotation.z = Math.PI;              // little fangs
+  });
+  // claw arm (the one that swings) and the other arm
+  const arm = new THREE.Group(); arm.position.set(0.15, 1.25, -0.45); g.add(arm);
+  mesh(new THREE.CylinderGeometry(0.09,0.08,0.55,7), stone, 0,-0.25,0, arm);
+  for(let k=-1;k<=1;k++){ const c = mesh(new THREE.ConeGeometry(0.04,0.22,5), dark, 0.05,-0.6,k*0.06, arm); c.rotation.z = Math.PI + 0.3; }
+  arm.rotation.z = -0.3;
+  const arm2 = mesh(new THREE.CylinderGeometry(0.09,0.08,0.55,7), stone, 0.15, 1.0, 0.45, g); arm2.rotation.x = 0.3;
+  // wings
+  const wings = [-1,1].map(sd=>{
+    const piv = new THREE.Group(); piv.position.set(-0.25, 1.45, sd*0.3); g.add(piv);
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute([0,0,0, -0.6,0.5,sd*1.2, -0.2,-0.4,sd*1.0,  0,0,0, -0.2,-0.4,sd*1.0, 0.1,-0.5,sd*0.4],3)); geo.computeVertexNormals();
+    const w = new THREE.Mesh(geo, M(big?0x5a5a64:0x76767e, {side:THREE.DoubleSide})); w.castShadow = true; piv.add(w);
+    const bone = mesh(new THREE.CylinderGeometry(0.03,0.04,1.3,5), dark, -0.3,0.25,sd*0.6, piv); bone.rotation.x = sd*-1.2;
+    return {piv, sd};
+  });
+  const tail = mesh(new THREE.ConeGeometry(0.1,0.9,6), stone, -0.55,0.7,0, g); tail.rotation.z = 1.9;
+  if(big) g.scale.setScalar(1.7); if(fly) g.scale.setScalar(0.9);
+  g.userData = {arm, skin:stone, wings, base: big ? 0x6a6a74 : 0x8a8a92};
+  return g;
+}
 function p4Enemy(kind, x, z, area){
-  let m;
-  if(kind==='knight' || kind==='captain') m = knightGoblin(kind);
-  else { m = goblinModel(false);
-    if(kind==='archer'){ const arm = m.userData.arm; arm.children.slice(1).forEach(c=>arm.remove(c));
-      const bow = new THREE.Group(); bow.position.set(0.15,-0.45,0); arm.add(bow);
-      const curve = new THREE.Mesh(new THREE.TorusGeometry(0.45,0.035,6,16,Math.PI), M(0x6b4a24)); curve.rotation.y = Math.PI/2; curve.rotation.x = Math.PI/2; bow.add(curve);
-      m.userData.skin.color.setHex(0x8ab86a); } }
+  const m = gargoyleModel(kind);
   L4root.add(m);
-  const hp = {goblin:14, archer:10, knight:20, captain:50}[kind];
-  const shieldHP = {knight:4, captain:8}[kind] || 0;
-  return {m, kind, area, x, z, hx:x, hz:z, hp, max:hp, shieldHP, shieldMax:shieldHP, big:kind==='captain', state:'idle', t:Math.random()*2, cd:Math.random()*1.5, flash:0, yaw:Math.PI, bob:Math.random()*6, swing:0};
+  const hp = {gargoyle:12, flyer:8, great:36}[kind];
+  const shieldHP = 0;
+  return {m, kind, area, x, z, hx:x, hz:z, hp, max:hp, shieldHP, shieldMax:shieldHP, big:kind==='great', state:'idle', t:Math.random()*2, cd:Math.random()*1.5, flash:0, yaw:Math.PI, bob:Math.random()*6, swing:0};
 }
 
 function buildPart4(){
@@ -2232,9 +2263,9 @@ function buildPart4(){
     P4.picks.push({kind, m, x, z, taken:false, base:m.position.y, glow}); };
   pk(-34,10,'potion'); pk(-34,-10,'pie'); pk(-6,11,'potion'); pk(4,-11,'strength'); pk(16,7,'potion'); pk(30,-7,'carrot'); pk(33,6,'speed');
   // enemies
-  [['goblin',-30,-6],['goblin',-28,5],['goblin',-25,-1],['goblin',-23,8],['archer',-21,-12],['archer',-21,12],['goblin',-26,-12],['goblin',-24,13]].forEach(([k,x,z])=>P4.enemies.push(p4Enemy(k,x,z,0)));
-  [['knight',-8,-5],['knight',-6,5],['goblin',-2,-9],['goblin',0,9],['knight',4,0],['archer',7,-11],['archer',7,11]].forEach(([k,x,z])=>P4.enemies.push(p4Enemy(k,x,z,1)));
-  [['goblin',16,-5],['goblin',18,5],['captain',26,0],['goblin',30,-5],['goblin',31,5]].forEach(([k,x,z])=>P4.enemies.push(p4Enemy(k,x,z,2)));
+  [['gargoyle',-30,-6],['gargoyle',-28,5],['gargoyle',-25,-1],['gargoyle',-23,8],['flyer',-21,-12],['flyer',-21,12],['gargoyle',-26,-12],['gargoyle',-24,13]].forEach(([k,x,z])=>P4.enemies.push(p4Enemy(k,x,z,0)));
+  [['gargoyle',-8,-5],['gargoyle',-6,5],['flyer',-2,-9],['flyer',0,9],['gargoyle',4,0]].forEach(([k,x,z])=>P4.enemies.push(p4Enemy(k,x,z,1)));
+  [['gargoyle',16,-5],['gargoyle',18,5],['great',26,0],['gargoyle',30,-4]].forEach(([k,x,z])=>P4.enemies.push(p4Enemy(k,x,z,2)));
   // the Thunder Dragon (your friend) and the sorcerer
   const TD = buildDragon({main:0x3b52c4, dark:0x26307a, belly:0xc4d2ff, spike:0xf5d020, spikeGlow:true, wing:0x7a8ff0, wingGlow:0x1a2a8a, eye:0xe8f8ff, eyeGlow:0x6aa8ff});
   TD.dragon.scale.setScalar(1.35); add(TD.dragon); TD.collar.visible = false; P4.td = TD;
@@ -2304,8 +2335,8 @@ function p4Quest(){
   const a = p4Area(), b = P4.boss;
   if(a===3) return b.form==='dragon' ? '<b>Knock the Dragon Crown off!</b> Strike him with ⚡ when he is under the hole in the roof!' : '<b>Defeat the evil sorcerer!</b> ⚡ works under the big hole in the roof.';
   const names = ['the Outer Wall','the Courtyard','the Great Hall'];
-  const tip = a===2 ? '⚡ only works in the beams of light from the roof cracks!' : (a===1 ? 'Armored guards block your sword. Break their shields with ⚡!' : 'The Thunder Dragon is helping! Press ⚡ to call lightning.');
-  return `Beat every guard at <b>${names[a]}</b> (${p4Left(a)} left)<br><span style="font-size:14px">${tip}</span>`;
+  const tip = a===2 ? '⚡ only works in the beams of light from the roof cracks!' : (a===1 ? 'Stone cracks under lightning! One ⚡ shatters a gargoyle.' : 'The Thunder Dragon is helping! Press ⚡ to call lightning.');
+  return `Beat every gargoyle at <b>${names[a]}</b> (${p4Left(a)} left)<br><span style="font-size:14px">${tip}</span>`;
 }
 function p4Objective(){
   if(P4.done || P4.flying) return null;
@@ -2345,10 +2376,10 @@ function p4HurtEnemy(e, dmg, kb){
   e.hp -= dmg; e.flash = 0.2;
   const a = Math.atan2(e.z-S.z, e.x-S.x); kb = e.big ? kb*0.3 : kb;
   if(enemyCan4(e.x+Math.cos(a)*kb, e.z+Math.sin(a)*kb)){ e.x += Math.cos(a)*kb; e.z += Math.sin(a)*kb; }
-  spawnChips(e.x, heightAt4(e.x,e.z)+1.2, e.z, 0x8be05a, 6);
+  spawnChips(e.x, heightAt4(e.x,e.z)+1.2, e.z, 0xb8b8c0, 6);
   if(e.hp <= 0){
-    e.state='flee'; e.t=2.5; spawnChips(e.x, 1.4, e.z, 0xf5c542, 14);
-    S.gold = (S.gold||0) + (e.big ? 10 : 3); if(e.big) S.potStr = (S.potStr||0)+1;
+    e.state='flee'; e.t=0.6; spawnChips(e.x, 1.2, e.z, 0x8a8a92, 18);                    // CRUMBLE into rubble
+    if(e.big) S.potStr = (S.potStr||0)+1;
     p4CheckArea(e.area);
   }
   updateHud();
@@ -2465,7 +2496,7 @@ function p4Fly(dt){
   if(f.x > -46){
     P4.flying = false; P4.landed = true; S.x = -40; S.z = 0; S.yaw = 0; S.pitch = 0; camPos.set(0,0,0);
     P4.helper.active = true; updateHud(); saveNow();
-    say([['🏰 Dragon Castle','The Thunder Dragon swoops down and lands in the field outside the castle walls. Guards come running out of the gate!'],
+    say([['🏰 Dragon Castle','The Thunder Dragon swoops down and lands in the field outside the castle walls. Stone gargoyles leap down from the walls, their purple eyes glowing!'],
          ['⚡ Thunder Dragon','I\'ll help you with the first wave! Press ⚡ Lightning (L) and I will strike where you aim. It recharges in a few seconds.']]);
   }
 }
@@ -2493,12 +2524,12 @@ function p4Update(dt){
     if(e.state==='gone') continue;
     e.t -= dt; e.cd -= dt; e.flash = Math.max(0, e.flash-dt);
     const d = dist(e.x,e.z);
-    if(e.state==='flee'){ const a = Math.atan2(e.z-S.z, e.x-S.x); const nx=e.x+Math.cos(a)*6*dt, nz=e.z+Math.sin(a)*6*dt; if(enemyCan4(nx,nz)){e.x=nx; e.z=nz;} e.yaw=a; if(e.t<=0){ e.state='gone'; e.m.visible=false; } continue; }
+    if(e.state==='flee'){ if(e.t<=0){ e.state='gone'; e.m.visible=false; } continue; }   // crumbling
     if(e.area > area){ e.state='idle'; continue; }
     const here = myArea === e.area && !p4WallBetween(e.x, e.z, S.x, S.z);
     if(!here && e.state!=='idle') e.state = 'idle';
-    const archer = e.kind==='archer', heavy = e.kind==='knight' || e.big;
-    const sp = (e.big ? 2.4 : heavy ? 3.0 : archer ? 3.0 : 4.0) * dt;
+    const archer = e.kind==='flyer', heavy = e.big;
+    const sp = (e.big ? 2.2 : archer ? 3.0 : 3.2) * dt;
     const step = (tx,tz,spd)=>{ const a = Math.atan2(tz-e.z, tx-e.x); e.yaw = a; const nx=e.x+Math.cos(a)*spd, nz=e.z+Math.sin(a)*spd; if(enemyCan4(nx,nz)){ e.x=nx; e.z=nz; } };
     if(e.state==='idle'){
       if(here && d < 15) e.state='chase';
@@ -2506,20 +2537,20 @@ function p4Update(dt){
     } else if(e.state==='chase'){
       if(archer){
         e.yaw = Math.atan2(S.z-e.z, S.x-e.x);
-        if(d < 6) step(e.x-(S.x-e.x), e.z-(S.z-e.z), sp); else if(d > 15) step(S.x, S.z, sp);
-        if(e.cd<=0 && d < 20 && !p4WallBetween(e.x,e.z,S.x,S.z)){ e.state='windup'; e.t = 0.9; }
+        if(d < 3.5) step(e.x-(S.x-e.x), e.z-(S.z-e.z), sp); else if(d > 11) step(S.x, S.z, sp);
+        if(e.cd<=0 && d < 18 && !p4WallBetween(e.x,e.z,S.x,S.z)){ e.state='windup'; e.t = 1.0; }
       } else {
         if(d > (e.big?2.6:1.9)) step(S.x, S.z, sp); else e.yaw = Math.atan2(S.z-e.z, S.x-e.x);
-        if(d < (e.big?3.6:2.9) && e.cd<=0){ e.state='windup'; e.t = e.big ? 0.8 : 0.55; }
+        if(d < (e.big?3.6:2.9) && e.cd<=0){ e.state='windup'; e.t = e.big ? 0.95 : 0.75; }
       }
     } else if(e.state==='windup'){
       e.yaw = Math.atan2(S.z-e.z, S.x-e.x);
       if(e.t<=0){
         e.state='chase'; e.swing = 0.25;
-        if(archer){ e.cd = 2.0 + Math.random()*0.8; p4Arrow(e); }
-        else { e.cd = e.big ? 1.6 : 1.15;
-          if(d < (e.big?4.6:3.4)){ const before = S.hp; hurt(e.big ? 9 : heavy ? 6 : 5, e.x, e.z);
-            if(S.hp < before){ const a = Math.atan2(S.z-e.z, S.x-e.x), kb = e.big ? 2.2 : 0.9; if(canStand4(S.x+Math.cos(a)*kb, S.z+Math.sin(a)*kb)){ S.x += Math.cos(a)*kb; S.z += Math.sin(a)*kb; } } } }
+        if(archer){ e.cd = 2.6 + Math.random()*0.8; p4Arrow(e); }
+        else { e.cd = e.big ? 1.8 : 1.4;
+          if(d < (e.big?4.6:3.4)){ const before = S.hp; hurt(e.big ? 6 : 4, e.x, e.z);
+            if(S.hp < before){ const a = Math.atan2(S.z-e.z, S.x-e.x), kb = e.big ? 1.4 : 0.7; if(canStand4(S.x+Math.cos(a)*kb, S.z+Math.sin(a)*kb)){ S.x += Math.cos(a)*kb; S.z += Math.sin(a)*kb; } } } }
       }
     }
     for(const o of P4.enemies){ if(o===e||o.state==='gone'||o.state==='flee') continue; const dd = Math.hypot(o.x-e.x,o.z-e.z); if(dd<1.3 && dd>0.01){ e.x -= (o.x-e.x)/dd*0.03; e.z -= (o.z-e.z)/dd*0.03; } }
@@ -2531,8 +2562,8 @@ function p4Update(dt){
     let gone = a.life<=0;
     if(a.px !== undefined && p4WallBetween(a.px, a.pz, a.m.position.x, a.m.position.z)) gone = true;
     a.px = a.m.position.x; a.pz = a.m.position.z;
-    if(!gone && Math.hypot(a.m.position.x-S.x, a.m.position.z-S.z) < 0.8 && a.m.position.y < 2.6){
-      gone = true; if(shieldCovers(S.x - a.vel.x, S.z - a.vel.z)) spawnChips(S.x+Math.cos(S.yaw), 1.4, S.z+Math.sin(S.yaw), 0xf5c542, 6); else hurt(4); }
+    if(!gone && Math.hypot(a.m.position.x-S.x, a.m.position.z-S.z) < 0.9 && a.m.position.y < 3.0){
+      gone = true; if(shieldCovers(S.x - a.vel.x, S.z - a.vel.z)) spawnChips(S.x+Math.cos(S.yaw), 1.4, S.z+Math.sin(S.yaw), 0xc070ff, 6); else hurt(3); }
     if(gone){ L4root.remove(a.m); P4.arrows.splice(i,1); }
   }
   p4Boss(dt);
@@ -2569,7 +2600,7 @@ function p4Update(dt){
   if(area===3 && b.state!=='wait' && b.state!=='done'){ $('boss').classList.remove('hidden'); $('bossName').textContent = b.form==='dragon' ? '🐲 The Dragon King' : '🧙 The Evil Sorcerer'; $('bossfill').style.width = Math.max(0,b.hp/b.max*100)+'%'; }
   else {
     const f = P4.focus && P4.focus.state!=='gone' && P4.focus.state!=='flee' && dist(P4.focus.x,P4.focus.z)<14 ? P4.focus : (engaged && ed<9 ? engaged : null);
-    if(f){ $('boss').classList.remove('hidden'); $('bossName').textContent = {goblin:'👺 Castle Goblin', archer:'🏹 Goblin Archer', knight:'🛡️ Armored Guard', captain:'🛡️ Guard Captain'}[f.kind] + (f.shieldHP>0 ? ' (shield up)' : ''); $('bossfill').style.width = Math.max(0,f.hp/f.max*100)+'%'; }
+    if(f){ $('boss').classList.remove('hidden'); $('bossName').textContent = {gargoyle:'🗿 Stone Gargoyle', flyer:'🦇 Flying Gargoyle', great:'🗿 Great Gargoyle'}[f.kind] + (f.shieldHP>0 ? ' (shield up)' : ''); $('bossfill').style.width = Math.max(0,f.hp/f.max*100)+'%'; }
     else $('boss').classList.add('hidden');
   }
   // the ⚡ button glows when the target in front of you is under open sky
@@ -2583,10 +2614,10 @@ function p4BoltUI(){
 function p4Arrow(e){
   const from = new THREE.Vector3(e.x + Math.cos(e.yaw)*0.6, heightAt4(e.x,e.z)+1.3, e.z + Math.sin(e.yaw)*0.6);
   const dir = new THREE.Vector3(S.x, groundH(S.x,S.z)+1.2, S.z).sub(from).normalize();
-  const m = new THREE.Group(); m.position.copy(from); L4root.add(m);
-  const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.03,0.9,5), M(0x8b5a2b)); shaft.rotation.z = Math.PI/2; m.add(shaft);
-  m.rotation.y = -Math.atan2(dir.z, dir.x);
-  P4.arrows.push({m, vel:dir.multiplyScalar(17), life:2});
+  from.y += 2.2;   // they spit from the air
+  const dir2 = new THREE.Vector3(S.x, groundH(S.x,S.z)+1.2, S.z).sub(from).normalize();
+  const m = new THREE.Mesh(new THREE.IcosahedronGeometry(0.3,1), new THREE.MeshBasicMaterial({color:0xc070ff})); m.position.copy(from); L4root.add(m);
+  P4.arrows.push({m, vel:dir2.multiplyScalar(10), life:3});
 }
 function p4Meteor(x,z,delay){
   const ring = new THREE.Mesh(new THREE.RingGeometry(1.5, 1.9, 28), new THREE.MeshBasicMaterial({color:0xff6a1a, transparent:true, opacity:.8, side:THREE.DoubleSide}));
@@ -2600,7 +2631,7 @@ function p4Boss(dt){
     if(p4Area()>=3 && S.x > G4[2]+1.5){
       b.state = 'intro';
       say([['🧙 The Sorcerer','*a skinny old man in purple robes sits on the golden throne, wearing a glowing crown*'],
-           ['🧙 The Sorcerer','So, the little knight has come all this way. You freed my dragons. You took my gold. You chased off my goblins.'],
+           ['🧙 The Sorcerer','So, the little knight has come all this way. You freed my dragons. You took my gold, and my greedy goblins ran off the moment it was gone. So I woke up my STONE GARGOYLES instead. They do not need any gold!'],
            ['🧙 The Sorcerer','But I still have the DRAGON CROWN! Bow before the Dragon King! *his staff crackles with purple magic*'],
            ['Tip','He teleports around and throws magic. Block with your shield, then hit him! ⚡ works under the hole in the roof.']], ()=>{ b.state = 'fight'; b.castCd = 1.5; b.tpCd = 4; });
     }
@@ -2700,15 +2731,17 @@ function p4Animate(dt){
   if(!P4) return;
   for(const e of P4.enemies){
     if(e.state==='gone') continue;
-    const y = heightAt4(e.x,e.z), moving = e.state==='chase' || e.state==='flee';
-    e.m.position.set(e.x, y + (moving ? Math.abs(Math.sin(time*12+e.bob))*0.15 : 0), e.z);
+    const y = heightAt4(e.x,e.z), moving = e.state==='chase';
+    const flyer = e.kind==='flyer';
+    if(e.state==='flee'){ const k = Math.max(0.01, e.t/0.6); e.m.scale.set((e.big?1.7:1)*1, (e.big?1.7:1)*k, (e.big?1.7:1)*1); e.m.position.y = y; continue; }
+    e.m.position.set(e.x, y + (flyer ? 2.2 + Math.sin(time*2.5+e.bob)*0.35 : (moving ? Math.abs(Math.sin(time*9+e.bob))*0.12 : 0)), e.z);
     e.m.rotation.y = -e.yaw;
-    const arm = e.m.userData.arm;
-    if(e.kind==='archer'){ arm.rotation.z = e.state==='windup' ? -1.5 : -0.4; }
-    else if(e.state==='windup') arm.rotation.z = Math.min(2.6, arm.rotation.z + dt*8);
+    const u = e.m.userData, arm = u.arm;
+    u.wings.forEach(w=>{ w.piv.rotation.x = w.sd * (flyer ? -0.2 + Math.sin(time*12+e.bob)*0.6 : -0.1 + Math.sin(time*2+e.bob)*0.08); });
+    if(e.state==='windup') arm.rotation.z = Math.min(2.4, arm.rotation.z + dt*6);
     else if(e.swing>0){ e.swing -= dt; arm.rotation.z = -0.9; }
     else arm.rotation.z += (-0.3 - arm.rotation.z)*Math.min(1,dt*8);
-    e.m.userData.skin.color.setHex(e.flash>0 ? 0xff5a4a : (e.kind==='archer' ? 0x8ab86a : 0x6aa84f));
+    u.skin.color.setHex(e.flash>0 ? 0xffffff : u.base);
   }
   P4.picks.forEach(p=>{ if(!p.taken){ p.m.position.y = p.base + Math.sin(time*3+p.x)*0.12; p.m.rotation.y += dt; } p.glow.visible = !p.taken; });
   P4.fires.forEach((f,i)=>{ f.scale.set(1, 0.85+Math.sin(time*13+i)*0.18, 1); });
