@@ -840,6 +840,7 @@ const L2root = new THREE.Group(); L2root.visible = false; scene.add(L2root);
 let P2 = null;              // Part 2 world + state, built the first time you sail there
 let P3 = null; let heightAt3 = (x,z)=>0;
 const PART3_READY = true;
+const PART4_READY = false;   // the preview turns this on
 function groundH(x,z){ return S && S.part===2 ? heightAt2(x,z) : (S && S.part===3 ? heightAt3(x,z) : (S && S.part===4 ? heightAt4(x,z) : 0)); }
 function showPart(n){
   L1root.visible = n===1; L2root.visible = n===2; if(typeof L3root!=='undefined') L3root.visible = n===3; if(typeof L4root!=='undefined') L4root.visible = n===4;
@@ -1690,12 +1691,12 @@ function p3Objective(){
   return null;
 }
 function p3Prompt(){
-  if(P3.done && dist(P3.boss.x, P3.boss.z) < 9) return '👋 Use (E) to climb on the Thunder Dragon 🐉';
+  if(PART4_READY && P3.done && dist(P3.boss.x, P3.boss.z) < 9) return '👋 Use (E) to climb on the Thunder Dragon 🐉';
   if(dist(P3.boat.position.x, P3.boat.position.z) < 4.5) return '👋 Use (E) to sail back to the village';
   return null;
 }
 function p3Use(){
-  if(P3.done && dist(P3.boss.x, P3.boss.z) < 9){ ask('⚡ Thunder Dragon', 'Ready to fly to Dragon Castle and stop the Dragon King for good?', 'Fly! 🐉', 'Not yet', ()=>sailToPart4()); return; }
+  if(PART4_READY && P3.done && dist(P3.boss.x, P3.boss.z) < 9){ ask('⚡ Thunder Dragon', 'Ready to fly to Dragon Castle and stop the Dragon King for good?', 'Fly! 🐉', 'Not yet', ()=>sailToPart4()); return; }
   if(dist(P3.boat.position.x, P3.boat.position.z) < 4.5){
     ask('Lin\'s Boat', 'Sail back to the village? Rosa can heal you and refill your potions, but Volcano Island will start over from the beginning.', 'Sail home ⛵', 'Stay and fight', ()=>{ backToVillage(); });
   }
@@ -1757,8 +1758,8 @@ function p3FreeDragon(){
       ()=>{
         $('endTitle').textContent = 'Part 3 Complete!';
         $('endText').textContent = `${kn()} fought through the goblin army, crossed the lava bridge, and freed the Thunder Dragon! The Dragon King's treasure is gone, and so is his goblin army.`;
-        $('endNext').innerHTML = 'Next: <b>Part 4: Dragon Castle</b> 🏰 Fly there on the Thunder Dragon!';
-        $('p2Btn').classList.add('hidden'); $('p3Btn').classList.add('hidden'); $('p4Btn').classList.remove('hidden');
+        $('endNext').innerHTML = (PART4_READY ? 'Next: ' : 'Coming next: ') + '<b>Part 4: Dragon Castle</b> 🏰 Fly there on the Thunder Dragon!';
+        $('p2Btn').classList.add('hidden'); $('p3Btn').classList.add('hidden'); $('p4Btn').classList.toggle('hidden', !PART4_READY);
         $('end').classList.remove('hidden'); paused = true;
       });
   }, 1500);
@@ -3160,10 +3161,11 @@ function setJoy(x, y){
 }
 function touchRole(t){
   const el = t.target;
+  if(!dlg.classList.contains('hidden')) return null;          // a message is showing: taps belong to its buttons
   const a = el.closest && el.closest('[data-act]');
   if(a) return 'act:'+a.dataset.act;
   // a thumb that lands just outside the big round buttons still presses them
-  if(!$('tact').classList.contains('hidden')){
+  if(el===canvas && !$('tact').classList.contains('hidden')){   // only taps on the game world, never on other buttons
     for(const id of ['bSword','bShield','bBolt']){ if($(id).classList.contains('hidden')) continue;
       const r = $(id).getBoundingClientRect(), cx = r.left+r.width/2, cy = r.top+r.height/2;
       if(Math.hypot(t.clientX-cx, t.clientY-cy) < r.width/2 + 34) return 'act:'+$(id).dataset.act;
