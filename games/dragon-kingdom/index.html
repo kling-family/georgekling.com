@@ -1208,11 +1208,11 @@ function p2Use(){
   if(pp){
     const i = pp.who, info = VILLAGERS[i];
     if(P2.home[i] < 0){ say([[`${info.name} ${info.role}`, 'Could you build me a house? 4 wood, at one of the plots. 🏠']]); return; }
-    if(i===1){ const before = S.pot; S.pot = Math.max(S.pot, 3); updateHud();
+    if(i===1){ const before = S.pot; S.pot = S.pot < 5 ? 5 : S.pot + 1; updateHud();   // fills you up to 5, and always gives at least one
       const shop = ()=> ask('Rosa the Healer', `I brew special potions too! ⚡ Speed costs 5 gold, 💪 Strength costs 8 gold. You have ${S.gold||0} gold 🪙. Which one?`, '⚡ Speed (5🪙)', '💪 Strength (8🪙)',
         ()=>{ if((S.gold||0) >= 5){ S.gold -= 5; S.potSpeed = (S.potSpeed||0)+1; updateHud(); say([['Rosa the Healer','One Speed Potion! Zoom zoom! ⚡ Press ⚡ Speed (6) to use it.']]); } else say([['Rosa the Healer','Oh dear, you need 5 gold for that one. Beat some goblins!']]); },
         ()=>{ if((S.gold||0) >= 8){ S.gold -= 8; S.potStr = (S.potStr||0)+1; updateHud(); say([['Rosa the Healer','One Strength Potion! Double damage! 💪 Press 💪 Strength (7) to use it.']]); } else say([['Rosa the Healer','Oh dear, you need 8 gold for that one. Beat some goblins!']]); });
-      say([['Rosa the Healer', S.pot>before ? `Here you go! Fresh healing potions. You have ${S.pot} now. 🧪` : 'Your healing potions are full!']], ()=> ask('Rosa the Healer', 'Would you like to buy a special potion?', 'Yes please!', 'No thanks', shop)); return; }
+      say([['Rosa the Healer', `Here you go! ${S.pot-before} fresh healing potion${S.pot-before===1?'':'s'}. You have ${S.pot} now. 🧪`]], ()=> ask('Rosa the Healer', 'Would you like to buy a special potion?', 'Yes please!', 'No thanks', shop)); return; }
     if(i===0){ say([['Tom the Blacksmith','Your sword is the sharpest on the island now! ⚔️🔥']]); return; }
     if(i===2){ say([['Pip the Farmer','Fresh pumpkins and carrots! Good food makes you stronger. 🎃']]); return; }
     if(i===3){ say([['Lin the Fisher', P2.done ? 'My boat is ready when you are. Next stop: the Volcano! 🌋' : 'Free everyone first, and then we can talk about sailing!']]); return; }
@@ -1232,7 +1232,7 @@ function p2Build(){
   const info = VILLAGERS[who];
   const lines = [[`${info.name} ${info.role}`, '*bang bang* *saw saw* ... My very own log cabin! Thank you! 🏠']];
   if(who===0){ P2.swordLvl = 1; lines.push(['Tom the Blacksmith','Hand me that sword... *clang clang clang* There! It hits much harder now, and it glows! ⚔️🔥']); }
-  if(who===1){ S.pot = Math.max(S.pot,3); lines.push(['Rosa the Healer','I brewed you some potions! 🧪 Come talk to me any time to get more.']); }
+  if(who===1){ S.pot = Math.max(S.pot,5); lines.push(['Rosa the Healer','I brewed you some potions! 🧪 Come talk to me any time to get more.']); }
   if(who===2){ S.maxHp += 10; S.hp = S.maxHp; lines.push(['Pip the Farmer','I planted a farm behind the village! 🎃 Eat up! You can take more hits now. (Max health +10)']); }
   if(who===3){ lines.push(['Lin the Fisher','I fixed up my dock and my boat on the beach. ⛵ Once the village is done, it can sail to the volcano!']); }
   updateHud();
@@ -1561,7 +1561,7 @@ function buildPart3(){
   // enemies by area. Area 0: outer yard. Area 1: lava bridge. Area 2: the treasury.
   [['goblin',-28,-3],['goblin',-24,4],['goblin',-17,1],['archer',-14,-9],['archer',-14,9]].forEach(([k,x,z])=>P3.enemies.push(p3Enemy(k,x,z,0)));
   [['goblin',-4,4],['goblin',-3,-4],['brute',6.5,0],['goblin',10,5],['archer',11,-10],['archer',11,10]].forEach(([k,x,z])=>P3.enemies.push(p3Enemy(k,x,z,1)));
-  [['brute',20,4],['archer',22,-9]].forEach(([k,x,z])=>P3.enemies.push(p3Enemy(k,x,z,2)));
+  // the treasure room has no goblins: just you and the Thunder Dragon
 
   // the Thunder Dragon
   const TD = buildDragon({main:0x3b52c4, dark:0x26307a, belly:0xc4d2ff, spike:0xf5d020, spikeGlow:true, wing:0x7a8ff0, wingGlow:0x1a2a8a, eye:0xe8f8ff, eyeGlow:0x6aa8ff});
@@ -1631,6 +1631,7 @@ function p3Quest(){
   if(P3.done) return 'You freed the Thunder Dragon! 🎉';
   if(b.state!=='sleep' && !b.freed) return `<b>Defeat the Thunder Dragon!</b> ⚡ Move out of the glowing circles!`;
   const left = p3AreaEnemiesLeft(a);
+  if(a===2) return 'Enter the <b>Treasury</b>. Something huge is sleeping on the gold... ⚡';
   const names = ['the Outer Yard','the Lava Bridge','the Treasury'];
   return `Beat every goblin in <b>${names[a]}</b> to open the way. (${left} left)<br><span style="font-size:14px">🧪 Few potions here. The boat at the beach goes home, but restarts this island.</span>`;
 }
@@ -1874,9 +1875,7 @@ function p3Boss(dt){
   // phase 2: at half health it takes to the sky and calls goblins
   if(b.phase===1 && b.hp < b.max*0.5){
     b.phase = 2; b.state = 'sky'; b.t = 7; b.skyCd = 22;
-    if(!b.summoned){ b.summoned = true;
-      [['goblin',ARENA.x-8,-6],['goblin',ARENA.x-8,6]].forEach(([k,x,z])=>{ const e = p3Enemy(k,x,z,2); e.summoned = true; e.state='chase'; P3.enemies.push(e); }); }
-    say([['⚡ Thunder Dragon','ENOUGH! GOBLINS, TO ME! *it rises into the storm clouds* ⚡']]);
+    say([['⚡ Thunder Dragon','ENOUGH! *it rises into the storm clouds* Feel the STORM! ⚡']]);
   }
   if(b.state==='roar'){ turnTo(face,3); if(b.t<=0) b.state='chase'; }
   else if(b.state==='sky'){
