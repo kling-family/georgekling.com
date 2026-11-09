@@ -38,6 +38,17 @@
   #mapBtn{position:absolute;top:calc(38% - 52px);right:8px;font-size:16px;padding:7px 12px;background:#3b52c4;color:#fff6e3;box-shadow:0 3px 0 #26307a}
   body.touch #mapBtn{top:auto;bottom:332px}
   #mapScreen .card{max-width:520px}
+  #buildScreen .card{max-width:620px}
+  #buildList{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+  .buildItem{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 6px;font-size:15px;background:#4e6a45;color:var(--cream);box-shadow:0 3px 0 #2d3f28}
+  .buildItem .bi{font-size:30px}
+  .buildItem small{font-size:12px;opacity:.9;line-height:1.2}
+  .buildItem:disabled{opacity:.45}
+  #placeBar{position:absolute;left:50%;bottom:150px;transform:translateX(-50%);display:flex;gap:8px;align-items:center;background:rgba(20,30,18,.8);padding:8px 10px;border-radius:14px;color:var(--cream);font-size:14px}
+  #placeBar button{font-size:16px;padding:8px 12px}
+  #placeBar #placeOk{background:var(--green);color:var(--cream)}
+  #placeBar #placeOk:disabled{opacity:.45}
+  @media (max-width:760px){#buildList{grid-template-columns:repeat(2,1fr)} #placeBar span{display:none}}
   #mapList{display:flex;flex-direction:column;gap:8px;margin:12px 0}
   .mapIsland{display:flex;gap:12px;align-items:center;text-align:left;font-size:17px;padding:10px 14px;background:#4e6a45;color:var(--cream);box-shadow:0 3px 0 #2d3f28}
   .mapIsland small{font-size:13px;opacity:.9}
@@ -122,10 +133,12 @@
     <button id="camTP" class="on">🎥 Over shoulder</button>
   </div>
   <div id="prompt" class="hidden"></div>
+  <div id="placeBar" class="hidden"><span>Walk and turn to move it</span><button id="placeOk">✅ Build here <small>(E)</small></button><button id="placeTurn">↻ Turn <small>(Q)</small></button><button id="placeCancel">✖ Cancel</button></div>
   <div id="joy" class="hidden"><div id="knob"></div></div>
   <div id="help">W A S D or arrows to move<br>Drag the screen, or R and F, to look up and down<br>V switches the camera</div>
   <div id="tact" class="hidden">
     <button class="big hidden" id="bBolt" data-act="bolt">⚡<small>strike</small></button>
+    <button class="big hidden" id="bRide" data-act="ride">🦖<small>ride</small></button>
     <button class="big hidden" id="bBow" data-act="bow">🏹<small>shoot</small></button>
     <button class="big" id="bShield" data-act="shield">🛡️<small>hold</small></button>
     <button class="big sword" id="bSword" data-act="sword">⚔️<small>hold</small></button>
@@ -139,6 +152,7 @@
     <button class="slot locked" id="sStr" data-act="strength"><span class="key">7</span><span class="cnt" id="strCnt">0</span>💪<small>Strength</small></button>
     <button class="slot locked" id="sCarrot" data-act="carrot"><span class="key">8</span><span class="cnt" id="carCnt">0</span>🥕<small>Carrot</small></button>
     <button class="slot locked" id="sPie" data-act="pie"><span class="key">9</span><span class="cnt" id="pieCnt">0</span>🥧<small>Pie</small></button>
+    <button class="slot hidden" id="sRide" data-act="ride"><span class="key">G</span>🦖<small>Ride</small></button>
     <button class="slot hidden" id="sBow" data-act="bow"><span class="key">B</span><span class="cnt" id="arrowCnt">0</span>🏹<small>Bow</small></button>
     <button class="slot hidden" id="sBolt" data-act="bolt"><span class="key">L</span>⚡<small>Lightning</small></button>
     <button class="slot" id="sChop" data-act="chop"><span class="key">4</span>🪓<small>Chop</small></button>
@@ -173,6 +187,16 @@
     <div id="dlgWho"></div>
     <div id="dlgText"></div>
     <div class="row"><button id="dlgNo" class="hidden" style="background:#8d8f93;box-shadow:0 4px 0 #5a5c60;margin-right:8px">No</button><button id="dlgBtn">OK ▶</button></div>
+  </div>
+</div>
+
+<div id="buildScreen" class="screen hidden">
+  <div class="card">
+    <h2 style="font-size:30px;margin:0">🔨 What will you build?</h2>
+    <p style="margin:6px 0 0;font-size:16px">You have 🪵 <b id="buildWood">0</b> wood. Chop trees on any island for more!</p>
+    <div id="buildList"></div>
+    <button id="buildRemove" style="background:#8a6a2a;color:#fff6e3;box-shadow:0 4px 0 #5a4418;margin-right:8px">🧹 Take one down</button>
+    <button id="buildClose" style="background:#8d8f93;box-shadow:0 4px 0 #5a5c60">Close</button>
   </div>
 </div>
 
@@ -863,9 +887,9 @@ let P2 = null;              // Part 2 world + state, built the first time you sa
 let P3 = null; let heightAt3 = (x,z)=>0;
 const PART3_READY = true;
 const PART4_READY = true;
-function groundH(x,z){ return S && S.part===2 ? heightAt2(x,z) : (S && S.part===3 ? heightAt3(x,z) : (S && S.part===4 ? heightAt4(x,z) : 0)); }
+function groundH(x,z){ return S && S.part===2 ? heightAt2(x,z) : (S && S.part===3 ? heightAt3(x,z) : (S && S.part===4 ? heightAt4(x,z) : (S && S.part===5 ? heightAt5(x,z) : (S && S.part===6 ? heightAt6(x,z) : 0)))); }
 function showPart(n){
-  L1root.visible = n===1; L2root.visible = n===2; if(typeof L3root!=='undefined') L3root.visible = n===3; if(typeof L4root!=='undefined') L4root.visible = n===4;
+  L1root.visible = n===1; L2root.visible = n===2; if(typeof L3root!=='undefined') L3root.visible = n===3; if(typeof L4root!=='undefined') L4root.visible = n===4; if(typeof L5root!=='undefined' && L5root) L5root.visible = n===5; if(typeof L6root!=='undefined' && L6root) L6root.visible = n===6;
   scene.children.forEach(o=>{ if(o.name==='far') o.visible = n<3; });
   // Volcano Island has a red, smoky sky
   const u = camera.userData.sky.material.uniforms, hot = n===3, storm = n===4;
@@ -873,6 +897,16 @@ function showPart(n){
   const fogC = storm?0xb09ab8:hot?0xd89a7a:HORIZON; scene.fog.color.setHex(fogC); scene.background.setHex(fogC);
   sun.color.setHex(storm?0xe0d0ff:hot?0xffb890:0xfff0d0); hemi.color.setHex(storm?0xd8d0f0:hot?0xffd0c0:0xe4f4ff);
   sea.material.color.setHex(storm?0x2a4a6a:hot?0x2a5a7a:0x2a8fd0);
+  if(n===5){ // Ice Island: pale, cold sky
+    u.top.value.setHex(0x7fa8d8); u.mid.value.setHex(0xcfe0f2); u.bot.value.setHex(0xeef4fa);
+    scene.fog.color.setHex(0xe6eef6); scene.background.setHex(0xe6eef6);
+    sun.color.setHex(0xf0f6ff); hemi.color.setHex(0xe8f2ff); sea.material.color.setHex(0x2a5a80);
+  }
+  if(n===6){ // Dino Island: warm, hazy jungle
+    u.top.value.setHex(0x3a9ad8); u.mid.value.setHex(0xa8dcd0); u.bot.value.setHex(0xe8f0c8);
+    scene.fog.color.setHex(0xd8e8c0); scene.background.setHex(0xd8e8c0);
+    sun.color.setHex(0xfff0c8); hemi.color.setHex(0xf0ffe0); sea.material.color.setHex(0x1a9ab0);
+  }
   if($('sBolt')){ $('sBolt').classList.toggle('hidden', n!==4); $('bBolt').classList.toggle('hidden', n!==4 || $('tact').classList.contains('hidden')); }
 }
 
@@ -1182,6 +1216,7 @@ function p2Start(fromSave){
   S.part = 2; showPart(2);
   S.fight = false; D.gone = true; $('boss').classList.add('hidden');
   S.freed = true; // Build button is unlocked from the start here
+  buildRestore();
   if(!fromSave){ S.x = -55; S.z = 0; S.yaw = 0; S.pitch = 0; S.hp = S.maxHp; S.wood = 0; S.stone = 0; }
   updateHud();
 }
@@ -1235,6 +1270,9 @@ function p2NearPerson(){
 }
 function p2Prompt(){
   const rp = sqRaidPrompt(); if(rp) return rp;
+  if(S.climb) return S.climb.dir > 0 ? '🪜 Climbing up...' : '🪜 Climbing down...';
+  if(S.tower) return '🏯 Walk to the ladder to climb down';
+  if(nearLadder()) return '🪜 Walk into the ladder to climb up';
   if(PART3_READY && P2.done && dist(-61, 14.6) < 5) return '👋 Use (E) to sail with Lin ⛵';
   const cg = p2NearCage();
   if(cg) return cg.gobs.some(g=>g.state!=='gone' && g.state!=='flee') ? '👺 Beat the goblin guards first!' : '👋 Use (E) to open the cage';
@@ -1729,7 +1767,7 @@ function p3Prompt(){
 function p3Use(){
   if(PART4_READY && P3.done && dist(P3.boss.x, P3.boss.z) < 9){ ask('⚡ Thunder Dragon', 'Ready to fly to Dragon Castle and stop the Dragon King for good?', 'Fly! 🐉', 'Not yet', ()=>sailToPart4()); return; }
   if(dist(P3.boat.position.x, P3.boat.position.z) < 4.5){
-    ask('Lin\'s Boat', 'Sail back to the village? Rosa can heal you and refill your potions, but Volcano Island will start over from the beginning.', 'Sail home ⛵', 'Stay and fight', ()=>{ backToVillage(); });
+    ask('Lin\'s Boat', S.part4done ? 'Sail to the Big Island?' : 'Sail back to the village? Rosa can heal you and refill your potions, but Volcano Island will start over from the beginning.', 'Sail home ⛵', 'Stay and fight', ()=>{ backToVillage(); });
   }
 }
 function p3Sword(){
@@ -1810,6 +1848,7 @@ function p3Lose(){
        ['Tip', 'Hold your shield when goblins raise their clubs or draw their bows. Lightning can\'t be blocked: run out of the glowing circles! Need potions? The boat goes back to Rosa (but the island starts over).']]);
 }
 function backToVillage(){
+  if(S.part4done) return travelTo(2);
   S.part3done = S.part3done || false;
   p2Start(true); p2SetDone();
   S.x = -55; S.z = 10; S.yaw = 0; S.hp = S.maxHp; S.poison = 0;
@@ -2592,6 +2631,7 @@ function p4Update(dt){
     e.t -= dt; e.cd -= dt; e.flash = Math.max(0, e.flash-dt);
     const d = dist(e.x,e.z);
     if(e.state==='flee'){ if(e.t<=0){ e.state='gone'; e.m.visible=false; } continue; }   // crumbling
+    if(e.frozenT > 0) continue;   // ❄️ frozen by a frost arrow
     if(e.area > area){ e.state='idle'; continue; }
     const here = myArea === e.area && !p4WallBetween(e.x, e.z, S.x, S.z);
     if(!here && e.state!=='idle') e.state = 'idle';
@@ -2808,7 +2848,7 @@ function p4Animate(dt){
     if(e.state==='windup') arm.rotation.z = Math.min(2.4, arm.rotation.z + dt*6);
     else if(e.swing>0){ e.swing -= dt; arm.rotation.z = -0.9; }
     else arm.rotation.z += (-0.3 - arm.rotation.z)*Math.min(1,dt*8);
-    u.skin.color.setHex(e.flash>0 ? 0xffffff : u.base);
+    u.skin.color.setHex(e.flash>0 ? 0xffffff : (e.frozenT>0 ? 0x9fdcff : u.base));
   }
   P4.picks.forEach(p=>{ if(!p.taken){ p.m.position.y = p.base + Math.sin(time*3+p.x)*0.12; p.m.rotation.y += dt; } p.glow.visible = !p.taken; });
   P4.fires.forEach((f,i)=>{ f.scale.set(1, 0.85+Math.sin(time*13+i)*0.18, 1); });
@@ -2897,7 +2937,7 @@ function saveNow(){
     s:{name:S.name, title:S.title, x:+S.x.toFixed(2), z:+S.z.toFixed(2), yaw:+S.yaw.toFixed(3), pitch:+S.pitch.toFixed(3),
        hp:Math.max(1,Math.min(S.hp, S.maxHp-(S.fightBoost||0))), wood:S.wood, stone:S.stone, pot:S.pot, sword:S.sword, shield:S.shield,
        freed:S.freed, house:S.house, bridge:S.bridge, won:S.won, seenPot:!!S.seenPot,
-       part:S.part||1, gold:S.gold||0, maxHp:S.maxHp-(S.fightBoost||0), part3done:!!S.part3done, part4done:!!S.part4done, potSpeed:S.potSpeed||0, potStr:S.potStr||0, seenSpeed:!!S.seenSpeed, seenStr:!!S.seenStr, carrot:S.carrot||0, pie:S.pie||0, seenFood:!!S.seenFood, seenPumpkin:!!S.seenPumpkin, sq:S.sq||{}, fireSword:!!S.fireSword, venomShield:!!S.venomShield, bow:!!S.bow, arrows:S.arrows||0},
+       part:S.part||1, gold:S.gold||0, maxHp:S.maxHp-(S.fightBoost||0), part3done:!!S.part3done, part4done:!!S.part4done, potSpeed:S.potSpeed||0, potStr:S.potStr||0, seenSpeed:!!S.seenSpeed, seenStr:!!S.seenStr, carrot:S.carrot||0, pie:S.pie||0, seenFood:!!S.seenFood, seenPumpkin:!!S.seenPumpkin, sq:S.sq||{}, fireSword:!!S.fireSword, venomShield:!!S.venomShield, bow:!!S.bow, arrows:S.arrows||0, frostArrows:!!S.frostArrows, builds:S.builds||[], rideRaptor:!!S.rideRaptor, riding:!!S.riding},
     picks: pickups.map(p=>p.taken?1:0),
     trees: trees.map(t=>t.alive?t.hits:-1)
   };
@@ -2925,7 +2965,7 @@ function applySave(d){
   if(S.bridge){ bridge.visible=true; bridgeSpot.visible=false; }
   if(S.won){ D.gone = true; dragon.visible = false; }
   S.gold = v.gold||0; S.maxHp = v.maxHp||30; S.part3done = !!v.part3done; S.potSpeed = v.potSpeed||0; S.potStr = v.potStr||0; S.seenSpeed = !!v.seenSpeed; S.seenStr = !!v.seenStr; S.carrot = v.carrot||0; S.pie = v.pie||0; S.seenFood = !!v.seenFood; S.seenPumpkin = !!v.seenPumpkin;
-  S.part4done = !!v.part4done; S.sq = Object.assign({}, v.sq||{}); S.fireSword = !!v.fireSword; S.venomShield = !!v.venomShield; S.bow = !!v.bow; S.arrows = v.arrows||0;
+  S.part4done = !!v.part4done; S.sq = Object.assign({}, v.sq||{}); S.fireSword = !!v.fireSword; S.venomShield = !!v.venomShield; S.bow = !!v.bow; S.arrows = v.arrows||0; S.frostArrows = !!v.frostArrows; S.builds = (v.builds||[]).slice(); S.rideRaptor = !!v.rideRaptor; S.riding = !!(v.rideRaptor && v.riding);
   if(v.part===4){ const q = d.p4 || {}; p4Start(false); p4Reset(q.gates||0, !q.landed);
     if(q.done){ P4.done = true; const b = P4.boss; b.state='done'; b.dk.dragon.visible=false; b.sorc.visible=true; b.sorc.userData.crown.visible=false; b.sorc.scale.setScalar(0.85); b.x = P4.cage.position.x; b.z = P4.cage.position.z; P4.cage.visible = true;
       if(!P4.wizard){ P4.wizard = sorcererModel({good:true}); L4root.add(P4.wizard); } P4.wizard.visible = true; P4.wizard.position.set(P4.cage.position.x + 3.2, 0.4, P4.cage.position.z + 1.5); } }
@@ -2947,8 +2987,8 @@ function applySave(d){
   }
   // after The End, finished islands always load in their finished state
   if(S.part4done){ const keep = {x:S.x, z:S.z, yaw:S.yaw};
-    if(S.part===3) visitPart3(); else if(S.part===4) visitPart4(); else if((S.part||1)===1) visitPart1();
-    Object.assign(S, keep); sqWildSetup(S.part||1); if(S.part===2) sqRaidStart(); }
+    if(v.part===6) visitPart6(); else if(v.part===5) visitPart5(); else if(S.part===3) visitPart3(); else if(S.part===4) visitPart4(); else if((S.part||1)===1) visitPart1();
+    Object.assign(S, keep); sqWildSetup(S.part||1); if(S.part===2){ buildRestore(); sqRaidStart(); } }
   // never wake up stuck inside something
   if(!canStand(S.x, S.z)){
     if(S.part===2){ S.x = VILLAGE.x+5; S.z = VILLAGE.z-3; }
@@ -2966,7 +3006,9 @@ function showContinue(){
   if(d){
     const v = d.s;
     let where = 'just landed on the beach';
-    if(v.part===4){ const q = d.p4||{}; where = q.done ? 'You won! The Dragon King is in prison 🏰🎉' : `Part 4, Dragon Castle (${q.gates||0}/3 doors open)`; }
+    if(v.part===6) where = 'Exploring Dino Island 🦖';
+    else if(v.part===5) where = 'Exploring Ice Island ❄️';
+    else if(v.part===4){ const q = d.p4||{}; where = q.done ? 'You won! The Dragon King is in prison 🏰🎉' : `Part 4, Dragon Castle (${q.gates||0}/3 doors open)`; }
     else if(v.part===3){ const g = (d.p3&&d.p3.gates)||0; where = (d.p3&&d.p3.done) ? 'Part 3 done! The Thunder Dragon is free ⚡' : `Part 3, the Dragon's Treasury (${g}/2 gates open)`; }
     else if(v.part===2){
       const q = d.p2||{}; const f = (q.freed||[]).filter(Boolean).length, b = (q.home||[]).filter(h=>h>=0).length;
@@ -3032,7 +3074,11 @@ function updateHud(){
   if(S.part===2 && P2) q = sqRaidQuest() || p2Quest();
   if(S.part===3 && P3) q = p3Quest();
   if(S.part===4 && P4){ q = p4Quest(); p4BoltUI(); }
+  if(S.part===5 && P5) q = p5Quest();
+  if(S.part===6 && P6) q = p6Quest();
   $('quest').innerHTML = q;
+  $('sRide').classList.toggle('hidden', !S.rideRaptor); $('sRide').classList.toggle('ready', !!S.riding);
+  $('bRide').classList.toggle('hidden', !S.rideRaptor || $('tact').classList.contains('hidden'));
   $('sBow').classList.toggle('hidden', !S.bow); $('arrowCnt').textContent = S.arrows||0; $('sBow').classList.toggle('locked', !(S.arrows>0));
   $('bBow').classList.toggle('hidden', !S.bow || $('tact').classList.contains('hidden'));
   $('mapBtn').classList.toggle('hidden', !S.part4done || (S.part===4 && P4 && P4.flying));
@@ -3047,6 +3093,8 @@ function objective(){
   if(S.part===2) return p2Objective();
   if(S.part===3) return p3Objective();
   if(S.part===4) return p4Objective();
+  if(S.part===5) return p5Objective();
+  if(S.part===6) return p6Objective();
   if(S.part4done && !(S.sq&&S.sq.venom) && dragon.visible) return [dragon.position.x, 8, dragon.position.z];
   if(!S.sword) return [chest.position.x, 2.4, chest.position.z];
   if(!S.freed) return [0, 4, -12];
@@ -3076,12 +3124,15 @@ function currentPrompt(){
 }
 function useAct(){
   if(paused) return;
+  if(BP){ placeNow(); return; }
   if(sqSwampNear()){ sqSwampTalk(); return; }
   if(S.part4done && sqRaidUse()) return;
   if((S.part||1)===1 && S.won && dist(-42,0) < 7){ ask('Bea the Builder', 'Ready to sail to the Big Island? I heard there are villagers there who need help.', 'Sail ⛵', 'Not yet', ()=>sailToPart2()); return; }
   if(S.part===2) return p2Use();
   if(S.part===3) return p3Use();
   if(S.part===4) return;
+  if(S.part===5) return p5Use();
+  if(S.part===6) return p6Use();
   if(!S.sword && dist(chest.position.x,chest.position.z)<3){
     S.sword = true; S.shield = true; lid.rotation.x = -1.9; updateHud();
     say([['Treasure Chest','You found a shining Knight\'s Sword ⚔️ and a Green Shield 🛡️!'],
@@ -3112,6 +3163,8 @@ function useAct(){
 }
 function buildAct(){
   if(paused || !S.freed) return;
+  if(S.part===2 && buildUnlocked()) return openBuildMenu();
+  if(S.part===2 && S.part4done && P2.done){ const left = BUILD_NEED - sqDoneCount(); say([['Bea the Builder', `Finish ${left} more side quest${left>1?'s':''} and I'll help you build anything you want here! An outpost, a barn, a windmill... 🔨`]]); return; }
   if(S.part===2) return p2Build();
   if(S.part>=3) return say([['Build','There is nothing to build here. This is a battle!']]);
   if(!S.house && dist(PLOT.x,PLOT.z)<4){
@@ -3138,6 +3191,8 @@ function chopAct(){
   if(paused || S.chop>0) return;
   S.chop = 0.4;
   if(S.part===2) return p2Chop();
+  if(S.part===5) return p5Chop();
+  if(S.part===6) return p6Chop();
   if(S.part>=3) return;
   const t = nearTree();
   if(!t) return;
@@ -3170,6 +3225,8 @@ function swordAct(){
   if(S.part===2) return p2Sword();
   if(S.part===3) return p3Sword();
   if(S.part===4) return p4Sword();
+  if(S.part===5) return p5Sword();
+  if(S.part===6) return p6Sword();
   // hit dragon?
   if(S.fight && !D.gone){
     const dx = dragon.position.x - S.x, dz = dragon.position.z - S.z, d = Math.hypot(dx,dz);
@@ -3236,6 +3293,8 @@ function lose(){
   if(S.part===2) return p2Lose();
   if(S.part===3) return p3Lose();
   if(S.part===4) return p4Lose();
+  if(S.part===5) return p5Lose();
+  if(S.part===6) return p6Lose();
   S.hp = S.maxHp; S.poison=0; S.mud=0; flashFx('poisonfx',0); $('mud').style.opacity=0;
   S.x = bea.position.x - 2; S.z = bea.position.z; S.yaw = 0;
   if(S.pot<1) S.pot=1;
@@ -3399,6 +3458,8 @@ function canStand(x,z){
   if(S.part===2) return canStand2(x,z);
   if(S.part===3) return canStand3(x,z);
   if(S.part===4) return canStand4(x,z);
+  if(S.part===5) return canStand5(x,z);
+  if(S.part===6) return canStand6(x,z);
   if(x<LAND.x0+0.5 || x>LAND.x1-0.5 || z<LAND.z0+0.5 || z>LAND.z1-0.5) return false;
   const onBridge = S.bridge && Math.abs(z-BRIDGE_Z) < BRIDGE_HALF-0.4 && x > RIVER_X0-3.6 && x < RIVER_X1+3.6;
   if(!onBridge){
@@ -3438,14 +3499,16 @@ function update(dt){
   const look = (keys.lu?1:0) - (keys.ld?1:0);
   if(look) S.pitch = Math.max(-1.3, Math.min(1.0, S.pitch + look*1.4*dt));
   S.blocking = !!keys.block && S.shield;
-  const speed = (S.blocking ? 3.2 : 7.5) * (S.mud>0 ? 0.6 : 1) * (S.speedT>0 ? 1.65 : 1) * (S.carrotT>0 ? 1.25 : 1);
+  if(S.frozenT>0){ S.frozenT = Math.max(0, S.frozenT - dt); }
+  const speed = (S.blocking ? 3.2 : 7.5) * (S.riding ? 1.9 : 1) * (S.frozenT>0 ? 0.15 : 1) * (S.mud>0 ? 0.6 : 1) * (S.speedT>0 ? 1.65 : 1) * (S.carrotT>0 ? 1.25 : 1);
   if(S.speedT>0 || S.strT>0 || S.carrotT>0 || S.pieT>0){
     const tick = () => [S.speedT, S.strT, S.carrotT, S.pieT].map(v=>Math.ceil(v||0)).join(',');
     const before = tick();
     S.speedT = Math.max(0, (S.speedT||0)-dt); S.strT = Math.max(0, (S.strT||0)-dt); S.carrotT = Math.max(0, (S.carrotT||0)-dt); S.pieT = Math.max(0, (S.pieT||0)-dt);
     if(before !== tick()) updateHud();
   }
-  if(Math.abs(fwd)>0.05){
+  if(S.part4done && towerMove(fwd, speed, dt)){ /* on the outpost ladder or platform */ }
+  else if(Math.abs(fwd)>0.05){
     fwd = Math.max(-1, Math.min(1, fwd));
     const nx = S.x + Math.cos(S.yaw)*fwd*speed*dt, nz = S.z + Math.sin(S.yaw)*fwd*speed*dt;
     if(canStand(nx,nz)){ S.x=nx; S.z=nz; }
@@ -3461,10 +3524,16 @@ function update(dt){
     if(S.poisonTick<=0){ S.poisonTick=1; S.poison--; S.hp-=1; updateHud(); flashFx('hurt',0.15); if(S.hp<=0){ lose(); return; } }
     $('poisonfx').style.opacity = S.poison>0?1:0;
   }
-  if(S.part4done){ sqStatusTick(dt); sqWild(dt); sqArrowTick(dt); }
+  if(S.part4done){ sqStatusTick(dt); sqWild(dt); sqArrowTick(dt); placingTick(); buildsTick(dt);
+    if(S.part===2 && !paused && buildUnlocked() && !sq().buildTold && !raidActive()){ sq().buildTold = true; saveNow();
+      say([['Bea the Builder','Knight! You have done so much for the kingdom. Now it\'s YOUR turn to build. 🔨'],
+           ['Bea the Builder','Chop trees for wood, then press 🔨 Build to pick something: fences, a campfire, a garden, a barn, an outpost, a windmill...'],
+           ['Tip','Build it anywhere on the Big Island! Walk and turn to move it, ↻ Turn (Q) to spin it, then ✅ Build here (E).']]); } }
   if(S.part===2){ p2Update(dt); return; }
   if(S.part===3){ p3Update(dt); return; }
   if(S.part===4){ p4Update(dt); return; }
+  if(S.part===5){ p5Update(dt); return; }
+  if(S.part===6){ p6Update(dt); return; }
   // pickups
   for(const p of pickups){
     if(p.taken) continue;
@@ -3537,14 +3606,15 @@ function animate(dt){
   if(S){
     knight.rotation.y = -S.yaw;
     const moving = keys.f||keys.b||Math.abs(joyV.y)>0.1;
-    const gy = groundH(S.x,S.z);
-    knight.position.y = gy + (moving ? Math.abs(Math.sin(time*10))*0.12 : 0);
+    const gy = (S.yOver!=null ? S.yOver : groundH(S.x,S.z)) + (S.riding ? 1.25 : 0);
+    knight.position.y = gy + (moving && !S.climb ? Math.abs(Math.sin(time*10))*0.12 : 0);
     cape.rotation.z = moving ? -0.25 + Math.sin(time*10)*0.12 : -0.05 + Math.sin(time*1.5)*0.03;
     plume.rotation.z = moving ? Math.sin(time*10)*0.12 : 0;
     tpSword.visible = S.sword; tpShield.visible = S.shield;
     aura.visible = (S.speedT>0 || S.strT>0);
     if(aura.visible){ aura.material.color.setHex(S.strT>0 && (S.speedT<=0 || Math.sin(time*6)>0) ? 0xff5a3a : 0xffd23a); aura.scale.setScalar(1 + Math.sin(time*8)*0.12); }
     if(!!S.venomShield !== _venomLook) sqShieldLook(!!S.venomShield);
+    sqIceBlock();
     if(S.venomShield && S.blocking && Math.random() < dt*6){ tpShield.getWorldPosition(_fsV); spawnChips(_fsV.x, _fsV.y, _fsV.z, 0x8cff3a, 1); }
     if(S.fireSword && S.sword && cam==='tp' && Math.random() < dt*8){ tpSword.getWorldPosition(_fsV); spawnChips(_fsV.x, _fsV.y + 0.5, _fsV.z, Math.random()<.5 ? 0xff7a1a : 0xffd23a, 1); }
     const baseGlow = S.fireSword ? (Math.sin(time*4)>0 ? 0xff5a00 : 0xdd3a00) : (S.swordUp || (P2 && P2.swordLvl)) ? 0xaa3300 : 0x333333;
@@ -3581,11 +3651,11 @@ function animate(dt){
       const dir = new THREE.Vector3(-Math.cos(S.yaw)*Math.cos(elev), Math.sin(elev), -Math.sin(S.yaw)*Math.cos(elev));
       let dCam = back;
       camRay.set(headP, dir); camRay.far = back;
-      const occ = (S.part===2 && P2 ? P2.occ : (S.part===3 && P3 ? P3.occ : (S.part===4 && P4 ? P4.occ : L1occ))).filter(o=>o.visible && o.parent && o.parent.visible !== false);
+      const occ = (S.part===2 && P2 ? P2.occ : (S.part===3 && P3 ? P3.occ : (S.part===4 && P4 ? P4.occ : (S.part===5 && P5 ? P5.occ : (S.part===6 && P6 ? P6.occ : L1occ))))).filter(o=>o.visible && o.parent && o.parent.visible !== false && o!==S.towerG);
       const hit = camRay.intersectObjects(occ, true)[0];
       if(hit) dCam = Math.max(1.3, hit.distance - 0.4);
       const target = headP.clone().addScaledVector(dir, dCam);
-      const gh = S.part===2 ? heightAt2(target.x, target.z) : (S.part===3 && P3 ? heightAt3(target.x, target.z) : (S.part===4 && P4 ? heightAt4(target.x, target.z) : heightAt(target.x, target.z)));
+      const gh = S.part===2 ? heightAt2(target.x, target.z) : (S.part===3 && P3 ? heightAt3(target.x, target.z) : (S.part===4 && P4 ? heightAt4(target.x, target.z) : (S.part===5 && P5 ? heightAt5(target.x, target.z) : (S.part===6 && P6 ? heightAt6(target.x, target.z) : heightAt(target.x, target.z)))));
       target.y = Math.max(target.y, gh + 0.6);
       if(camPos.lengthSq()===0 || hit) camPos.copy(target); else camPos.lerp(target, Math.min(1, dt*8));
       camera.position.copy(camPos);
@@ -3612,6 +3682,9 @@ function animate(dt){
   if(S && S.part===2){ p2Animate(dt); sqRaidAnimate(); }
   if(S && S.part===3) p3Animate(dt);
   if(S && S.part===4) p4Animate(dt);
+  if(S && S.part===5) p5Animate(dt);
+  if(S && S.part===6) p6Animate(dt);
+  if(S && S.part4done) rideTick(dt);
   // world life: sun + shadows follow the knight, sky, clouds, water, smoke
   if(S && S.x!==undefined){ sun.position.set(S.x+SUN_OFF.x, SUN_OFF.y, S.z+SUN_OFF.z); sun.target.position.set(S.x,0,S.z); }
   camera.userData.sky.position.copy(camera.position);
@@ -3738,17 +3811,20 @@ function swordBase(){ return ((S.swordUp || (P2 && P2.swordLvl)) ? 6 : 4) + (S.f
 // ---------- travel ----------
 const ISLANDS = [
   {n:1, name:'Dragon Island', icon:'🏝️', note:()=> sq().venom ? '✅ The Swamp Dragon gave you its scale.' : '🟢 Side quest: an old friend is waiting in the swamp!'},
-  {n:2, name:'The Big Island', icon:'🏡', note:()=> sq().raid==='done' ? '✅ Your friends are safe. Tom makes arrows 🏹' : '🔒 Side quest: something is wrong in the village...'},
+  {n:2, name:'The Big Island', icon:'🏡', note:()=> sq().raid==='done' ? ('✅ Your friends are safe. Tom makes arrows 🏹' + (buildUnlocked() ? ' 🔨 Build anything!' : '')) : '🔒 Side quest: something is wrong in the village...'},
   {n:3, name:'Volcano Island', icon:'🌋', note:()=> sq().fire ? '✅ The Fire Dragon is your friend.' : '🔥 Side quest: a loyal Fire Dragon lives in the volcano!'},
   {n:4, name:'Dragon Castle', icon:'🏰', note:()=> sq().gargs ? '✅ The last gargoyles are broken.' : '🗿 Side quest: some gargoyles still have the crown\'s magic!'},
-  {n:5, name:'Ice Island', icon:'❄️', note:()=> 'Coming soon!', soon:true},
-  {n:6, name:'Dino Island', icon:'🦖', note:()=> 'Coming soon!', soon:true},
+  {n:5, name:'Ice Island', icon:'❄️', note:()=> sq().ice ? '✅ The Ice Dragon is your friend.' : '❄️ Side quest: an Ice Dragon and its frost wolves!'},
+  {n:6, name:'Dino Island', icon:'🦖', hidden:true, note:()=> sq().queen && sq().fossilDone ? '✅ The Raptor Queen is your friend.' : '🦖 Side quests: stolen eggs, fossil bones and the Raptor Queen!'},
 ];
 function openMap(){
   if(!S.part4done) return;
   paused = true;
   const list = $('mapList'); list.innerHTML = '';
   ISLANDS.forEach(is=>{
+    // only the secret passage in the Ice Caves unlocks Dino Island
+    if(is.hidden && !(sq().dinoFound && sq().passage)){ const b = document.createElement('button'); b.className = 'mapIsland'; b.disabled = true;
+      b.innerHTML = '<span class="mi">❓</span><span><b>???</b><br><small>Nobody knows the way there... maybe something under the ice? 🧊</small></span>'; list.appendChild(b); return; }
     const b = document.createElement('button');
     b.className = 'mapIsland' + (is.n===S.part ? ' here' : '');
     b.innerHTML = `<span class="mi">${is.icon}</span><span><b>${is.name}</b>${is.n===S.part?' <i>(you are here)</i>':''}<br><small>${is.note()}</small></span>`;
@@ -3760,13 +3836,17 @@ function openMap(){
 }
 function closeMap(){ $('mapScreen').classList.add('hidden'); paused = false; }
 function travelTo(n){
-  paused = true; sqBoost(false); sqClearGlobs(); dragon.visible = false; _sqArrows.forEach(a=>scene.remove(a.m)); _sqArrows.length = 0;
+  paused = true; cancelPlacing(); towerReset(); if(P6 && P6.carried){ knight.remove(P6.carried); P6.carried = null; } S.carryEgg = -1; sqBoost(false); sqClearGlobs(); if(P5) iceBlizzard(false); S.frozenT = 0; dragon.visible = false; _sqArrows.forEach(a=>scene.remove(a.m)); _sqArrows.length = 0;
   S.poison = 0; S.mud = 0; S.hp = S.maxHp; S.fight = false;
   [P3, P4].forEach(P=>{ if(P && P.arrows){ P.arrows.forEach(a=>a.m.parent && a.m.parent.remove(a.m)); P.arrows = []; } });
   if(n===1){ visitPart1(); }
-  if(n===2){ p2Start(true); p2SetDone(); S.x = VILLAGE.x + 6; S.z = VILLAGE.z; S.yaw = 0; }
+  if(n===2){ p2Start(true); p2SetDone(); S.x = VILLAGE.x + 6; S.z = VILLAGE.z; S.yaw = 0; buildRestore();
+    // the forest grows back while you're away (but not where you built something)
+    P2.trees.forEach(t=>{ if(t.alive || (S.builds||[]).some(b=>Math.hypot(b.x-t.x, b.z-t.z) < 4)) return; t.alive = true; t.hits = 0; t.g.visible = true; t.g.rotation.x = 0; t.g.rotation.z = 0; t.fall = 0; if(!P2.cols.includes(t.col)) P2.cols.push(t.col); }); }
   if(n===3){ visitPart3(); }
   if(n===4){ visitPart4(); }
+  if(n===5){ visitPart5(); }
+  if(n===6){ visitPart6(); }
   sqWildSetup(n);
   const raidLines = n===2 ? sqRaidStart() : [];
   if(raidActive() && n===2){ S.x = -55; S.z = 0; S.yaw = 0; }
@@ -3877,7 +3957,7 @@ function sqSpawnSal(n){
 function sqSalUpdate(dt){
   const f = P3.fire;
   for(let i=f.sal.length-1;i>=0;i--){
-    const s = f.sal[i]; if(!s) continue; s.t -= dt; s.cd -= dt; s.flash = Math.max(0, s.flash-dt);
+    const s = f.sal[i]; if(!s) continue; if(s.frozenT > 0 && s.state!=='dead') continue; s.t -= dt; s.cd -= dt; s.flash = Math.max(0, s.flash-dt);
     if(s.state==='dead'){ if(s.t<=0){ L3root.remove(s.m); f.sal.splice(i,1); } continue; }
     const d = dist(s.x, s.z), a = Math.atan2(S.z-s.z, S.x-s.x);
     if(s.state==='windup'){ s.yaw = a; if(s.t<=0){ s.state='chase'; s.cd = 1.6; if(d < 2.3) hurt(3, s.x, s.z); } continue; }
@@ -4055,7 +4135,7 @@ function sqFireAnimate(dt){
     u.legs.forEach((l,i)=>{ l.rotation.z = moving ? Math.sin(time*14 + i*Math.PI/2 + s.bob)*0.6 : 0; });
     u.tail.rotation.y = Math.sin(time*8 + s.bob)*0.4;
     u.head.rotation.z = s.state==='windup' ? 0.4 : 0;
-    u.skin.color.setHex(s.flash>0 ? 0xffffff : 0xd8461a);
+    u.skin.color.setHex(s.flash>0 ? 0xffffff : (s.frozenT>0 ? 0x9fdcff : 0xd8461a));
     if(s.state==='dead') s.m.scale.setScalar(Math.max(0.01, s.t/0.5));
   });
   if(!f.fd.dragon.visible) return;
@@ -4088,7 +4168,12 @@ function sqSwampTalk(){
        ['🟢 Swamp Dragon','*it pulls a shiny green scale from its chest and presses it onto your shield* There. Now you carry a little bit of my swamp with you.'],
        ['🛡️ Venom Shield!','Your shield is covered in swamp scales! 💚 When you BLOCK an attack, it sprays poison back at whoever attacked you. Poisoned enemies keep getting hurt for a few seconds.']]);
 }
-var _venomLook = false;
+var _venomLook = false, _iceBlock = null;
+function sqIceBlock(){
+  const on = S.frozenT > 0;
+  if(on && !_iceBlock){ _iceBlock = new THREE.Mesh(new THREE.BoxGeometry(1.3, 2.3, 1.3), new THREE.MeshStandardMaterial({color:0xbfefff, transparent:true, opacity:.45, roughness:.1, emissive:0x2a6a9a, emissiveIntensity:.3})); _iceBlock.position.y = 1.1; knight.add(_iceBlock); }
+  if(_iceBlock) _iceBlock.visible = on && cam==='tp';
+}
 function sqShieldLook(on){
   _venomLook = on;
   [tpShield.children[0], fpShield.children[0]].forEach(sm=>{ if(!sm) return;
@@ -4105,8 +4190,17 @@ function sqFoes(){
   const out = [];
   if(S.part===3 && P3 && P3.fire){
     const f = P3.fire;
-    if(sqFireActive()) out.push({e:f, x:f.x, z:f.z, y:f.y+3.5, fireProof:true, hit:d=>sqFireHit(d)});
+    if(sqFireActive()) out.push({e:f, x:f.x, z:f.z, y:f.y+3.5, fireProof:true, noFreeze:true, hit:d=>sqFireHit(d)});
     (f.sal||[]).forEach(s=>{ if(s.state!=='dead') out.push({e:s, x:s.x, z:s.z, y:0.8, fireProof:true, hit:d=>sqSalHit(s, d, true)}); });
+  }
+  if(S.part===6 && P6){
+    const Q = P6.queen; if(queenActive()) out.push({e:Q, x:Q.x, z:Q.z, y:heightAt6(Q.x,Q.z)+Q.y+2.5, noFreeze:true, hit:d=>queenHit(d)});
+    P6.raptors.forEach(w=>{ if(w.state!=='dead' && w.state!=='down') out.push({e:w, x:w.x, z:w.z, y:heightAt6(w.x,w.z)+1, hit:d=>raptorHurt(w, d, 0)}); });
+    P6.gobs.forEach(g=>{ if(g.state!=='gone' && g.state!=='flee') out.push({e:g, x:g.x, z:g.z, y:heightAt6(g.x,g.z)+1.2, hit:d=>gobHurt6(g, d, 0)}); });
+  }
+  if(S.part===5 && P5){
+    const f = P5.ice; if(iceActive()) out.push({e:f, x:f.x, z:f.z, y:f.y+3.8, fireWeak:true, noFreeze:true, hit:d=>iceHit(d)});
+    P5.wolves.forEach(w=>{ if(w.state!=='dead' && w.state!=='down') out.push({e:w, x:w.x, z:w.z, y:heightAt5(w.x,w.z)+0.9, hit:d=>wolfHurt(w, d, 0)}); });
   }
   sqWildList().forEach(g=>{ if(g.state!=='crumble' && g.state!=='down') out.push({e:g, x:g.x, z:g.z, y:groundH(g.x,g.z)+1.4, hit:d=>sqWildHurt(g, d, 0)}); });
   if(S.part===4 && P4 && !P4.flying){
@@ -4140,12 +4234,13 @@ function sqStatusTick(dt){
   }
   for(const o of sqFoes()){
     const e = o.e;
+    if(e.frozenT > 0){ e.frozenT -= dt; if(Math.random() < dt*6) spawnChips(o.x+(Math.random()-.5), o.y+Math.random()*0.5, o.z+(Math.random()-.5), 0xdff4ff, 1); }
     if(!(e.burnT>0 || e.poisonT>0)) continue;
     if(e.burnT>0) e.burnT -= dt; if(e.poisonT>0) e.poisonT -= dt;
     if(e.burnT>0 && Math.random() < dt*14) spawnChips(o.x+(Math.random()-.5)*0.8, o.y+Math.random()*0.6, o.z+(Math.random()-.5)*0.8, Math.random()<.5?0xff7a1a:0xffd23a, 1);
     if(e.poisonT>0 && Math.random() < dt*10) spawnChips(o.x+(Math.random()-.5)*0.8, o.y+Math.random()*0.6, o.z+(Math.random()-.5)*0.8, 0x8cff3a, 1);
     e.dotT = (e.dotT||0) - dt;
-    if(e.dotT <= 0){ e.dotT = 0.5; const d = (e.burnT>0 ? 1 : 0) + (e.poisonT>0 ? 1 : 0); if(d) o.hit(d); }
+    if(e.dotT <= 0){ e.dotT = 0.5; const d = (e.burnT>0 ? (o.fireWeak ? 3 : 1) : 0) + (e.poisonT>0 ? 1 : 0); if(d) o.hit(d); }
   }
 }
 // the Fire Sword sets things on fire (but not fire creatures!)
@@ -4161,9 +4256,11 @@ const WILD_SPOTS = {
   2: [['gargoyle',10,-26],['gargoyle',36,20],['gargoyle',-18,30],['great',42,-10],['gargoyle',-46,-18],['gargoyle',14,36],['gargoyle',52,6],['gargoyle',-8,-38]],
   3: [['gargoyle',-42,-10],['gargoyle',-29,9],['gargoyle',-18,-5]],
   4: [['gargoyle',-52,-14],['gargoyle',-36,20],['great',-46,4]],
+  5: [['gargoyle',-36,12],['gargoyle',-6,-12],['gargoyle',2,28]],
+  6: [['gargoyle',-22,-6],['gargoyle',14,34],['great',-4,18]],
 };
 const WILD = {};
-const WILD_ROOT = ()=>({1:L1root, 2:L2root, 3:L3root, 4:L4root})[S.part];
+const WILD_ROOT = ()=>({1:L1root, 2:L2root, 3:L3root, 4:L4root, 5:L5root, 6:L6root})[S.part];
 const WILD_STATS = {gargoyle:{hp:22, dmg:5, cd:1.1, reach:2.9}, great:{hp:60, dmg:8, cd:1.5, reach:3.6}};
 function sqWildSetup(n){
   if(!S.part4done || !WILD_SPOTS[n]) return;
@@ -4213,6 +4310,7 @@ function sqWild(dt){
   let engaged = null, ed = 1e9;
   for(const g of list){
     g.t -= dt; g.cd -= dt; g.flash = Math.max(0, g.flash-dt);
+    if(g.frozenT > 0 && g.state!=='crumble' && g.state!=='down') continue;
     if(g.state==='crumble'){ if(g.t<=0){ g.state='down'; g.t = 40; g.m.visible = false; } continue; }
     if(g.state==='down'){
       if(g.raid) continue;   // raid guards stay broken
@@ -4234,11 +4332,11 @@ function sqWild(dt){
       }
     } else if(g.state==='windup'){
       g.yaw = Math.atan2(S.z-g.z, S.x-g.x);
-      if(g.t<=0){ g.state = 'chase'; g.swing = 0.25; g.cd = g.st.cd; if(d < g.st.reach + 0.6) hurt(g.st.dmg, g.x, g.z); }
+      if(g.t<=0){ g.state = 'chase'; g.swing = 0.25; g.cd = g.st.cd; if(d < g.st.reach + 0.6 && !S.tower) hurt(g.st.dmg, g.x, g.z); }   // they can't reach you up on an outpost
     }
     // gargoyles are solid: you can't walk through them
     const solid = g.big ? 2.2 : 1.4;
-    if(d < solid){ const a = d > 0.01 ? Math.atan2(S.z-g.z, S.x-g.x) : S.yaw + Math.PI, nx = g.x + Math.cos(a)*solid, nz = g.z + Math.sin(a)*solid; if(canStand(nx,nz)){ S.x = nx; S.z = nz; } }
+    if(d < solid && S.yOver==null){ const a = d > 0.01 ? Math.atan2(S.z-g.z, S.x-g.x) : S.yaw + Math.PI, nx = g.x + Math.cos(a)*solid, nz = g.z + Math.sin(a)*solid; if(canStand(nx,nz)){ S.x = nx; S.z = nz; } }
     if(g.state!=='idle' && d < ed){ ed = d; engaged = g; }
   }
   // gentle lock-on while you fight one
@@ -4262,7 +4360,7 @@ function sqWildAnimate(dt){
     if(g.state==='windup') u.arm.rotation.z = Math.min(2.4, u.arm.rotation.z + dt*6);
     else if(g.swing>0){ g.swing -= dt; u.arm.rotation.z = -0.9; }
     else u.arm.rotation.z += (-0.3 - u.arm.rotation.z)*Math.min(1, dt*8);
-    u.skin.color.setHex(g.flash>0 ? 0xffffff : u.base);
+    u.skin.color.setHex(g.flash>0 ? 0xffffff : (g.frozenT>0 ? 0x9fdcff : u.base));
   }
   // health bar for the one you're fighting (unless a dragon is using it)
   const f = sqWild.show;
@@ -4397,18 +4495,1597 @@ function sqArrowTick(dt){
   for(let i=_sqArrows.length-1;i>=0;i--){
     const a = _sqArrows[i]; a.life -= dt; a.m.position.addScaledVector(a.vel, dt);
     const p = a.m.position;
-    const hit = foes.find(o=>Math.hypot(o.x-p.x, o.z-p.z) < (o.e===(P3&&P3.fire) ? 3 : 1.3) && Math.abs(o.y - p.y) < 3);
-    if(hit){ hit.hit(Math.round(6 * dmgMul())); spawnChips(p.x, p.y, p.z, 0xf5c542, 8); a.life = 0; }
+    const hit = foes.find(o=>Math.hypot(o.x-p.x, o.z-p.z) < (o.noFreeze ? 3.2 : 1.3) && Math.abs(o.y - p.y) < 3);
+    if(hit){ hit.hit(Math.round(6 * dmgMul())); spawnChips(p.x, p.y, p.z, S.frostArrows ? 0xbfefff : 0xf5c542, 8); a.life = 0;
+      if(S.frostArrows && !hit.noFreeze){ hit.e.frozenT = 2.5; spawnChips(hit.x, hit.y, hit.z, 0xffffff, 14); } }
     if(a.life <= 0){ scene.remove(a.m); _sqArrows.splice(i,1); }
   }
 }
 ACT.bow = {down:bowAct};
 window.addEventListener('keydown', e=>{ if(e.code==='KeyB' && document.activeElement!==$('nameIn')) bowAct(); });
 
+// ================= ❄️ ICE ISLAND (side quest island 5) =================
+var L5root = new THREE.Group(); L5root.visible = false; scene.add(L5root);
+var P5 = null, heightAt5 = (x,z)=>0;
+const ARENA5 = {x:34, z:0, r:17};
+const LAKE5 = {x:-6, z:17, r:9};
+const WOLF_DENS = [[-26,-20,false],[4,-27,false],[-14,26,false],[14,12,true]];   // the last pack has an alpha
+function heightAt5Raw(x,z){
+  const e = Math.hypot((x+4)/60, z/42);
+  const wob = Math.sin(Math.atan2(z,x)*5)*0.03;
+  const d = (e - 1 - wob) * 46;
+  let y = d < 0 ? 0.4 * smooth(0, -6, d) + noise(x*0.6,z*0.6)*0.06 : -d*0.32;
+  // the Ice Dragon's lair: a bowl of ice cliffs with one way in, from the west
+  const ad = Math.hypot(x-ARENA5.x, z-ARENA5.z);
+  if(ad > ARENA5.r && ad < ARENA5.r + 14 && d < -2){
+    const gap = x < ARENA5.x - 8 && Math.abs(z) < 4.5;
+    if(!gap) y = Math.max(y, 0.4 + Math.min(9, (ad-ARENA5.r)*1.8) + noise(x*0.5,z*0.5)*0.4);
+  }
+  return Math.max(y, -4);
+}
+function canStand5(x,z){
+  if(x > 100 && !caveWalk(x,z)) return false;
+  const y = heightAt5(x,z); if(y < -0.1 || y > 1.0) return false;
+  for(const c of P5.cols){ if(Math.hypot(x-c.x, z-c.z) < c.r+0.5) return false; }
+  return true;
+}
+function wolfCan(x,z){ if(x > 100) return false; const y = heightAt5(x,z); if(y < -0.1 || y > 1.0) return false; for(const c of P5.cols){ if(Math.hypot(x-c.x, z-c.z) < c.r+0.3) return false; } return true; }
+
+function wolfModel(alpha){
+  const g = new THREE.Group();
+  const fur = SM(alpha ? 0xb8c4d0 : 0xe8eef4), fur2 = SM(alpha ? 0x8a98a8 : 0xc8d4e0), dark = M(0x2a2e34), eyeM = new THREE.MeshBasicMaterial({color:0x6af0ff});
+  const body = mesh(new THREE.SphereGeometry(0.5, 14, 10), fur, 0, 0.75, 0, g); body.scale.set(1.5, 0.75, 0.62);
+  mesh(new THREE.SphereGeometry(0.36, 12, 8), fur2, 0.45, 0.82, 0, g).scale.set(1, 1.05, 1.1);                // chest fluff
+  const head = new THREE.Group(); head.position.set(0.85, 1.05, 0); g.add(head);
+  mesh(new THREE.SphereGeometry(0.28, 12, 8), fur, 0, 0, 0, head).scale.set(1.15, 0.95, 0.95);
+  mesh(new THREE.BoxGeometry(0.34, 0.16, 0.18), fur2, 0.3, -0.08, 0, head);                                         // snout
+  mesh(new THREE.SphereGeometry(0.05, 6, 5), dark, 0.48, -0.04, 0, head);                                           // nose
+  [-1,1].forEach(s=>{ const ear = mesh(new THREE.ConeGeometry(0.09, 0.24, 5), fur2, -0.02, 0.27, s*0.13, head); ear.rotation.x = s*0.2;
+    mesh(new THREE.SphereGeometry(0.045, 6, 5), eyeM, 0.2, 0.06, s*0.12, head); });
+  const legs = [];
+  [[0.45,1],[0.45,-1],[-0.45,1],[-0.45,-1]].forEach(([x,s])=>{ const l = mesh(new THREE.BoxGeometry(0.14, 0.55, 0.14), fur2, x, 0.3, s*0.2, g); legs.push(l); });
+  const tail = mesh(new THREE.ConeGeometry(0.13, 0.75, 7), fur, -0.95, 0.85, 0, g); tail.rotation.z = 1.1;
+  g.userData = {skin:fur, base:alpha ? 0xb8c4d0 : 0xe8eef4, legs, head, tail};
+  if(alpha) g.scale.setScalar(1.35);
+  return g;
+}
+
+function buildPart5(){
+  const R = L5root, r = rng(5150);
+  const add = (o)=>{ R.add(o); return o; };
+  const m5 = (geo, mat, x, y, z, parent=R)=> mesh(geo, mat, x, y, z, parent);
+  P5 = {occ:[], cols:[], wolves:[], done:false, crystals:[], trees:[]};
+  const col = (x,z,rad)=>{ const c={x,z,r:rad}; P5.cols.push(c); return c; };
+  // ground: snow, blue shadows, ice cliffs
+  const W = 150, D = 110, SX = 200, SZ = 150, OX = 0;
+  const geo = new THREE.PlaneGeometry(W, D, SX, SZ); geo.rotateX(-Math.PI/2);
+  { const gs = gridSampler(heightAt5Raw, W, D, SX, SZ, OX); heightAt5 = (x,z)=> x > 100 ? 0.4 : gs(x,z); }   // the Ice Caves are flat, far to the east
+  const pos = geo.attributes.position, cols = [];
+  const c = new THREE.Color(), snow = new THREE.Color(0xf6f9fc), shade = new THREE.Color(0xd6e4f0), ice = new THREE.Color(0xa8d4f0), ice2 = new THREE.Color(0x7ab4e0), wet = new THREE.Color(0x5a7488), pebble = new THREE.Color(0xb8c2cc);
+  for(let i=0;i<pos.count;i++){
+    const x = pos.getX(i), z = pos.getZ(i), y = heightAt5Raw(x,z); pos.setY(i, y);
+    const n = noise(x*1.7,z*1.7)*0.5+0.5;
+    if(y < -0.2) c.copy(wet);
+    else if(y > 1.0) c.copy(ice).lerp(ice2, n*0.8);
+    else if(y < 0.3) c.copy(pebble).lerp(snow, n*0.5);
+    else c.copy(snow).lerp(shade, n*0.45);
+    cols.push(c.r, c.g, c.b);
+  }
+  geo.setAttribute('color', new THREE.Float32BufferAttribute(cols,3)); geo.computeVertexNormals();
+  const ground = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({vertexColors:true, roughness:.9, flatShading:true})); ground.receiveShadow = true; add(ground);
+
+  // the frozen lake
+  const lake = m5(new THREE.CircleGeometry(LAKE5.r, 40), new THREE.MeshStandardMaterial({color:0xbfe6ff, roughness:.12, metalness:.15}), LAKE5.x, heightAt5Raw(LAKE5.x,LAKE5.z)+0.06, LAKE5.z);
+  lake.rotation.x = -Math.PI/2; lake.receiveShadow = true;
+  for(let k=0;k<7;k++){ const a = r()*6.28, len = 2 + r()*5; const cr = m5(new THREE.BoxGeometry(len, 0.02, 0.06), new THREE.MeshBasicMaterial({color:0xffffff}), LAKE5.x + Math.cos(a)*len/2, heightAt5Raw(LAKE5.x,LAKE5.z)+0.08, LAKE5.z + Math.sin(a)*len/2); cr.rotation.y = -a; }
+
+  // snowy pines
+  const trunk = M(0x5a3c22), needle = M(0x2a5a40), needle2 = M(0x336a48), snowM = M(0xffffff);
+  function pine(x,z){
+    const g = new THREE.Group(); g.position.set(x, heightAt5Raw(x,z), z); g.rotation.y = r()*6.28; add(g); P5.occ.push(g);
+    const s = 0.9 + r()*0.6; g.scale.setScalar(s);
+    m5(new THREE.CylinderGeometry(0.22,0.32,1.6,7), trunk, 0,0.8,0, g);
+    for(let k=0;k<3;k++){ m5(new THREE.ConeGeometry(1.7-k*0.4, 1.9, 8), k%2?needle:needle2, 0,1.9+k*1.05,0, g);
+      m5(new THREE.ConeGeometry(1.1-k*0.3, 0.8, 8), snowM, 0,2.45+k*1.05,0, g); }
+    P5.trees.push({g, x, z, hits:0, alive:true, fall:-1, col:col(x, z, 0.7*s)});
+  }
+  const avoid = [[-50,0,10],[CAVE_MOUTH.x,CAVE_MOUTH.z,7],[LAKE5.x,LAKE5.z,LAKE5.r+2.5],[ARENA5.x,ARENA5.z,ARENA5.r+15]].concat(WOLF_DENS.map(([x,z])=>[x,z,7]));
+  let made = 0, tries = 0;
+  while(made < 80 && tries < 5000){ tries++;
+    const x = -60 + r()*110, z = -40 + r()*80, y = heightAt5Raw(x,z);
+    if(y < 0.3 || y > 0.9) continue;
+    if(Math.abs(z) < 4 && x > -50 && x < 20) continue;           // keep the path to the lair clear
+    if(avoid.some(([ax,az,ar])=>Math.hypot(x-ax, z-az) < ar)) continue;
+    if(P5.cols.some(cc=>Math.hypot(x-cc.x, z-cc.z) < 3)) continue;
+    pine(x, z); made++;
+  }
+  // snow-capped rocks and drifts
+  const rk = M(0x7a8490), rk2 = M(0x8a94a0);
+  for(let i=0;i<40;i++){
+    const x = -58 + r()*104, z = -38 + r()*76; if(heightAt5Raw(x,z) < 0.3 || Math.hypot(x-ARENA5.x, z) < ARENA5.r+15 || Math.abs(z) < 4) continue;
+    if(avoid.some(([ax,az,ar])=>Math.hypot(x-ax, z-az) < ar)) continue;
+    const s = 0.5 + r()*0.9, b = m5(new THREE.DodecahedronGeometry(s,0), r()<.5?rk:rk2, x, heightAt5Raw(x,z)+s*0.4, z); b.rotation.set(r()*3, r()*3, 0);
+    m5(new THREE.SphereGeometry(s*0.85, 8, 6), snowM, x, heightAt5Raw(x,z)+s*0.9, z).scale.set(1, 0.35, 1);
+    if(s > 0.9) col(x, z, s*0.8);
+  }
+  // glowing ice crystals, all around the lair
+  const crys = M(0x9fe8ff, {emissive:0x3a9acc, emissiveIntensity:.6, roughness:.2, transparent:true, opacity:.9});
+  for(let i=0;i<26;i++){
+    const a = i/26*Math.PI*2, rr = ARENA5.r + 2 + r()*5, x = ARENA5.x + Math.cos(a)*rr, z = ARENA5.z + Math.sin(a)*rr;
+    if(x < ARENA5.x - 8 && Math.abs(z) < 6) continue;
+    const h = 2 + r()*4, cr = m5(new THREE.OctahedronGeometry(1, 0), crys, x, heightAt5Raw(x,z) + h*0.4, z); cr.scale.set(0.6, h*0.6, 0.6); cr.rotation.y = r()*3; P5.crystals.push(cr);
+  }
+  [[-20,-6],[-2,8],[12,-10],[22,6]].forEach(([x,z])=>{ const cr = m5(new THREE.OctahedronGeometry(1,0), crys, x, heightAt5Raw(x,z)+1.2, z); cr.scale.set(0.5,1.8,0.5); col(x,z,0.6); P5.crystals.push(cr); });
+  // the Ice Dragon's cave: a big ice arch at the back of the lair
+  { const g = new THREE.Group(); g.position.set(ARENA5.x + ARENA5.r + 1, 0.4, 0); add(g);
+    const arch = m5(new THREE.TorusGeometry(6, 1.6, 8, 16, Math.PI), M(0xbfe6ff, {emissive:0x2a6a9a, emissiveIntensity:.4, roughness:.3}), 0, 0, 0, g); arch.rotation.y = Math.PI/2;
+    const dark = m5(new THREE.CircleGeometry(5.2, 20, 0, Math.PI), new THREE.MeshBasicMaterial({color:0x1a2a3a, side:THREE.DoubleSide}), 0.6, 0, 0, g); dark.rotation.y = -Math.PI/2;
+    P5.cave = g; }
+  // wolf dens: rocks and bones
+  WOLF_DENS.forEach(([x,z])=>{ for(let k=0;k<4;k++){ const a = k/4*6.28 + 0.5, rx = x + Math.cos(a)*3.2, rz = z + Math.sin(a)*3.2;
+      const b = m5(new THREE.DodecahedronGeometry(0.9,0), rk, rx, heightAt5Raw(rx,rz)+0.4, rz); b.rotation.set(r()*3, r()*3, 0); }
+    for(let k=0;k<3;k++){ const bn = m5(new THREE.CylinderGeometry(0.06,0.06,0.7,5), M(0xf3ead8), x + (r()-.5)*2, heightAt5Raw(x,z)+0.08, z + (r()-.5)*2); bn.rotation.z = Math.PI/2; bn.rotation.y = r()*3; } });
+  // the landing: a little boat home
+  { const g = new THREE.Group(); g.position.set(-58, 0, 7); g.rotation.y = 0.3; add(g);
+    m5(new THREE.BoxGeometry(4,0.8,1.6), M(0x2a9d8f), 0,0.1,0, g); m5(new THREE.CylinderGeometry(0.08,0.08,4), M(0x5a3815), 0,2.3,0, g);
+    const sl = m5(new THREE.PlaneGeometry(2,2.6), M(0xf5c542,{side:THREE.DoubleSide}), 0.5,2.6,0, g); sl.rotation.y = Math.PI/2;
+    P5.boat = g; }
+  // falling snow
+  { const n = 1400, g = new THREE.BufferGeometry(), a = new Float32Array(n*3);
+    for(let i=0;i<n;i++){ a[i*3] = (r()-.5)*70; a[i*3+1] = r()*24; a[i*3+2] = (r()-.5)*70; }
+    g.setAttribute('position', new THREE.BufferAttribute(a, 3));
+    P5.snow = new THREE.Points(g, new THREE.PointsMaterial({color:0xffffff, size:0.22, transparent:true, opacity:.9, depthWrite:false})); add(P5.snow); }
+  // the wolves
+  WOLF_DENS.forEach(([x,z,alphaPack], pi)=>{
+    for(let k=0;k<3;k++){
+      const alpha = alphaPack && k===0, a = k/3*6.28, wx = x + Math.cos(a)*1.6, wz = z + Math.sin(a)*1.6;
+      const m = wolfModel(alpha); L5root.add(m);
+      P5.wolves.push({m, alpha, pack:pi, x:wx, z:wz, hx:wx, hz:wz, hp:alpha?30:14, max:alpha?30:14, state:'idle', t:0, cd:2, yaw:r()*6.28, flash:0, orbit:r()*6.28, bob:r()*6});
+    }
+  });
+  // the Ice Dragon
+  const ID = buildDragon({main:0xbfe6ff, dark:0x6aa6d8, belly:0xffffff, spike:0x9fe8ff, spikeGlow:true, wing:0xd8f2ff, wingGlow:0x2a5a8a, eye:0x6af0ff, eyeGlow:0x0a6a9a});
+  ID.dragon.scale.setScalar(1.4); ID.collar.visible = false; ID.dragon.visible = false; L5root.add(ID.dragon);
+  buildCave();
+  P5.ice = {fd:ID, x:ARENA5.x+22, z:0, y:18, yaw:Math.PI, hp:180, max:180, phase:1, state:'wait', t:0, fx:[], flash:0};
+}
+
+// ---------- visiting ----------
+function visitPart5(){
+  if(!P5) buildPart5();
+  S.part = 5; showPart(5);
+  S.fight = false; D.gone = true; $('boss').classList.add('hidden');
+  S.freed = true; S.frozenT = 0;
+  p5ResetWolves(); iceReset(); caveRestore();
+  P5.trees.forEach(t=>{ t.alive = true; t.hits = 0; t.fall = -1; t.g.visible = true; t.g.rotation.x = 0; t.g.rotation.z = 0; t.g.position.y = heightAt5Raw(t.x,t.z); if(!P5.cols.includes(t.col)) P5.cols.push(t.col); });
+  S.x = -50; S.z = 0; S.yaw = 0; S.pitch = 0;
+}
+function p5ResetWolves(){
+  P5.wolves = P5.wolves.filter(w=>{ if(w.summoned){ L5root.remove(w.m); return false; } return true; });
+  P5.wolves.forEach(w=>{ Object.assign(w, {x:w.hx, z:w.hz, hp:w.max, state:'idle', t:0, cd:2, flash:0, burnT:0, poisonT:0, frozenT:0}); w.m.visible = true; w.m.scale.setScalar(w.alpha?1.35:1); });
+}
+function p5Chop(){
+  let t = null, bd = 2.8;
+  P5.trees.forEach(tr=>{ if(!tr.alive) return; const d = dist(tr.x,tr.z); if(d < bd){ bd = d; t = tr; } });
+  if(!t) return;
+  t.hits++; spawnChips(t.x, heightAt5(t.x,t.z)+1.5, t.z, 0xc89060, 6); spawnChips(t.x, heightAt5(t.x,t.z)+3, t.z, 0xffffff, 6);   // snow falls off
+  if(t.hits >= 3){ t.alive = false; P5.cols.splice(P5.cols.indexOf(t.col),1); t.fall = 0; t.fallDir = Math.atan2(t.z-S.z, t.x-S.x); S.wood += 2; updateHud(); }
+}
+function p5Quest(){
+  if(inCave()) return sq().passage ? '🧊 The Ice Caves. The warm tunnel 🌴 leads somewhere secret...' : '🧊 <b>The Ice Caves</b>: explore! Some say a secret is hidden deep inside...';
+  if(iceActive()) return '<b>Defeat the Ice Dragon!</b> ❄️ Shield up against its frost breath. Jump sideways when the ice spikes come!';
+  if(!sq().ice) return '❄️ <b>Side quest:</b> Cross the snowy island to the <b>Ice Dragon\'s lair</b> in the east. Watch out for frost wolves! 🐺<br><span style="font-size:14px">🗺️ Map to fly to another island</span>';
+  if(!sq().passage) return 'The Ice Dragon is your friend! ❄️ Have you explored the 🧊 <b>Ice Caves</b> on the north side of the island?<br>';
+  return 'The Ice Dragon is your friend! ❄️ Your arrows freeze enemies now.<br><span style="font-size:14px">🗺️ Map to fly to another island</span>';
+}
+function p5Objective(){
+  if(inCave()) return sq().passage ? [196, 3, CAVE_CRACK.z] : null;
+  if(sq().ice && !sq().passage && !iceActive()) return [CAVE_MOUTH.x, 4.5, CAVE_MOUTH.z + 1.5];
+  if(iceActive()){ const f = P5.ice; return [f.x, f.y + 11, f.z]; }
+  if(sq().ice) return null;
+  const w = P5.wolves.filter(w=>w.state!=='idle' && w.state!=='dead' && w.state!=='down').sort((p,q)=>dist(p.x,p.z)-dist(q.x,q.z))[0];
+  if(w) return [w.x, heightAt5(w.x,w.z)+2.6, w.z];
+  return [ARENA5.x, 4, 0];
+}
+function p5Prompt(){
+  const cp = cavePrompt(); if(cp) return cp;
+  if(sq().caveSeen && !iceActive() && Math.hypot(S.x-(ARENA5.x+ARENA5.r-0.6), S.z) < 5) return '🧊 The dragon\'s cave leads into the Ice Caves';
+  if(dist(P5.boat.position.x, P5.boat.position.z) < 4.5) return '👋 Use (E) to sail to the Big Island ⛵';
+  if(sq().ice && P5.ice.state==='friend' && dist(P5.ice.x, P5.ice.z) < 8) return '👋 Use (E) to talk to the Ice Dragon ❄️';
+  return null;
+}
+function p5Use(){
+  if(caveUse()) return;
+  if(dist(P5.boat.position.x, P5.boat.position.z) < 4.5){ ask('⛵ Boat', 'Sail to the Big Island?', 'Sail ⛵', 'Stay', ()=>travelTo(2)); return; }
+  if(sq().ice && P5.ice.state==='friend' && dist(P5.ice.x, P5.ice.z) < 8){ say([['❄️ Ice Dragon','*a happy, frosty puff* My wolves will not bother you anymore... well, maybe a little. They like to play rough. 🐺'],
+    ['❄️ Ice Dragon','Have you been in the Ice Caves under my island? Be careful in there: the tunnels twist every which way, and it is VERY easy to get lost. My cave at the back of this lair leads straight into them. 🧊']]); return; }
+}
+function p5Lose(){
+  const wasIce = iceActive();
+  visitPart5(); S.hp = S.maxHp; S.poison = 0; S.mud = 0; if(S.pot < 1) S.pot = 1; sqWildSetup(5); updateHud();
+  if(wasIce) say([['💥 Ouch!','The Ice Dragon blew you all the way back to the beach!'],['Tip','Hold your shield 🛡️ against the frost breath so you don\'t freeze. Watch for the line of ice spikes and step to the side! Fire hurts it extra 🔥']]);
+  else say([['💥 Ouch!','The frost wolves chased you back to the beach!'],['Tip','Wolves crouch right before they jump at you. Hold your shield or step aside, then hit back! 🐺']]);
+}
+function p5Sword(){
+  if(caveSword()) return;
+  const dmgBase = swordBase(), roll = ()=>Math.round((dmgBase + Math.floor(Math.random()*3)) * dmgMul());
+  const inFront = (x,z)=>Math.abs(angDiff(Math.atan2(z-S.z, x-S.x), S.yaw));
+  if(iceActive()){ const f = P5.ice, d = dist(f.x,f.z); if(f.y < 1.5 && f.state!=='rage' && d < 7.8 && inFront(f.x,f.z) < 1.2){ iceHit(roll()); sqIgnite(f, false); return; } }
+  let best = null, bd = 1e9;
+  P5.wolves.forEach(w=>{ if(w.state==='dead'||w.state==='down') return; const d = dist(w.x,w.z); if(d < (w.alpha?3.4:3.0) && inFront(w.x,w.z) < 1.3 && d < bd){ bd = d; best = w; } });
+  if(!best) return;
+  wolfHurt(best, roll(), 0.6); sqIgnite(best, false); P5.focus = best;
+}
+function wolfHurt(w, dmg, kb){
+  if(w.state==='dead' || w.state==='down') return;
+  w.hp -= dmg; w.flash = 0.2;
+  if(kb){ const a = Math.atan2(w.z-S.z, w.x-S.x); if(wolfCan(w.x+Math.cos(a)*kb, w.z+Math.sin(a)*kb)){ w.x += Math.cos(a)*kb; w.z += Math.sin(a)*kb; } }
+  spawnChips(w.x, heightAt5(w.x,w.z)+0.9, w.z, 0xffffff, 6);
+  if(w.state==='idle' || w.state==='stalk') { w.state = 'retreat'; w.t = 0.6; }
+  if(w.hp <= 0){ w.state = 'dead'; w.t = 0.8; w.burnT = 0; w.poisonT = 0; spawnChips(w.x, heightAt5(w.x,w.z)+0.8, w.z, 0xdff4ff, 18); }
+}
+
+// ---------- 🐺 frost wolves: they circle you, crouch, then lunge ----------
+function p5Wolves(dt){
+  let engaged = null, ed = 1e9;
+  const packAware = {};
+  P5.wolves.forEach(w=>{ if(w.state!=='dead' && w.state!=='down' && w.state!=='idle') packAware[w.pack] = true; });
+  for(const w of P5.wolves){
+    w.t -= dt; w.cd -= dt; w.flash = Math.max(0, w.flash-dt);
+    if(w.state==='dead'){ if(w.t<=0){ w.state = 'down'; w.m.visible = false; } continue; }
+    if(w.state==='down') continue;
+    if(w.frozenT > 0) continue;
+    const d = dist(w.x,w.z), home = Math.hypot(w.x-w.hx, w.z-w.hz);
+    const go = (tx,tz,spd)=>{ const a = Math.atan2(tz-w.z, tx-w.x); w.yaw = a; const nx = w.x+Math.cos(a)*spd, nz = w.z+Math.sin(a)*spd; if(wolfCan(nx,nz)){ w.x = nx; w.z = nz; } };
+    if(w.state==='idle'){
+      if((d < 13 || packAware[w.pack] || w.summoned) && home < 30){ w.state = 'stalk'; w.cd = 1 + Math.random()*1.5; w.orbit = Math.atan2(w.z-S.z, w.x-S.x); }
+      else if(home > 0.6) go(w.hx, w.hz, 3*dt);
+      else w.yaw += Math.sin(time + w.bob)*dt;
+    } else if(w.state==='stalk'){
+      if(!w.summoned && (Math.hypot(S.x-w.hx, S.z-w.hz) > 32)){ w.state = 'idle'; continue; }
+      w.orbit += (w.pack%2 ? 0.7 : -0.7) * dt;
+      const tx = S.x + Math.cos(w.orbit)*5.5, tz = S.z + Math.sin(w.orbit)*5.5;
+      if(Math.hypot(tx-w.x, tz-w.z) > 0.4) go(tx, tz, (w.alpha ? 6.2 : 5.6)*dt);
+      w.yaw = Math.atan2(S.z-w.z, S.x-w.x);
+      if(w.cd <= 0 && d < 8){ w.state = 'crouch'; w.t = 0.5; }
+    } else if(w.state==='crouch'){
+      w.yaw = Math.atan2(S.z-w.z, S.x-w.x);
+      if(w.t <= 0){ w.state = 'lunge'; w.t = 0.35; w.bit = false; }
+    } else if(w.state==='lunge'){
+      const sp = 15*dt, nx = w.x + Math.cos(w.yaw)*sp, nz = w.z + Math.sin(w.yaw)*sp;
+      if(wolfCan(nx,nz) && dist(nx,nz) > 0.9){ w.x = nx; w.z = nz; }
+      if(!w.bit && dist(w.x,w.z) < 1.6){ w.bit = true; hurt(w.alpha ? 6 : 4, w.x, w.z); }
+      if(w.t <= 0){ w.state = 'retreat'; w.t = 0.9; w.cd = 1.8 + Math.random()*1.4; }
+    } else if(w.state==='retreat'){
+      const a = Math.atan2(w.z-S.z, w.x-S.x); go(w.x + Math.cos(a), w.z + Math.sin(a), 5*dt); w.yaw = a + Math.PI;
+      if(w.t <= 0){ w.state = 'stalk'; w.orbit = Math.atan2(w.z-S.z, w.x-S.x); }
+    }
+    // wolves are solid too
+    if(d < 1.0){ const a = d > 0.01 ? Math.atan2(S.z-w.z, S.x-w.x) : S.yaw + Math.PI, nx = w.x + Math.cos(a)*1.0, nz = w.z + Math.sin(a)*1.0; if(canStand5(nx,nz)){ S.x = nx; S.z = nz; } }
+    if(w.state!=='idle' && d < ed){ ed = d; engaged = w; }
+  }
+  return engaged;
+}
+
+// ---------- ❄️ the Ice Dragon ----------
+function iceActive(){ return S.part===5 && P5 && P5.ice && ['roar','chase','windup','breath','hop','rage','sky','dive','spikes'].includes(P5.ice.state); }
+function iceClearFx(){
+  const f = P5.ice; f.fx.forEach(o=>{ L5root.remove(o.m); if(o.rock) L5root.remove(o.rock); }); f.fx = [];
+  if(f.diveRing){ L5root.remove(f.diveRing); f.diveRing = null; }
+}
+function iceBlizzard(on){
+  if(on){ scene.fog.near = 6; scene.fog.far = 55; } else { scene.fog.near = 80; scene.fog.far = 300; }
+  if(P5) P5.blizzard = on;
+}
+function iceReset(){
+  const f = P5.ice; iceClearFx(); iceBlizzard(false); sqBoost(false);
+  if(sq().ice){ Object.assign(f, {state:'friend', x:ARENA5.x+9, z:-6, y:0.4, yaw:Math.PI, hp:0}); f.fd.dragon.visible = true; }
+  else { Object.assign(f, {state:'wait', x:ARENA5.x+22, z:0, y:18, yaw:Math.PI, hp:f.max, phase:1, t:0, flash:0}); f.fd.dragon.visible = false; }
+}
+function iceSpawnWolves(n){
+  for(let i=0;i<n;i++){
+    const x = ARENA5.x - ARENA5.r + 2, z = (i%2 ? -2 : 2);
+    const m = wolfModel(false); L5root.add(m);
+    P5.wolves.push({m, alpha:false, pack:9, summoned:true, x, z, hx:x, hz:z, hp:14, max:14, state:'stalk', t:0, cd:2, yaw:0, flash:0, orbit:Math.atan2(z-S.z, x-S.x), bob:Math.random()*6});
+    spawnChips(x, 1, z, 0xffffff, 14);
+  }
+}
+function iceHit(dmg){
+  const f = P5.ice; if(!iceActive()) return;
+  f.hp -= dmg; f.flash = 0.2; spawnChips(f.x, 3.5 + f.y, f.z, 0xdff4ff, 8);
+  if(f.phase===1 && f.hp <= f.max/2 && f.hp > 0){
+    f.phase = 2; f.state = 'rage'; f.t = 1.8; iceClearFx();
+    iceBlizzard(true); iceSpawnWolves(2);
+    $('status').textContent = '🌨️ BLIZZARD! The Ice Dragon calls its wolves and takes to the sky!';
+  }
+  if(f.hp <= 0){
+    f.state = 'beaten'; f.t = 1.2; f.y = 0.4; iceClearFx(); iceBlizzard(false);
+    P5.wolves.forEach(w=>{ if(w.summoned && w.state!=='dead' && w.state!=='down'){ w.state='dead'; w.t=0.5; } });
+    $('boss').classList.add('hidden');
+    setTimeout(()=>{
+      sqBoost(false); S.hp = S.maxHp;
+      sq().ice = true; S.frostArrows = true; f.state = 'friend'; updateHud(); saveNow();
+      say([['❄️ Ice Dragon','*it shivers and lies down in the snow* ...You are warm, and brave, and stronger than me.'],
+           ['❄️ Ice Dragon','The Dragon King never cared about me. He just wanted my island. You fought fair. I will be your friend now, knight.'],
+           ['❄️ Ice Dragon','*it breathes a soft, sparkly frost over your quiver*'],
+           ['❄️ Frost Arrows!', S.bow ? 'Your arrows sparkle with frost! 🏹❄️ Anything they hit freezes solid for a few seconds. (Dragons are too big to freeze.)'
+                                      : 'Your arrows will sparkle with frost! ❄️ But you need a bow first. Maybe someone on the Big Island can make you one... 🏹']]);
+    }, 1200);
+  }
+  updateHud();
+}
+function iceIcicle(x,z,delay){
+  const ring = new THREE.Mesh(new THREE.RingGeometry(1.5, 1.9, 28), new THREE.MeshBasicMaterial({color:0x6ad0ff, transparent:true, opacity:.8, side:THREE.DoubleSide}));
+  ring.rotation.x = -Math.PI/2; ring.position.set(x, heightAt5(x,z)+0.08, z); L5root.add(ring);
+  const rock = new THREE.Mesh(new THREE.ConeGeometry(0.5, 2.2, 6), new THREE.MeshBasicMaterial({color:0xdff4ff})); rock.rotation.x = Math.PI; rock.position.set(x, 20, z); L5root.add(rock);
+  P5.ice.fx.push({kind:'rock', m:ring, rock, x, z, t:delay, life:delay+0.3});
+}
+function iceSpikeLine(){
+  const f = P5.ice, a = Math.atan2(S.z-f.z, S.x-f.x);
+  for(let k=0;k<8;k++){
+    const x = f.x + Math.cos(a)*(5 + k*2.2), z = f.z + Math.sin(a)*(5 + k*2.2);
+    const mark = new THREE.Mesh(new THREE.CircleGeometry(1.1, 16), new THREE.MeshBasicMaterial({color:0x6ad0ff, transparent:true, opacity:.55})); mark.rotation.x = -Math.PI/2; mark.position.set(x, heightAt5(x,z)+0.08, z); L5root.add(mark);
+    const spike = new THREE.Mesh(new THREE.ConeGeometry(0.7, 2.8, 6), new THREE.MeshStandardMaterial({color:0xbfefff, emissive:0x2a8aca, emissiveIntensity:.5, roughness:.2})); spike.position.set(x, -2, z); spike.visible = false; L5root.add(spike);
+    f.fx.push({kind:'spike', m:mark, rock:spike, x, z, t:0.9 + k*0.09, life:0.9 + k*0.09 + 0.7});
+  }
+}
+function iceUpdate(dt){
+  const f = P5 && P5.ice; if(!f) return;
+  if(f.state==='wait'){
+    if(!sq().ice && Math.hypot(S.x-ARENA5.x, S.z-ARENA5.z) < ARENA5.r - 3){
+      f.state = 'arrive'; f.fd.dragon.visible = true; Object.assign(f, {x:ARENA5.x+22, y:16, z:0, yaw:Math.PI, hp:f.max, phase:1, skyCd:14, biteCd:0, rockCd:5, breathCd:4, spikeCd:8});
+      spawnChips(ARENA5.x+ARENA5.r, 4, 0, 0xffffff, 40);
+      const helper = sq().fire ? ['🔥 Fire Dragon','*a warm wind blows across the snow* Knight! Take some of my fire to keep you warm! 🔥'] : ['⚡ Thunder Dragon','*from high above* Knight! Take my strength! ⚡'];
+      say([['❄️ *CRACK... CRACK...*','The ice at the back of the lair shatters, and a huge WHITE-BLUE DRAGON crawls out, breathing frost!'],
+           ['❄️ Ice Dragon','The Dragon King gave me this whole island. I will NEVER bow to a little knight! Wolves, come to me!'],
+           helper,
+           ['💙 Dragon Strength','+30 health for this fight!'],
+           ['Tip','Hold your shield against its frost breath, or you will freeze! When ice spikes come at you in a line, step to the side. And fire hurts it extra! 🔥']]);
+    }
+    return;
+  }
+  if(f.state==='arrive'){
+    f.x += (ARENA5.x+8 - f.x)*Math.min(1, dt*1.2); f.y += (0.4 - f.y)*Math.min(1, dt*1.2);
+    if(f.y < 1){ f.y = 0.4; f.state = 'roar'; f.t = 1.2; spawnChips(f.x, 1, f.z, 0xffffff, 24); sqBoost(true); updateHud(); }
+    return;
+  }
+  if(f.state==='friend' || f.state==='beaten'){ f.t -= dt; return; }
+  const p2 = f.phase===2;
+  f.t -= dt; f.biteCd -= dt; f.rockCd -= dt; f.breathCd -= dt; f.spikeCd -= dt; f.flash = Math.max(0, f.flash-dt);
+  if(p2) f.skyCd -= dt;
+  const d = dist(f.x,f.z), face = Math.atan2(S.z-f.z, S.x-f.x);
+  const turnTo = (a,rate)=>{ f.yaw += Math.max(-rate*dt, Math.min(rate*dt, angDiff(a, f.yaw))); };
+  const inArena = (x,z)=>Math.hypot(x-ARENA5.x, z-ARENA5.z) < ARENA5.r-4;
+  if(f.state==='roar'){ turnTo(face,3); if(f.t<=0) f.state='chase'; }
+  else if(f.state==='rage'){ turnTo(face,3); f.y = 0.4 + Math.max(0, 1.8 - f.t)*0.6; if(f.t<=0){ f.state='sky'; f.t = 6; f.dropT = 0.6; } }
+  else if(f.state==='sky'){
+    f.y += (11 - f.y)*Math.min(1, dt*1.5);
+    const ang = time*0.7, tx = S.x + Math.cos(ang)*8, tz = S.z + Math.sin(ang)*8;
+    f.x += (tx - f.x)*Math.min(1, dt*1.2); f.z += (tz - f.z)*Math.min(1, dt*1.2); turnTo(face, 3);
+    f.dropT -= dt;
+    if(f.dropT<=0){ f.dropT = 0.75; iceIcicle(S.x + (Math.random()-.5)*2, S.z + (Math.random()-.5)*2, 1.1); }
+    if(f.t<=0){
+      f.state = 'dive'; f.t = 1.4; f.tx = S.x; f.tz = S.z; f.sx = f.x; f.sz = f.z; f.sy = f.y;
+      const ring = new THREE.Mesh(new THREE.RingGeometry(2.6, 3.2, 32), new THREE.MeshBasicMaterial({color:0x2a8aff, transparent:true, opacity:.85, side:THREE.DoubleSide}));
+      ring.rotation.x = -Math.PI/2; ring.position.set(f.tx, heightAt5(f.tx,f.tz)+0.1, f.tz); L5root.add(ring); f.diveRing = ring;
+      $('status').textContent = '⚠️ DIVE BOMB! Get out of the blue circle!';
+    }
+  }
+  else if(f.state==='dive'){
+    const k = 1 - Math.max(0, f.t)/1.4, e = k*k;
+    f.x = f.sx + (f.tx - f.sx)*e; f.z = f.sz + (f.tz - f.sz)*e; f.y = Math.max(0.4, f.sy*(1 - e));
+    f.yaw = Math.atan2(f.tz - f.sz, f.tx - f.sx);
+    if(f.diveRing) f.diveRing.material.opacity = 0.5 + Math.sin(time*25)*0.35;
+    if(f.t<=0){
+      f.y = 0.4; spawnChips(f.tx, 0.8, f.tz, 0xffffff, 30);
+      if(f.diveRing){ L5root.remove(f.diveRing); f.diveRing = null; }
+      if(Math.hypot(S.x-f.tx, S.z-f.tz) < 3.2){ S.blocking = false; hurt(7); }
+      if(!inArena(f.x, f.z)){ f.x = ARENA5.x + 6; f.z = 0; }
+      f.state = 'hop'; f.t = 1.0; f.skyCd = 16; $('status').textContent = '';
+    }
+  }
+  else if(f.state==='hop'){ if(f.t<=0) f.state='chase'; }
+  else if(f.state==='spikes'){ turnTo(face, 1); if(f.t<=0) f.state = 'chase'; }
+  else if(f.state==='windup'){ turnTo(face,1.4); if(f.t<=0){ f.state='breath'; f.shots = 0; f.shotT = 0; } }
+  else if(f.state==='breath'){
+    f.shotT -= dt; const n = p2 ? 8 : 6;
+    if(f.shotT<=0 && f.shots<n){ f.shotT = 0.13; f.shots++;
+      const a = f.yaw + (f.shots-(n+1)/2)*0.13, from = new THREE.Vector3(f.x+Math.cos(f.yaw)*7.5, 5, f.z+Math.sin(f.yaw)*7.5);
+      const orb = new THREE.Mesh(new THREE.IcosahedronGeometry(0.45,1), new THREE.MeshBasicMaterial({color:0xbfefff})); orb.position.copy(from); L5root.add(orb);
+      f.fx.push({kind:'frost', m:orb, vel:new THREE.Vector3(Math.cos(a), (1.2-from.y)/Math.max(4,d), Math.sin(a)).normalize().multiplyScalar(p2?15:13), life:2.2}); }
+    if(f.shots>=n && f.shotT<=0){ f.state='chase'; f.breathCd = p2 ? 5 : 7; }
+  } else {
+    turnTo(face, p2 ? 2.8 : 2.2);
+    if(d > 7){ const sp = (p2 ? 4.6 : 3.6)*dt, nx = f.x+Math.cos(f.yaw)*sp, nz = f.z+Math.sin(f.yaw)*sp; if(inArena(nx,nz)){ f.x=nx; f.z=nz; } }
+    if(p2 && f.skyCd<=0){ f.state='rage'; f.t = 0.8; }
+    else if(d < 7.4 && f.biteCd<=0){ f.biteCd = p2 ? 1.6 : 2.0; f.state='hop'; f.t=0.35; hurt(6, f.x, f.z); }
+    else if(f.spikeCd<=0 && d > 6){ f.spikeCd = p2 ? 7 : 9; iceSpikeLine(); f.state = 'spikes'; f.t = 1.4; }
+    else if(f.rockCd<=0){ f.rockCd = p2 ? 6 : 7.5;
+      for(let k=0;k<3;k++){ const a = Math.random()*6.28, rr = k===0 ? 0 : 3+Math.random()*3; iceIcicle(S.x+Math.cos(a)*rr, S.z+Math.sin(a)*rr, 1.3+k*0.2); }
+      f.state='hop'; f.t=0.6; }
+    else if(f.breathCd<=0 && d<18){ f.state='windup'; f.t=0.9; }
+  }
+  // frost, icicles and ice spikes
+  for(let i=f.fx.length-1;i>=0;i--){
+    const o = f.fx[i]; if(!o) continue; o.life -= dt;
+    if(o.kind==='frost'){
+      o.m.position.addScaledVector(o.vel, dt); if(o.m.position.y < 0.9) o.m.position.y = 0.9;
+      if(Math.random() < 0.4) spawnChips(o.m.position.x, o.m.position.y, o.m.position.z, 0xffffff, 1);
+      if(Math.hypot(o.m.position.x-S.x, o.m.position.z-S.z) < 1.1){ o.life = 0;
+        if(shieldCovers(S.x-o.vel.x, S.z-o.vel.z)) spawnChips(S.x+Math.cos(S.yaw),1.4,S.z+Math.sin(S.yaw),0xbfefff,8);
+        else { hurt(3); if(!(S.frozenT>0)){ S.frozenT = 1.3; $('status').textContent = '🧊 FROZEN! Hold your shield against the frost!'; } } }
+    } else if(o.kind==='rock'){
+      o.t -= dt; o.m.material.opacity = 0.5 + Math.sin(time*20)*0.3; o.rock.position.y = Math.max(heightAt5(o.x,o.z)+1, 1 + Math.max(0,o.t)*20);
+      if(o.t<=0 && !o.struck){ o.struck = true; spawnChips(o.x, 0.8, o.z, 0xdff4ff, 14);
+        if(Math.hypot(S.x-o.x, S.z-o.z) < 1.9){ S.blocking = false; hurt(5); } }
+    } else {
+      o.t -= dt;
+      if(o.t > 0) o.m.material.opacity = 0.35 + Math.sin(time*18)*0.25;
+      else { if(!o.struck){ o.struck = true; o.rock.visible = true; spawnChips(o.x, 0.8, o.z, 0xdff4ff, 8);
+               if(Math.hypot(S.x-o.x, S.z-o.z) < 1.4){ S.blocking = false; hurt(5); } }
+             o.rock.position.y = Math.min(heightAt5(o.x,o.z)+1.2, o.rock.position.y + dt*30); o.m.visible = false; }
+    }
+    if(o.life<=0){ L5root.remove(o.m); if(o.rock) L5root.remove(o.rock); f.fx.splice(i,1); }
+  }
+}
+function iceAnimate(dt){
+  const f = P5.ice; if(!f.fd.dragon.visible) return;
+  const FD = f.fd;
+  FD.dragon.position.set(f.x, (f.state==='friend'||f.state==='beaten'||f.y<1 ? heightAt5(f.x,f.z) - 0.4 : 0) + f.y, f.z); FD.dragon.rotation.y = -f.yaw;
+  const flying = f.state==='arrive' || f.state==='sky' || f.state==='dive' || f.state==='rage';
+  FD.wings.forEach(w=>{ w.piv.rotation.x = w.s*(-0.15 + Math.sin(time*(flying?9:3))*0.45); });
+  FD.dBody.position.y = f.state==='friend' ? Math.sin(time*1.5)*0.05 : Math.sin(time*2)*0.1 + (f.state==='hop'?0.5:0) + (f.state==='beaten'?-0.4:0);
+  FD.head.rotation.z = f.state==='windup' ? 0.6 : (f.state==='breath' ? -0.3 : (f.state==='beaten' ? -0.6 : (f.state==='dive' ? -0.5 : (f.state==='spikes' ? -0.7 : Math.sin(time*1.5)*0.1))));
+  FD.dJaw.rotation.z = (f.state==='breath'||f.state==='roar'||f.state==='rage') ? -0.6 : -0.03;
+  FD.tailSegs.forEach((sg,i)=>{ sg.rotation.y = Math.sin(time*2.4 - i*0.55) * (0.05 + i*0.012); });
+  FD.dGreen.color.setHex(f.flash>0 ? 0xffffff : (f.state==='rage' ? (Math.sin(time*30)>0 ? 0xffffff : 0x6aa6ff) : 0xbfe6ff));
+  if(f.state!=='friend' && Math.random() < dt*6) spawnChips(f.x + (Math.random()-.5)*3, 2 + f.y + Math.random()*3, f.z + (Math.random()-.5)*3, 0xffffff, 2);
+  if(f.state==='friend') FD.dragon.rotation.y = -Math.atan2(S.z-f.z, S.x-f.x);
+}
+
+// ---------- Ice Island update and animation ----------
+function p5Update(dt){
+  caveTick(dt);
+  const engaged = p5Wolves(dt);
+  iceUpdate(dt);
+  // the dragon is solid; aim-help turns you gently, only while you stand and fight
+  const f = P5.ice;
+  if(iceActive() && f.y < 2){ const d = dist(f.x,f.z), rr = 3.9; if(d < rr){ const a = d > 0.01 ? Math.atan2(S.z-f.z, S.x-f.x) : S.yaw + Math.PI, nx = f.x + Math.cos(a)*rr, nz = f.z + Math.sin(a)*rr; if(canStand5(nx,nz)){ S.x = nx; S.z = nz; } } }
+  const turning = Math.abs((keys.r?1:0)-(keys.l?1:0)+joyV.x) > 0.25, walking = keys.f || keys.b || Math.abs(joyV.y) > 0.1;
+  let t = null;
+  const foc = P5.focus && P5.focus.state!=='dead' && P5.focus.state!=='down' && dist(P5.focus.x,P5.focus.z) < 8 ? P5.focus : (engaged && dist(engaged.x,engaged.z) < 7 ? engaged : null);
+  if(foc && dist(foc.x,foc.z) > 2) t = [foc.x, foc.z];
+  else if(iceActive() && f.y < 3 && dist(f.x,f.z) > 4.2 && dist(f.x,f.z) < 22) t = [f.x, f.z];
+  if(t && !turning && !walking && (S.lookT||0) <= 0){ const want = angDiff(Math.atan2(t[1]-S.z, t[0]-S.x), S.yaw)*Math.min(1, dt*5), max = 3*dt; S.yaw += Math.max(-max, Math.min(max, want)); }
+  // health bars
+  if(iceActive()){ $('boss').classList.remove('hidden'); $('bossName').textContent = '❄️ Ice Dragon'; $('bossfill').style.width = Math.max(0, f.hp/f.max*100)+'%'; }
+  else if(foc){ $('boss').classList.remove('hidden'); $('bossName').textContent = foc.alpha ? '🐺 Alpha Frost Wolf' : '🐺 Frost Wolf'; $('bossfill').style.width = Math.max(0, foc.hp/foc.max*100)+'%'; }
+  else $('boss').classList.add('hidden');
+  // prompt
+  const p = paused ? null : p5Prompt();
+  const pr = $('prompt'); if(p){ pr.textContent = p; pr.classList.remove('hidden'); } else pr.classList.add('hidden');
+  $('sUse').classList.toggle('ready', !!p);
+}
+function p5Animate(dt){
+  if(!P5) return;
+  for(const w of P5.wolves){
+    if(w.state==='down') continue;
+    const u = w.m.userData, y = heightAt5(w.x,w.z);
+    if(w.state==='dead'){ const k = Math.max(0.01, w.t/0.8); w.m.position.set(w.x, y - (1-k)*0.6, w.z); w.m.rotation.z = (1-k)*1.4; continue; }
+    w.m.rotation.z = 0;
+    const moving = w.state==='stalk' || w.state==='lunge' || w.state==='retreat' || (w.state==='idle' && Math.hypot(w.x-w.hx, w.z-w.hz) > 0.6);
+    w.m.position.set(w.x, y + (w.state==='crouch' ? -0.15 : 0) + (w.state==='lunge' ? 0.35 : 0), w.z);
+    w.m.rotation.y = -w.yaw;
+    const sp = w.state==='lunge' ? 26 : 14;
+    u.legs.forEach((l,i)=>{ l.rotation.z = moving && !(w.frozenT>0) ? Math.sin(time*sp + (i%2 ? Math.PI : 0) + (i>1 ? Math.PI/2 : 0))*0.6 : 0; });
+    u.tail.rotation.y = Math.sin(time*6 + w.bob)*0.3;
+    u.head.rotation.z = w.state==='crouch' ? -0.3 : (w.state==='idle' ? Math.sin(time + w.bob)*0.1 : 0.05);
+    u.skin.color.setHex(w.flash>0 ? 0xff8a8a : (w.frozenT>0 ? 0x9fdcff : u.base));
+  }
+  iceAnimate(dt);
+  caveAnimate(dt);
+  P5.crystals.forEach((cr,i)=>{ cr.rotation.y += dt*0.2; });
+  P5.trees.forEach(t=>{ if(t.fall < 0 || !t.g.visible) return; t.fall = Math.min(2.2, t.fall + dt*1.4);
+    const k = Math.min(1, t.fall), lean = k*k*1.5, a = t.fallDir + t.g.rotation.y; t.g.rotation.order = 'YXZ'; t.g.rotation.x = Math.sin(a)*lean; t.g.rotation.z = -Math.cos(a)*lean;
+    if(t.fall >= 2.2) t.g.visible = false; else if(t.fall > 1.4) t.g.position.y -= dt*2; });
+  // falling snow follows you around
+  const s = P5.snow, a = s.geometry.attributes.position, fall = (P5.blizzard ? 9 : 2.2)*dt, drift = (P5.blizzard ? 6 : 0.6)*dt;
+  for(let i=0;i<a.count;i++){
+    let y = a.getY(i) - fall, x = a.getX(i) + drift;
+    if(y < 0){ y += 24; } if(x > 35) x -= 70;
+    a.setY(i, y); a.setX(i, x);
+  }
+  a.needsUpdate = true; s.position.set(S.x, groundH(S.x,S.z), S.z);
+}
+
+// ================= 🔨 FREE BUILDING on the Big Island (after a few side quests) =================
+const BUILD_NEED = 3;
+const BUILDS = {
+  fence:    {name:'Fence',        icon:'🪵', cost:1,  r:0.4, len:3},
+  campfire: {name:'Campfire',     icon:'🔥', cost:2,  r:1.1, note:'Stand by it to heal'},
+  garden:   {name:'Garden',       icon:'🥕', cost:3,  r:1.8, note:'Grows a carrot now and then'},
+  well:     {name:'Well',         icon:'🪣', cost:4,  r:1.3},
+  stall:    {name:'Market Stall', icon:'🧺', cost:5,  r:1.6},
+  statue:   {name:'Dragon Statue',icon:'🗿', cost:8,  r:1.4},
+  outpost:  {name:'Outpost',      icon:'🏯', cost:10, r:1.9},
+  barn:     {name:'Barn',         icon:'🛖', cost:14, r:3.2},
+  windmill: {name:'Windmill',     icon:'🌾', cost:16, r:2.0},
+};
+function sqDoneCount(){ const q = sq(); return [q.fire, q.gargs, q.venom, q.raid==='done', q.ice, q.fossilDone, q.queen].filter(Boolean).length; }
+function buildUnlocked(){ return S.part4done && sqDoneCount() >= BUILD_NEED; }
+
+function buildModel(k){
+  const g = new THREE.Group(), wood = M(0x8b5a2b), wood2 = M(0x6b4a24), stone = M(0x9a9ca0), stone2 = M(0x7a7c80), red = M(0xb5322a), white = M(0xf3ead8), straw = M(0xe8cf8a);
+  const m = (geo, mat, x, y, z)=> mesh(geo, mat, x, y, z, g);
+  g.userData.anim = [];
+  if(k==='fence'){
+    [-1.4, 0, 1.4].forEach(x=>m(new THREE.BoxGeometry(0.18, 1.1, 0.18), wood2, x, 0.55, 0));
+    [0.4, 0.8].forEach(y=>m(new THREE.BoxGeometry(3, 0.12, 0.08), wood, 0, y, 0));
+  } else if(k==='campfire'){
+    for(let i=0;i<8;i++){ const a = i/8*6.28; m(new THREE.DodecahedronGeometry(0.22,0), stone, Math.cos(a)*0.75, 0.15, Math.sin(a)*0.75); }
+    [0, 1.1, 2.2].forEach(a=>{ const l = m(new THREE.CylinderGeometry(0.08,0.08,1.1,6), wood2, 0, 0.18, 0); l.rotation.z = Math.PI/2; l.rotation.y = a; });
+    const fl = m(new THREE.ConeGeometry(0.4, 1.0, 7), new THREE.MeshBasicMaterial({color:0xff8a2a}), 0, 0.7, 0);
+    const fl2 = m(new THREE.ConeGeometry(0.22, 0.7, 7), new THREE.MeshBasicMaterial({color:0xffd23a}), 0, 0.6, 0);
+    g.userData.anim.push(t=>{ fl.scale.set(1, 0.85+Math.sin(t*13)*0.18, 1); fl2.scale.set(1, 0.85+Math.sin(t*17+1)*0.2, 1); });
+  } else if(k==='garden'){
+    m(new THREE.BoxGeometry(3.2, 0.2, 3.2), M(0x6b4a2a), 0, 0.1, 0);
+    for(let i=0;i<3;i++) for(let j=0;j<3;j++){
+      const x = -1 + i, z = -1 + j;
+      if((i+j)%2){ m(new THREE.ConeGeometry(0.12, 0.35, 6), M(0xf28c28), x, 0.3, z).rotation.x = Math.PI; m(new THREE.ConeGeometry(0.15, 0.35, 5), M(0x3f9a3a), x, 0.55, z); }
+      else m(new THREE.IcosahedronGeometry(0.28, 0), M(0x4f9a3a), x, 0.4, z);
+    }
+    [[-1.6,0,0.1,3.4],[1.6,0,0.1,3.4]].forEach(([x,z,w,d])=>m(new THREE.BoxGeometry(w, 0.5, d), wood, x, 0.25, z));
+  } else if(k==='well'){
+    m(new THREE.CylinderGeometry(1, 1.1, 1, 12, 1, true), stone, 0, 0.5, 0).material.side = THREE.DoubleSide;
+    m(new THREE.CylinderGeometry(0.9, 0.9, 0.1, 12), M(0x2a6a9a), 0, 0.7, 0);
+    [-1,1].forEach(s=>m(new THREE.BoxGeometry(0.14, 2.2, 0.14), wood2, s*0.95, 1.1, 0));
+    const roof = m(new THREE.ConeGeometry(1.5, 0.9, 4), red, 0, 2.6, 0); roof.rotation.y = Math.PI/4;
+    m(new THREE.CylinderGeometry(0.06, 0.06, 2, 6), wood, 0, 1.8, 0).rotation.z = Math.PI/2;
+    m(new THREE.CylinderGeometry(0.18, 0.14, 0.3, 8), wood2, 0, 1.3, 0);
+  } else if(k==='stall'){
+    m(new THREE.BoxGeometry(2.6, 0.9, 1.2), wood, 0, 0.45, 0);
+    [[-1.2,-0.5],[1.2,-0.5],[-1.2,0.5],[1.2,0.5]].forEach(([x,z])=>m(new THREE.BoxGeometry(0.12, 2.2, 0.12), wood2, x, 1.1, z));
+    for(let i=0;i<6;i++) m(new THREE.BoxGeometry(0.46, 0.06, 1.6), i%2 ? white : red, -1.15 + i*0.46, 2.25, 0).rotation.x = 0.2;
+    [[-0.8,0xf28c28],[-0.2,0xd7382f],[0.5,0x6aa84f],[1.0,0xf5c542]].forEach(([x,c])=>m(new THREE.SphereGeometry(0.16, 8, 6), M(c), x, 1.0, 0));
+  } else if(k==='statue'){
+    m(new THREE.BoxGeometry(2, 1, 2), stone2, 0, 0.5, 0);
+    const D = buildDragon({main:0x9a9ca0, dark:0x7a7c80, belly:0xb8b8bc, spike:0x8a8c90, wing:0x9a9ca0, wingGlow:0x000000, eye:0x9fe8ff, eyeGlow:0x2a6a9a});
+    D.collar.visible = false; D.dragon.scale.setScalar(0.42); D.dragon.position.y = 1; g.add(D.dragon);
+  } else if(k==='outpost'){
+    [[-1.2,-1.2],[1.2,-1.2],[-1.2,1.2],[1.2,1.2]].forEach(([x,z])=>m(new THREE.BoxGeometry(0.25, 4.2, 0.25), wood2, x, 2.1, z));
+    m(new THREE.BoxGeometry(3, 0.25, 3), wood, 0, 3.6, 0);
+    [[0,-1.45,3,0.1],[0,1.45,3,0.1],[-1.45,0,0.1,3],[1.45,-0.98,0.1,1.04],[1.45,0.98,0.1,1.04]].forEach(([x,z,w,d])=>m(new THREE.BoxGeometry(w, 0.7, d), wood, x, 4.05, z));
+    // a tall roof, so there's room to stand under it
+    const roof = m(new THREE.ConeGeometry(2.4, 1.6, 4), red.clone(), 0, 7.2, 0); roof.rotation.y = Math.PI/4; roof.material.transparent = true;
+    [[-1.2,-1.2],[1.2,-1.2],[-1.2,1.2],[1.2,1.2]].forEach(([x,z])=>m(new THREE.BoxGeometry(0.15, 2.7, 0.15), wood2, x, 5.05, z));
+    g.userData.roof = roof;
+    // ladder: two side rails with round rungs, up to the gap in the railing
+    [-1,1].forEach(s=>m(new THREE.CylinderGeometry(0.06, 0.07, 4.5, 7), wood2, 1.7, 2.25, s*0.36));
+    for(let i=0;i<9;i++){ const rung = m(new THREE.CylinderGeometry(0.04, 0.04, 0.72, 6), wood, 1.7, 0.35 + i*0.4, 0); rung.rotation.x = Math.PI/2; }
+    m(new THREE.CylinderGeometry(0.04, 0.04, 1.6), wood2, 0, 8.7, 0);
+    const flag = m(new THREE.PlaneGeometry(0.9, 0.55), M(0x2f6fb5, {side:THREE.DoubleSide}), 0.45, 9.2, 0);
+    g.userData.anim.push(t=>{ flag.rotation.y = Math.sin(t*3)*0.3; });
+  } else if(k==='barn'){
+    m(new THREE.BoxGeometry(5.2, 3, 4.4), red, 0, 1.5, 0);
+    const shape = new THREE.Shape(); shape.moveTo(-2.9,0); shape.lineTo(0,2); shape.lineTo(2.9,0); shape.lineTo(-2.9,0);
+    const gable = new THREE.ExtrudeGeometry(shape, {depth:4.6, bevelEnabled:false}); gable.translate(0, 0, -2.3);
+    m(gable, M(0x6b3a2a), 0, 3, 0);
+    m(new THREE.BoxGeometry(1.8, 2.2, 0.08), white, 0, 1.1, 2.22);
+    [0.75,-0.75].forEach(a=>{ const b = m(new THREE.BoxGeometry(0.12, 2.6, 0.06), white, 0, 1.1, 2.27); b.rotation.z = a; });
+    m(new THREE.BoxGeometry(0.8, 0.8, 0.08), white, 0, 3.6, 2.32);
+    [[-2.62,0],[2.62,0]].forEach(([x])=>m(new THREE.BoxGeometry(0.06, 3, 4.4), white, x, 1.5, 0));
+    for(let i=0;i<3;i++) m(new THREE.CylinderGeometry(0.35, 0.35, 0.6, 10), straw, -1.8 + i*0.5, 0.3, 2.9).rotation.x = Math.PI/2;
+  } else if(k==='windmill'){
+    m(new THREE.CylinderGeometry(1.0, 1.6, 6, 8), M(0xe8dcc4), 0, 3, 0);
+    m(new THREE.ConeGeometry(1.3, 1.4, 8), M(0x6b4a24), 0, 6.7, 0);
+    m(new THREE.BoxGeometry(0.8, 1.4, 0.08), wood2, 0, 0.7, 1.45);
+    const hub = new THREE.Group(); hub.position.set(0, 5.6, 1.3); g.add(hub);
+    for(let i=0;i<4;i++){ const arm = new THREE.Group(); arm.rotation.z = i*Math.PI/2; hub.add(arm);
+      mesh(new THREE.BoxGeometry(0.12, 3.2, 0.08), wood2, 0, 1.6, 0, arm); mesh(new THREE.BoxGeometry(0.7, 2.4, 0.03), white, 0.4, 1.9, 0, arm); }
+    g.userData.anim.push(t=>{ hub.rotation.z = -t*1.2; });
+  }
+  g.traverse(o=>{ if(o.isMesh){ o.castShadow = true; o.receiveShadow = true; } });
+  return g;
+}
+
+// the buildings you've placed (saved in S.builds)
+const BUILT = [];
+function buildCols(b){
+  const info = BUILDS[b.k];
+  if(b.k==='fence') return [-1.2, 0, 1.2].map(t=>({x:b.x + Math.cos(b.r)*t, z:b.z - Math.sin(b.r)*t, r:0.4, build:true}));
+  return [{x:b.x, z:b.z, r:info.r, build:true}];
+}
+function buildSpawn(b){
+  const g = buildModel(b.k); g.position.set(b.x, heightAt2(b.x,b.z), b.z); g.rotation.y = b.r; L2root.add(g);
+  const cols = buildCols(b); cols.forEach(c=>P2.cols.push(c)); P2.occ.push(g);
+  BUILT.push({b, g, cols});
+}
+function buildRestore(){
+  if(!P2) return;
+  BUILT.forEach(o=>{ L2root.remove(o.g); o.cols.forEach(c=>{ const i = P2.cols.indexOf(c); if(i>=0) P2.cols.splice(i,1); }); const oi = P2.occ.indexOf(o.g); if(oi>=0) P2.occ.splice(oi,1); });
+  BUILT.length = 0;
+  (S.builds||[]).forEach(buildSpawn);
+}
+
+// ---- the build menu ----
+let BP = null;   // what you're placing right now: {k, r, ghost, ok}
+function openBuildMenu(){
+  paused = true;
+  const list = $('buildList'); list.innerHTML = '';
+  $('buildWood').textContent = S.wood;
+  Object.entries(BUILDS).forEach(([k,info])=>{
+    const b = document.createElement('button'); b.className = 'buildItem';
+    b.innerHTML = `<span class="bi">${info.icon}</span><b>${info.name}</b><small>🪵 ${info.cost}${info.note ? '<br>'+info.note : ''}</small>`;
+    if(S.wood < info.cost) b.disabled = true;
+    b.onclick = ()=>{ $('buildScreen').classList.add('hidden'); paused = false; startPlacing(k); };
+    list.appendChild(b);
+  });
+  $('buildRemove').disabled = !BUILT.length;
+  $('buildScreen').classList.remove('hidden');
+}
+function closeBuildMenu(){ $('buildScreen').classList.add('hidden'); paused = false; }
+function startPlacing(k){
+  cancelPlacing();
+  const ghost = buildModel(k);
+  ghost.traverse(o=>{ if(o.isMesh){ o.material = o.material.clone(); o.material.transparent = true; o.material.opacity = 0.55; o.castShadow = false; } });
+  L2root.add(ghost);
+  BP = {k, rel:0, r:0, ghost, ok:false};
+  $('placeBar').classList.remove('hidden');
+}
+function cancelPlacing(){ if(BP){ L2root.remove(BP.ghost); BP = null; } $('placeBar').classList.add('hidden'); }
+function placeSpot(){
+  const info = BUILDS[BP.k], d = info.r + 2.2;
+  return {x:S.x + Math.cos(S.yaw)*d, z:S.z + Math.sin(S.yaw)*d};
+}
+function placeOk(b){
+  const info = BUILDS[b.k];
+  for(const c of buildCols(b)){
+    const yc = heightAt2(b.x, b.z);
+    for(let i=0;i<9;i++){ const a = i/8*6.28, rr = i===8 ? 0 : c.r; const x = c.x + Math.cos(a)*rr, z = c.z + Math.sin(a)*rr, y = heightAt2(x,z); if(y < 0.05 || Math.abs(y - yc) > 0.9) return false; }   // dry, and not too steep
+    for(const o of P2.cols){ if(Math.hypot(c.x-o.x, c.z-o.z) < c.r + o.r + 0.2) return false; }
+    if(Math.hypot(c.x-S.x, c.z-S.z) < c.r + 0.8) return false;
+    const people = [P2.bea, ...P2.vill.map(v=>v.m)];
+    if(people.some(m=>Math.hypot(c.x-m.position.x, c.z-m.position.z) < c.r + 1)) return false;
+    if(Math.hypot(c.x-(-61), c.z-14.6) < c.r + 3) return false;    // keep Lin's dock clear
+  }
+  return true;
+}
+function placingTick(){
+  if(!BP) return;
+  if(S.part!==2){ cancelPlacing(); return; }
+  BP.r = Math.atan2(-Math.cos(S.yaw), -Math.sin(S.yaw)) + BP.rel;   // the front faces you
+  const p = placeSpot(), b = {k:BP.k, x:p.x, z:p.z, r:BP.r};
+  BP.ok = placeOk(b);
+  BP.ghost.position.set(p.x, heightAt2(p.x,p.z), p.z); BP.ghost.rotation.y = BP.r;
+  BP.ghost.traverse(o=>{ if(o.isMesh) o.material.emissive && o.material.emissive.setHex(BP.ok ? 0x1a5a1a : 0x7a1010); });
+  $('placeOk').disabled = !BP.ok;
+}
+function placeNow(){
+  if(!BP) return;
+  if(!BP.ok){ $('status').textContent = '🚫 Something is in the way. Try another spot!'; return; }
+  const info = BUILDS[BP.k];
+  if(S.wood < info.cost){ $('status').textContent = `🪵 You need ${info.cost} wood. Chop some trees!`; cancelPlacing(); return; }
+  const p = placeSpot(), b = {k:BP.k, x:+p.x.toFixed(2), z:+p.z.toFixed(2), r:+BP.r.toFixed(3)};
+  S.wood -= info.cost; if(!S.builds) S.builds = []; S.builds.push(b); buildSpawn(b);
+  spawnChips(b.x, heightAt2(b.x,b.z)+1.2, b.z, 0xc89060, 18);
+  const k = BP.k; cancelPlacing(); updateHud(); saveNow();
+  $('status').textContent = `🔨 *bang bang* You built a ${info.name}! ${S.wood >= info.cost ? 'Build another? Press 🔨 Build.' : ''}`;
+  if(k==='fence' && S.wood >= 1) startPlacing('fence');    // fences are quick to build in a row
+}
+function turnPlacing(){ if(BP) BP.rel += Math.PI/4; }
+function removeNearest(){
+  if(S.climb || S.tower){ closeBuildMenu(); $('status').textContent = '🪜 Climb down first!'; return; }
+  let best = null, bd = 8;
+  BUILT.forEach(o=>{ const d = dist(o.b.x, o.b.z); if(d < bd){ bd = d; best = o; } });
+  closeBuildMenu();
+  if(!best){ $('status').textContent = '🧹 Walk up to the building you want to take down.'; return; }
+  const info = BUILDS[best.b.k];
+  ask('🧹 Take it down?', `Take down the ${info.name}? You get back ${Math.ceil(info.cost/2)} 🪵.`, 'Take it down', 'Keep it', ()=>{
+    L2root.remove(best.g); best.cols.forEach(c=>{ const i = P2.cols.indexOf(c); if(i>=0) P2.cols.splice(i,1); });
+    const oi = P2.occ.indexOf(best.g); if(oi>=0) P2.occ.splice(oi,1);
+    BUILT.splice(BUILT.indexOf(best),1); S.builds.splice(S.builds.indexOf(best.b),1);
+    S.wood += Math.ceil(info.cost/2); spawnChips(best.b.x, heightAt2(best.b.x,best.b.z)+1, best.b.z, 0xc89060, 14); updateHud(); saveNow(); });
+}
+// 🪜 climbing the outpost ladder
+const TOWER_TOP = 3.73;
+function towerLocal(o, x, z){ const dx = x - o.b.x, dz = z - o.b.z, c = Math.cos(o.b.r), s = Math.sin(o.b.r); return {lx: dx*c - dz*s, lz: dx*s + dz*c}; }
+function towerWorld(o, lx, lz){ const c = Math.cos(o.b.r), s = Math.sin(o.b.r); return {x: o.b.x + lx*c + lz*s, z: o.b.z - lx*s + lz*c}; }
+function towerReset(){ S.climb = null; S.tower = null; S.yOver = null; S.towerG = null; }
+function nearLadder(){
+  if(S.part!==2 || S.climb || S.tower) return null;
+  for(const o of BUILT){ if(o.b.k!=='outpost') continue; const f = towerWorld(o, 2.5, 0); if(Math.hypot(S.x-f.x, S.z-f.z) < 1.0) return o; }
+  return null;
+}
+function towerMove(fwdRaw, speed, dt){
+  if(S.part!==2){ if(S.climb || S.tower) towerReset(); return false; }
+  const fwd = Math.max(-1, Math.min(1, fwdRaw));
+  if(S.climb){
+    const o = S.climb.o, base = o.g.position.y, foot = towerWorld(o, 2.5, 0), at = towerWorld(o, 2.2, 0);
+    S.climb.t = Math.max(0, Math.min(1, S.climb.t + S.climb.dir*dt*0.9));   // climbs by itself, up or down
+    S.x = at.x; S.z = at.z; S.yaw = Math.atan2(o.b.z - S.z, o.b.x - S.x);
+    S.yOver = heightAt2(foot.x, foot.z) + (base + TOWER_TOP - heightAt2(foot.x, foot.z)) * S.climb.t;
+    if(S.climb.t >= 1){ S.tower = {o}; S.climb = null; const p = towerWorld(o, 0.8, 0); S.x = p.x; S.z = p.z; S.yOver = base + TOWER_TOP;
+      if(!towerMove.told){ towerMove.told = true; $('status').textContent = '🏯 What a view! Walk back to the ladder to climb down.'; } }
+    else if(S.climb.t <= 0){ S.climb = null; S.yOver = null; S.towerG = null; S.x = foot.x + (foot.x - o.b.x)*0.04; S.z = foot.z + (foot.z - o.b.z)*0.04; S.yaw = Math.atan2(S.z - o.b.z, S.x - o.b.x); }   // step off, facing away
+    return true;
+  }
+  if(S.tower){
+    const o = S.tower.o; S.yOver = o.g.position.y + TOWER_TOP;
+    if(Math.abs(fwd) > 0.05){
+      const nx = S.x + Math.cos(S.yaw)*fwd*speed*0.6*dt, nz = S.z + Math.sin(S.yaw)*fwd*speed*0.6*dt, L = towerLocal(o, nx, nz);
+      if(Math.abs(L.lx) < 1.15 && Math.abs(L.lz) < 1.15){ S.x = nx; S.z = nz; }
+      else if(L.lx >= 1.15 && Math.abs(L.lz) < 0.5){ S.tower = null; S.climb = {o, t:0.99, dir:-1}; }    // over the edge onto the ladder: climb down
+    }
+    return true;
+  }
+  if(fwd > 0.3 && !S.riding){
+    const o = nearLadder();
+    if(o && Math.abs(angDiff(Math.atan2(o.b.z - S.z, o.b.x - S.x), S.yaw)) < 1.0){ S.climb = {o, t:0, dir:1}; S.towerG = o.g; return true; }
+  }
+  return false;
+}
+// what the buildings do
+let _gardenT = 0;
+function buildsTick(dt){
+  if(S.part!==2 || !BUILT.length) return;
+  BUILT.forEach(o=>{ o.g.userData.anim.forEach(f=>f(time));
+    if(o.g.userData.roof){ const see = S.towerG===o.g; o.g.userData.roof.material.opacity += ((see ? 0.2 : 1) - o.g.userData.roof.material.opacity)*Math.min(1, dt*6); } });   // see-through roof while you're up there
+  // 🔥 a campfire heals you slowly while you stand next to it
+  if(S.hp < S.maxHp && BUILT.some(o=>o.b.k==='campfire' && dist(o.b.x,o.b.z) < 3.2)){
+    S.campHeal = (S.campHeal||0) + dt; if(S.campHeal >= 1){ S.campHeal = 0; S.hp = Math.min(S.maxHp, S.hp + 2); spawnChips(S.x, groundH(S.x,S.z)+1.5, S.z, 0xff8a8a, 3); updateHud(); } }
+  // 🥕 gardens grow a carrot every 2 minutes or so
+  const gardens = BUILT.filter(o=>o.b.k==='garden').length;
+  if(gardens){ _gardenT += dt*gardens; if(_gardenT > 120){ _gardenT = 0; S.carrot = (S.carrot||0) + 1; $('status').textContent = '🥕 Your garden grew a carrot!'; updateHud(); } }
+}
+
+$('buildClose').onclick = closeBuildMenu;
+$('buildRemove').onclick = removeNearest;
+$('placeOk').onclick = placeNow;
+$('placeTurn').onclick = turnPlacing;
+$('placeCancel').onclick = cancelPlacing;
+window.addEventListener('keydown', e=>{ if(!BP) return; if(e.code==='KeyQ') turnPlacing(); if(e.code==='Escape') cancelPlacing(); });
+// ================= 🦖 DINO ISLAND (side quest island 6) =================
+var L6root = new THREE.Group(); L6root.visible = false; scene.add(L6root);
+var P6 = null, heightAt6 = (x,z)=>0;
+const SPRING6 = {x:-4, z:-4, r:5};
+const MUSEUM6 = {x:-40, z:12};
+const NEST6 = {x:-18, z:24};
+const CAMP6 = {x:26, z:16};
+const QUEEN6 = {x:30, z:-20, r:13};
+const FOSSILS6 = [[-30,-14,'skull'],[-6,30,'spine'],[12,-6,'ribs'],[44,2,'tail'],[2,-32,'front legs'],[-48,-22,'back legs']];
+const RAPTOR_DENS = [[6,-20],[-26,-30],[-30,34]];
+function heightAt6Raw(x,z){
+  const e = Math.hypot(x/62, z/44);
+  const wob = Math.sin(Math.atan2(z,x)*6)*0.03 + Math.sin(Math.atan2(z,x)*3+1)*0.02;
+  const d = (e - 1 - wob) * 46;
+  let y = d < 0 ? 0.4 * smooth(0, -6, d) + noise(x*0.5,z*0.5)*0.12 : -d*0.32;
+  const sd = Math.hypot(x-SPRING6.x, z-SPRING6.z);
+  if(sd < SPRING6.r) y = Math.min(y, 0.4 - 0.9*smooth(SPRING6.r, SPRING6.r-1.5, sd));
+  return Math.max(y, -4);
+}
+function canStand6(x,z){
+  const y = heightAt6(x,z); if(y < -0.1 || y > 1.1) return false;
+  for(const c of P6.cols){ if(Math.hypot(x-c.x, z-c.z) < c.r+0.5) return false; }
+  return true;
+}
+function dinoCan(x,z){ const y = heightAt6(x,z); if(y < -0.1 || y > 1.1) return false; for(const c of P6.cols){ if(Math.hypot(x-c.x, z-c.z) < c.r+0.3) return false; } return true; }
+
+// ---- models ----
+function miniDino(kind, col){
+  const g = new THREE.Group(), skin = SM(col), belly = SM(0xf3e6b8), dark = M(0x2a1d10), legs = [];
+  const body = mesh(new THREE.SphereGeometry(0.5, 12, 9), skin, 0, 0.6, 0, g); body.scale.set(1.4, 0.8, 0.8);
+  mesh(new THREE.SphereGeometry(0.4, 10, 8), belly, 0.05, 0.48, 0, g).scale.set(1.3, 0.55, 0.7);
+  [[0.4,1],[0.4,-1],[-0.4,1],[-0.4,-1]].forEach(([x,s])=>legs.push(mesh(new THREE.CylinderGeometry(0.11, 0.13, 0.45, 7), skin, x, 0.22, s*0.25, g)));
+  const tail = mesh(new THREE.ConeGeometry(0.22, 1.0, 8), skin, -0.95, 0.6, 0, g); tail.rotation.z = Math.PI/2 + 0.15;
+  const head = new THREE.Group(); g.add(head);
+  if(kind==='longneck'){
+    const neck = mesh(new THREE.CylinderGeometry(0.12, 0.2, 1.4, 8), skin, 0.75, 1.15, 0, g); neck.rotation.z = -0.5;
+    head.position.set(1.15, 1.75, 0); mesh(new THREE.SphereGeometry(0.2, 10, 8), skin, 0, 0, 0, head).scale.set(1.4, 0.9, 0.9);
+  } else {
+    head.position.set(0.85, 0.75, 0); mesh(new THREE.SphereGeometry(0.28, 10, 8), skin, 0, 0, 0, head).scale.set(1.3, 0.9, 0.9);
+  }
+  [-1,1].forEach(s=>mesh(new THREE.SphereGeometry(0.045, 6, 5), dark, 0.15, 0.08, s*0.14, head));
+  if(kind==='trike'){
+    mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.06, 12), M(0xe8b070), -0.1, 0.18, 0, head).rotation.z = Math.PI/2 - 0.4;
+    [-1,1].forEach(s=>{ const h = mesh(new THREE.ConeGeometry(0.05, 0.35, 6), M(0xf3ead8), 0.15, 0.25, s*0.15, head); h.rotation.z = -1.0; });
+    mesh(new THREE.ConeGeometry(0.05, 0.22, 6), M(0xf3ead8), 0.38, 0.05, 0, head).rotation.z = -1.3;
+  }
+  if(kind==='stego') for(let i=0;i<5;i++) mesh(new THREE.ConeGeometry(0.16, 0.42, 4), M(0xd86a3a), -0.5 + i*0.25, 1.0, 0, g).scale.set(1, 1, 0.3);
+  g.userData = {legs, head, tail};
+  return g;
+}
+function raptorModel(queen){
+  const g = new THREE.Group(), skin = SM(queen ? 0x6a3a8a : 0x5a8a3a), stripe = SM(queen ? 0xf5c542 : 0xd86a2a), belly = SM(0xe8dcc0), dark = M(0x1a1a1a), eyeM = new THREE.MeshBasicMaterial({color: queen ? 0xffd23a : 0xff4a2a});
+  const body = mesh(new THREE.SphereGeometry(0.5, 14, 10), skin, 0, 1.0, 0, g); body.scale.set(1.5, 0.75, 0.6); body.rotation.z = 0.12;
+  mesh(new THREE.SphereGeometry(0.4, 10, 8), belly, 0.1, 0.88, 0, g).scale.set(1.4, 0.6, 0.62);
+  for(let i=0;i<4;i++) mesh(new THREE.BoxGeometry(0.1, 0.06, 0.62), stripe, -0.45 + i*0.28, 1.32, 0);
+  const neck = mesh(new THREE.CylinderGeometry(0.16, 0.24, 0.7, 8), skin, 0.75, 1.35, 0, g); neck.rotation.z = -0.7;
+  const head = new THREE.Group(); head.position.set(1.05, 1.62, 0); g.add(head);
+  mesh(new THREE.SphereGeometry(0.24, 10, 8), skin, 0, 0, 0, head).scale.set(1.2, 0.9, 0.9);
+  mesh(new THREE.BoxGeometry(0.45, 0.12, 0.22), skin, 0.32, 0.0, 0, head);
+  const jaw = mesh(new THREE.BoxGeometry(0.42, 0.07, 0.2), belly, 0.3, -0.1, 0, head);
+  for(let i=0;i<4;i++) [-1,1].forEach(s=>mesh(new THREE.ConeGeometry(0.02, 0.07, 4), M(0xffffff), 0.18 + i*0.09, -0.07, s*0.09, head).rotation.x = Math.PI);
+  [-1,1].forEach(s=>mesh(new THREE.SphereGeometry(0.05, 6, 5), eyeM, 0.12, 0.1, s*0.15, head));
+  if(queen) for(let i=0;i<5;i++){ const f = mesh(new THREE.ConeGeometry(0.06, 0.55, 5), stripe, -0.15 - i*0.05, 0.25 + Math.sin(i)*0.05, (i-2)*0.06, head); f.rotation.z = 0.9 + i*0.08; }
+  const legs = [];
+  [-1,1].forEach(s=>{ const leg = new THREE.Group(); leg.position.set(-0.15, 0.95, s*0.22); g.add(leg);
+    mesh(new THREE.CylinderGeometry(0.13, 0.09, 0.5, 7), skin, 0, -0.25, 0, leg);
+    const shin = mesh(new THREE.CylinderGeometry(0.07, 0.06, 0.5, 6), skin, 0.08, -0.65, 0, leg); shin.rotation.z = -0.3;
+    mesh(new THREE.BoxGeometry(0.3, 0.06, 0.14), dark, 0.18, -0.9, 0, leg);
+    mesh(new THREE.ConeGeometry(0.03, 0.18, 4), M(0xf3ead8), 0.2, -0.82, 0, leg).rotation.z = -0.8;    // the big toe claw
+    legs.push(leg); });
+  [-1,1].forEach(s=>{ const arm = mesh(new THREE.CylinderGeometry(0.04, 0.03, 0.35, 5), skin, 0.55, 1.0, s*0.18, g); arm.rotation.z = -1.2; });
+  const tail = new THREE.Group(); tail.position.set(-0.7, 1.05, 0); g.add(tail);
+  mesh(new THREE.ConeGeometry(0.2, 1.6, 8), skin, -0.8, 0.05, 0, tail).rotation.z = Math.PI/2 + 0.05;
+  g.userData = {skin, base: queen ? 0x6a3a8a : 0x5a8a3a, legs, head, jaw, tail};
+  return g;
+}
+function eggModel(){
+  const g = new THREE.Group();
+  mesh(new THREE.SphereGeometry(0.28, 12, 10), M(0xf3ead8), 0, 0.32, 0, g).scale.set(1, 1.3, 1);
+  for(let i=0;i<5;i++) mesh(new THREE.SphereGeometry(0.06, 6, 5), M(0x7ab45a), Math.cos(i*1.3)*0.2, 0.2 + i*0.08, Math.sin(i*1.3)*0.2, g);
+  return g;
+}
+function skeletonPart(name){
+  const g = new THREE.Group(), bone = M(0xf3ead8, {roughness:.6});
+  if(name==='skull'){ mesh(new THREE.BoxGeometry(0.9, 0.5, 0.5), bone, 2.4, 2.6, 0, g); mesh(new THREE.BoxGeometry(0.6, 0.12, 0.4), bone, 2.6, 2.25, 0, g); }
+  if(name==='spine') for(let i=0;i<7;i++) mesh(new THREE.SphereGeometry(0.16, 8, 6), bone, -0.9 + i*0.45, 2.1 + Math.sin(i/6*Math.PI)*0.3, 0, g);
+  if(name==='ribs') for(let i=0;i<5;i++){ const r = mesh(new THREE.TorusGeometry(0.45, 0.05, 5, 12, Math.PI), bone, -0.3 + i*0.3, 1.75, 0, g); r.rotation.y = Math.PI/2; r.rotation.x = Math.PI; }
+  if(name==='tail') for(let i=0;i<6;i++) mesh(new THREE.SphereGeometry(0.13 - i*0.015, 7, 5), bone, -1.3 - i*0.4, 2.0 - i*0.18, 0, g);
+  if(name==='front legs') [-1,1].forEach(s=>{ mesh(new THREE.CylinderGeometry(0.08, 0.08, 1.4, 6), bone, 1.0, 0.9, s*0.3, g); });
+  if(name==='back legs') [-1,1].forEach(s=>{ mesh(new THREE.CylinderGeometry(0.1, 0.1, 1.6, 6), bone, -0.6, 0.95, s*0.32, g); });
+  return g;
+}
+
+function buildPart6(){
+  const R = L6root, r = rng(6262);
+  const add = (o)=>{ R.add(o); return o; };
+  const m6 = (geo, mat, x, y, z, parent=R)=> mesh(geo, mat, x, y, z, parent);
+  P6 = {occ:[], cols:[], trees:[], herds:[], raptors:[], gobs:[], eggsOnGround:[], digs:[], skel:{}, steam:[]};
+  const col = (x,z,rad)=>{ const c={x,z,r:rad}; P6.cols.push(c); return c; };
+  const W = 150, D = 110, SX = 200, SZ = 150, OX = 0;
+  const geo = new THREE.PlaneGeometry(W, D, SX, SZ); geo.rotateX(-Math.PI/2);
+  heightAt6 = gridSampler(heightAt6Raw, W, D, SX, SZ, OX);
+  const pos = geo.attributes.position, cols = [];
+  const c = new THREE.Color(), jg = new THREE.Color(0x3f8a32), jg2 = new THREE.Color(0x5aa83a), mud = new THREE.Color(0x7a5a3a), sand = new THREE.Color(0xe8d49a), wet = new THREE.Color(0x3a5a50);
+  for(let i=0;i<pos.count;i++){
+    const x = pos.getX(i), z = pos.getZ(i), y = heightAt6Raw(x,z); pos.setY(i, y);
+    const n = noise(x*1.6,z*1.6)*0.5+0.5;
+    if(y < -0.2) c.copy(wet); else if(y < 0.28) c.copy(sand).lerp(mud, n*0.3);
+    else c.copy(jg).lerp(jg2, n*0.7);
+    if(Math.hypot(x-QUEEN6.x, z-QUEEN6.z) < QUEEN6.r-1 && y > 0.28) c.lerp(mud, 0.45 + n*0.2);
+    cols.push(c.r, c.g, c.b);
+  }
+  geo.setAttribute('color', new THREE.Float32BufferAttribute(cols,3)); geo.computeVertexNormals();
+  const ground = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({vertexColors:true, roughness:.95, flatShading:true})); ground.receiveShadow = true; add(ground);
+  // the hot spring, with steam
+  const spring = m6(new THREE.CircleGeometry(SPRING6.r-0.4, 32), new THREE.MeshStandardMaterial({color:0x5ad0c8, roughness:.15, emissive:0x0a3a3a}), SPRING6.x, 0.05, SPRING6.z); spring.rotation.x = -Math.PI/2;
+  for(let i=0;i<10;i++){ const a = i/10*6.28; const st = m6(new THREE.DodecahedronGeometry(0.6,0), M(0x8a8a80), SPRING6.x + Math.cos(a)*SPRING6.r, 0.3, SPRING6.z + Math.sin(a)*SPRING6.r); st.rotation.set(r()*3, r()*3, 0); }
+  for(let i=0;i<8;i++){ const pf = new THREE.Mesh(new THREE.IcosahedronGeometry(0.8,1), new THREE.MeshStandardMaterial({color:0xffffff, transparent:true, opacity:.35, flatShading:true, depthWrite:false})); add(pf); P6.steam.push({m:pf, k:i}); }
+  // a smoking volcano far in the north-east corner
+  const vol = new THREE.Group(); vol.position.set(50, -0.5, 36); add(vol);
+  m6(new THREE.CylinderGeometry(4, 16, 18, 14, 2), M(0x5a4a3a), 0, 9, 0, vol);
+  m6(new THREE.CylinderGeometry(3.8, 4, 0.6, 14), new THREE.MeshBasicMaterial({color:0xff6a1a}), 0, 18, 0, vol);
+  col(50, 36, 15);
+  // jungle trees (choppable) and giant ferns
+  const trunk = M(0x6b4a2a), leaf = M(0x2f7a2a), leaf2 = M(0x4a9a32), palmL = M(0x5aa83a);
+  function jtree(x,z){
+    const g = new THREE.Group(); g.position.set(x, heightAt6Raw(x,z), z); g.rotation.y = r()*6.28; add(g); P6.occ.push(g);
+    const s = 0.9 + r()*0.6; g.scale.setScalar(s);
+    if(r() < 0.45){ // palm
+      const tr = m6(new THREE.CylinderGeometry(0.16, 0.26, 4.2, 7), trunk, 0.3, 2.1, 0, g); tr.rotation.z = -0.12;
+      for(let k=0;k<6;k++){ const fr = new THREE.Group(); fr.position.set(0.55, 4.2, 0); fr.rotation.y = k/6*6.28; g.add(fr);
+        const lf = m6(new THREE.BoxGeometry(2.2, 0.05, 0.5), palmL, 1.0, -0.3, 0, fr); lf.rotation.z = -0.35; }
+    } else {
+      m6(new THREE.CylinderGeometry(0.28, 0.42, 3, 7), trunk, 0, 1.5, 0, g);
+      [[0,3.6,0,1.6],[1,3.2,0.5,1.2],[-0.9,3.3,-0.4,1.25],[0.2,3.1,-1,1.1],[-0.3,4.3,0.4,1]].forEach(([a,b,c2,rr],k)=>m6(new THREE.IcosahedronGeometry(rr,0), k%2?leaf:leaf2, a,b,c2, g));
+    }
+    P6.trees.push({g, x, z, hits:0, alive:true, fall:-1, col:col(x, z, 0.6*s)});
+  }
+  function fern(x,z){
+    const g = new THREE.Group(); g.position.set(x, heightAt6Raw(x,z), z); g.rotation.y = r()*6.28; add(g);
+    const s = 0.8 + r()*0.9;
+    for(let k=0;k<6;k++){ const lf = m6(new THREE.ConeGeometry(0.28*s, 1.8*s, 4), k%2?leaf2:palmL, 0, 0.55*s, 0, g); lf.rotation.z = 1.0; lf.rotation.y = k/6*6.28; lf.position.set(Math.cos(k/6*6.28)*0.6*s, 0.5*s, -Math.sin(k/6*6.28)*0.6*s); lf.rotation.order = 'YZX'; }
+  }
+  const keep = [[-50,0,9],[SPRING6.x,SPRING6.z,SPRING6.r+3],[MUSEUM6.x,MUSEUM6.z,8],[NEST6.x,NEST6.z,7],[CAMP6.x,CAMP6.z,9],[QUEEN6.x,QUEEN6.z,QUEEN6.r+2],[50,36,17]]
+    .concat(FOSSILS6.map(([x,z])=>[x,z,4])).concat(RAPTOR_DENS.map(([x,z])=>[x,z,5]));
+  const free = (x,z,pad=0)=>!keep.some(([ax,az,ar])=>Math.hypot(x-ax, z-az) < ar+pad) && !P6.cols.some(cc=>Math.hypot(x-cc.x, z-cc.z) < cc.r + 2.2);
+  let made = 0, tries = 0;
+  while(made < 70 && tries < 5000){ tries++; const x = -58 + r()*112, z = -40 + r()*80, y = heightAt6Raw(x,z);
+    if(y < 0.3 || y > 1.0 || (Math.abs(z) < 3.5 && x < 20) || !free(x,z)) continue; jtree(x,z); made++; }
+  made = 0; tries = 0;
+  while(made < 55 && tries < 4000){ tries++; const x = -58 + r()*112, z = -40 + r()*80, y = heightAt6Raw(x,z);
+    if(y < 0.3 || y > 1.0 || !free(x,z,-2)) continue; fern(x,z); made++; }
+  // the museum (a stone pavilion) with Professor Fern, and the skeleton display
+  { const g = new THREE.Group(); g.position.set(MUSEUM6.x, heightAt6Raw(MUSEUM6.x,MUSEUM6.z), MUSEUM6.z); add(g);
+    m6(new THREE.BoxGeometry(9, 0.3, 7), M(0xd8cfb8), 0, 0.15, 0, g);
+    [[-4,-3],[4,-3],[-4,3],[4,3]].forEach(([x,z])=>{ m6(new THREE.CylinderGeometry(0.3, 0.35, 4, 10), M(0xe8e0cc), x, 2.1, z, g); col(MUSEUM6.x+x, MUSEUM6.z+z, 0.4); });
+    const roof = m6(new THREE.ConeGeometry(6.2, 1.8, 4), M(0x9a4a2a), 0, 5, 0, g); roof.rotation.y = Math.PI/4; roof.scale.set(1, 1, 0.8);
+    m6(new THREE.BoxGeometry(5.5, 0.4, 2.2), M(0xb8b0a0), 0, 0.5, 0, g); col(MUSEUM6.x-2, MUSEUM6.z, 1.2); col(MUSEUM6.x+2, MUSEUM6.z, 1.2);
+    const sign = m6(new THREE.BoxGeometry(2.6, 0.7, 0.1), M(0x6b4a24), -4.6, 1.2, 3.6, g);
+    const sk = new THREE.Group(); sk.position.set(0, 0.5, 0); g.add(sk);
+    FOSSILS6.forEach(([,,name])=>{ const p = skeletonPart(name); p.visible = false; sk.add(p); P6.skel[name] = p; });
+    P6.museum = g; }
+  P6.prof = beaModel({skin:0xd8a878, over:0x9a8a5a, shirt:0xf3ead8, hair:0xd8d8d8, hat:'straw', hatColor:0xc8a86a, tool:null, pony:false, beard:true});
+  P6.prof.position.set(MUSEUM6.x + 3, heightAt6Raw(MUSEUM6.x+3, MUSEUM6.z-4.6), MUSEUM6.z - 4.6); add(P6.prof);
+  // the nest, with a big mama long-neck watching over it
+  { const g = new THREE.Group(); g.position.set(NEST6.x, heightAt6Raw(NEST6.x,NEST6.z), NEST6.z); add(g);
+    const ring = m6(new THREE.TorusGeometry(1.6, 0.45, 8, 18), M(0x8a6a3a), 0, 0.3, 0, g); ring.rotation.x = Math.PI/2;
+    m6(new THREE.CircleGeometry(1.4, 16), M(0x6b5a3a), 0, 0.12, 0, g).rotation.x = -Math.PI/2;
+    P6.nestEggs = []; for(let i=0;i<5;i++){ const e = eggModel(); const a = i/5*6.28; e.position.set(Math.cos(a)*0.7, 0, Math.sin(a)*0.7); e.visible = false; g.add(e); P6.nestEggs.push(e); }
+    col(NEST6.x, NEST6.z, 1.6);
+    const mama = miniDino('longneck', 0x7a9a6a); mama.scale.setScalar(3); mama.position.set(NEST6.x + 6, heightAt6Raw(NEST6.x+6,NEST6.z+3), NEST6.z + 3); mama.rotation.y = 2.4; add(mama); P6.mama = mama; col(NEST6.x+6, NEST6.z+3, 2.4); }
+  // the goblin camp (they stole the eggs)
+  { const g = new THREE.Group(); g.position.set(CAMP6.x, heightAt6Raw(CAMP6.x,CAMP6.z), CAMP6.z); add(g);
+    [[-3,-2],[3,-2.5]].forEach(([dx,dz],k)=>{ const t = m6(new THREE.ConeGeometry(2, 2.6, 4), M(k?0x7a5a3a:0x6b4a2a), dx, 1.3, dz, g); t.rotation.y = Math.PI/4; P6.occ.push(t); col(CAMP6.x+dx, CAMP6.z+dz, 1.6); });
+    for(let i=0;i<7;i++){ const a = i/7*6.28; m6(new THREE.DodecahedronGeometry(0.2,0), M(0x8a8a80), Math.cos(a)*0.7, 0.15, Math.sin(a)*0.7, g); }
+    const fl = m6(new THREE.ConeGeometry(0.35, 0.9, 7), new THREE.MeshBasicMaterial({color:0xff8a2a}), 0, 0.5, 0, g); P6.campFire = fl; }
+  // the Raptor Queen's clearing: a ring of standing stones
+  for(let i=0;i<14;i++){ const a = i/14*6.28; if(Math.abs(angDiff(a, Math.PI*0.75)) < 0.35) continue;
+    const x = QUEEN6.x + Math.cos(a)*(QUEEN6.r+0.5), z = QUEEN6.z + Math.sin(a)*(QUEEN6.r+0.5);
+    const st = m6(new THREE.BoxGeometry(1, 3 + r()*1.5, 0.8), M(0x7a7a72), x, heightAt6Raw(x,z) + 1.5, z); st.rotation.y = -a; col(x, z, 0.7); }
+  // fossil dig spots
+  FOSSILS6.forEach(([x,z,name],i)=>{
+    const g = new THREE.Group(); g.position.set(x, heightAt6Raw(x,z), z); add(g);
+    m6(new THREE.SphereGeometry(1.1, 10, 6, 0, Math.PI*2, 0, Math.PI/2), M(0x7a5a3a), 0, 0, 0, g).scale.y = 0.35;
+    const bone = m6(new THREE.CylinderGeometry(0.07, 0.07, 0.8, 6), M(0xf3ead8), 0.2, 0.4, 0, g); bone.rotation.z = 0.8;
+    const spark = m6(new THREE.OctahedronGeometry(0.18, 0), new THREE.MeshBasicMaterial({color:0xfff27a}), 0, 1.0, 0, g);
+    P6.digs.push({i, x, z, name, g, spark, hits:0});
+  });
+  // the rock arch where the secret passage from the Ice Caves comes out
+  { const g = new THREE.Group(); g.position.set(-55, heightAt6Raw(-55,-9), -9); g.rotation.y = Math.PI/2; add(g);
+    m6(new THREE.TorusGeometry(2.4, 0.9, 8, 14, Math.PI), M(0x7a6a5a), 0, 0, 0, g);
+    m6(new THREE.CircleGeometry(2, 18, 0, Math.PI), new THREE.MeshBasicMaterial({color:0x2a1a10, side:THREE.DoubleSide}), 0, 0, -0.3, g);
+    for(let k=0;k<4;k++){ const lf = m6(new THREE.ConeGeometry(0.3, 1.6, 4), M(0x4a9a32), (k-1.5)*1.2, 2.8, 0.4, g); lf.rotation.z = (k-1.5)*0.4; }
+    P6.cols.push({x:-55, z:-12.2, r:0.9}, {x:-55, z:-5.8, r:0.9}); }
+  // the landing: a boat home
+  { const g = new THREE.Group(); g.position.set(-58, 0, 7); g.rotation.y = 0.3; add(g);
+    m6(new THREE.BoxGeometry(4,0.8,1.6), M(0x2a9d8f), 0,0.1,0, g); m6(new THREE.CylinderGeometry(0.08,0.08,4), M(0x5a3815), 0,2.3,0, g);
+    const sl = m6(new THREE.PlaneGeometry(2,2.6), M(0xf5c542,{side:THREE.DoubleSide}), 0.5,2.6,0, g); sl.rotation.y = Math.PI/2; P6.boat = g; }
+  // herds of tiny, friendly dinosaurs
+  [[-30,4,'trike',0x8aa84a,4],[8,24,'stego',0x6a9ab8,3],[-12,-22,'longneck',0xa8b06a,3],[38,-2,'trike',0xc87a4a,3],[16,-30,'stego',0x9a7ab8,3]].forEach(([hx,hz,kind,colr,n])=>{
+    for(let k=0;k<n;k++){ const m = miniDino(kind, colr); add(m); const x = hx + (r()-.5)*4, z = hz + (r()-.5)*4;
+      P6.herds.push({m, kind, hx, hz, x, z, yaw:r()*6.28, tx:x, tz:z, wait:r()*3, bob:r()*6}); }
+  });
+  // mini raptor packs
+  RAPTOR_DENS.forEach(([x,z],pi)=>{ for(let k=0;k<3;k++){ const a = k/3*6.28, rx = x + Math.cos(a)*1.6, rz = z + Math.sin(a)*1.6, m = raptorModel(false); add(m);
+    P6.raptors.push({m, pack:pi, x:rx, z:rz, hx:rx, hz:rz, hp:12, max:12, state:'idle', t:0, cd:2, yaw:r()*6.28, flash:0, orbit:0, bob:r()*6}); } });
+  // egg-thief goblins: three at the camp, two out on patrol
+  [[CAMP6.x-2, CAMP6.z+3],[CAMP6.x+2, CAMP6.z+3],[CAMP6.x, CAMP6.z-5],[2, 12],[20, -2]].forEach(([x,z],i)=>{
+    const m = goblinModel(false); add(m); const egg = eggModel(); egg.scale.setScalar(0.8); egg.position.set(0.1, 0.5, 0.45); m.add(egg);
+    P6.gobs.push({m, egg, i, x, z, hx:x, hz:z, hp:16, max:16, state:'idle', t:0, cd:1, yaw:Math.PI, flash:0, swing:0, bob:r()*6});
+  });
+  // the Raptor Queen
+  const Q = raptorModel(true); Q.scale.setScalar(2.5); Q.visible = false; add(Q);
+  P6.queen = {m:Q, x:QUEEN6.x+4, z:QUEEN6.z, yaw:Math.PI, hp:170, max:170, phase:1, state:'wait', t:0, fx:[], flash:0, y:0};
+  // your ride: the Raptor Queen follows you anywhere once she's your friend
+  P6.mount = raptorModel(true); P6.mount.scale.setScalar(1.55); P6.mount.visible = false; scene.add(P6.mount);
+}
+
+// ---------- visiting ----------
+function visitPart6(){
+  if(!P6) buildPart6();
+  S.part = 6; showPart(6);
+  S.fight = false; D.gone = true; $('boss').classList.add('hidden');
+  S.freed = true; S.carryEgg = -1;
+  p6Reset();
+  S.x = -50; S.z = 0; S.yaw = 0; S.pitch = 0;
+}
+function p6Reset(){
+  const q = sq(); if(!q.fossils) q.fossils = [false,false,false,false,false,false]; if(!q.placed) q.placed = [false,false,false,false,false,false]; if(!q.eggs) q.eggs = [false,false,false,false,false];
+  P6.trees.forEach(t=>{ t.alive = true; t.hits = 0; t.fall = -1; t.g.visible = true; t.g.rotation.x = 0; t.g.rotation.z = 0; t.g.position.y = heightAt6Raw(t.x,t.z); if(!P6.cols.includes(t.col)) P6.cols.push(t.col); });
+  P6.raptors = P6.raptors.filter(w=>{ if(w.summoned){ L6root.remove(w.m); return false; } return true; });
+  P6.raptors.forEach(w=>{ Object.assign(w, {x:w.hx, z:w.hz, hp:w.max, state:'idle', t:0, cd:2, flash:0, burnT:0, poisonT:0, frozenT:0}); w.m.visible = true; w.m.rotation.z = 0; });
+  P6.gobs.forEach(g=>{ const done = q.eggs[g.i]; Object.assign(g, {x:g.hx, z:g.hz, hp:g.max, state: done ? 'gone' : 'idle', t:0, cd:1, flash:0, burnT:0, poisonT:0, frozenT:0}); g.m.visible = !done; g.egg.visible = !done; });
+  P6.eggsOnGround.forEach(e=>L6root.remove(e.m)); P6.eggsOnGround = [];
+  P6.digs.forEach(d=>{ d.g.visible = !q.fossils[d.i]; });
+  FOSSILS6.forEach(([,,name],i)=>{ P6.skel[name].visible = !!q.placed[i]; });
+  P6.nestEggs.forEach((e,i)=>{ e.visible = !!q.eggs[i]; });
+  if(P6.carried){ knight.remove(P6.carried); P6.carried = null; }
+  queenReset();
+}
+function p6FossilCount(){ return sq().fossils ? sq().fossils.filter(Boolean).length : 0; }
+function p6EggCount(){ return sq().eggs ? sq().eggs.filter(Boolean).length : 0; }
+function p6Quest(){
+  if(queenActive()) return '<b>Defeat the Raptor Queen!</b> 🦖 Watch for her crouch, then dodge her dash! Step out of the circle when she spins her tail.';
+  const q = sq(), lines = [];
+  if(!q.eggDone) lines.push(`🥚 Get the stolen eggs back from the goblins and carry them to the nest (${p6EggCount()}/5)${S.carryEgg>=0 ? ' <b>You are carrying an egg!</b>' : ''}`);
+  if(!q.fossilDone) lines.push(`🦴 Dig up fossil bones ✨ and bring them to Professor Fern's museum (${p6FossilCount()}/6 found)`);
+  if(q.eggDone && !q.queen) lines.push('🦖 <b>The Raptor Queen</b> wants revenge! Find her clearing of standing stones in the south-east.');
+  if(!lines.length) return 'Dino Island is safe! 🦖 Press 🦖 Ride (G) to ride the Raptor Queen anywhere.<br><span style="font-size:14px">🗺️ Map to fly to another island</span>';
+  return lines.join('<br>');
+}
+function p6Objective(){
+  if(queenActive()){ const Q = P6.queen; return [Q.x, 7, Q.z]; }
+  const q = sq();
+  if(S.carryEgg >= 0) return [NEST6.x, 3.5, NEST6.z];
+  const eg = P6.eggsOnGround[0]; if(eg) return [eg.x, 2, eg.z];
+  if(!q.eggDone){ const g = P6.gobs.filter(g=>g.state!=='gone' && g.state!=='flee').sort((a,b)=>dist(a.x,a.z)-dist(b.x,b.z))[0]; if(g) return [g.x, heightAt6(g.x,g.z)+2.8, g.z]; }
+  if(q.eggDone && !q.queen) return [QUEEN6.x, 3, QUEEN6.z];
+  if(!q.fossilDone){
+    if(q.fossils.some((f,i)=>f && !q.placed[i])) return [P6.prof.position.x, 3.5, P6.prof.position.z];
+    const d = P6.digs.filter(d=>!q.fossils[d.i]).sort((a,b)=>dist(a.x,a.z)-dist(b.x,b.z))[0]; if(d) return [d.x, 2.6, d.z];
+  }
+  return null;
+}
+function p6Prompt(){
+  if(sq().passage && Math.hypot(S.x+55, S.z+9) < 3.5) return '🧊 The secret passage back to the Ice Caves';
+  if(dist(P6.boat.position.x, P6.boat.position.z) < 4.5) return '👋 Use (E) to sail to the Big Island ⛵';
+  if(dist(P6.prof.position.x, P6.prof.position.z) < 3.5) return '👋 Use (E) to talk to Professor Fern 🦴';
+  if(S.carryEgg >= 0 && dist(NEST6.x, NEST6.z) < 3.6) return '👋 Use (E) to put the egg back in the nest 🥚';
+  const eg = P6.eggsOnGround.find(e=>dist(e.x,e.z) < 2.6); if(eg) return S.carryEgg >= 0 ? '🥚 Bring the egg on your back to the nest first! (one at a time)' : '👋 Use (E), or just walk over it, to pick up the egg 🥚';
+  const dg = P6.digs.find(d=>d.g.visible && dist(d.x,d.z) < 2.6); if(dg) return '👋 Use (E) to dig ⛏️';
+  return null;
+}
+function p6Use(){
+  const q = sq();
+  if(dist(P6.boat.position.x, P6.boat.position.z) < 4.5){ ask('⛵ Boat', 'Sail to the Big Island?', 'Sail ⛵', 'Stay', ()=>travelTo(2)); return; }
+  if(dist(P6.prof.position.x, P6.prof.position.z) < 3.5){
+    const newOnes = FOSSILS6.map((f,i)=>i).filter(i=>q.fossils[i] && !q.placed[i]);
+    if(!newOnes.length){
+      if(q.fossilDone) say([['🧑‍🔬 Professor Fern','Look at her! The biggest dino skeleton in the whole kingdom. Thank you, knight! 🦴']]);
+      else say([['🧑‍🔬 Professor Fern', p6FossilCount() ? 'Find the rest of the bones! Look for little dirt mounds with a sparkle ✨ on top.' : 'Hello, knight! I\'m Professor Fern. There are fossil bones buried all over this island. Look for dirt mounds with a sparkle ✨ and dig! 🦴'],
+                ['🧑‍🔬 Professor Fern','Oh, and be careful. Goblins stole the dino eggs, and the little raptors are grumpy about it.']]);
+      return;
+    }
+    newOnes.forEach(i=>{ q.placed[i] = true; const p = P6.skel[FOSSILS6[i][2]]; p.visible = true; });
+    spawnChips(MUSEUM6.x, 2.5, MUSEUM6.z, 0xf3ead8, 20);
+    if(q.placed.every(Boolean)){
+      q.fossilDone = true; S.maxHp += 10; S.hp = S.maxHp; updateHud(); saveNow();
+      say([['🧑‍🔬 Professor Fern','*click... clack...* That\'s the last bone! The whole skeleton is together! 🦴🦖'],
+           ['🧑‍🔬 Professor Fern','It\'s a giant raptor, the great-great-great-grandmother of the Raptor Queen herself!'],
+           ['🧑‍🔬 Professor Fern','Here, take my lucky 🦷 Dino Tooth Necklace. It makes you tougher! (Max health +10)']]);
+    } else { updateHud(); saveNow(); say([['🧑‍🔬 Professor Fern',`Wonderful! The ${newOnes.map(i=>FOSSILS6[i][2]).join(' and the ')} go right here. *click* That's ${q.placed.filter(Boolean).length} of 6!`]]); }
+    return;
+  }
+  if(S.carryEgg >= 0 && dist(NEST6.x, NEST6.z) < 3.6){
+    const i = S.carryEgg; q.eggs[i] = true; S.carryEgg = -1; P6.nestEggs[i].visible = true;
+    if(P6.carried){ knight.remove(P6.carried); P6.carried = null; }
+    spawnChips(NEST6.x, 1.2, NEST6.z, 0xfff27a, 16); updateHud(); saveNow();
+    if(q.eggs.every(Boolean)){ q.eggDone = true; saveNow();
+      say([['🦕 Mama Long-neck','*a happy, rumbling HOOOONK* All my eggs are home!'],
+           ['🦕 Mama Long-neck','*then the whole jungle shakes with a SCREECH from the south-east*'],
+           ['🧑‍🔬 Professor Fern','(from far away) Knight! That was the RAPTOR QUEEN! She told the goblins to steal those eggs. Now she is FURIOUS!'],
+           ['Tip','Her clearing is the ring of standing stones in the south-east. She dashes fast: watch for her crouch, then get out of the way, or block with your shield!']]);
+    } else say([['🦕 Mama Long-neck', `*HONK* (${p6EggCount()}/5 eggs home)`]]);
+    return;
+  }
+  const eg = P6.eggsOnGround.find(e=>dist(e.x,e.z) < 2.6);
+  if(eg && S.carryEgg < 0){ p6PickEgg(eg); return; }
+  const dg = P6.digs.find(d=>d.g.visible && dist(d.x,d.z) < 2.6);
+  if(dg){
+    swingStart(); dg.hits++; spawnChips(dg.x, heightAt6(dg.x,dg.z)+0.6, dg.z, 0x7a5a3a, 10);
+    if(dg.hits >= 3){ q.fossils[dg.i] = true; dg.g.visible = false; spawnChips(dg.x, heightAt6(dg.x,dg.z)+1, dg.z, 0xf3ead8, 16); updateHud(); saveNow();
+      say([['🦴 Fossil!', `You dug up the ${dg.name}! (${p6FossilCount()}/6) Bring it to Professor Fern at the museum.`]]); }
+    return;
+  }
+}
+function p6DropEgg(i, x, z){
+  if(P6.eggsOnGround.some(e=>e.i===i) || S.carryEgg===i || sq().eggs[i]) return;
+  // find a free spot so eggs never land on top of each other
+  let ex = x, ez = z;
+  for(let k=0;k<24;k++){ const a = k*2.4, rr = k===0 ? 0 : 1.2 + k*0.15, tx = x + Math.cos(a)*rr, tz = z + Math.sin(a)*rr;
+    if(dinoCan(tx,tz) && !P6.eggsOnGround.some(e=>Math.hypot(e.x-tx, e.z-tz) < 1.4)){ ex = tx; ez = tz; break; } }
+  const m = eggModel(); m.position.set(ex, heightAt6(ex,ez), ez); L6root.add(m); P6.eggsOnGround.push({m, i, x:ex, z:ez});
+}
+function p6PickEgg(eg){
+  S.carryEgg = eg.i; L6root.remove(eg.m); P6.eggsOnGround.splice(P6.eggsOnGround.indexOf(eg),1);
+  P6.carried = eggModel(); P6.carried.position.set(-0.45, 1.0, 0); knight.add(P6.carried); spawnChips(S.x, groundH(S.x,S.z)+1.2, S.z, 0xfff27a, 8); updateHud();
+  if(!p6Use.told){ p6Use.told = true; say([['🥚 Egg!','You pick up the egg and put it on your back. Bring it to the big nest by Mama Long-neck! 🦕 (One egg at a time.)']]); }
+  else $('status').textContent = '🥚 Got it! Take it to the nest. 🦕';
+}
+function p6Chop(){
+  let t = null, bd = 2.8;
+  P6.trees.forEach(tr=>{ if(!tr.alive) return; const d = dist(tr.x,tr.z); if(d < bd){ bd = d; t = tr; } });
+  if(!t) return;
+  t.hits++; spawnChips(t.x, heightAt6(t.x,t.z)+1.5, t.z, 0xc89060, 6); spawnChips(t.x, heightAt6(t.x,t.z)+3.5, t.z, 0x4a9a32, 5);
+  if(t.hits >= 3){ t.alive = false; P6.cols.splice(P6.cols.indexOf(t.col),1); t.fall = 0; t.fallDir = Math.atan2(t.z-S.z, t.x-S.x); S.wood += 2; updateHud(); }
+}
+function p6Lose(){
+  const wasQ = queenActive();
+  visitPart6(); S.hp = S.maxHp; S.poison = 0; S.mud = 0; if(S.pot < 1) S.pot = 1; sqWildSetup(6); updateHud();
+  if(wasQ) say([['💥 Ouch!','The Raptor Queen chased you all the way back to the beach!'],['Tip','When she crouches, she is about to dash: move sideways or hold your shield. When she spins, step out of the circle!']]);
+  else say([['💥 Ouch!','You wake up on the beach. Professor Fern patched you up! 🩹'],['Tip','Raptors crouch before they jump. Goblins raise their clubs. Hold your shield at the right moment!']]);
+}
+function p6Sword(){
+  const dmgBase = swordBase(), roll = ()=>Math.round((dmgBase + Math.floor(Math.random()*3)) * dmgMul());
+  const inFront = (x,z)=>Math.abs(angDiff(Math.atan2(z-S.z, x-S.x), S.yaw));
+  if(queenActive()){ const Q = P6.queen, d = dist(Q.x,Q.z); if(Q.y < 1 && d < 5.4 && inFront(Q.x,Q.z) < 1.2){ queenHit(roll()); sqIgnite(Q, false); return; } }
+  let best = null, bd = 1e9;
+  P6.raptors.forEach(w=>{ if(w.state==='dead'||w.state==='down') return; const d = dist(w.x,w.z); if(d < 3.0 && inFront(w.x,w.z) < 1.3 && d < bd){ bd = d; best = {w, raptor:true}; } });
+  P6.gobs.forEach(g=>{ if(g.state==='gone'||g.state==='flee') return; const d = dist(g.x,g.z); if(d < 3.0 && inFront(g.x,g.z) < 1.3 && d < bd){ bd = d; best = {w:g}; } });
+  if(!best) return;
+  if(best.raptor) raptorHurt(best.w, roll(), 0.6); else gobHurt6(best.w, roll(), 0.4);
+  sqIgnite(best.w, false); P6.focus = best.w;
+}
+function raptorHurt(w, dmg, kb){
+  if(w.state==='dead' || w.state==='down') return;
+  w.hp -= dmg; w.flash = 0.2;
+  if(kb){ const a = Math.atan2(w.z-S.z, w.x-S.x); if(dinoCan(w.x+Math.cos(a)*kb, w.z+Math.sin(a)*kb)){ w.x += Math.cos(a)*kb; w.z += Math.sin(a)*kb; } }
+  spawnChips(w.x, heightAt6(w.x,w.z)+1, w.z, 0x8be05a, 6);
+  if(w.state==='idle' || w.state==='stalk'){ w.state = 'retreat'; w.t = 0.6; }
+  if(w.hp <= 0){ w.state = 'dead'; w.t = 0.8; w.burnT = 0; w.poisonT = 0; spawnChips(w.x, heightAt6(w.x,w.z)+0.8, w.z, 0x8be05a, 16); }
+}
+function gobHurt6(g, dmg, kb){
+  if(g.state==='gone' || g.state==='flee') return;
+  g.hp -= dmg; g.flash = 0.2;
+  if(kb){ const a = Math.atan2(g.z-S.z, g.x-S.x); if(dinoCan(g.x+Math.cos(a)*kb, g.z+Math.sin(a)*kb)){ g.x += Math.cos(a)*kb; g.z += Math.sin(a)*kb; } }
+  spawnChips(g.x, heightAt6(g.x,g.z)+1.2, g.z, 0x8be05a, 6);
+  if(g.hp <= 0){
+    g.state = 'flee'; g.t = 2.2; g.burnT = 0; g.poisonT = 0; g.egg.visible = false;
+    p6DropEgg(g.i, g.x, g.z);
+    spawnChips(g.x, heightAt6(g.x,g.z)+1, g.z, 0xf5c542, 12);
+    $('status').textContent = '👺 "Ow! Take the stupid egg!" The goblin drops the egg and runs away. 🥚';
+  }
+}
+
+// ---------- 🦖 mini raptors (pack hunters, like the frost wolves) ----------
+function p6Raptors(dt){
+  let engaged = null, ed = 1e9;
+  const aware = {};
+  P6.raptors.forEach(w=>{ if(w.state!=='dead' && w.state!=='down' && w.state!=='idle') aware[w.pack] = true; });
+  for(const w of P6.raptors){
+    w.t -= dt; w.cd -= dt; w.flash = Math.max(0, w.flash-dt);
+    if(w.state==='dead'){ if(w.t<=0){ w.state = 'down'; w.m.visible = false; } continue; }
+    if(w.state==='down' || w.frozenT > 0) continue;
+    const d = dist(w.x,w.z), home = Math.hypot(w.x-w.hx, w.z-w.hz);
+    const go = (tx,tz,spd)=>{ const a = Math.atan2(tz-w.z, tx-w.x); w.yaw = a; const nx = w.x+Math.cos(a)*spd, nz = w.z+Math.sin(a)*spd; if(dinoCan(nx,nz)){ w.x = nx; w.z = nz; } };
+    if(S.riding && w.state!=='idle'){ w.state = 'idle'; }        // 🦖 you're riding their queen: the pack leaves you alone
+    if(w.state==='idle'){
+      if(!S.riding && (d < 12 || aware[w.pack] || w.summoned) && home < 30){ w.state = 'stalk'; w.cd = 1 + Math.random()*1.5; w.orbit = Math.atan2(w.z-S.z, w.x-S.x); }
+      else if(home > 0.6) go(w.hx, w.hz, 3*dt);
+    } else if(w.state==='stalk'){
+      if(!w.summoned && Math.hypot(S.x-w.hx, S.z-w.hz) > 32){ w.state = 'idle'; continue; }
+      w.orbit += (w.pack%2 ? 0.8 : -0.8) * dt;
+      const tx = S.x + Math.cos(w.orbit)*5, tz = S.z + Math.sin(w.orbit)*5;
+      if(Math.hypot(tx-w.x, tz-w.z) > 0.4) go(tx, tz, 6*dt);
+      w.yaw = Math.atan2(S.z-w.z, S.x-w.x);
+      if(w.cd <= 0 && d < 8){ w.state = 'crouch'; w.t = 0.45; }
+    } else if(w.state==='crouch'){ w.yaw = Math.atan2(S.z-w.z, S.x-w.x); if(w.t <= 0){ w.state = 'lunge'; w.t = 0.35; w.bit = false; } }
+    else if(w.state==='lunge'){
+      const sp = 15*dt, nx = w.x + Math.cos(w.yaw)*sp, nz = w.z + Math.sin(w.yaw)*sp;
+      if(dinoCan(nx,nz) && dist(nx,nz) > 0.9){ w.x = nx; w.z = nz; }
+      if(!w.bit && dist(w.x,w.z) < 1.6){ w.bit = true; if(!S.tower) hurt(3, w.x, w.z); }
+      if(w.t <= 0){ w.state = 'retreat'; w.t = 0.9; w.cd = 1.6 + Math.random()*1.4; }
+    } else if(w.state==='retreat'){
+      const a = Math.atan2(w.z-S.z, w.x-S.x); go(w.x + Math.cos(a), w.z + Math.sin(a), 5*dt); w.yaw = a + Math.PI;
+      if(w.t <= 0){ w.state = 'stalk'; w.orbit = Math.atan2(w.z-S.z, w.x-S.x); }
+    }
+    if(d < 1.0 && S.yOver==null){ const a = d > 0.01 ? Math.atan2(S.z-w.z, S.x-w.x) : S.yaw + Math.PI, nx = w.x + Math.cos(a)*1.0, nz = w.z + Math.sin(a)*1.0; if(canStand6(nx,nz)){ S.x = nx; S.z = nz; } }
+    if(w.state!=='idle' && d < ed){ ed = d; engaged = w; }
+  }
+  return {engaged, ed};
+}
+// ---------- 👺 egg-thief goblins ----------
+function p6Goblins(dt){
+  let engaged = null, ed = 1e9;
+  for(const g of P6.gobs){
+    g.t -= dt; g.cd -= dt; g.flash = Math.max(0, g.flash-dt);
+    if(g.state==='gone') continue;
+    if(g.state==='flee'){ const a = Math.atan2(g.z-S.z, g.x-S.x), nx = g.x+Math.cos(a)*6*dt, nz = g.z+Math.sin(a)*6*dt; if(dinoCan(nx,nz)){ g.x = nx; g.z = nz; } g.yaw = a; if(g.t<=0){ g.state = 'gone'; g.m.visible = false; } continue; }
+    if(g.frozenT > 0) continue;
+    const d = dist(g.x,g.z), home = Math.hypot(g.x-g.hx, g.z-g.hz);
+    const step = (tx,tz,spd)=>{ const a = Math.atan2(tz-g.z, tx-g.x); g.yaw = a; const nx = g.x+Math.cos(a)*spd, nz = g.z+Math.sin(a)*spd; if(dinoCan(nx,nz)){ g.x = nx; g.z = nz; } };
+    if(g.state==='idle'){ if(d < 11) g.state = 'chase'; else if(home > 0.6) step(g.hx, g.hz, 2.5*dt); }
+    else if(g.state==='chase'){
+      if(d > 18 || home > 22) g.state = 'idle';
+      else { if(d > 1.9) step(S.x, S.z, 3.6*dt); else g.yaw = Math.atan2(S.z-g.z, S.x-g.x);
+        if(d < 2.8 && g.cd <= 0){ g.state = 'windup'; g.t = 0.7; } }
+    } else if(g.state==='windup'){ g.yaw = Math.atan2(S.z-g.z, S.x-g.x); if(g.t <= 0){ g.state = 'chase'; g.swing = 0.25; g.cd = 1.4; if(d < 3.3 && !S.tower) hurt(4, g.x, g.z); } }
+    if(d < 1.1 && S.yOver==null){ const a = d > 0.01 ? Math.atan2(S.z-g.z, S.x-g.x) : S.yaw + Math.PI, nx = g.x + Math.cos(a)*1.1, nz = g.z + Math.sin(a)*1.1; if(canStand6(nx,nz)){ S.x = nx; S.z = nz; } }
+    if(g.state!=='idle' && d < ed){ ed = d; engaged = g; }
+  }
+  return {engaged, ed};
+}
+
+// ---------- 👑 the Raptor Queen ----------
+function queenActive(){ return S.part===6 && P6 && P6.queen && ['roar','chase','crouch','dash','whipwind','whip','rage','leap','screech','hop'].includes(P6.queen.state); }
+function queenClearFx(){ const Q = P6.queen; Q.fx.forEach(o=>L6root.remove(o.m)); Q.fx = []; }
+function queenReset(){
+  const Q = P6.queen; queenClearFx(); sqBoost(false);
+  if(sq().queen){ Object.assign(Q, {state:'friend', x:QUEEN6.x, z:QUEEN6.z, yaw:Math.PI, y:0, hp:0}); Q.m.visible = !S.riding; }
+  else { Object.assign(Q, {state:'wait', x:QUEEN6.x+4, z:QUEEN6.z, yaw:Math.PI, y:0, hp:Q.max, phase:1, t:0, flash:0}); Q.m.visible = false; }
+}
+function queenHit(dmg){
+  const Q = P6.queen; if(!queenActive()) return;
+  Q.hp -= dmg; Q.flash = 0.2; spawnChips(Q.x, 2.5, Q.z, 0x8be05a, 8);
+  if(Q.phase===1 && Q.hp <= Q.max/2 && Q.hp > 0){
+    Q.phase = 2; Q.state = 'rage'; Q.t = 1.6; queenClearFx(); queenSummon(2);
+    $('status').textContent = '😡 The Raptor Queen is ENRAGED! She calls her pack and leaps!';
+  }
+  if(Q.hp <= 0){
+    Q.state = 'beaten'; Q.t = 1.2; Q.y = 0; queenClearFx();
+    P6.raptors.forEach(w=>{ if(w.summoned && w.state!=='dead' && w.state!=='down'){ w.state = 'dead'; w.t = 0.5; } });
+    $('boss').classList.add('hidden');
+    setTimeout(()=>{
+      sqBoost(false); S.hp = S.maxHp; sq().queen = true; S.rideRaptor = true; Q.state = 'friend'; updateHud(); saveNow();
+      say([['👑 Raptor Queen','*she lowers her head and purrs like a giant cat* ...No one has ever beaten me. Not even the Dragon King.'],
+           ['👑 Raptor Queen','The goblins said you were a monster. But you gave the eggs back to their mother. You are a good hunter.'],
+           ['👑 Raptor Queen','Climb on my back, knight. I am the fastest thing in the whole kingdom. Wherever you go, I will run with you!'],
+           ['🦖 Ride the Raptor Queen!','Press 🦖 Ride (G) on ANY island to hop on or off. She runs twice as fast, and she can stomp little enemies by running into them!']]);
+    }, 1200);
+  }
+  updateHud();
+}
+function queenSummon(n){
+  for(let i=0;i<n;i++){
+    const a = Math.random()*6.28, x = QUEEN6.x + Math.cos(a)*(QUEEN6.r-2), z = QUEEN6.z + Math.sin(a)*(QUEEN6.r-2);
+    const m = raptorModel(false); L6root.add(m);
+    P6.raptors.push({m, pack:9, summoned:true, x, z, hx:x, hz:z, hp:12, max:12, state:'stalk', t:0, cd:2, yaw:0, flash:0, orbit:Math.atan2(z-S.z, x-S.x), bob:Math.random()*6});
+    spawnChips(x, 1, z, 0x8be05a, 12);
+  }
+}
+function queenUpdate(dt){
+  const Q = P6.queen;
+  if(Q.state==='wait'){
+    if(sq().eggDone && !sq().queen && Math.hypot(S.x-QUEEN6.x, S.z-QUEEN6.z) < QUEEN6.r - 2){
+      Q.state = 'roar'; Q.t = 1.6; Q.m.visible = true; Object.assign(Q, {x:QUEEN6.x+5, z:QUEEN6.z, y:0, hp:Q.max, phase:1, dashCd:2.5, whipCd:3, screechCd:12, leapCd:10});
+      spawnChips(Q.x, 2, Q.z, 0x8be05a, 30);
+      const helper = sq().ice ? ['❄️ Ice Dragon','*a cool breeze rolls through the jungle* Knight! Take my strength! ❄️'] : (sq().fire ? ['🔥 Fire Dragon','*a warm wind blows through the jungle* Knight! Take some of my fire! 🔥'] : ['⚡ Thunder Dragon','*from high above* Knight! Take my strength! ⚡']);
+      say([['👑 *SCREEEEECH*','A HUGE purple raptor with a golden crest bursts out of the ferns!'],
+           ['👑 Raptor Queen','Those eggs were going to be MY new pack! You will pay, little knight!'],
+           helper, ['💙 Dragon Strength','+30 health for this fight!'],
+           ['Tip','When she CROUCHES, she is about to dash at you: move sideways, or hold your shield. When she SPINS, step out of the red circle!']]);
+      sqBoost(true);
+    }
+    return;
+  }
+  if(Q.state==='friend' || Q.state==='beaten'){ Q.t -= dt; return; }
+  if(Q.frozenT > 0) return;
+  const p2 = Q.phase===2;
+  Q.t -= dt; Q.dashCd -= dt; Q.whipCd -= dt; Q.screechCd -= dt; Q.leapCd -= dt; Q.flash = Math.max(0, Q.flash-dt);
+  const d = dist(Q.x,Q.z), face = Math.atan2(S.z-Q.z, S.x-Q.x);
+  const turnTo = (a,rate)=>{ Q.yaw += Math.max(-rate*dt, Math.min(rate*dt, angDiff(a, Q.yaw))); };
+  const inArena = (x,z)=>Math.hypot(x-QUEEN6.x, z-QUEEN6.z) < QUEEN6.r - 1.5;
+  const marker = (x1,z1,x2,z2)=>{ const len = Math.hypot(x2-x1, z2-z1), m = new THREE.Mesh(new THREE.PlaneGeometry(len, 1.6), new THREE.MeshBasicMaterial({color:0xff3a2a, transparent:true, opacity:.45, side:THREE.DoubleSide}));
+    m.rotation.x = -Math.PI/2; m.rotation.z = -Math.atan2(z2-z1, x2-x1); m.position.set((x1+x2)/2, heightAt6((x1+x2)/2,(z1+z2)/2)+0.08, (z1+z2)/2); L6root.add(m); Q.fx.push({m, life:1.4}); return m; };
+  if(Q.state==='roar'){ turnTo(face, 3); if(Q.t<=0) Q.state = 'chase'; }
+  else if(Q.state==='hop'){ if(Q.t<=0) Q.state = 'chase'; }
+  else if(Q.state==='rage'){ turnTo(face, 3); if(Q.t<=0){ Q.state = 'chase'; Q.leapCd = 1; } }
+  else if(Q.state==='screech'){ if(Q.t<=0) Q.state = 'chase'; }
+  else if(Q.state==='crouch'){
+    if(Q.t<=0){ Q.state = 'dash'; Q.t = 0.65; Q.hitDone = false; }
+  }
+  else if(Q.state==='dash'){
+    const sp = 20*dt, nx = Q.x + Math.cos(Q.dashA)*sp, nz = Q.z + Math.sin(Q.dashA)*sp;
+    if(inArena(nx,nz)){ Q.x = nx; Q.z = nz; } else Q.t = 0;
+    Q.yaw = Q.dashA;
+    if(!Q.hitDone && dist(Q.x,Q.z) < 2.2){ Q.hitDone = true; if(!S.tower) hurt(p2 ? 8 : 7, Q.x - Math.cos(Q.dashA)*3, Q.z - Math.sin(Q.dashA)*3); }
+    if(Q.t<=0){
+      if(Q.dashesLeft > 0){ Q.dashesLeft--; Q.state = 'crouch'; Q.t = 0.35; const side = (Q.dashesLeft%2 ? 1 : -1) * 3.5, a = Math.atan2(S.z-Q.z, S.x-Q.x);
+        const tx = S.x + Math.cos(a+Math.PI/2)*side, tz = S.z + Math.sin(a+Math.PI/2)*side; Q.dashA = Math.atan2(tz-Q.z, tx-Q.x);
+        marker(Q.x, Q.z, Q.x + Math.cos(Q.dashA)*13, Q.z + Math.sin(Q.dashA)*13); }
+      else { Q.state = 'hop'; Q.t = 0.7; Q.dashCd = p2 ? 2.6 : 3.6; }
+    }
+  }
+  else if(Q.state==='whipwind'){
+    Q.yaw += dt*4; if(Q.t<=0){ Q.state = 'whip'; Q.t = 0.45; spawnChips(Q.x, 0.8, Q.z, 0xc8a86a, 24);
+      if(Math.hypot(S.x-Q.x, S.z-Q.z) < 5){ S.blocking = false; if(!S.tower) hurt(5); } }
+  }
+  else if(Q.state==='whip'){ Q.yaw += dt*14; if(Q.t<=0){ Q.state = 'chase'; Q.whipCd = p2 ? 4 : 5.5; } }
+  else if(Q.state==='leap'){
+    const k = 1 - Math.max(0, Q.t)/1.2;
+    Q.x = Q.sx + (Q.tx - Q.sx)*k; Q.z = Q.sz + (Q.tz - Q.sz)*k; Q.y = Math.sin(k*Math.PI)*7;
+    if(Q.t<=0){ Q.y = 0; spawnChips(Q.tx, 0.8, Q.tz, 0xc8a86a, 30); if(Q.leapRing){ L6root.remove(Q.leapRing); Q.leapRing = null; }
+      if(Math.hypot(S.x-Q.tx, S.z-Q.tz) < 3.2){ S.blocking = false; if(!S.tower) hurt(8); }
+      Q.state = 'hop'; Q.t = 0.9; Q.leapCd = 9; $('status').textContent = ''; }
+  }
+  else { // chase
+    turnTo(face, p2 ? 4 : 3);
+    if(d > 4){ const sp = (p2 ? 6 : 4.8)*dt, nx = Q.x+Math.cos(Q.yaw)*sp, nz = Q.z+Math.sin(Q.yaw)*sp; if(inArena(nx,nz)){ Q.x = nx; Q.z = nz; } }
+    if(d < 4.6 && Q.whipCd <= 0){ Q.state = 'whipwind'; Q.t = 0.7;
+      const ring = new THREE.Mesh(new THREE.RingGeometry(4.4, 5, 32), new THREE.MeshBasicMaterial({color:0xff3a2a, transparent:true, opacity:.8, side:THREE.DoubleSide}));
+      ring.rotation.x = -Math.PI/2; ring.position.set(Q.x, heightAt6(Q.x,Q.z)+0.1, Q.z); L6root.add(ring); Q.fx.push({m:ring, life:0.8}); }
+    else if(p2 && Q.leapCd <= 0){ Q.state = 'leap'; Q.t = 1.2; Q.sx = Q.x; Q.sz = Q.z; Q.tx = S.x; Q.tz = S.z;
+      const ring = new THREE.Mesh(new THREE.RingGeometry(2.6, 3.2, 32), new THREE.MeshBasicMaterial({color:0xff3a2a, transparent:true, opacity:.85, side:THREE.DoubleSide}));
+      ring.rotation.x = -Math.PI/2; ring.position.set(Q.tx, heightAt6(Q.tx,Q.tz)+0.1, Q.tz); L6root.add(ring); Q.leapRing = ring; $('status').textContent = '⚠️ POUNCE! Get out of the red circle!'; }
+    else if(Q.screechCd <= 0){ Q.state = 'screech'; Q.t = 1; Q.screechCd = 15; if(P6.raptors.filter(w=>w.summoned && w.state!=='dead' && w.state!=='down').length < 4) queenSummon(2); $('status').textContent = '👑 *SCREECH!* More raptors come running!'; }
+    else if(Q.dashCd <= 0 && d > 5 && d < 16){ Q.state = 'crouch'; Q.t = 0.8; Q.dashesLeft = p2 ? 2 : 0; Q.dashA = face;
+      marker(Q.x, Q.z, Q.x + Math.cos(face)*14, Q.z + Math.sin(face)*14); }
+  }
+  for(let i=Q.fx.length-1;i>=0;i--){ const o = Q.fx[i]; if(!o) continue; o.life -= dt; if(o.m.material) o.m.material.opacity = Math.max(0, Math.min(0.8, o.life)); if(o.life<=0){ L6root.remove(o.m); Q.fx.splice(i,1); } }
+}
+
+// ---------- Dino Island update and animation ----------
+function p6Update(dt){
+  if(!paused && sq().passage && Math.hypot(S.x+55.6, S.z+9) < 1.4){
+    travelTo(5); S.x = 194; S.z = CAVE_CRACK.z; S.yaw = Math.PI; camPos.set(0,0,0);
+    say([['🌴 The Secret Passage','You crawl back through the warm tunnel... it gets colder and colder... and you come out in the Ice Caves! 🧊']]); return;
+  }
+  const r1 = p6Raptors(dt), r2 = p6Goblins(dt);
+  queenUpdate(dt);
+  // eggs: walk over one to pick it up, and make sure no egg ever goes missing
+  if(!paused && S.carryEgg < 0){ const eg = P6.eggsOnGround.find(e=>dist(e.x,e.z) < 2.0); if(eg) p6PickEgg(eg); }
+  P6.gobs.forEach(g=>{ if((g.state==='gone' || g.state==='flee') && !sq().eggs[g.i] && S.carryEgg!==g.i && !P6.eggsOnGround.some(e=>e.i===g.i)) p6DropEgg(g.i, g.x, g.z); });
+  const Q = P6.queen;
+  if(queenActive() && Q.y < 1 && Q.state!=='dash'){ const d = dist(Q.x,Q.z), rr = 2.6; if(d < rr){ const a = d > 0.01 ? Math.atan2(S.z-Q.z, S.x-Q.x) : S.yaw + Math.PI, nx = Q.x + Math.cos(a)*rr, nz = Q.z + Math.sin(a)*rr; if(canStand6(nx,nz)){ S.x = nx; S.z = nz; } } }
+  const engaged = r1.ed < r2.ed ? r1.engaged : r2.engaged;
+  const turning = Math.abs((keys.r?1:0)-(keys.l?1:0)+joyV.x) > 0.25, walking = keys.f || keys.b || Math.abs(joyV.y) > 0.1;
+  const alive = (w)=>w && w.state!=='dead' && w.state!=='down' && w.state!=='gone' && w.state!=='flee';
+  const foc = alive(P6.focus) && dist(P6.focus.x,P6.focus.z) < 8 ? P6.focus : (engaged && dist(engaged.x,engaged.z) < 7 ? engaged : null);
+  let t = null;
+  if(foc && dist(foc.x,foc.z) > 2) t = [foc.x, foc.z];
+  else if(queenActive() && Q.y < 2 && dist(Q.x,Q.z) > 3.2 && dist(Q.x,Q.z) < 20) t = [Q.x, Q.z];
+  if(t && !turning && !walking && (S.lookT||0) <= 0){ const want = angDiff(Math.atan2(t[1]-S.z, t[0]-S.x), S.yaw)*Math.min(1, dt*5), max = 3*dt; S.yaw += Math.max(-max, Math.min(max, want)); }
+  if(queenActive()){ $('boss').classList.remove('hidden'); $('bossName').textContent = '👑 Raptor Queen'; $('bossfill').style.width = Math.max(0, Q.hp/Q.max*100)+'%'; }
+  else if(foc){ $('boss').classList.remove('hidden'); $('bossName').textContent = foc.egg ? '👺 Egg Thief' : '🦖 Raptor'; $('bossfill').style.width = Math.max(0, foc.hp/foc.max*100)+'%'; }
+  else $('boss').classList.add('hidden');
+  // the little dinos wander around their herd
+  for(const h of P6.herds){
+    h.wait -= dt;
+    if(h.wait <= 0 && Math.hypot(h.tx-h.x, h.tz-h.z) < 0.3){ h.wait = 2 + Math.random()*4; const a = Math.random()*6.28, rr = Math.random()*5; h.tx = h.hx + Math.cos(a)*rr; h.tz = h.hz + Math.sin(a)*rr; }
+    if(Math.hypot(h.tx-h.x, h.tz-h.z) > 0.3 && h.wait <= 0){ const a = Math.atan2(h.tz-h.z, h.tx-h.x), nx = h.x + Math.cos(a)*1.5*dt, nz = h.z + Math.sin(a)*1.5*dt; h.yaw = a; if(dinoCan(nx,nz)){ h.x = nx; h.z = nz; } else { h.tx = h.x; h.tz = h.z; } }
+  }
+  const p = paused ? null : p6Prompt();
+  const pr = $('prompt'); if(p){ pr.textContent = p; pr.classList.remove('hidden'); } else pr.classList.add('hidden');
+  $('sUse').classList.toggle('ready', !!p);
+}
+function p6Animate(dt){
+  if(!P6) return;
+  for(const w of P6.raptors){
+    if(w.state==='down') continue;
+    const u = w.m.userData, y = heightAt6(w.x,w.z);
+    if(w.state==='dead'){ const k = Math.max(0.01, w.t/0.8); w.m.position.set(w.x, y, w.z); w.m.rotation.z = (1-k)*1.4; continue; }
+    w.m.rotation.z = 0;
+    const moving = w.state==='stalk' || w.state==='lunge' || w.state==='retreat' || (w.state==='idle' && Math.hypot(w.x-w.hx, w.z-w.hz) > 0.6);
+    w.m.position.set(w.x, y + (w.state==='crouch' ? -0.15 : 0) + (w.state==='lunge' ? 0.4 : 0), w.z); w.m.rotation.y = -w.yaw;
+    u.legs.forEach((l,i)=>{ l.rotation.z = moving && !(w.frozenT>0) ? Math.sin(time*(w.state==='lunge'?26:16) + i*Math.PI)*0.7 : 0; });
+    u.tail.rotation.y = Math.sin(time*7 + w.bob)*0.3; u.jaw.rotation.z = w.state==='crouch' || w.state==='lunge' ? -0.5 : 0;
+    u.skin.color.setHex(w.flash>0 ? 0xffffff : (w.frozenT>0 ? 0x9fdcff : u.base));
+  }
+  for(const g of P6.gobs){
+    if(g.state==='gone') continue;
+    g.m.position.set(g.x, heightAt6(g.x,g.z) + (g.state==='chase'||g.state==='flee' ? Math.abs(Math.sin(time*12+g.bob))*0.15 : 0), g.z); g.m.rotation.y = -g.yaw;
+    const arm = g.m.userData.arm;
+    if(g.state==='windup') arm.rotation.z = Math.min(2.6, arm.rotation.z + dt*8); else if(g.swing>0){ g.swing -= dt; arm.rotation.z = -0.9; } else arm.rotation.z += (-0.3 - arm.rotation.z)*Math.min(1,dt*8);
+    g.m.userData.skin.color.setHex(g.flash>0 ? 0xff5a4a : (g.frozenT>0 ? 0x9fdcff : 0x6aa84f));
+  }
+  for(const h of P6.herds){
+    const u = h.m.userData, moving = Math.hypot(h.tx-h.x, h.tz-h.z) > 0.3 && h.wait <= 0;
+    h.m.position.set(h.x, heightAt6(h.x,h.z), h.z); h.m.rotation.y = -h.yaw;
+    u.legs.forEach((l,i)=>{ l.rotation.z = moving ? Math.sin(time*10 + i*Math.PI/2)*0.4 : 0; });
+    u.head.rotation.z = moving ? 0 : Math.sin(time*1.2 + h.bob)*0.25 - 0.15; u.tail.rotation.y = Math.sin(time*2 + h.bob)*0.2;
+  }
+  P6.eggsOnGround.forEach(e=>{ e.m.rotation.y += dt; e.m.position.y = heightAt6(e.x,e.z) + Math.abs(Math.sin(time*3))*0.15; });
+  P6.digs.forEach(d=>{ if(d.g.visible){ d.spark.rotation.y += dt*3; d.spark.position.y = 1 + Math.sin(time*3 + d.i)*0.15; } });
+  P6.steam.forEach(sm=>{ const k = (sm.k + time*0.4) % 8; sm.m.position.set(SPRING6.x + Math.sin(sm.k*2.3)*2, 0.5 + k*0.6, SPRING6.z + Math.cos(sm.k*1.7)*2); sm.m.scale.setScalar(0.6 + k*0.25); sm.m.material.opacity = 0.35 - k*0.04; });
+  P6.campFire.scale.set(1, 0.85 + Math.sin(time*13)*0.18, 1);
+  P6.trees.forEach(t=>{ if(t.fall < 0 || !t.g.visible) return; t.fall = Math.min(2.2, t.fall + dt*1.4);
+    const k = Math.min(1, t.fall), lean = k*k*1.5, a = t.fallDir + t.g.rotation.y; t.g.rotation.order = 'YXZ'; t.g.rotation.x = Math.sin(a)*lean; t.g.rotation.z = -Math.cos(a)*lean;
+    if(t.fall >= 2.2) t.g.visible = false; else if(t.fall > 1.4) t.g.position.y -= dt*2; });
+  // the Raptor Queen
+  const Q = P6.queen, u = Q.m.userData;
+  if(Q.m.visible){
+    Q.m.position.set(Q.x, heightAt6(Q.x,Q.z) + Q.y + (Q.state==='crouch' ? -0.4 : 0), Q.z); Q.m.rotation.y = -Q.yaw;
+    const run = Q.state==='chase' || Q.state==='dash';
+    u.legs.forEach((l,i)=>{ l.rotation.z = run ? Math.sin(time*(Q.state==='dash'?24:12) + i*Math.PI)*0.6 : (Q.state==='leap' ? -0.6 : 0); });
+    u.tail.rotation.y = Q.state==='whip' || Q.state==='whipwind' ? Math.sin(time*20)*0.6 : Math.sin(time*3)*0.25;
+    u.jaw.rotation.z = (Q.state==='roar'||Q.state==='screech'||Q.state==='rage'||Q.state==='crouch') ? -0.6 : -0.05;
+    u.head.rotation.z = Q.state==='friend' ? Math.sin(time*1.3)*0.1 : 0;
+    u.skin.color.setHex(Q.flash>0 ? 0xffffff : (Q.state==='rage' ? (Math.sin(time*30)>0 ? 0xff6a6a : 0x6a3a8a) : u.base));
+    if(Q.state==='friend') Q.m.rotation.y = -Math.atan2(S.z-Q.z, S.x-Q.x);
+  }
+}
+
+// ---------- 🦖 riding the Raptor Queen (on every island) ----------
+function rideAct(){
+  if(paused || !S.rideRaptor || !running) return;
+  if(S.climb || S.tower){ $('status').textContent = '🪜 Climb down first!'; return; }
+  if(!P6) buildPart6();
+  S.riding = !S.riding;
+  spawnChips(S.x, groundH(S.x,S.z)+1, S.z, 0xf5c542, 14);
+  if(S.part===6 && sq().queen) P6.queen.m.visible = !S.riding;
+  $('status').textContent = S.riding ? '🦖 Hop on! She runs fast and stomps little enemies.' : '🦖 You hop off.';
+  updateHud(); saveNow();
+}
+const _stompCd = new Map();
+function rideTick(dt){
+  if(!S.riding || !P6){ if(P6 && P6.mount.visible) P6.mount.visible = false; return; }
+  const m = P6.mount, u = m.userData, moving = keys.f||keys.b||Math.abs(joyV.y)>0.1;
+  m.visible = true; m.position.set(S.x, groundH(S.x,S.z), S.z); m.rotation.y = -S.yaw;
+  u.legs.forEach((l,i)=>{ l.rotation.z = moving ? Math.sin(time*18 + i*Math.PI)*0.7 : 0; });
+  u.tail.rotation.y = Math.sin(time*(moving?10:3))*0.2;
+  // running into little enemies stomps them
+  if(moving) sqFoes().forEach(o=>{ if(o.noFreeze || (S.part===6 && P6.raptors.includes(o.e))) return; const d = Math.hypot(o.x-S.x, o.z-S.z); if(d > 2) return;
+    const last = _stompCd.get(o.e) || 0; if(time - last < 1) return; _stompCd.set(o.e, time);
+    o.hit(Math.round(6 * dmgMul())); spawnChips(o.x, o.y, o.z, 0xc8a86a, 12); });
+}
+ACT.ride = {down:rideAct};
+window.addEventListener('keydown', e=>{ if(e.code==='KeyG' && document.activeElement!==$('nameIn')) rideAct(); });
+
+// ================= 🧊 THE ICE CAVES (under Ice Island) and the secret passage to Dino Island =================
+// The caves sit far east of Ice Island's map (x > 100), reached through a cave mouth on the island.
+const CAVE_MOUTH = {x:-36, z:30};
+const CAVE_ROOMS = [
+  {x:118,z:0,r:7},      // A: the way in
+  {x:132,z:13,r:5},     // B
+  {x:130,z:-13,r:5},    // C
+  {x:146,z:3,r:8},      // D: the crystal hall (frozen waterfall)
+  {x:150,z:-17,r:5},    // E: the treasure cave
+  {x:160,z:18,r:5},     // F
+  {x:165,z:-5,r:6},     // G
+  {x:177,z:-19,r:5},    // H
+  {x:177,z:13,r:5},     // I
+  {x:186,z:4,r:6.5},    // J: the cracked wall
+  {x:196,z:-18,r:4.2},  // K: the door to the Ice Dragon's lair
+  {x:140,z:25,r:4},     // L: a dead end
+  {x:118,z:-25,r:4},    // M: a dead end
+  {x:164,z:-28,r:3.5},  // N: a dead end
+  {x:196,z:20,r:3.5},   // O: a dead end
+];
+const CAVE_TUNNELS = [[118,0,132,13],[118,0,130,-13],[132,13,146,3],[130,-13,146,3],[132,13,140,25],[130,-13,118,-25],
+  [146,3,150,-17],[150,-17,164,-28],[146,3,160,18],[146,3,165,-5],[160,18,177,13],[165,-5,177,13],[165,-5,177,-19],
+  [177,13,186,4],[177,13,196,20],[177,-19,196,-18],[130,-13,150,-17]];
+const CAVE_DOOR = {x:199.6, z:-18};
+const CAVE_CRACK = {x:192, z:4};
+function segDist(px,pz,x1,z1,x2,z2){ const dx = x2-x1, dz = z2-z1, t = Math.max(0, Math.min(1, ((px-x1)*dx + (pz-z1)*dz)/(dx*dx+dz*dz))); return Math.hypot(px-(x1+dx*t), pz-(z1+dz*t)); }
+function caveWalk(x,z){
+  if(CAVE_ROOMS.some(r=>Math.hypot(x-r.x, z-r.z) < r.r-0.6)) return true;
+  if(CAVE_TUNNELS.some(([a,b,c,d])=>segDist(x,z,a,b,c,d) < 2.2)) return true;
+  if(sq().passage && x > 186 && x < 199 && Math.abs(z-CAVE_CRACK.z) < 2.2) return true;    // the warm tunnel, once the ice is broken
+  return false;
+}
+function inCave(){ return S.part===5 && S.x > 100; }
+function buildCave(){
+  const R = L5root, r = rng(7171);
+  const m = (geo, mat, x, y, z)=> mesh(geo, mat, x, y, z, R);
+  P5.cave5 = {crystals:[], shrooms:[]};
+  // floor and ceiling
+  const floor = m(new THREE.PlaneGeometry(110, 64), M(0xcfe6f4, {roughness:.35}), 150, 0.4, 0); floor.rotation.x = -Math.PI/2; floor.castShadow = false;
+  const ceil = m(new THREE.PlaneGeometry(110, 64), M(0x1a2a44, {side:THREE.DoubleSide}), 150, 8.5, 0); ceil.rotation.x = Math.PI/2; ceil.castShadow = false;
+  // walls: chunks of blue ice all around the edges of the rooms and tunnels
+  const geo = new THREE.DodecahedronGeometry(1.25, 0), mats = [M(0x8ab8dc), M(0xa8d0ec), M(0x6a98c8)];
+  const spots = [];
+  for(let x=104; x<=204; x+=2.1) for(let z=-34; z<=30; z+=2.1){
+    if(caveWalk(x,z)) continue;
+    if(x > 187 && Math.abs(z - CAVE_CRACK.z) < 3.4) continue;   // keep the cracked wall and the secret tunnel clear
+    if(Math.hypot(x-CAVE_DOOR.x-0.6, z-CAVE_DOOR.z) < 2.6) continue;   // and the door to the dragon's lair
+    let near = false; for(let a=0;a<8 && !near;a++){ const tx = x + Math.cos(a/8*6.28)*2.6, tz = z + Math.sin(a/8*6.28)*2.6; if(caveWalk(tx,tz)) near = true; }
+    if(near) spots.push([x + (r()-.5)*0.8, z + (r()-.5)*0.8]);
+  }
+  mats.forEach((mat,k)=>{
+    const list = spots.filter((s,i)=>i%3===k), im = new THREE.InstancedMesh(geo, mat, list.length * 3), o = new THREE.Object3D(); let n = 0;
+    list.forEach(([x,z])=>{ for(let h=0;h<3;h++){ o.position.set(x, 1.2 + h*2.6, z); o.rotation.set(r()*3, r()*3, r()*3); const s = 0.9 + r()*0.5; o.scale.set(s, s*1.3, s); o.updateMatrix(); im.setMatrixAt(n++, o.matrix); } });
+    im.count = n; im.castShadow = false; im.receiveShadow = true; R.add(im);
+  });
+  // icicles hanging from the ceiling
+  { const ic = new THREE.ConeGeometry(0.25, 1.6, 6), im = new THREE.InstancedMesh(ic, M(0xdff4ff, {roughness:.2}), 160), o = new THREE.Object3D(); let n = 0;
+    for(let t=0; t<1200 && n<160; t++){ const x = 108 + r()*92, z = -30 + r()*60; if(!caveWalk(x,z)) continue;
+      o.position.set(x, 7.8 - r()*0.6, z); o.rotation.set(Math.PI, 0, 0); const s = 0.6 + r()*1.2; o.scale.set(s, s, s); o.updateMatrix(); im.setMatrixAt(n++, o.matrix); }
+    im.count = n; R.add(im); }
+  // glowing crystals and mushrooms along the walls
+  const crys = M(0x9fe8ff, {emissive:0x3a9acc, emissiveIntensity:.8, roughness:.2});
+  const shroomCap = M(0x6af0ff, {emissive:0x2aa0c0, emissiveIntensity:.9}), stem = M(0xe8f2f8);
+  for(let t=0, n=0; t<1600 && n<60; t++){ const x = 108 + r()*92, z = -30 + r()*60; if(!caveWalk(x,z) || caveWalk(x+1.6,z) && caveWalk(x-1.6,z) && caveWalk(x,z+1.6) && caveWalk(x,z-1.6)) continue;
+    if(Math.hypot(x-CAVE_CRACK.x, z-CAVE_CRACK.z) < 4) continue;
+    if(n%2){ const cr = m(new THREE.OctahedronGeometry(0.5, 0), crys, x, 1.0, z); cr.scale.set(0.6, 1.6 + r(), 0.6); cr.rotation.y = r()*3; P5.cave5.crystals.push(cr); }
+    else { m(new THREE.CylinderGeometry(0.08, 0.1, 0.5, 6), stem, x, 0.65, z); const cap = m(new THREE.SphereGeometry(0.3, 10, 6, 0, Math.PI*2, 0, Math.PI/2), shroomCap, x, 0.9, z); P5.cave5.shrooms.push(cap); }
+    n++; }
+  // the crystal hall: a frozen waterfall and a frozen pond with a fish stuck in the ice
+  { const fall = m(new THREE.BoxGeometry(5, 8, 1.2), M(0xbfe6ff, {transparent:true, opacity:.75, roughness:.1, emissive:0x2a6a9a, emissiveIntensity:.3}), 146, 4.4, 9.9); fall.castShadow = false;
+    const pond = m(new THREE.CircleGeometry(3.4, 28), M(0xa8dcf8, {roughness:.08, metalness:.2}), 146, 0.43, 6.5); pond.rotation.x = -Math.PI/2;
+    const fish = new THREE.Group(); fish.position.set(145, 0.3, 6.5); R.add(fish);
+    mesh(new THREE.SphereGeometry(0.35, 10, 8), M(0xf28c28), 0, 0, 0, fish).scale.set(1.6, 0.8, 0.5);
+    mesh(new THREE.ConeGeometry(0.3, 0.5, 4), M(0xf28c28), -0.65, 0, 0, fish).rotation.z = Math.PI/2; }
+  // a treasure chest in the side cave
+  { const g = new THREE.Group(); g.position.set(151, 0.4, -17); g.rotation.y = -0.4; R.add(g);
+    mesh(new THREE.BoxGeometry(1.4, 0.8, 0.9), M(0x8b5a2b), 0, 0.4, 0, g); const lid = new THREE.Group(); lid.position.set(0, 0.8, -0.45); g.add(lid);
+    mesh(new THREE.BoxGeometry(1.45, 0.3, 0.95), M(0x6b4a24), 0, 0.15, 0.45, lid);
+    mesh(new THREE.BoxGeometry(1.5, 0.12, 0.1), M(0xf5c542, {metalness:.5}), 0, 0.5, 0.46, g);
+    P5.cave5.chest = g; P5.cave5.lid = lid; P5.cols.push({x:151, z:-17, r:0.8}); }
+  // the cracked ice wall with a warm orange glow behind it
+  { const g = new THREE.Group(); g.position.set(CAVE_CRACK.x, 0.4, CAVE_CRACK.z); R.add(g);
+    const wall = mesh(new THREE.BoxGeometry(1.2, 6, 5.6), M(0xb8dcf4, {roughness:.25, emissive:0x5a2a00, emissiveIntensity:.35}), 0, 3, 0, g);
+    const crackM = new THREE.MeshBasicMaterial({color:0xffa04a});
+    [[0.8, 0.3],[1.6,-0.5],[2.4,0.2],[3.1,-0.3],[3.8,0.4]].forEach(([y,zz],i)=>{ const c = mesh(new THREE.BoxGeometry(0.06, 1.2, 0.16), crackM, -0.62, y+0.5, zz, g); c.rotation.x = (i%2?1:-1)*0.6; });
+    P5.cave5.crack = g; P5.cave5.crackWall = wall; P5.cave5.crackCol = {x:CAVE_CRACK.x, z:CAVE_CRACK.z, r:1.6}; }
+  // the warm tunnel behind it (shown once the wall breaks)
+  { const g = new THREE.Group(); g.position.set(196, 0.4, CAVE_CRACK.z); g.visible = false; R.add(g);
+    const tun = mesh(new THREE.BoxGeometry(8, 0.1, 4.4), M(0x8a6a3a), 0, 0.02, 0, g); tun.castShadow = false;
+    [-1,1].forEach(s=>mesh(new THREE.BoxGeometry(8, 5, 0.6), M(0x7a5a3a), 0, 2.5, s*2.5, g));
+    for(let k=0;k<5;k++){ const leaf = mesh(new THREE.ConeGeometry(0.3, 1.4, 4), M(0x4a9a32), -2 + k*1.2, 0.6, (k%2?1:-1)*1.7, g); leaf.rotation.z = 0.6; }
+    const glow = mesh(new THREE.PlaneGeometry(4.4, 5), new THREE.MeshBasicMaterial({color:0xffd27a, transparent:true, opacity:.85, side:THREE.DoubleSide}), 3.9, 2.5, 0, g); glow.rotation.y = Math.PI/2;
+    P5.cave5.warm = g; }
+  // the cave mouth on Ice Island (north side)
+  { const g = new THREE.Group(); g.position.set(CAVE_MOUTH.x, heightAt5Raw(CAVE_MOUTH.x, CAVE_MOUTH.z+1.5), CAVE_MOUTH.z+1.5); R.add(g);
+    const arch = mesh(new THREE.TorusGeometry(2.6, 0.9, 8, 14, Math.PI), M(0x8ab8dc, {roughness:.3}), 0, 0, 0, g);
+    const dark = mesh(new THREE.CircleGeometry(2.2, 18, 0, Math.PI), new THREE.MeshBasicMaterial({color:0x14203a, side:THREE.DoubleSide}), 0, 0, 0.3, g);
+    for(let k=0;k<7;k++){ const b = mesh(new THREE.DodecahedronGeometry(1.4,0), M(k%2?0x8a94a0:0xa8d0ec), (k-3)*1.3, 3.2 + (k%2)*0.6, 1.2, g); b.rotation.set(k, k*2, 0); }
+    [-1,1].forEach(s=>P5.cols.push({x:CAVE_MOUTH.x + s*3.2, z:CAVE_MOUTH.z+1.5, r:1})); }
+  // a blue glowing door that leads straight to the Ice Dragon's lair
+  { const d = m(new THREE.PlaneGeometry(3.6, 4.6), new THREE.MeshBasicMaterial({color:0x8ad8ff, transparent:true, opacity:.85, side:THREE.DoubleSide}), CAVE_DOOR.x + 0.4, 2.7, CAVE_DOOR.z); d.rotation.y = Math.PI/2;
+    const fr = m(new THREE.TorusGeometry(2.2, 0.35, 6, 14, Math.PI), M(0xdff4ff, {emissive:0x2a8aca, emissiveIntensity:.5}), CAVE_DOOR.x + 0.3, 0.6, CAVE_DOOR.z); fr.rotation.y = Math.PI/2;
+    const ic = m(new THREE.OctahedronGeometry(0.4,0), new THREE.MeshBasicMaterial({color:0xffffff}), CAVE_DOOR.x + 0.2, 4.6, CAVE_DOOR.z); P5.cave5.doorGem = ic; }
+  // a glowing doorway back out to the snow
+  { const d = m(new THREE.PlaneGeometry(4, 5), new THREE.MeshBasicMaterial({color:0xeef8ff, transparent:true, opacity:.8, side:THREE.DoubleSide}), 111.6, 2.9, 0); d.rotation.y = Math.PI/2; }
+}
+function caveRestore(){
+  if(!P5.cave5) return;
+  const open = !!sq().passage;
+  P5.cave5.crack.visible = !open; P5.cave5.warm.visible = open;
+  const ci = P5.cols.indexOf(P5.cave5.crackCol);
+  if(open && ci>=0) P5.cols.splice(ci,1); if(!open && ci<0) P5.cols.push(P5.cave5.crackCol);
+  P5.cave5.hits = 0;
+  P5.cave5.lid.rotation.x = sq().caveChest ? -1.9 : 0;
+}
+// walking in and out of the caves
+function caveTick(dt){
+  if(S.part!==5 || !P5 || !P5.cave5 || paused) return;
+  if(!inCave() && Math.hypot(S.x-CAVE_MOUTH.x, S.z-(CAVE_MOUTH.z+0.6)) < 1.8){
+    S.x = 114; S.z = 0; S.yaw = 0; camPos.set(0,0,0); spawnChips(S.x, 1, S.z, 0xffffff, 16); updateHud();
+    if(!sq().caveSeen){ sq().caveSeen = true; saveNow();
+      say([['🧊 The Ice Caves','You squeeze through the cave mouth... and find a huge glittering cave under the island! Icicles hang from the ceiling and crystals glow blue.'],
+           [sq().ice ? '❄️ Ice Dragon' : '⚡ Thunder Dragon', sq().ice ? '*its voice echoes through the ice* Careful, knight! These caves twist and turn every which way. It is VERY easy to get lost in there, so remember the way you came!' : '*from far above* Careful, little knight! Those caves twist every which way. It is VERY easy to get lost in there, so remember the way you came!'],
+           ['Tip','Explore! Some say there is a secret hidden deep inside, and a door that leads to the Ice Dragon\'s lair. To go back outside, walk into the bright doorway behind you.']]); }
+    return;
+  }
+  if(inCave() && S.x < 112.3){ S.x = CAVE_MOUTH.x; S.z = CAVE_MOUTH.z - 4; S.yaw = -Math.PI/2; camPos.set(0,0,0); updateHud(); return; }
+  if(inCave() && Math.hypot(S.x-CAVE_DOOR.x, S.z-CAVE_DOOR.z) < 1.4){
+    S.x = ARENA5.x + ARENA5.r - 3.5; S.z = 0; S.yaw = Math.PI; camPos.set(0,0,0); updateHud(); spawnChips(S.x, 1.5, S.z, 0xdff4ff, 16);
+    $('status').textContent = '❄️ You step out of the ice cave at the back of the Ice Dragon\'s lair!'; return;
+  }
+  if(!inCave() && !iceActive() && sq().caveSeen && Math.hypot(S.x-(ARENA5.x+ARENA5.r-0.6), S.z) < 1.6){
+    S.x = CAVE_DOOR.x - 2.6; S.z = CAVE_DOOR.z; S.yaw = Math.PI; camPos.set(0,0,0); updateHud(); spawnChips(S.x, 1.5, S.z, 0xdff4ff, 16);
+    $('status').textContent = '🧊 You walk into the dragon\'s ice cave... and come out deep in the Ice Caves!'; return;
+  }
+  if(inCave() && !sq().passage && !P5.cave5.hinted && Math.hypot(S.x-CAVE_CRACK.x, S.z-CAVE_CRACK.z) < 9){ P5.cave5.hinted = true; $('status').textContent = '🌬️ A WARM breeze is coming through a crack in the ice... Hit it with your sword!'; }
+  if(inCave() && sq().passage && S.x > 197.5){
+    sq().dinoFound = true; saveNow();
+    travelTo(6); S.x = -50; S.z = -6; S.yaw = 0; camPos.set(0,0,0);
+    say([['🌴 The Secret Passage','The tunnel gets warmer and warmer... the ice turns into rock, then mud, then FERNS! You climb out into a steamy jungle full of tiny dinosaurs. 🦖'],
+         ['🧑‍🔬 Professor Fern','Well, I\'ll be! A knight, popping out of my rock arch! Welcome to Dino Island. Nobody has found this place in a thousand years!'],
+         ['🗺️ New island!','Dino Island is on your map now. The Thunder Dragon can fly you here any time.']]);
+  }
+}
+function cavePrompt(){
+  if(!inCave() || !P5.cave5) return null;
+  if(!sq().caveChest && Math.hypot(S.x-151, S.z+17) < 2.6) return '👋 Use (E) to open the chest';
+  if(!sq().passage && Math.hypot(S.x-CAVE_CRACK.x, S.z-CAVE_CRACK.z) < 3.4) return '⚔️ The ice is cracked here... hit it with your sword!';
+  if(sq().passage && S.x > 186) return '🌴 Walk through the warm tunnel';
+  if(S.x < 116) return '🚪 The bright doorway goes back outside';
+  if(Math.hypot(S.x-CAVE_DOOR.x, S.z-CAVE_DOOR.z) < 5) return '❄️ The blue door leads to the Ice Dragon\'s lair';
+  return null;
+}
+function caveUse(){
+  if(!inCave() || !P5.cave5) return false;
+  if(!sq().caveChest && Math.hypot(S.x-151, S.z+17) < 2.6){
+    sq().caveChest = true; P5.cave5.lid.rotation.x = -1.9; S.gold = (S.gold||0) + 30; S.pot = (S.pot||0) + 2; if(S.bow) S.arrows = Math.max(S.arrows||0, 20);
+    spawnChips(151, 1.4, -17, 0xf5c542, 20); updateHud(); saveNow();
+    say([['💰 Treasure!', `30 gold 🪙, 2 potions 🧪${S.bow ? ' and a full quiver of arrows 🏹' : ''}! Someone hid this here a long time ago...`]]); return true;
+  }
+  return false;
+}
+function caveSword(){
+  if(!inCave() || sq().passage || !P5.cave5) return false;
+  const d = Math.hypot(S.x-CAVE_CRACK.x, S.z-CAVE_CRACK.z), ang = Math.abs(angDiff(Math.atan2(CAVE_CRACK.z-S.z, CAVE_CRACK.x-S.x), S.yaw));
+  if(d > 3.6 || ang > 1.2) return false;
+  P5.cave5.hits = (P5.cave5.hits||0) + 1; spawnChips(CAVE_CRACK.x-0.7, 2.5, CAVE_CRACK.z, 0xdff4ff, 10);
+  P5.cave5.crackWall.position.x = (P5.cave5.hits%2 ? 0.08 : -0.08);
+  if(P5.cave5.hits >= 4){
+    sq().passage = true; caveRestore(); spawnChips(CAVE_CRACK.x, 2.5, CAVE_CRACK.z, 0xffd27a, 30); spawnChips(CAVE_CRACK.x, 2.5, CAVE_CRACK.z, 0xdff4ff, 30); saveNow();
+    say([['💥 *CRASH!*','The cracked ice shatters! Behind it is a tunnel of warm brown rock... and you can smell flowers and jungle. 🌴'],
+         ['Tip','It\'s a secret passage! Walk through it to see where it goes.']]);
+  }
+  return true;
+}
+function caveAnimate(dt){
+  if(!P5 || !P5.cave5) return;
+  const inside = inCave();
+  P5.cave5.crystals.forEach((c,i)=>{ c.rotation.y += dt*0.3; });
+  P5.cave5.shrooms.forEach((c,i)=>{ c.scale.setScalar(1 + Math.sin(time*2 + i)*0.08); });
+  if(P5.cave5.warm.visible && Math.random() < dt*6) spawnChips(193 + Math.random()*5, 0.6 + Math.random()*2, CAVE_CRACK.z + (Math.random()-.5)*3, 0xffd27a, 1);
+  // darker, bluer air inside the caves; the snow stops
+  if(!P5.blizzard){
+    if(inside){ scene.fog.near = 8; scene.fog.far = 70; scene.fog.color.setHex(0x2a3a5a); scene.background.setHex(0x2a3a5a); }
+    else if(scene.fog.near !== 80 && !P5.blizzard){ scene.fog.near = 80; scene.fog.far = 300; scene.fog.color.setHex(0xe6eef6); scene.background.setHex(0xe6eef6); }
+  }
+  P5.snow.visible = !inside;
+}
+
 $('mapBtn').onclick = ()=>{ if(!paused) openMap(); };
 $('mapClose').onclick = closeMap;
 // test hook
-window.__dk = { wild:()=>sqWildList(), openMap, travelTo, sqFireHit, get sq(){return sq();}, sqGargLeft, sqGargCheck,  sailToPart4, boltAct, get P4(){return P4;}, canStand4:(x,z)=>canStand4(x,z), kit:{THREE, scene, camera, renderer, buildDragon, shieldModel, swordModel, M, mesh, L1root, L2root, L3root, knight, marker, sun, hemi, sea}, carrotAct, pieAct, p3WallBetween:(a,b,c,d)=>p3WallBetween(a,b,c,d), speedAct, strengthAct, potionAct, step:(n)=>{ for(let i=0;i<n;i++){ if(!paused) update(0.05); time+=0.05; animate(0.05); } }, sailToPart3, get P3(){return P3;}, canStand3:(x,z)=>canStand3(x,z), sailToPart2, get P2(){return P2;}, canStand2: (x,z)=>canStand2(x,z), heightAt2, VILLAGE, PLOTS, CAMPS, canStand, heightAt, saveNow, readSave, dragon, trees, get paused(){return paused;}, get S(){return S;}, get D(){return D;}, useAct, buildAct, chopAct, swordAct, potionAct, setCam, next };
+window.__dk = { get P6(){return P6;}, buildAct, get P5(){return P5;}, wild:()=>sqWildList(), openMap, travelTo, sqFireHit, get sq(){return sq();}, sqGargLeft, sqGargCheck,  sailToPart4, boltAct, get P4(){return P4;}, canStand4:(x,z)=>canStand4(x,z), kit:{THREE, scene, camera, renderer, buildDragon, shieldModel, swordModel, M, mesh, L1root, L2root, L3root, knight, marker, sun, hemi, sea}, carrotAct, pieAct, p3WallBetween:(a,b,c,d)=>p3WallBetween(a,b,c,d), speedAct, strengthAct, potionAct, step:(n)=>{ for(let i=0;i<n;i++){ if(!paused) update(0.05); time+=0.05; animate(0.05); } }, sailToPart3, get P3(){return P3;}, canStand3:(x,z)=>canStand3(x,z), sailToPart2, get P2(){return P2;}, canStand2: (x,z)=>canStand2(x,z), heightAt2, VILLAGE, PLOTS, CAMPS, canStand, heightAt, saveNow, readSave, dragon, trees, get paused(){return paused;}, get S(){return S;}, get D(){return D;}, useAct, buildAct, chopAct, swordAct, potionAct, setCam, next };
 })();
 </script>
 </body>
