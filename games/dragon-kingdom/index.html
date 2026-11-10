@@ -3510,7 +3510,7 @@ function update(dt){
     S.speedT = Math.max(0, (S.speedT||0)-dt); S.strT = Math.max(0, (S.strT||0)-dt); S.carrotT = Math.max(0, (S.carrotT||0)-dt); S.pieT = Math.max(0, (S.pieT||0)-dt);
     if(before !== tick()) updateHud();
   }
-  if(S.part4done && towerMove(fwd, speed, dt)){ /* on the outpost ladder or platform */ }
+  if((S.part4done || S.part===2) && towerMove(fwd, speed, dt)){ /* on the outpost ladder or platform */ }
   else if(Math.abs(fwd)>0.05){
     fwd = Math.max(-1, Math.min(1, fwd));
     const nx = S.x + Math.cos(S.yaw)*fwd*speed*dt, nz = S.z + Math.sin(S.yaw)*fwd*speed*dt;
@@ -3527,9 +3527,10 @@ function update(dt){
     if(S.poisonTick<=0){ S.poisonTick=1; S.poison--; S.hp-=1; updateHud(); flashFx('hurt',0.15); if(S.hp<=0){ lose(); return; } }
     $('poisonfx').style.opacity = S.poison>0?1:0;
   }
-  if(S.part4done){ sqStatusTick(dt); sqWild(dt); sqArrowTick(dt); placingTick(); buildsTick(dt);
-    if(S.part===2 && !paused && buildUnlocked() && !sq().buildTold && !raidActive()){ sq().buildTold = true; saveNow();
-      say([['Bea the Builder','Knight! You have done so much for the kingdom. Now it\'s YOUR turn to build. 🔨'],
+  if(S.part4done){ sqStatusTick(dt); sqWild(dt); sqArrowTick(dt); }
+  if(S.part===2){ placingTick(); buildsTick(dt);
+    if(!paused && buildUnlocked() && !sq().buildTold && !raidActive()){ sq().buildTold = true; saveNow();
+      say([['Bea the Builder','Knight! The village is finished, and it\'s beautiful. Now it\'s YOUR turn to build anything you like! 🔨'],
            ['Bea the Builder','Chop trees for wood, then press 🔨 Build to pick something: fences, a campfire, a garden, a barn, an outpost, a windmill...'],
            ['Tip','Build it anywhere on the Big Island! Walk and turn to move it, ↻ Turn (Q) to spin it, then ✅ Build here (E).']]); } }
   if(S.part===2){ p2Update(dt); return; }
@@ -5015,7 +5016,7 @@ const BUILDS = {
   windmill: {name:'Windmill',     icon:'🌾', cost:16, r:2.0},
 };
 function sqDoneCount(){ const q = sq(); return [q.fire, q.gargs, q.venom, q.raid==='done', q.ice, q.fossilDone, q.queen].filter(Boolean).length; }
-function buildUnlocked(){ return S.part4done && sqDoneCount() >= BUILD_NEED; }
+function buildUnlocked(){ return (P2 && P2.done) || (S.part4done && sqDoneCount() >= BUILD_NEED); }   // as soon as the Part 2 village is built
 
 function buildModel(k){
   const g = new THREE.Group(), wood = M(0x8b5a2b), wood2 = M(0x6b4a24), stone = M(0x9a9ca0), stone2 = M(0x7a7c80), red = M(0xb5322a), white = M(0xf3ead8), straw = M(0xe8cf8a);
