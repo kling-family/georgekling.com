@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="Stories, book reviews, toy reviews, games, videos, Lego builds, and travels by George.">
+<meta name="description" content="Stories, book reviews, toy reviews, games, videos, drawings, Lego builds, and travels by George.">
 <meta property="og:type" content="website">
 <meta property="og:title" content="George.">
-<meta property="og:description" content="Stories, book reviews, toy reviews, games, videos, Lego builds, and travels by George.">
+<meta property="og:description" content="Stories, book reviews, toy reviews, games, videos, drawings, Lego builds, and travels by George.">
 <meta property="og:url" content="https://georgekling.com/">
 <meta property="og:image" content="https://georgekling.com/share.png">
 <meta property="og:image:width" content="1200">
@@ -194,6 +194,20 @@
   .postcard:nth-child(3n) .visa { color: var(--orange); border-color: var(--orange); }
   .postcard figcaption { padding: 0 4px; }
 
+  /* Drawings: sketchbook pages taped to the wall */
+  .drawing { position: relative; background: var(--paper); padding: 14px 14px 16px; border-radius: 2px; box-shadow: 0 12px 22px -14px rgba(30,43,63,.5); }
+  .drawing:nth-child(odd) { transform: rotate(1.2deg); }
+  .drawing:nth-child(even) { transform: rotate(-1deg); }
+  .drawing::before {
+    content: ""; position: absolute; top: -12px; left: 50%; width: 96px; height: 26px;
+    transform: translateX(-50%) rotate(-3deg);
+    background: rgba(235,218,169,.85); box-shadow: 0 1px 2px rgba(30,43,63,.15);
+  }
+  .drawing:nth-child(even)::before { transform: translateX(-50%) rotate(4deg); }
+  .drawing .photo { aspect-ratio: 4 / 3; border: 2px dashed var(--rule); border-radius: 2px; display: grid; place-items: center; padding: 16px; }
+  .drawing img.photo { display: block; width: 100%; height: auto; border: 0; padding: 0; object-fit: contain; background: var(--paper); }
+  .drawing figcaption { padding: 0 2px; }
+
   /* Letter */
   .letter { max-width: 62ch; margin-top: 24px; }
   .letter p { margin: 0 0 1.1em; }
@@ -238,6 +252,7 @@
           <a href="#toys">Toys</a>
           <a href="games/">Games</a>
           <a href="videos/">Videos</a>
+          <a href="#drawings">Drawings</a>
           <a href="#lego">Lego</a>
           <a href="#travels">Travels</a>
         </nav>
@@ -386,6 +401,21 @@
         </figure>
       </div>
       <p class="more"><a href="videos/">See all of George's videos &rarr;</a></p>
+    </section>
+
+    <section id="drawings" aria-labelledby="drawings-h">
+      <div class="head">
+        <svg class="badge r" viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="56" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="60" cy="60" r="31" fill="none" stroke="currentColor" stroke-width="1.5"/><text font-family="Special Elite, Courier New, monospace" font-size="12" fill="currentColor"><textPath href="#ring" textLength="252" lengthAdjust="spacing">DRAWN BY GEORGE ★ DRAWN BY GEORGE ★</textPath></text><text x="60" y="71" text-anchor="middle" font-family="Young Serif, Georgia, serif" font-size="32" fill="currentColor">G</text></svg>
+        <div>
+          <h2 id="drawings-h">Drawings</h2>
+          <p class="lede">Drawings George made.</p>
+        </div>
+      </div>
+      <div class="grid">
+        <figure class="drawing"><div class="photo"><span class="placeholder">George's drawing</span></div><figcaption>Drawing name <span>and what it shows</span></figcaption></figure>
+        <figure class="drawing"><div class="photo"><span class="placeholder">George's drawing</span></div><figcaption>Drawing name <span>and what it shows</span></figcaption></figure>
+        <figure class="drawing"><div class="photo"><span class="placeholder">George's drawing</span></div><figcaption>Drawing name <span>and what it shows</span></figcaption></figure>
+      </div>
     </section>
 
     <section id="lego" aria-labelledby="lego-h">
