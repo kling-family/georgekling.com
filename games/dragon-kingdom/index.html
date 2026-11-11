@@ -254,6 +254,7 @@ scene.add(sun); scene.add(sun.target);
 function resize(){
   const w = window.innerWidth, h = window.innerHeight;
   renderer.setSize(w, h, false); camera.aspect = w/h; camera.updateProjectionMatrix();
+  if(typeof fpLayout==='function' && FP) fpLayout();
 }
 window.addEventListener('resize', resize); resize();
 
@@ -742,6 +743,26 @@ fpShield.add(shieldModel());
 const fpAxe = new THREE.Group(); fpAxe.scale.setScalar(0.5); fpAxe.position.set(0.55,-0.6,-1); fpAxe.rotation.set(-0.3,0,-0.3); camera.add(fpAxe); fpAxe.visible=false;
 mesh(new THREE.CylinderGeometry(0.05,0.05,1.1), M(0x6b4a24), 0,0.3,0, fpAxe);
 mesh(new THREE.BoxGeometry(0.06,0.35,0.4), M(0xb8c0c8), 0,0.75,0.15, fpAxe);
+// Knight's eyes: size the sword and shield from the screen's WIDTH and stand them up from the bottom edge,
+// so they look the same on a wide phone, an iPad and a computer (big shield on the left, tall sword on the right).
+var FP = {};
+function fpLayout(){
+  const a = camera.aspect, t = Math.tan(camera.fov*Math.PI/360);
+  const g = Math.min((a<1 ? 0.40 : 0.27)*a, 0.62);        // shield width, as a share of the screen's height
+  const dS = 1.1, hhS = dS*t, hwS = hhS*a;                // the shield sits 1.1 in front of the eyes
+  FP.shS = g*2*hhS/1.05;
+  FP.shX = -hwS*(1 - (a<1 ? 0.08 : 0.16)) + g*hhS;
+  FP.shY = hhS*(-1 + 2*0.73*g) - 0.53*FP.shS;             // top edge sits 0.73 shield-widths above the bottom
+  FP.shZ = -dS;
+  const hh = t, hw = t*a;                                 // the sword sits 1.0 in front of the eyes
+  FP.swS = 1.82*g*hh;
+  FP.swX = hw*0.58; FP.swY = hh*(-1 + 2*0.04*g) + 0.11*FP.swS;
+  FP.k = Math.min(1.6, hw/0.92);                          // how far a swing or a block travels across the screen
+  fpSword.scale.setScalar(FP.swS); fpSword.position.set(FP.swX, FP.swY, -1);
+  fpAxe.scale.setScalar(FP.swS*1.1); fpAxe.position.set(FP.swX, FP.swY - 0.05, -1);
+  fpShield.scale.setScalar(FP.shS); fpShield.position.set(FP.shX, FP.shY, FP.shZ);
+}
+fpLayout();
 
 // ================= DRAGON =================
 const SM = (c, o={}) => M(c, Object.assign({flatShading:false, roughness:.55}, o));
@@ -3636,10 +3657,10 @@ function animate(dt){
     fpShield.visible = fp && S.shield;
     const sw = S.swing>0 ? S.swing/0.35 : 0;
     fpSword.rotation.set(-0.3 - Math.sin(sw*Math.PI)*1.2, 0, -0.35 + Math.sin(sw*Math.PI)*0.9);
-    fpSword.position.x = 0.55 - Math.sin(sw*Math.PI)*0.4;
+    fpSword.position.x = FP.swX - Math.sin(sw*Math.PI)*0.4*FP.k;
     const ch = S.chop>0 ? S.chop/0.4 : 0;
     fpAxe.rotation.set(-0.3 - Math.sin(ch*Math.PI)*1.3, 0, -0.3);
-    fpShield.position.set(S.blocking?-0.15:-0.6, S.blocking?-0.25:-0.55, S.blocking?-0.8:-1.1);
+    fpShield.position.set(S.blocking ? FP.shX*0.25 : FP.shX, S.blocking ? FP.shY + 0.3 : FP.shY, S.blocking ? -0.8 : FP.shZ);
     // camera
     if(fp){
       camPos.set(S.x, gy+1.75, S.z);
