@@ -5302,7 +5302,7 @@ function raptorModel(queen){
   const g = new THREE.Group(), skin = SM(queen ? 0x6a3a8a : 0x5a8a3a), stripe = SM(queen ? 0xf5c542 : 0xd86a2a), belly = SM(0xe8dcc0), dark = M(0x1a1a1a), eyeM = new THREE.MeshBasicMaterial({color: queen ? 0xffd23a : 0xff4a2a});
   const body = mesh(new THREE.SphereGeometry(0.5, 14, 10), skin, 0, 1.0, 0, g); body.scale.set(1.5, 0.75, 0.6); body.rotation.z = 0.12;
   mesh(new THREE.SphereGeometry(0.4, 10, 8), belly, 0.1, 0.88, 0, g).scale.set(1.4, 0.6, 0.62);
-  for(let i=0;i<4;i++) mesh(new THREE.BoxGeometry(0.1, 0.06, 0.62), stripe, -0.45 + i*0.28, 1.32, 0);
+  for(let i=0;i<4;i++) mesh(new THREE.BoxGeometry(0.1, 0.06, 0.62), stripe, -0.45 + i*0.28, 1.32, 0, g);   // stripes belong to the raptor (they used to float loose in the world)
   const neck = mesh(new THREE.CylinderGeometry(0.16, 0.24, 0.7, 8), skin, 0.75, 1.35, 0, g); neck.rotation.z = -0.7;
   const head = new THREE.Group(); head.position.set(1.05, 1.62, 0); g.add(head);
   mesh(new THREE.SphereGeometry(0.24, 10, 8), skin, 0, 0, 0, head).scale.set(1.2, 0.9, 0.9);
