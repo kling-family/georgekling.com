@@ -330,6 +330,45 @@ const LC = {x:(LAND.x0+LAND.x1)/2, hx:(LAND.x1-LAND.x0)/2, hz:(LAND.z1-LAND.z0)/
   camera.userData.sky = sky;
 })();
 
+// --- a little more real: soft light from the whole sky ---
+// The sky and ground colors are baked into a light map, so every surface gets gentle sky light from above,
+// warm bounce light from below, and shiny things (armor, swords, water, potions) reflect the sky.
+const ENV_K = 0.3;                          // how strong the sky light is
+const SKY_ENV = (() => {
+  const es = new THREE.Scene(), g = new THREE.SphereGeometry(10, 32, 16), cols = [], c = new THREE.Color();
+  const top = new THREE.Color(0x4a90d8), mid = new THREE.Color(0xbfe0f7), low = new THREE.Color(0x9a8a62);
+  const p = g.attributes.position;
+  for(let i=0;i<p.count;i++){ const h = p.getY(i)/10;
+    if(h > 0) c.copy(mid).lerp(top, Math.min(1, h*1.4)); else c.copy(mid).lerp(low, Math.min(1, -h*3));
+    cols.push(c.r*ENV_K, c.g*ENV_K, c.b*ENV_K); }
+  g.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3));
+  es.add(new THREE.Mesh(g, new THREE.MeshBasicMaterial({vertexColors:true, side:THREE.BackSide})));
+  const sunBlob = new THREE.Mesh(new THREE.SphereGeometry(1.2, 16, 12), new THREE.MeshBasicMaterial({color:new THREE.Color(0xfff2d0).multiplyScalar(2.5)}));
+  sunBlob.position.copy(SUN_OFF).normalize().multiplyScalar(8.5); es.add(sunBlob);
+  const pm = new THREE.PMREMGenerator(renderer); const tex = pm.fromScene(es, 0.02).texture; pm.dispose();
+  return tex;
+})();
+scene.environment = SKY_ENV;
+hemi.intensity = 0.32; sun.intensity = 0.92;  // the sky light above does part of the soft fill; a bit more sun for crisper shadows
+// fine grain for sand, grass, rock and snow, so the ground isn't one flat paint color
+const groundGrain = (() => {
+  const N = 256, cv = document.createElement('canvas'); cv.width = cv.height = N; const cx = cv.getContext('2d');
+  const img = cx.createImageData(N, N), rnd = rng(9123), layers = [[8, .5], [32, .3], [128, .2]], v = new Float32Array(N*N);
+  layers.forEach(([cells, amt]) => {                              // smooth, tiling bumps at three sizes
+    const grid = []; for(let i=0;i<cells*cells;i++) grid.push(rnd());
+    const at = (x,y) => grid[((y+cells)%cells)*cells + ((x+cells)%cells)];
+    for(let y=0;y<N;y++) for(let x=0;x<N;x++){
+      const fx = x/N*cells, fy = y/N*cells, ix = Math.floor(fx), iy = Math.floor(fy), tx = smooth(0,1,fx-ix), ty = smooth(0,1,fy-iy);
+      const a = at(ix,iy)*(1-tx) + at(ix+1,iy)*tx, b = at(ix,iy+1)*(1-tx) + at(ix+1,iy+1)*tx;
+      v[y*N+x] += (a*(1-ty) + b*ty) * amt;
+    } });
+  for(let i=0;i<N*N;i++){ const k = Math.round(255*(0.84 + v[i]*0.22)); img.data[i*4] = img.data[i*4+1] = img.data[i*4+2] = Math.min(255,k); img.data[i*4+3] = 255; }
+  cx.putImageData(img, 0, 0);
+  const t = new THREE.CanvasTexture(cv); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+  return t;
+})();
+function grainFor(geo){ const t = groundGrain.clone(); t.needsUpdate = true; t.repeat.set(geo.parameters.width/7, geo.parameters.height/7); return t; }
+
 // --- puffy clouds ---
 const skyClouds = [];
 (() => {
@@ -394,7 +433,7 @@ function heightAtRaw(x,z){
   }
   geo.setAttribute('color', new THREE.Float32BufferAttribute(cols,3));
   geo.computeVertexNormals();
-  const ground = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({vertexColors:true, roughness:.95, metalness:0}));
+  const ground = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({vertexColors:true, map:grainFor(geo), roughness:.95, metalness:0}));
   ground.receiveShadow = true; scene.add(ground);
 })();
 
@@ -1148,7 +1187,7 @@ function buildPart2(){
     cols.push(c.r, c.g, c.b);
   }
   geo.setAttribute('color', new THREE.Float32BufferAttribute(cols,3)); geo.computeVertexNormals();
-  const ground = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({vertexColors:true, roughness:.95})); ground.receiveShadow = true; add(ground);
+  const ground = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({vertexColors:true, map:grainFor(geo), roughness:.95})); ground.receiveShadow = true; add(ground);
 
   // shore foam
   { const pts = [];
@@ -1677,7 +1716,7 @@ function buildPart3(){
     cols.push(c.r, c.g, c.b);
   }
   geo.setAttribute('color', new THREE.Float32BufferAttribute(cols,3)); geo.computeVertexNormals();
-  const ground = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({vertexColors:true, roughness:.95, flatShading:false})); ground.receiveShadow = true; add(ground);
+  const ground = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({vertexColors:true, map:grainFor(geo), roughness:.95, flatShading:false})); ground.receiveShadow = true; add(ground);
 
   // the volcano itself, right behind the treasury
   const vol = new THREE.Group(); vol.position.set(78, -0.5, 0); add(vol);
@@ -2369,7 +2408,7 @@ function buildPart4(){
     cols.push(c.r, c.g, c.b);
   }
   geo.setAttribute('color', new THREE.Float32BufferAttribute(cols,3)); geo.computeVertexNormals();
-  const ground = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({vertexColors:true, roughness:.95, flatShading:false})); ground.receiveShadow = true; add(ground);
+  const ground = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({vertexColors:true, map:grainFor(geo), roughness:.95, flatShading:false})); ground.receiveShadow = true; add(ground);
 
   const stone = M(0x7a7684), stone2 = M(0x6a6674), dark = M(0x3a3644), roofM = M(0x5a2a4a), banner = M(0x4a2a6a, {side:THREE.DoubleSide});
   const wallSeg = (x1,z1,x2,z2,h=7,th=1.6)=>{ const len = Math.hypot(x2-x1,z2-z1), w = m4(new THREE.BoxGeometry(len, h, th), stone, (x1+x2)/2, 0.4+h/2, (z1+z2)/2); w.rotation.y = -Math.atan2(z2-z1, x2-x1); P4.occ.push(w);
@@ -4667,7 +4706,7 @@ function buildPart5(){
     cols.push(c.r, c.g, c.b);
   }
   geo.setAttribute('color', new THREE.Float32BufferAttribute(cols,3)); geo.computeVertexNormals();
-  const ground = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({vertexColors:true, roughness:.9, flatShading:false})); ground.receiveShadow = true; add(ground);
+  const ground = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({vertexColors:true, map:grainFor(geo), roughness:.9, flatShading:false})); ground.receiveShadow = true; add(ground);
 
   // the frozen lake
   const lake = m5(new THREE.CircleGeometry(LAKE5.r, 40), new THREE.MeshStandardMaterial({color:0xbfe6ff, roughness:.12, metalness:.15}), LAKE5.x, heightAt5Raw(LAKE5.x,LAKE5.z)+0.06, LAKE5.z);
@@ -5452,7 +5491,7 @@ function buildPart6(){
     cols.push(c.r, c.g, c.b);
   }
   geo.setAttribute('color', new THREE.Float32BufferAttribute(cols,3)); geo.computeVertexNormals();
-  const ground = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({vertexColors:true, roughness:.95, flatShading:false})); ground.receiveShadow = true; add(ground);
+  const ground = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({vertexColors:true, map:grainFor(geo), roughness:.95, flatShading:false})); ground.receiveShadow = true; add(ground);
   // the hot spring, with steam
   const spring = m6(new THREE.CircleGeometry(SPRING6.r-0.4, 32), new THREE.MeshStandardMaterial({color:0x5ad0c8, roughness:.15, emissive:0x0a3a3a}), SPRING6.x, 0.05, SPRING6.z); spring.rotation.x = -Math.PI/2;
   for(let i=0;i<10;i++){ const a = i/10*6.28; const st = m6(new THREE.DodecahedronGeometry(0.6,0), M(0x8a8a80), SPRING6.x + Math.cos(a)*SPRING6.r, 0.3, SPRING6.z + Math.sin(a)*SPRING6.r); st.rotation.set(r()*3, r()*3, 0); }
@@ -6174,6 +6213,7 @@ function caveAnimate(dt){
     if(inside){ scene.fog.near = 8; scene.fog.far = 70; scene.fog.color.setHex(0x2a3a5a); scene.background.setHex(0x2a3a5a); }
     else if(scene.fog.near !== 80 && !P5.blizzard){ scene.fog.near = 80; scene.fog.far = 300; scene.fog.color.setHex(0xe6eef6); scene.background.setHex(0xe6eef6); }
   }
+  scene.environment = inside ? null : SKY_ENV;            // no blue sky light deep inside the cave
   P5.snow.visible = !inside;
 }
 
