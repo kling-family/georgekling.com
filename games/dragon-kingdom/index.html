@@ -912,7 +912,8 @@ function fpLayout(){
   const barUp = bar ? (H - bar.top)/H : 0;                 // share of the screen the item bar covers
   const joyUp = (joy && a < 1) ? (H - joy.top)/H - 0.06 : 0; // on tall phones the shield peeks out above the joystick
   FP.shY += 2*hhS*Math.max(barUp, joyUp);
-  if(a < 1) FP.swX = hw*0.14;                              // tall phones: the sword stands between the shield and the side buttons
+  FP.swRz = -0.35;                                        // how far the sword leans to the right
+  if(a < 1){ FP.swS *= 1.5; FP.swX = hw*0.06; FP.swRz = -0.12; }   // tall phones: a bigger, more upright sword between the shield and the side buttons
   const swordAt = 0.5 + 0.5*0.58;                         // where the sword sits across the screen (0 = left, 1 = right)
   if(tact){
     const tactUp = (H - tact.top)/H;
@@ -3818,7 +3819,7 @@ function animate(dt){
     fpAxe.visible = fp && usingAxe;
     fpShield.visible = fp && S.shield;
     const sw = S.swing>0 ? S.swing/0.35 : 0;
-    fpSword.rotation.set(-0.3 - Math.sin(sw*Math.PI)*1.2, 0, -0.35 + Math.sin(sw*Math.PI)*0.9);
+    fpSword.rotation.set(-0.3 - Math.sin(sw*Math.PI)*1.2, 0, FP.swRz + Math.sin(sw*Math.PI)*0.9);
     fpSword.position.x = FP.swX - Math.sin(sw*Math.PI)*0.4*FP.k;
     const ch = S.chop>0 ? S.chop/0.4 : 0;
     fpAxe.rotation.set(-0.3 - Math.sin(ch*Math.PI)*1.3, 0, -0.3);
