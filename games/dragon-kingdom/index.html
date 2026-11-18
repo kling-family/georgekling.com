@@ -905,11 +905,26 @@ function fpLayout(){
   FP.swS = 1.82*g*hh;
   FP.swX = hw*0.58; FP.swY = hh*(-1 + 2*0.04*g) + 0.11*FP.swS;
   FP.k = Math.min(1.6, hw/0.92);                          // how far a swing or a block travels across the screen
+  // lift the shield and sword above the buttons at the bottom of the screen, so you can always see them
+  const H = window.innerHeight || 1, W = window.innerWidth || 1;
+  const box = id => { const el = document.getElementById(id); if(!el || el.closest('.hidden')) return null; const r = el.getBoundingClientRect(); return r.height ? r : null; };
+  const bar = box('bar'), tact = box('tact'), joy = box('joy');
+  const barUp = bar ? (H - bar.top)/H : 0;                 // share of the screen the item bar covers
+  const joyUp = (joy && a < 1) ? (H - joy.top)/H - 0.06 : 0; // on tall phones the shield peeks out above the joystick
+  FP.shY += 2*hhS*Math.max(barUp, joyUp);
+  if(a < 1) FP.swX = hw*0.14;                              // tall phones: the sword stands between the shield and the side buttons
+  const swordAt = 0.5 + 0.5*0.58;                         // where the sword sits across the screen (0 = left, 1 = right)
+  if(tact){
+    const tactUp = (H - tact.top)/H;
+    if(tactUp < 0.42) FP.swY += 2*hh*tactUp;              // tall screens: stand the sword just above the big buttons
+    else { FP.swX = Math.min(FP.swX, (tact.left/W*2 - 1)*hw - 0.06*FP.swS); FP.swY += 2*hh*barUp; }   // wide phones: just left of them
+  } else if(bar && bar.right/W > swordAt - 0.04) FP.swY += 2*hh*barUp*0.8;
   fpSword.scale.setScalar(FP.swS); fpSword.position.set(FP.swX, FP.swY, -1);
   fpAxe.scale.setScalar(FP.swS*1.1); fpAxe.position.set(FP.swX, FP.swY - 0.05, -1);
   fpShield.scale.setScalar(FP.shS); fpShield.position.set(FP.shX, FP.shY, FP.shZ);
 }
 fpLayout();
+if(window.ResizeObserver){ const ro = new ResizeObserver(()=>fpLayout()); ['bar','tact'].forEach(id=>{ const el = document.getElementById(id); if(el) ro.observe(el); }); }   // re-place them when the buttons appear or change
 
 // ================= DRAGON =================
 const SM = (c, o={}) => M(c, Object.assign({flatShading:false, roughness:.55}, o));
@@ -3527,7 +3542,7 @@ document.querySelectorAll('[data-act]').forEach(b=>{
 window.addEventListener('keydown', e=>{ if(e.repeat) return; if(['Digit1','KeyJ','Space'].includes(e.code) && dlg.classList.contains('hidden')) keys.swordHeld = true; });
 window.addEventListener('keyup', e=>{ if(['Digit1','KeyJ','Space'].includes(e.code)) keys.swordHeld = false; });
 
-function setCam(c){ cam = c; $('camFP').classList.toggle('on', c==='fp'); $('camTP').classList.toggle('on', c==='tp'); }
+function setCam(c){ cam = c; if(c==='fp') fpLayout(); $('camFP').classList.toggle('on', c==='fp'); $('camTP').classList.toggle('on', c==='tp'); }
 $('camFP').addEventListener('click', ()=>setCam('fp'));
 $('camTP').addEventListener('click', ()=>setCam('tp'));
 
