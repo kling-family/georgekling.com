@@ -17,7 +17,7 @@
   :root{--red:#d7382f;--orange:#f28c28;--green:#3f9a3a;--cream:#fff6e3;--gold:#f5c542}
   *{box-sizing:border-box}
   html,body{margin:0;height:100%;overflow:hidden;background:#87c6ee;font-family:'Fredoka',system-ui,sans-serif;color:var(--cream);-webkit-user-select:none;user-select:none;touch-action:none}
-  #game{position:fixed;inset:0;display:block}
+  #game{position:fixed;inset:0;display:block;filter:contrast(1.1) saturate(1.12) brightness(.97)}  /* a touch richer, like a photo */
   .hidden{display:none !important}
   button{font-family:inherit;font-weight:600;cursor:pointer;border:none;border-radius:12px;background:var(--orange);color:#2a1300;box-shadow:0 4px 0 #a2540f;padding:8px 14px;font-size:18px}
   button:active{transform:translateY(3px);box-shadow:0 1px 0 #a2540f}
@@ -272,6 +272,44 @@
   THREE.BoxGeometry = RoundBox; THREE.CylinderGeometry = SmoothCyl; THREE.ConeGeometry = SmoothCone;
   THREE.SphereGeometry = SmoothSphere; THREE.TorusGeometry = SmoothTorus;
 })();
+
+// ================= SURFACE TEXTURE =================
+// Gives every painted surface a natural, uneven look (like real wood, bark, stone, leaves and cloth)
+// by gently varying its color in a pattern tied to where it is in the world. Colors stay George's;
+// they just get light and dark patches and fine grain. Shiny metal gets only a touch, see-through things none.
+(() => {
+  const Base = THREE.MeshStandardMaterial;
+  const NOISE = `
+    varying vec3 vDkW; uniform float dkAmt;
+    float dkH(vec3 p){ p = fract(p*0.3183099 + .1); p *= 17.0; return fract(p.x*p.y*p.z*(p.x+p.y+p.z)); }
+    float dkN(vec3 x){ vec3 i = floor(x), f = fract(x); f = f*f*(3.0-2.0*f);
+      return mix(mix(mix(dkH(i),dkH(i+vec3(1,0,0)),f.x), mix(dkH(i+vec3(0,1,0)),dkH(i+vec3(1,1,0)),f.x),f.y),
+                 mix(mix(dkH(i+vec3(0,0,1)),dkH(i+vec3(1,0,1)),f.x), mix(dkH(i+vec3(0,1,1)),dkH(i+vec3(1,1,1)),f.x),f.y), f.z); }
+    float dkDetail(vec3 p){
+      float n = dkN(p*0.7)*0.45 + dkN(p*2.6)*0.33 + dkN(p*9.0)*0.22;          // big patches, medium blotches, fine grain
+      return 1.0 + dkAmt*(n - 0.5)*2.4;
+    }`;
+  class Textured extends Base {
+    constructor(o){
+      super(o);
+      const amt = this.transparent ? 0 : (this.metalness > 0.3 ? 0.06 : (this.vertexColors ? 0.16 : 0.22));
+      if(this.metalness > 0.3) this.envMapIntensity = 1.8;          // polished steel and gold catch the sky
+      if(amt > 0) this.onBeforeCompile = sh => {
+        sh.uniforms.dkAmt = {value: amt};
+        sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vDkW;')
+          .replace('#include <project_vertex>', `#include <project_vertex>
+            vec4 dkW = vec4(transformed, 1.0);
+            #ifdef USE_INSTANCING
+              dkW = instanceMatrix * dkW;
+            #endif
+            vDkW = (modelMatrix * dkW).xyz;`);
+        sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>' + NOISE)
+          .replace('#include <color_fragment>', '#include <color_fragment>\n diffuseColor.rgb *= dkDetail(vDkW);');
+      };
+    }
+  }
+  THREE.MeshStandardMaterial = Textured;
+})();
 </script>
 <script>
 (() => {
@@ -349,7 +387,7 @@ const SKY_ENV = (() => {
   return tex;
 })();
 scene.environment = SKY_ENV;
-hemi.intensity = 0.32; sun.intensity = 0.92;  // the sky light above does part of the soft fill; a bit more sun for crisper shadows
+hemi.intensity = 0.32; hemi.groundColor.setHex(0x4a3f28); sun.intensity = 0.95;  // the sky light above does part of the soft fill; a bit more sun for crisper shadows
 // fine grain for sand, grass, rock and snow, so the ground isn't one flat paint color
 const groundGrain = (() => {
   const N = 256, cv = document.createElement('canvas'); cv.width = cv.height = N; const cx = cv.getContext('2d');
@@ -441,7 +479,7 @@ function heightAtRaw(x,z){
 const seaGeo = new THREE.PlaneGeometry(520, 520, 64, 64); seaGeo.rotateX(-Math.PI/2);
 const seaBase = Float32Array.from(seaGeo.attributes.position.array);
 const sea = new THREE.Mesh(seaGeo, new THREE.MeshStandardMaterial({color:0x2a8fd0, roughness:.22, metalness:.15, transparent:true, opacity:.82, flatShading:false}));
-sea.position.y = -0.3; sea.receiveShadow = true; scene.add(sea);
+sea.position.y = -0.3; sea.receiveShadow = true; scene.add(sea); sea.material.envMapIntensity = 1.2;   // water mirrors the sky a little
 function waveSea(t){
   const a = seaGeo.attributes.position;
   for(let i=0;i<a.count;i++){
