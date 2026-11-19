@@ -662,6 +662,11 @@ function champTeam(i){const s=ISLES[i];if(s.secret)return s.champ.team;const t=[
   for(let k=0;t.length<6&&k<pool.length;k++)t.push([pool[k],lo]);return scaled(t,2)}
 // after you beat the Grand Champion, Rex shows up with a team at the very same levels as the champion's
 const REX_LINE='Rex: "Hey, you beat me to the champion of islands. Well, now I\'ll just beat you."';
+// Preview links only (never the real site): ?champion jumps straight to Champion Island with a ready test player
+function previewChamp(){if(!/netlify\.app$|^localhost$/.test(location.hostname)||!/[?&]champion\b/.test(location.search))return false;
+  const id='pchamp',ps=profiles();if(!ps.some(q=>q.id===id)){ps.push({id,name:'Champion Test',color:4});saveProfiles(ps)}PROFILE=ps.find(q=>q.id===id);
+  if(!readSave(id)){S={starter:'flicklet',team:[['flarion',28],['tidalord',27],['bloomroar',27],['stormhare',26],['mudzilla',26],['phantomkin',26]].map(([sp,l])=>mk(sp,l)),unlocked:MAIN+1,beaten:[0,1,2,3,4],caught:{flicklet:1,bubblop:1,sproutle:1},coins:800,supers:5,pos:{},lookSeen:1,look:{},compass:1,buddy:{name:'Pip',d:{}},gift:1,onboard:1};save()}
+  S=load();map();return true}
 function rexFinalTeam(champ){const base=S.starter||'bubblop',ctr={flicklet:'bubblop',bubblop:'sproutle',sproutle:'flicklet'}[base]||'flicklet',lv=champ.map(t=>t[1]).sort((a,b)=>a-b);
   const others=[['cindermaw','fire'],['tidefang','water'],['mossbrute','leaf'],['boulderon','stone'],['thunderhop','storm'],['nightcoil','shadow']].filter(x=>x[1]!==SP[ctr].el).map(x=>x[0]);
   return [...others,ctr].slice(-lv.length).map((sp,k)=>[evolved(sp,lv[k]),lv[k]])}
@@ -2413,7 +2418,7 @@ addEventListener('blur',()=>{if(WORLD)WORLD.held=null});
 
 Promise.all([loadMonImages(),document.fonts?document.fonts.ready.catch(()=>{}):0]).then(()=>{
   // build the island art a little at a time so the page stays responsive
-  let k=0;const step=()=>{if(k<RING.length){buildTex(RING[k++]);setTimeout(step,0)}else{buildSea();title()}};step()});
+  let k=0;const step=()=>{if(k<RING.length){buildTex(RING[k++]);setTimeout(step,0)}else{buildSea();if(!previewChamp())title()}};step()});
 </script>
 
 </body>
