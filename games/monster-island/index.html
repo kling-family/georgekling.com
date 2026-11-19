@@ -423,7 +423,7 @@ ISLES.push({name:'Coralheart Deep',el:'deep',secret:true,deep:true,x:1600,y:70,w
 // It goes at the end of the list so old saves keep their island numbers.
 const CHAMP=ISLES.length;
 ISLES.push({name:'Champion Island',el:'champ',x:35,y:40,blurb:'The last island. Only the best trainers ever make it here.',
-  tr:[{name:'Ace Mira',team:[['flintfox',21],['krakling',21],['thornbeetle',22]]},{name:'Veteran Hugo',team:[['gravelord',22],['thunderhop',22],['phantomkin',23],['shellguard',23]]},{name:'Battle Queen Tess',team:[['blazehound',23],['stormhare',23],['mudzilla',24],['abyssquid',24]]}],
+  tr:[],arena:true,
   wild:['flintfox','abyssquid','glowcap','gravelord','voltusk','nightcoil'],rare:'cindermaw',rares:['tidefang','mossbrute','stormwing','eclipsar'],lv:[19,23],
   // a strong, balanced team: one monster of every element
   champ:{name:'The Grand Champion',team:[['blazehound',25],['krakling',25],['thornbeetle',26],['mudzilla',26],['stormhare',27],['eclipsar',28]]}});
@@ -604,7 +604,7 @@ function genMap(i){
   const route=[champ];{let c=champ;while(dist[c.y][c.x]>0){const n=N4.map(([dx,dy])=>({x:c.x+dx,y:c.y+dy})).filter(q=>q.x>=0&&q.y>=0&&q.x<W&&q.y<H&&dist[q.y][q.x]===dist[c.y][c.x]-1);n.sort((a,b)=>(g[b.y][b.x]===T_PATH)-(g[a.y][a.x]===T_PATH));c=n[0];route.push(c)}route.reverse()}
   const dist0=dist,onRoute=(x,y)=>route.some(c=>c.x===x&&c.y===y);
   // three gates split the island into towns: every tile at a gate's distance becomes a wall, except the gate itself
-  const gates=secret?[]:[.32,.58,.82].map((fr,k)=>{const D=Math.round(far*fr),gt=route[D];return {x:gt.x,y:gt.y,k,D}});
+  const gates=secret||ISLES[i].arena?[]:[.32,.58,.82].map((fr,k)=>{const D=Math.round(far*fr),gt=route[D];return {x:gt.x,y:gt.y,k,D}});
   for(const gt of gates)for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(dist0[y][x]===gt.D&&walk(g[y][x])&&!(x===gt.x&&y===gt.y))g[y][x]=T_OBST;
   for(const gt of gates)g[gt.y][gt.x]=T_PATH;
   dist=bfs();prune(dist);
@@ -635,7 +635,7 @@ function genMap(i){
   if(!secret&&i!==CHAMP)for(let off=3;off<12;off++){const pt=route[gates[0].D+off];if(!pt)break;const s2=beside(pt,3);if(s2){trainers.push({...s2,k:99,leader:false,rival:true,zone:1});break}}
   lead=true;gates.forEach((gt,k)=>{for(let back=1;back<9;back++){const s=beside(route[gt.D-back],1);if(s){trainers.push({...s,k,leader:true,zone:k});break}}});lead=false;
   const rn=rng(i*131+5),extra=[[0,2],[1,2],[2,2],[3,1]];let ek=3;
-  if(!secret)for(const [z,cnt] of extra)for(let tries2=0,got=0;tries2<2;tries2++){const want=cnt-trainers.filter(t=>!t.leader&&t.zone===z).length;if(want<=0)break;const pts=[];for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++)if((g[y][x]===T_PATH||(tries2>0&&(g[y][x]===T_GROUND||g[y][x]===T_SAND)))&&dist[y][x]>3&&zoneOf(x,y)===z&&!gates.some(gt=>Math.abs(gt.x-x)+Math.abs(gt.y-y)<3))pts.push({x,y});
+  if(!secret&&!ISLES[i].arena)for(const [z,cnt] of extra)for(let tries2=0,got=0;tries2<2;tries2++){const want=cnt-trainers.filter(t=>!t.leader&&t.zone===z).length;if(want<=0)break;const pts=[];for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++)if((g[y][x]===T_PATH||(tries2>0&&(g[y][x]===T_GROUND||g[y][x]===T_SAND)))&&dist[y][x]>3&&zoneOf(x,y)===z&&!gates.some(gt=>Math.abs(gt.x-x)+Math.abs(gt.y-y)<3))pts.push({x,y});
     for(let n=0,tries=0;n<want&&tries<300&&pts.length;tries++){const s=beside(pts[Math.floor(rn()*pts.length)],tries<150?6:4);if(s){trainers.push({...s,k:ek++,leader:false,zone:z});n++}}}
   // every town gets its own patch of tall grass, so new players can find wild monsters before the first gate
   if(!secret)for(let z=0;z<4;z++){let have=0;const cand=[];for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){if(dist[y][x]<0||zoneOf(x,y)!==z)continue;if(g[y][x]===T_GRASS)have++;
@@ -645,6 +645,8 @@ function genMap(i){
     for(const c of cand.slice(0,16-have))g[c.y][c.x]=T_GRASS}
   const grass=[],objs=[];
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){if(g[y][x]===T_GRASS&&dist[y][x]>=0)grass.push({x,y});if(g[y][x]===T_OBST){const h=hash(x+i*99,y);objs.push({x,y,s:.85+(h%30)/100,h})}}
+  // the big arena sits right behind the champion's spot, so clear the crystals where it stands
+  if(ISLES[i].arena)for(let k=objs.length-1;k>=0;k--){const o=objs[k];if(Math.abs(o.x-champ.x)<=3&&o.y<=champ.y&&o.y>=champ.y-4)objs.splice(k,1)}
   // each main island hides one secret: a tree, rock, coral or crystal you can bump into
   let secretStone=null;
   if(!secret&&i!==CHAMP){const cand=[];for(const o of objs){const nb=N4.map(([dx,dy])=>({x:o.x+dx,y:o.y+dy})).find(q=>q.x>0&&q.y>0&&q.x<W-1&&q.y<H-1&&walk(g[q.y][q.x])&&dist[q.y][q.x]>=8&&g[q.y][q.x]!==T_PATH&&zoneOf(q.x,q.y)>=1&&zoneOf(q.x,q.y)<=2);
@@ -895,6 +897,21 @@ function drawPerson(ctx,x,y,dir,walkT,c){
   if(c.crown){ctx.fillStyle='#ffc83d';ctx.beginPath();ctx.moveTo(cx-.16,hy-.3);ctx.lineTo(cx-.16,hy-.46);ctx.lineTo(cx-.08,hy-.38);ctx.lineTo(cx,hy-.5);ctx.lineTo(cx+.08,hy-.38);ctx.lineTo(cx+.16,hy-.46);ctx.lineTo(cx+.16,hy-.3);ctx.fill()}
   ctx.restore();
 }
+// the big arena on Champion Island: a round stone stadium with gold trim and flags; its gate is the champion's spot
+function drawArena(ctx,x,y,t){const cx=x+.5,by=y+.55,rx=2.9,top=y-2.6;
+  shadowBlob(ctx,cx+.2,by-.05,rx+.3,.55,.3);
+  ctx.fillStyle='#cdbb94';ctx.beginPath();ctx.ellipse(cx,top+.55,rx,.75,0,0,7);ctx.fill();
+  ctx.fillStyle='#7cc46a';ctx.beginPath();ctx.ellipse(cx,top+.6,rx-.45,.48,0,0,7);ctx.fill();
+  const g=ctx.createLinearGradient(0,top+.5,0,by);g.addColorStop(0,'#f6ecd4');g.addColorStop(1,'#d8c49a');ctx.fillStyle=g;
+  ctx.beginPath();ctx.moveTo(cx-rx,top+.55);ctx.lineTo(cx-rx,by-.5);ctx.ellipse(cx,by-.5,rx,.5,0,Math.PI,0,true);ctx.lineTo(cx+rx,top+.55);ctx.ellipse(cx,top+.55,rx,.75,0,0,Math.PI,false);ctx.fill();
+  ctx.strokeStyle='#d49a17';ctx.lineWidth=.12;ctx.beginPath();ctx.ellipse(cx,top+.95,rx,.68,0,.08,Math.PI-.08);ctx.stroke();
+  ctx.fillStyle='rgba(90,60,30,.55)';for(let k=-4;k<=4;k++){if(k===0)continue;const ax=cx+k*.62,ay=by-.5+(Math.abs(k)/4)**2*-.05-.15;ctx.beginPath();ctx.moveTo(ax-.2,ay);ctx.lineTo(ax-.2,ay-.55);ctx.arc(ax,ay-.55,.2,Math.PI,0);ctx.lineTo(ax+.2,ay);ctx.fill()}
+  ctx.fillStyle='#3a2414';ctx.beginPath();ctx.moveTo(cx-.42,by);ctx.lineTo(cx-.42,by-.95);ctx.arc(cx,by-.95,.42,Math.PI,0);ctx.lineTo(cx+.42,by);ctx.fill();
+  ctx.strokeStyle='#ffc83d';ctx.lineWidth=.1;ctx.beginPath();ctx.moveTo(cx-.47,by);ctx.lineTo(cx-.47,by-.95);ctx.arc(cx,by-.95,.47,Math.PI,0);ctx.lineTo(cx+.47,by);ctx.stroke();
+  for(const [dx,c] of [[-2.6,'#ff5a3d'],[-1.3,'#ffc83d'],[0,'#ff5a3d'],[1.3,'#ffc83d'],[2.6,'#ff5a3d']]){const fx=cx+dx,fy=top+(dx?.1:-.3)+Math.abs(dx)*.08,w=Math.sin(t/260+dx)*.08;
+    ctx.strokeStyle='#5a3a1a';ctx.lineWidth=.06;ctx.beginPath();ctx.moveTo(fx,fy+.6);ctx.lineTo(fx,fy-.5);ctx.stroke();ctx.fillStyle=c;ctx.beginPath();ctx.moveTo(fx,fy-.5);ctx.lineTo(fx+.55,fy-.36+w);ctx.lineTo(fx,fy-.2);ctx.fill()}
+  ctx.fillStyle='#ffc83d';ctx.font='bold .34px Fredoka, sans-serif';ctx.textAlign='center';ctx.fillText('\u2605',cx,by-1.55);
+  const b=Math.sin(t/300)*.08;ctx.fillStyle='#fff';ctx.beginPath();ctx.roundRect(cx-.18,by-2.15+b,.36,.42,.1);ctx.fill();ctx.fillStyle='#ff5a3d';ctx.fillRect(cx-.035,by-2.08+b,.07,.18);ctx.fillRect(cx-.035,by-1.86+b,.07,.06)}
 function drawHouse(ctx,h,el,t){const x=h.x,y=h.y,roof=ROOF[el];shadowBlob(ctx,x+.55,y+.9,.75,.16);
   const wg=ctx.createLinearGradient(x,0,x+1,0);wg.addColorStop(0,'#fff6e2');wg.addColorStop(1,'#e2d2b2');ctx.fillStyle=wg;ctx.fillRect(x+.04,y-.15,.92,1);
   ctx.fillStyle='rgba(0,0,0,.12)';ctx.fillRect(x+.04,y+.75,.92,.1);
@@ -1335,14 +1352,14 @@ function island(i,fromMap){
     <span class="zoom"><button id="zo" aria-label="Zoom out">&#8722;</button><span id="zl">Close</span><button id="zi" aria-label="Zoom in">+</button></span>
     ${muteBtn()}${S.buddy?`<button class="btn ghost sm" id="askb">Ask ${S.buddy.name}</button>`:''}${journalBtn()}<button class="btn ghost sm" id="team">Team</button><button class="btn ghost sm" id="mapb">Map</button></div></div>
   <div class="worldwrap box np"><canvas class="scene" id="cv" data-aspect=".62"></canvas><div class="prompt box" id="prompt" hidden></div><div class="tip3d" id="tip3d" hidden>&#9650; walk forward &nbsp; &#9664; &#9654; turn &nbsp; &#9660; turn around</div></div>
-  <div class="controls"><div class="box help"><div class="hshort">${s.secret?`Find the legendary <b>${SP[s.legend].name}</b> at the far end. Walk onto the glowing portal to go home.`:done?`You beat ${s.champ.name}! Explore for secrets, chests and rare monsters.`:`Tap anywhere on the island to walk there. Make your way to ${i===CHAMP&&!S.tourneyWon?'the <b>Champion Tournament</b>':`<b>${s.champ.name}</b>`} at the far end.`}${S.buddy?` Stuck? Tap <b>Ask ${S.buddy.name}</b>.`:''}</div>
+  <div class="controls"><div class="box help"><div class="hshort">${s.secret?`Find the legendary <b>${SP[s.legend].name}</b> at the far end. Walk onto the glowing portal to go home.`:done?`You beat ${s.champ.name}! Explore for secrets, chests and rare monsters.`:`Tap anywhere on the island to walk there. Make your way to ${i===CHAMP?'the <b>big arena</b>':`<b>${s.champ.name}</b>`} at the far end.`}${S.buddy?` Stuck? Tap <b>Ask ${S.buddy.name}</b>.`:''}</div>
     <details class="hmore"><summary>How to play</summary><b>Tap</b> a spot to walk there, or use the <b>arrow keys</b> or <b>WASD</b> to walk. <b>+</b> and <b>&#8722;</b> zoom out to see the whole island and the sea.
     ${s.secret?`<b>${s.deep?'You found the underwater kingdom!':'You found a secret world!'}</b> ${s.blurb} Rare monsters roam everywhere. The legendary <b>${SP[s.legend].name}</b> waits at the far end${legendGot?' (you caught it!)':''}. Walk back onto the glowing portal to go home.</details></div>`:`Monsters wander the tall grass. Walk into one to battle. If you get too close, they come after you!
-    Each island has <b>three towns</b> split by locked <b>gates</b>. Beat each town's <b>leader</b> to open the gate to the next town. Other <b>trainers</b> battle you if they see you! Find the hidden <b>treasure chests</b>. Heal your team at the <b>tent</b>, any <b>Rest House</b> (the ones with a heart), or a sparkly <b>healing spring</b>. ${s.champ.name} waits at the far end. Every town has a <b>Move Shop</b>.${i===CHAMP?'':' And somewhere on this island is a <b>secret</b>...'}</details></div>`}
+    ${i===CHAMP?'Walk into the <b>big arena</b> at the far end to enter the Champion Tournament.':'Each island has <b>three towns</b> split by locked <b>gates</b>.'} Beat each town's <b>leader</b> to open the gate to the next town. Other <b>trainers</b> battle you if they see you! Find the hidden <b>treasure chests</b>. Heal your team at the <b>tent</b>, any <b>Rest House</b> (the ones with a heart), or a sparkly <b>healing spring</b>. ${s.champ.name} waits at the far end. Every town has a <b>Move Shop</b>.${i===CHAMP?'':' And somewhere on this island is a <b>secret</b>...'}</details></div>`}
     <div class="dpad" aria-label="Move"><button class="u" data-d="up" aria-label="Up">&#9650;</button><button class="l" data-d="left" aria-label="Left">&#9664;</button><button class="r" data-d="right" aria-label="Right">&#9654;</button><button class="d" data-d="down" aria-label="Down">&#9660;</button></div></div>
   ${s.secret?'':boardHTML()}
   <div class="box"><h3>Monsters on ${s.name}</h3><div class="wild">${list.map(sp=>{const got=S.caught[sp],isR=sp===s.rare||(s.rares||[]).includes(sp);return `<div class="${got?'':'unknown'}"><div class="art">${spr(sp)}</div>${got?SP[sp].name:'???'}${s.secret?(sp===s.legend?'<div class="muted" style="font-size:12px">Legendary!</div>':''):(NIGHT[i]||[]).includes(sp)?'<div class="muted" style="font-size:12px">Only at night</div>':isR?`<div class="muted" style="font-size:12px">${done?'Rare. It runs away!':'Appears after the champion'}</div>`:''}</div>`}).join('')}</div>
-    <p class="muted small" style="margin-top:10px">${s.secret?`Monsters here are level ${s.lv[0]} to ${s.lv[1]}. ${SP[s.legend].name} is level ${s.llv}. Bring your strongest team and a Super Net!`:`Wild monsters here are level ${s.lv[0]} to ${s.lv[1]}. ${s.champ.name} has ${champTeam(i).length} monsters, up to level ${Math.max(...champTeam(i).map(t=>t[1]))}. ${i===CHAMP?'':`Secret: ${S.secrets[i]?'<b>found!</b> '+SECRETS[i].name:'not found yet'}. `}Trainers beaten: ${m.trainers.filter(t=>(S.tb[i]||[]).includes(t.k)).length} of ${m.trainers.length}${m.trainers.some(t=>t.rival&&!(S.tb[i]||[]).includes(t.k))?' (Rival Rex is waiting just past the first gate!)':''}.`}</p></div>`;
+    <p class="muted small" style="margin-top:10px">${s.secret?`Monsters here are level ${s.lv[0]} to ${s.lv[1]}. ${SP[s.legend].name} is level ${s.llv}. Bring your strongest team and a Super Net!`:`Wild monsters here are level ${s.lv[0]} to ${s.lv[1]}. ${s.champ.name} has ${champTeam(i).length} monsters, up to level ${Math.max(...champTeam(i).map(t=>t[1]))}. ${i===CHAMP?'':`Secret: ${S.secrets[i]?'<b>found!</b> '+SECRETS[i].name:'not found yet'}. `}${i===CHAMP?'':`Trainers beaten: ${m.trainers.filter(t=>(S.tb[i]||[]).includes(t.k)).length} of ${m.trainers.length}${m.trainers.some(t=>t.rival&&!(S.tb[i]||[]).includes(t.k))?' (Rival Rex is waiting just past the first gate!)':''}.`}`}</p></div>`;
   document.getElementById('team').onclick=()=>{WORLD=null;team(()=>island(i))};bindJournal(()=>island(i));
   const ab=document.getElementById('askb');if(ab)ab.onclick=()=>{if(WORLD)WORLD.lastBuddy=performance.now();buddySay(buddyHint(i),true)};
   document.getElementById('mapb').onclick=()=>{SFX.select();if(s.deep)return map();if(s.secret){S.pos[s.parent]=secretReturn(s.parent);island(s.parent,'portal')}else map()};
@@ -1605,7 +1622,7 @@ function drawOver(t){
     for(const tr of ws.trainers)ents.push({y:tr.fy+.6,d:()=>{drawPerson(ctx,tr.fx,tr.fy,tr.dir,tr.walkT||0,palFor(tr));
       if(tr.alert&&!trBeaten(tr.k)){const bx=tr.fx+.28,by=tr.fy-1.25;ctx.fillStyle='#fff';ctx.beginPath();ctx.roundRect(bx,by,.44,.52,.12);ctx.fill();ctx.fillStyle='#ff4d4d';ctx.fillRect(bx+.18,by+.08,.08,.24);ctx.fillRect(bx+.18,by+.37,.08,.07)}
       else if(!trBeaten(tr.k)){const [dx,dy]=DIRS[tr.dir];ctx.fillStyle='rgba(255,255,255,.07)';for(let k=1;k<=4;k++){const x=tr.x+dx*k,y=tr.y+dy*k;if(x<0||y<0||x>=W||y>=H||!walk(m.g[y][x]))break;ctx.fillRect(x+.1,y+.1,.8,.8)}}}});
-    if(m.secret){if(!S.caught[s.legend])ents.push({y:m.champ.y+.6,d:()=>drawMon(ctx,{sp:s.legend,fx:m.champ.x,fy:m.champ.y,hx:0,face:true,rare:true},t)})}else ents.push({y:m.champ.y+.6,d:()=>{drawPerson(ctx,m.champ.x,m.champ.y,'down',0,{shirt:ELHEX[s.el],shirtD:'#222a44',cap:'#1b1b2a',brim:'#1b1b2a',cape:'#7a1f2e',crown:1});
+    if(m.secret){if(!S.caught[s.legend])ents.push({y:m.champ.y+.6,d:()=>drawMon(ctx,{sp:s.legend,fx:m.champ.x,fy:m.champ.y,hx:0,face:true,rare:true},t)})}else if(s.arena)ents.push({y:m.champ.y+.55,d:()=>drawArena(ctx,m.champ.x,m.champ.y,t)});else ents.push({y:m.champ.y+.6,d:()=>{drawPerson(ctx,m.champ.x,m.champ.y,'down',0,{shirt:ELHEX[s.el],shirtD:'#222a44',cap:'#1b1b2a',brim:'#1b1b2a',cape:'#7a1f2e',crown:1});
       const b=Math.sin(t/300)*.08;ctx.fillStyle='#fff';ctx.beginPath();ctx.roundRect(m.champ.x+.32,m.champ.y-1.15+b,.36,.42,.1);ctx.fill();ctx.fillStyle='#ff5a3d';ctx.fillRect(m.champ.x+.465,m.champ.y-1.08+b,.07,.18);ctx.fillRect(m.champ.x+.465,m.champ.y-.86+b,.07,.06)}});
     ents.push({y:p.fy+.6,d:()=>{if(t<Wd.inv&&Math.floor(t/90)%2)return;drawPerson(ctx,p.fx,p.fy,p.dir,p.walkT,HERO);
       if(Wd.alert){const bx=p.fx+.28,by=p.fy-1.25;ctx.fillStyle='#fff';ctx.beginPath();ctx.roundRect(bx,by,.44,.52,.12);ctx.fill();ctx.fillStyle='#ff4d4d';ctx.fillRect(bx+.18,by+.08,.08,.24);ctx.fillRect(bx+.18,by+.37,.08,.07)}}});
@@ -1707,7 +1724,15 @@ function build3D(i){
     const lid=new T.Group();lid.position.set(0,.38,-.21);const lm=new T.Mesh(new T.BoxGeometry(.6,.14,.42),new T.MeshLambertMaterial({color:'#b5652a'}));lm.position.set(0,.07,.21);lid.add(lm);g.add(lid);g.position.set(x,0,z);sc.add(g);return {c,lid}});
   // people and monsters
   const player=person3D({...HERO,pack:1});sc.add(player);
-  const champ=person3D({shirt:ELHEX[s.el],cap:'#1b1b2a',brim:'#1b1b2a',cape:'#7a1f2e',crown:1});{const [x,z]=P(m.champ.x,m.champ.y);champ.position.set(x,0,z);champ.bang.visible=true;if(!m.secret)sc.add(champ)}
+  const champ=person3D({shirt:ELHEX[s.el],cap:'#1b1b2a',brim:'#1b1b2a',cape:'#7a1f2e',crown:1});{const [x,z]=P(m.champ.x,m.champ.y);champ.position.set(x,0,z);champ.bang.visible=true;if(!m.secret&&!s.arena)sc.add(champ)}
+  if(s.arena){const [x,z]=P(m.champ.x,m.champ.y),a=new T.Group(),stone=new T.MeshLambertMaterial({color:'#efe3c6',side:T.DoubleSide}),gold=new T.MeshPhongMaterial({color:'#ffc83d',emissive:'#5a3a00'});
+    const wall=new T.Mesh(new T.CylinderGeometry(2.6,2.8,1.7,40,1,true),stone);wall.position.y=.85;a.add(wall);
+    const rim=new T.Mesh(new T.TorusGeometry(2.6,.1,8,40),gold);rim.rotation.x=Math.PI/2;rim.position.y=1.72;a.add(rim);
+    const floor=new T.Mesh(new T.CircleGeometry(2.55,40),new T.MeshLambertMaterial({color:'#7cc46a'}));floor.rotation.x=-Math.PI/2;floor.position.y=.03;a.add(floor);
+    for(let k=0;k<8;k++){const ang=k/8*Math.PI*2,pole=new T.Mesh(new T.CylinderGeometry(.04,.04,1.1,6),new T.MeshLambertMaterial({color:'#5a3a1a'}));pole.position.set(Math.cos(ang)*2.6,2.25,Math.sin(ang)*2.6);a.add(pole);
+      const flag=new T.Mesh(new T.PlaneGeometry(.55,.32),new T.MeshLambertMaterial({color:k%2?'#ffc83d':'#ff5a3d',side:T.DoubleSide}));flag.position.set(Math.cos(ang)*2.6+.28,2.62,Math.sin(ang)*2.6);a.add(flag)}
+    const door=new T.Mesh(new T.BoxGeometry(.9,1.1,.12),new T.MeshLambertMaterial({color:'#3a2414'}));door.position.set(0,.55,2.75);a.add(door);const arch=new T.Mesh(new T.TorusGeometry(.5,.07,8,20,Math.PI),gold);arch.position.set(0,1.05,2.8);a.add(arch);
+    a.position.set(x,0,z-3);sc.add(a)}
   R3.portals=[];const ring=(x,z)=>{const g=new T.Mesh(new T.TorusGeometry(.42,.07,10,28),new T.MeshPhongMaterial({color:'#7ee4f4',emissive:'#4a8aff'}));g.position.set(x,.55,z);sc.add(g);R3.portals.push(g);return g};
   if(m.secret){const [x,z]=P(m.start.x,m.start.y);ring(x,z)}
   if(m.secretStone){const [x,z]=P(m.secretStone.x,m.secretStone.y);R3.secretRing=ring(x,z);R3.secretRing.position.y=1.1}else R3.secretRing=null;
@@ -2036,9 +2061,10 @@ function buddyHint(i){
   if(st&&S.beaten.includes(i)&&!S.secrets[i]&&Math.random()<.7)return secrets[0];
   if(secrets.length&&Math.random()<.4)return pick(secrets);
   const z=m.zoneOf(WORLD?WORLD.p.x:m.start.x,WORLD?WORLD.p.y:m.start.y);
+  if(i===CHAMP&&!S.tourneyWon)return 'The big arena is at the far end of the island. Walk in to enter the Champion Tournament. Win it, and you get to battle The Grand Champion!';
   if(!S.beaten.includes(i)){
     if(z<3&&!gateOpen(i,z)){const L=s.tr[z],mx=Math.max(...scaled(L.team,1).map(t=>t[1]));return `${L.name} guards the gate in ${m.towns[z].name}. Beat them to open the way forward!${top<mx-1?` Their monsters are up to level ${mx}, so train in the tall grass first.`:''}`}
-    const mx=Math.max(...champTeam(i).map(t=>t[1]));if(i===CHAMP&&!S.tourneyWon)return 'The Champion Tournament is at the far end of the island. Beat the town leaders to get there, then win the tournament to battle The Grand Champion!';if(i===CHAMP)return `The Grand Champion waits at the far end of the island. Their team has one monster of every element, so bring lots of different elements!${top<mx-1?` Their best is level ${mx}, so level up a bit first!`:''}`;return `${s.champ.name} waits at the far end of the island. ${EL[counterOf(s.el)].n} moves are super strong against ${EL[s.el].n} monsters.${top<mx-1?` Their best is level ${mx}, so level up a bit first!`:''}`}
+    const mx=Math.max(...champTeam(i).map(t=>t[1]));if(i===CHAMP)return `The Grand Champion waits at the far end of the island. Their team has one monster of every element, so bring lots of different elements!${top<mx-1?` Their best is level ${mx}, so level up a bit first!`:''}`;return `${s.champ.name} waits at the far end of the island. ${EL[counterOf(s.el)].n} moves are super strong against ${EL[s.el].n} monsters.${top<mx-1?` Their best is level ${mx}, so level up a bit first!`:''}`}
   if(i===CHAMP&&!S.rexFinal)return 'Rex is still waiting at the champion\'s spot. Go battle him!';
   return secrets.length?pick(secrets):'You did it here! Use the Map button to sail somewhere new.';
 }
