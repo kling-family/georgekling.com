@@ -152,6 +152,10 @@ canvas.scene{display:block;width:100%;height:auto;touch-action:none}
 @keyframes faint{to{transform:translateY(40px);opacity:0}}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(22px + env(safe-area-inset-bottom,0px));z-index:5;font-family:var(--display);font-weight:600;font-size:16px;max-width:min(90vw,520px);text-align:center;margin:0;animation:pop .25s ease}
 @keyframes pop{from{transform:translate(-50%,12px);opacity:0}}
+.bracket{overflow-x:auto}.bsec+.bsec{margin-top:14px}.bsec h3{margin:0 0 8px}
+.bcols{display:flex;gap:12px;min-width:max-content;align-items:stretch}.bcol{display:flex;flex-direction:column;gap:10px;justify-content:space-around;width:178px}
+.tm{background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:6px 8px;font-size:14px}.tm.live{border-color:var(--gold);box-shadow:0 0 0 2px rgba(255,200,61,.35)}
+.tlab{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px}.tp{padding:2px 4px;font-weight:600}.tp.me{color:var(--gold)}.tp.tw::after{content:" \2714";color:var(--gold)}.tp.tl{color:var(--dim);text-decoration:line-through;opacity:.75}
 .win{display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center}
 .win h1{font-size:clamp(40px,10vw,72px);font-weight:700;background:linear-gradient(180deg,#fff2a8,var(--gold),#ff8a3d);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 4px 0 #7a2e12)}
 .wheelwrap{display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:center;margin-top:12px}.wheel{width:min(330px,100%);height:auto;filter:drop-shadow(0 8px 18px rgba(0,0,0,.5))}.winfo{display:flex;flex-direction:column;gap:10px;min-width:220px;max-width:300px;font-size:15px;color:#3a2a10;font-family:Cinzel,Georgia,'Times New Roman',serif;background:radial-gradient(120% 120% at 30% 20%,#f4e8c4,#e2cf9c 70%,#cdb37a);border:2px solid #8a6a2a;border-radius:6px;padding:14px 16px;box-shadow:inset 0 0 18px rgba(120,80,20,.35),0 6px 16px rgba(0,0,0,.35)}.winfo .small{color:#5a4420}.wnode:focus{outline:none}.wnode:focus circle{stroke:#3fd6ff;stroke-width:4}
@@ -660,6 +664,62 @@ const mine=S.team.map(m=>m.lvl).sort((a,b)=>b-a),order=team.map((t,k)=>k).sort((
 const trBonus=info=>info.rival?1:info.leader?1:0;
 function champTeam(i){const s=ISLES[i];if(s.secret)return s.champ.team;const t=[...s.champ.team],lo=Math.min(...t.map(x=>x[1])),pool=[...s.wild,...(NIGHT[i]||[])].filter(sp=>!t.some(x=>x[0]===sp));
   for(let k=0;t.length<6&&k<pool.length;k++)t.push([pool[k],lo]);return scaled(t,2)}
+// ================= CHAMPION TOURNAMENT (George's idea) =================
+// Eight trainers: you, the five island champions, Rex, and Challenger Zara.
+// Double elimination: your first loss drops you to the second-chance bracket, a second loss and you're out.
+// Win the whole tournament to earn a battle with The Grand Champion.
+const TOUR_NEW={name:'Challenger Zara',team:[['voltusk',24],['krakling',24],['flintfox',24],['glowcap',25],['bouldrake',25],['phantomkin',26]]};
+const TOUR_IDS=['you',0,1,2,3,4,'rex','zara'];
+const TOUR_M=[
+  ['W1','Round 1',['s',0],['s',1]],['W2','Round 1',['s',2],['s',3]],['W3','Round 1',['s',4],['s',5]],['W4','Round 1',['s',6],['s',7]],
+  ['W5','Semifinal',['w','W1'],['w','W2']],['W6','Semifinal',['w','W3'],['w','W4']],
+  ['L1','Second chance',['l','W1'],['l','W2']],['L2','Second chance',['l','W3'],['l','W4']],
+  ['L3','Second chance',['w','L1'],['l','W6']],['L4','Second chance',['w','L2'],['l','W5']],
+  ['W7','Winners final',['w','W5'],['w','W6']],
+  ['L5','Second chance',['w','L3'],['w','L4']],
+  ['L6','Second chance final',['w','L5'],['l','W7']],
+  ['GF','Grand final',['w','W7'],['w','L6']]].map(([id,round,a,b])=>({id,round,a,b}));
+const TOUR_COLS=[['Winners bracket',[['W1','W2','W3','W4'],['W5','W6'],['W7']]],['Second-chance bracket',[['L1','L2'],['L3','L4'],['L5'],['L6']]],['Grand final',[['GF']]]];
+const tName=id=>id==='you'?'You':id==='rex'?'Rival Rex':id==='zara'?TOUR_NEW.name:ISLES[id].champ.name;
+const tM=id=>TOUR_M.find(m=>m.id===id);
+function tWho(src){const T=S.tourney;if(src[0]==='s')return T.seed[src[1]];const r=T.res[src[1]];return r?(src[0]==='w'?r.w:r.l):null}
+const tPair=m=>[tWho(m.a),tWho(m.b)];
+const tNext=()=>TOUR_M.find(m=>!S.tourney.res[m.id]);
+const tLosses=id=>Object.values(S.tourney.res).filter(r=>r.l===id).length;
+const tBonus=m=>['W7','L6','GF'].includes(m.id)?2:m.round==='Round 1'?0:1;
+function newTourney(){const seed=[...TOUR_IDS];for(let k=seed.length-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));[seed[k],seed[j]]=[seed[j],seed[k]]}S.tourney={seed,res:{}};save()}
+// each island champion brings a full team of six from their own island
+function tBase(id){if(id==='zara')return TOUR_NEW.team;if(id==='rex')return rexFinalTeam([20,20,21,21,22,23].map(l=>['x',l]));
+  const s=ISLES[id],t=[...s.champ.team],lo=Math.min(...t.map(x=>x[1])),pool=[...s.wild,...(NIGHT[id]||[])].filter(sp=>!t.some(x=>x[0]===sp));for(let k=0;t.length<6&&k<pool.length;k++)t.push([pool[k],lo]);return t}
+const tTeam=(id,bonus)=>scaled(tBase(id),bonus);
+// matches you're not in: the trainer with the stronger usual team wins more often, but anyone can win
+function tSim(m){const [a,b]=tPair(m),pw=id=>tBase(id).reduce((x,t)=>x+t[1],0)**2,w=Math.random()<pw(a)/(pw(a)+pw(b))?a:b;S.tourney.res[m.id]={w,l:w===a?b:a};return S.tourney.res[m.id]}
+function tFight(m){const [a,b]=tPair(m),opp=a==='you'?b:a;[...S.team,...(S.box||[])].forEach(x=>x.hp=maxHp(x));
+  battle({wild:false,isle:CHAMP,trainer:{k:-7,name:tName(opp),tourney:m.id,opp},enemies:tTeam(opp,tBonus(m)).map(([sp,l])=>mk(sp,l))})}
+function tourney(msg){
+  SCREEN='tourney';WORLD=null;B=null;scrollTo(0,0);playSong('island');if(!S.tourney)newTourney();
+  const T=S.tourney,m=tNext(),out=tLosses('you')>=2,gf=T.res.GF;let text,acts=[];
+  if(gf&&gf.w==='you'){S.tourneyWon=1;save();text=`<b>You won the Champion Tournament!</b> The Grand Champion has been watching. Now it's time to battle for real.`;acts.push(['Battle The Grand Champion!','hot','gc'])}
+  else if(gf){text=`<b>${tName(gf.w)}</b> won the tournament this time. Train up and try again!`;acts.push(['Start a new tournament','','new'])}
+  else if(out){text=`You lost two matches, so you're out of the tournament. Good try!`;acts.push(['Watch the rest','','rest'],['Start a new tournament','','new'])}
+  else{const [a,b]=tPair(m),mine=a==='you'||b==='you';
+    if(mine){const opp=a==='you'?b:a;text=`<b>${m.round}:</b> you vs <b>${tName(opp)}</b>. Your team gets healed before every match.${tLosses('you')?' You already lost once, so one more loss and you\'re out!':''}`;acts.push([`Battle ${tName(opp)}!`,'hot','fight'])}
+    else{text=`<b>${m.round}:</b> ${tName(a)} vs ${tName(b)}.`;acts.push(['Watch this match','','watch'],['Skip to my match','ghost','skip'])}}
+  const card=id=>{const mm=tM(id),r=T.res[id],[a,b]=tPair(mm),live=m&&m.id===id;
+    return `<div class="tm${live?' live':''}"><div class="tlab">${mm.round}</div>${[a,b].map(p=>`<div class="tp${p==='you'?' me':''}${r&&r.w===p?' tw':''}${r&&r.l===p?' tl':''}">${p===null?'<span class="muted">?</span>':tName(p)}</div>`).join('')}</div>`};
+  app.innerHTML=`<div class="box hud"><span class="name">Champion Tournament</span><div class="stats">${muteBtn()}<button class="btn ghost sm" id="team">Team</button><button class="btn ghost sm" id="back">Back to the island</button></div></div>
+  <div class="box"><p style="margin:0 0 6px">${msg?msg+' ':''}${text}</p><p class="muted small" style="margin:0 0 12px">Lose once and you drop to the second-chance bracket. Lose twice and you're out.</p><div class="row">${acts.map(([l,c,id])=>`<button class="btn ${c} sm" data-t="${id}">${l}</button>`).join('')}</div></div>
+  <div class="box bracket">${TOUR_COLS.map(([h,cols])=>`<div class="bsec"><h3>${h}</h3><div class="bcols">${cols.map(c=>`<div class="bcol">${c.map(card).join('')}</div>`).join('')}</div></div>`).join('')}</div>`;
+  document.getElementById('back').onclick=()=>{SFX.select();island(CHAMP)};document.getElementById('team').onclick=()=>team(()=>tourney());
+  app.querySelectorAll('[data-t]').forEach(bt=>bt.onclick=()=>{const t=bt.dataset.t;
+    if(t==='fight'){SFX.alert();return tFight(tNext())}
+    if(t==='watch'){const r=tSim(tNext());save();SFX.select();return tourney(`${tName(r.w)} beat ${tName(r.l)}!`)}
+    if(t==='skip'){let n,k=0;while((n=tNext())&&!tPair(n).includes('you')){tSim(n);k++}save();SFX.select();return tourney(k?`${k} match${k>1?'es':''} played.`:'')}
+    if(t==='rest'){while(tNext())tSim(tNext());save();return tourney()}
+    if(t==='new'){newTourney();SFX.select();return tourney('A new tournament! The bracket has been shuffled.')}
+    if(t==='gc'){[...S.team,...(S.box||[])].forEach(x=>x.hp=maxHp(x));SFX.alert();battle({wild:false,isle:CHAMP,enemies:champTeam(CHAMP).map(([sp,l])=>mk(sp,l))})}});
+  focusFirst('.box');
+}
 // after you beat the Grand Champion, Rex shows up with a team at the very same levels as the champion's
 const REX_LINE='Rex: "Hey, you beat me to the champion of islands. Well, now I\'ll just beat you."';
 // Preview links only (never the real site): ?champion jumps straight to Champion Island with a ready test player
@@ -1275,7 +1335,7 @@ function island(i,fromMap){
     <span class="zoom"><button id="zo" aria-label="Zoom out">&#8722;</button><span id="zl">Close</span><button id="zi" aria-label="Zoom in">+</button></span>
     ${muteBtn()}${S.buddy?`<button class="btn ghost sm" id="askb">Ask ${S.buddy.name}</button>`:''}${journalBtn()}<button class="btn ghost sm" id="team">Team</button><button class="btn ghost sm" id="mapb">Map</button></div></div>
   <div class="worldwrap box np"><canvas class="scene" id="cv" data-aspect=".62"></canvas><div class="prompt box" id="prompt" hidden></div><div class="tip3d" id="tip3d" hidden>&#9650; walk forward &nbsp; &#9664; &#9654; turn &nbsp; &#9660; turn around</div></div>
-  <div class="controls"><div class="box help"><div class="hshort">${s.secret?`Find the legendary <b>${SP[s.legend].name}</b> at the far end. Walk onto the glowing portal to go home.`:done?`You beat ${s.champ.name}! Explore for secrets, chests and rare monsters.`:`Tap anywhere on the island to walk there. Make your way to <b>${s.champ.name}</b> at the far end.`}${S.buddy?` Stuck? Tap <b>Ask ${S.buddy.name}</b>.`:''}</div>
+  <div class="controls"><div class="box help"><div class="hshort">${s.secret?`Find the legendary <b>${SP[s.legend].name}</b> at the far end. Walk onto the glowing portal to go home.`:done?`You beat ${s.champ.name}! Explore for secrets, chests and rare monsters.`:`Tap anywhere on the island to walk there. Make your way to ${i===CHAMP&&!S.tourneyWon?'the <b>Champion Tournament</b>':`<b>${s.champ.name}</b>`} at the far end.`}${S.buddy?` Stuck? Tap <b>Ask ${S.buddy.name}</b>.`:''}</div>
     <details class="hmore"><summary>How to play</summary><b>Tap</b> a spot to walk there, or use the <b>arrow keys</b> or <b>WASD</b> to walk. <b>+</b> and <b>&#8722;</b> zoom out to see the whole island and the sea.
     ${s.secret?`<b>${s.deep?'You found the underwater kingdom!':'You found a secret world!'}</b> ${s.blurb} Rare monsters roam everywhere. The legendary <b>${SP[s.legend].name}</b> waits at the far end${legendGot?' (you caught it!)':''}. Walk back onto the glowing portal to go home.</details></div>`:`Monsters wander the tall grass. Walk into one to battle. If you get too close, they come after you!
     Each island has <b>three towns</b> split by locked <b>gates</b>. Beat each town's <b>leader</b> to open the gate to the next town. Other <b>trainers</b> battle you if they see you! Find the hidden <b>treasure chests</b>. Heal your team at the <b>tent</b>, any <b>Rest House</b> (the ones with a heart), or a sparkly <b>healing spring</b>. ${s.champ.name} waits at the far end. Every town has a <b>Move Shop</b>.${i===CHAMP?'':' And somewhere on this island is a <b>secret</b>...'}</details></div>`}
@@ -1500,6 +1560,11 @@ function openChamp(){
   if(ISLES[WORLD.i].secret){if(!S.caught[ISLES[WORLD.i].legend])return openLegend();return}
   const Wd=WORLD,s=ISLES[Wd.i],pr=document.getElementById('prompt'),tired=!S.team.some(x=>x.hp>0);Wd.paused=true;
   pr.hidden=false;
+  if(Wd.i===CHAMP&&!S.beaten.includes(CHAMP)&&!S.tourneyWon){const going=S.tourney&&!S.tourney.res.GF&&tLosses('you')<2&&Object.keys(S.tourney.res).length;
+    pr.innerHTML=`<div class="who">Champion Tournament</div><div>${going?'Your tournament is still going. Ready for your next match?':'Welcome to the Champion Tournament! Eight trainers: you, the five island champions, Rival Rex and Challenger Zara. Win it, and you get to battle The Grand Champion!'}</div><div class="row"><button class="btn hot sm" id="py">${going?'Back to the bracket':'Enter!'}</button><button class="btn ghost sm" id="pn">Not yet</button></div>`;
+    document.getElementById('pn').onclick=()=>{pr.hidden=true;Wd.paused=false};
+    document.getElementById('py').onclick=()=>{pr.hidden=true;if(!going)newTourney();SFX.whoosh();tourney()};
+    return focusFirst('#prompt')}
   if(Wd.i===CHAMP&&S.beaten.includes(CHAMP)&&!S.rexFinal){
     pr.innerHTML=`<div class="who">Rival Rex</div><div>${tired?'Your team looks tired. Go rest in the tent first!':REX_LINE.replace(/^Rex: /,'')}</div><div class="row">${tired?'<button class="btn sm" id="pn">OK</button>':'<button class="btn hot sm" id="py">Battle!</button><button class="btn ghost sm" id="pn">Not yet</button>'}</div>`;
     document.getElementById('pn').onclick=()=>{pr.hidden=true;Wd.paused=false};
@@ -1953,7 +2018,7 @@ const counterOf=el=>Object.keys(BEATS).find(e=>BEATS[e].includes(el));
 function buddyHint(i){
   const pick=a=>a[Math.floor(Math.random()*a.length)],team=S.team,hp=team.reduce((a,m)=>a+m.hp,0)/team.reduce((a,m)=>a+maxHp(m),0),top=Math.max(...team.map(m=>m.lvl));
   const pieces=Object.keys(S.pieces||{}).length;
-  if((i===null||i===undefined)&&champUnlocked()&&!S.rexFinal&&!(pieces>=MAIN&&!S.caught.leviathorn&&Math.random()<.4))return S.beaten.includes(CHAMP)?'Rex is still waiting on Champion Island! Go back to the champion\'s spot to battle him.':'Let\'s sail to Champion Island! The Grand Champion has one monster of every element, so bring a team with lots of different elements.';
+  if((i===null||i===undefined)&&champUnlocked()&&!S.rexFinal&&!(pieces>=MAIN&&!S.caught.leviathorn&&Math.random()<.4))return S.beaten.includes(CHAMP)?'Rex is still waiting on Champion Island! Go back to the champion\'s spot to battle him.':'Let\'s sail to Champion Island! Win the Champion Tournament there, and you get to battle The Grand Champion.';
   if(i===null||i===undefined){const n=S.unlocked-1;if(S.beaten.length>=MAIN)return pieces>=MAIN&&!S.caught.leviathorn?'All five map pieces point to the whirlpool between the islands. Sail into it, if you dare!':'You beat every champion! Now hunt for secret worlds and fill your monster book.';
     const is=ISLES[Math.min(n,MAIN-1)];return `Let's sail to ${is.name}! ${is.champ.name} is the champion there, and ${EL[counterOf(ISLES[Math.min(n,MAIN-1)].el)].n} moves work great against ${EL[is.el].n} monsters.`}
   const s=ISLES[i],m=genMap(i);
@@ -1973,7 +2038,7 @@ function buddyHint(i){
   const z=m.zoneOf(WORLD?WORLD.p.x:m.start.x,WORLD?WORLD.p.y:m.start.y);
   if(!S.beaten.includes(i)){
     if(z<3&&!gateOpen(i,z)){const L=s.tr[z],mx=Math.max(...scaled(L.team,1).map(t=>t[1]));return `${L.name} guards the gate in ${m.towns[z].name}. Beat them to open the way forward!${top<mx-1?` Their monsters are up to level ${mx}, so train in the tall grass first.`:''}`}
-    const mx=Math.max(...champTeam(i).map(t=>t[1]));if(i===CHAMP)return `The Grand Champion waits at the far end of the island. Their team has one monster of every element, so bring lots of different elements!${top<mx-1?` Their best is level ${mx}, so level up a bit first!`:''}`;return `${s.champ.name} waits at the far end of the island. ${EL[counterOf(s.el)].n} moves are super strong against ${EL[s.el].n} monsters.${top<mx-1?` Their best is level ${mx}, so level up a bit first!`:''}`}
+    const mx=Math.max(...champTeam(i).map(t=>t[1]));if(i===CHAMP&&!S.tourneyWon)return 'The Champion Tournament is at the far end of the island. Beat the town leaders to get there, then win the tournament to battle The Grand Champion!';if(i===CHAMP)return `The Grand Champion waits at the far end of the island. Their team has one monster of every element, so bring lots of different elements!${top<mx-1?` Their best is level ${mx}, so level up a bit first!`:''}`;return `${s.champ.name} waits at the far end of the island. ${EL[counterOf(s.el)].n} moves are super strong against ${EL[s.el].n} monsters.${top<mx-1?` Their best is level ${mx}, so level up a bit first!`:''}`}
   if(i===CHAMP&&!S.rexFinal)return 'Rex is still waiting at the champion\'s spot. Go battle him!';
   return secrets.length?pick(secrets):'You did it here! Use the Map button to sail somewhere new.';
 }
@@ -2016,7 +2081,7 @@ function meetBuddy(next){
   const sugg=[...BUDDY_NAMES].sort(()=>Math.random()-.5).slice(0,8);
   const RULES=[n=>`Here's how Monster Island works. Tap anywhere on the island to walk there, or use the arrow buttons or keys. Monsters hide in the tall grass. Walk into one to battle it, then throw a net to catch it!`,
     n=>`Every island has three towns with locked gates. Beat each town's leader to open the gate. Watch out: other trainers will battle you if they spot you!`,
-    n=>`Beat the champion at the far end of an island to unlock the next one. Win all five islands to unlock Champion Island, where the champion of all islands is waiting!`,
+    n=>`Beat the champion at the far end of an island to unlock the next one. Win all five islands to unlock Champion Island and its Champion Tournament!`,
     n=>`Tired monsters? Heal at the tent, a Rest House with a heart on the roof, or a sparkly spring. Every element is strong against two others. Tap Element guide on the map to see which!`,
     n=>`Every island hides treasure chests and a secret door to a hidden world. I'll pop up with hints when I find them. Tap "Ask ${n}" any time you're stuck. Let's go!`];
   const draw=()=>{registerCustom('_buddy',{...d,name:name||'Buddy'});
@@ -2170,7 +2235,7 @@ function opts(list){const a=document.getElementById('act');a.innerHTML=list.map(
 function menu(){
   document.getElementById('log').textContent=`What will ${nm(active())} do?`;
   opts([{label:'Fight',go:fightMenu},{label:'Net',off:!B.wild,sub:B.wild?(S.supers?`Super nets: ${S.supers}`:'Catch it!'):(B.trainer?"Can't catch a trainer's monster":"Can't catch a champion's monster"),go:netMenu},
-    {label:'Dodge',off:!!B.tired,sub:B.tired?'Too tired after a Full Blast!':'50% chance to dodge',go:dodgeTurn},{label:'Switch',off:S.team.filter(m=>m.hp>0).length<2,go:()=>swapMenu(false)},{label:'Run',sub:B.showdown?'Leave the showdown':B.wild?'':'No coins if you run',go:async()=>{lock();if(B.showdown){await say('You left the showdown.',700);return endShowdown(null)}if(B.trainer){const ws=WSTATE[B.isle];if(ws){ws.fled=ws.fled||new Set();ws.fled.add(B.trainer.k)}await say(`You ran away from ${B.trainer.name}!`,900);await say(B.trainer.rexFinal?'Rex will be waiting at the champion\'s spot.':'Walk up to them when you are ready for a rematch.',1100)}else if(!B.wild){await say(`You ran away from ${foe()}! Come back when you're ready.`,1200)}else await say('You got away safely!');save();island(B.isle)}}]);
+    {label:'Dodge',off:!!B.tired,sub:B.tired?'Too tired after a Full Blast!':'50% chance to dodge',go:dodgeTurn},{label:'Switch',off:S.team.filter(m=>m.hp>0).length<2,go:()=>swapMenu(false)},{label:'Run',sub:B.showdown?'Leave the showdown':B.wild?'':'No coins if you run',go:async()=>{lock();if(B.showdown){await say('You left the showdown.',700);return endShowdown(null)}if(B.trainer&&B.trainer.tourney){await say('You step out of the arena. Your match will wait for you.',1000);save();return tourney()}if(B.trainer){const ws=WSTATE[B.isle];if(ws){ws.fled=ws.fled||new Set();ws.fled.add(B.trainer.k)}await say(`You ran away from ${B.trainer.name}!`,900);await say(B.trainer.rexFinal?'Rex will be waiting at the champion\'s spot.':'Walk up to them when you are ready for a rematch.',1100)}else if(!B.wild){await say(`You ran away from ${foe()}! Come back when you're ready.`,1200)}else await say('You got away safely!');save();island(B.isle)}}]);
 }
 function fightMenu(){
   const e=enemy();
@@ -2313,6 +2378,8 @@ async function winBattle(){
   stopSong();doVictoryHop();
   if(B.showdown){SFX.win();await say(`You won the showdown against ${B.trainer.name}!`,1200);if(B.opp==='rex')await say('Rex: "WHAT?! Fine... but next time I\'m winning!"',1300);return endShowdown(true)}
   if(B.wild){SFX.win();await say('You won the battle!');const c=3+Math.floor(enemy().lvl/2);S.coins+=c;await say(`You found ${c} coins!`,700);save();island(B.isle);return}
+  if(B.trainer&&B.trainer.tourney){const id=B.trainer.tourney,opp=B.trainer.opp,n=Math.round(8+B.enemies.reduce((a,m)=>a+m.lvl,0)/2);SFX.win();await say(`You beat ${B.trainer.name}!`,1000);
+    S.tourney.res[id]={w:'you',l:opp};S.coins+=n;await say(`You win ${n} coins.`,800);save();return tourney()}
   if(B.trainer&&B.trainer.rexFinal){const n=Math.round(8+B.enemies.reduce((a,m)=>a+m.lvl,0));SFX.win();await say('You beat Rival Rex!',1000);
     const first=!S.rexFinal;S.rexFinal=1;S.coins+=n;await say(`Rex gives you ${n} coins.`,900);save();if(first)return victory();island(CHAMP);return}
   if(B.trainer){const n=Math.round((8+B.enemies.reduce((a,m)=>a+m.lvl,0))*(B.trainer.again?.5:1));SFX.win();await say(`You beat ${B.trainer.name}!`,900);
@@ -2334,6 +2401,8 @@ async function winBattle(){
 async function loseBattle(){
   stopSong();
   if(B.showdown){await say(`${B.trainer.name} wins this showdown! Good battle!`,1200);if(B.opp==='rex')await say('Rex: "Ha! Told you my team was better!"',1300);return endShowdown(false)}
+  if(B.trainer&&B.trainer.tourney){const id=B.trainer.tourney;S.tourney.res[id]={w:B.trainer.opp,l:'you'};await say(`${B.trainer.name} wins this match!`,1000);
+    await say(tLosses('you')>=2?'That was your second loss, so you are out of the tournament.':'You drop to the second-chance bracket. Lose one more time and you\'re out!',1500);[...S.team,...(S.box||[])].forEach(x=>x.hp=maxHp(x));save();return tourney()}
   if(B.trainer&&B.trainer.rexFinal){await say('Rex wins this time!',1000);await say('Rest up, then go back to the champion\'s spot. Rex will be waiting there.',1600);S.team.forEach(m=>m.hp=maxHp(m));save();return island(CHAMP)}
   await say('All your monsters fainted.',900);
   await say('You hurry back to rest. Your team gets all better.',1100);
@@ -2410,7 +2479,7 @@ addEventListener('keydown',e=>{
   }
   if(SCREEN==='map'&&n>=1&&n<=RING.length){e.preventDefault();if(MAPVIEW&&MAPVIEW.pick)MAPVIEW.pick(RING[n-1]);else goIsland(RING[n-1]);return}
   if(SCREEN==='starter'&&n>=1&&n<=4){e.preventDefault();if(n===4)document.getElementById('own').click();else app.querySelectorAll('[data-s]')[n-1].click();return}
-  if(d&&['title','starter','team','win','map'].includes(SCREEN)&&!e.code.startsWith('Key')){const bs=[...app.querySelectorAll('button:not([disabled])')].filter(b=>b.offsetParent);const i=bs.indexOf(document.activeElement);if(bs.length){e.preventDefault();const j=Math.max(0,Math.min(bs.length-1,i+((d==='right'||d==='down')?1:-1)));bs[i<0?0:j].focus()}}
+  if(d&&['title','starter','team','win','map','tourney'].includes(SCREEN)&&!e.code.startsWith('Key')){const bs=[...app.querySelectorAll('button:not([disabled])')].filter(b=>b.offsetParent);const i=bs.indexOf(document.activeElement);if(bs.length){e.preventDefault();const j=Math.max(0,Math.min(bs.length-1,i+((d==='right'||d==='down')?1:-1)));bs[i<0?0:j].focus()}}
 });
 addEventListener('keyup',e=>{if(ROOM&&DIRK[e.code]&&DIRK[e.code]===ROOM.heldKey){ROOM.held=null;ROOM.heldKey=null}if(WORLD&&DIRK[e.code]&&DIRK[e.code]===WORLD.heldKey){WORLD.held=null;WORLD.heldKey=null}});
 addEventListener('blur',()=>{if(WORLD)WORLD.held=null});
