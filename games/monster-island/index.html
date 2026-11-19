@@ -665,7 +665,7 @@ const mine=S.team.map(m=>m.lvl).sort((a,b)=>b-a),order=team.map((t,k)=>k).sort((
   order.forEach((k,j)=>{const ref=mine[Math.min(j,mine.length-1)]||1,L=Math.min(60,Math.max(team[k][1],ref+bonus));out[k]=[evolved(team[k][0],L),L]});return out}
 const trBonus=info=>info.rival?1:info.leader?1:0;
 function champTeam(i){const s=ISLES[i];if(s.secret)return s.champ.team;const t=[...s.champ.team],lo=Math.min(...t.map(x=>x[1])),pool=[...s.wild,...(NIGHT[i]||[])].filter(sp=>!t.some(x=>x[0]===sp));
-  for(let k=0;t.length<6&&k<pool.length;k++)t.push([pool[k],lo]);return scaled(t,2)}
+  for(let k=0;t.length<6&&k<pool.length;k++)t.push([pool[k],lo]);return scaled(t,i===CHAMP?6:2)}
 // ================= CHAMPION TOURNAMENT (George's idea) =================
 // Eight trainers: you, the five island champions, Rex, and Challenger Zara.
 // Double elimination: your first loss drops you to the second-chance bracket, a second loss and you're out.
@@ -688,7 +688,8 @@ function tWho(src){const T=S.tourney;if(src[0]==='s')return T.seed[src[1]];const
 const tPair=m=>[tWho(m.a),tWho(m.b)];
 const tNext=()=>TOUR_M.find(m=>!S.tourney.res[m.id]);
 const tLosses=id=>Object.values(S.tourney.res).filter(r=>r.l===id).length;
-const tBonus=m=>['W7','L6','GF'].includes(m.id)?2:m.round==='Round 1'?0:1;
+// how many levels above your monsters the opponent's monsters are: tougher every round (George found the semifinals too easy)
+const tBonus=m=>({W1:1,W2:1,W3:1,W4:1,L1:2,L2:2,W5:3,W6:3,L3:3,L4:3,L5:3,W7:4,L6:4,GF:5})[m.id];
 function newTourney(){const seed=[...TOUR_IDS];for(let k=seed.length-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));[seed[k],seed[j]]=[seed[j],seed[k]]}S.tourney={seed,res:{}};save()}
 // each island champion brings a full team of six from their own island
 function tBase(id){if(id==='zara')return TOUR_NEW.team;if(id==='rex')return rexFinalTeam([20,20,21,21,22,23].map(l=>['x',l]));
