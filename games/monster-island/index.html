@@ -426,7 +426,7 @@ ISLES.push({name:'Champion Island',el:'champ',x:35,y:40,blurb:'The last island. 
   tr:[],arena:true,
   wild:['flintfox','abyssquid','glowcap','gravelord','voltusk','nightcoil'],rare:'cindermaw',rares:['tidefang','mossbrute','stormwing','eclipsar'],lv:[19,23],
   // a strong, balanced team: one monster of every element, and the legends of all five secret worlds (George said he was too easy)
-  champ:{name:'The Grand Champion',team:[['magmaroc',25],['aquarion',25],['sylvanox',26],['mudzilla',26],['voltara',27],['nyxis',28]]}});
+  champ:{name:'The Grand Champion',team:[['magmaroc',36],['aquarion',36],['sylvanox',37],['mudzilla',37],['voltara',38],['nyxis',40]]}});
 // the islands you can sail to, in order around the circle
 const RING=[0,1,2,3,4,CHAMP];
 const champUnlocked=()=>S&&S.unlocked>MAIN;
@@ -664,7 +664,8 @@ function scaled(team,bonus){if(beginner())return team.map(([sp,l])=>[evolved(sp,
 const mine=S.team.map(m=>m.lvl).sort((a,b)=>b-a),order=team.map((t,k)=>k).sort((a,b)=>team[b][1]-team[a][1]),out=team.map(t=>[...t]);
   order.forEach((k,j)=>{const ref=mine[Math.min(j,mine.length-1)]||1,L=Math.min(60,Math.max(team[k][1],ref+bonus));out[k]=[evolved(team[k][0],L),L]});return out}
 const trBonus=info=>info.rival?1:info.leader?1:0;
-function champTeam(i){const s=ISLES[i];if(s.secret)return s.champ.team;const t=[...s.champ.team],lo=Math.min(...t.map(x=>x[1])),pool=[...s.wild,...(NIGHT[i]||[])].filter(sp=>!t.some(x=>x[0]===sp));
+// The Grand Champion is always the same: his team and levels never change to match yours (George's idea)
+function champTeam(i){const s=ISLES[i];if(s.secret)return s.champ.team;if(i===CHAMP)return s.champ.team.map(([sp,l])=>[evolved(sp,l),l]);const t=[...s.champ.team],lo=Math.min(...t.map(x=>x[1])),pool=[...s.wild,...(NIGHT[i]||[])].filter(sp=>!t.some(x=>x[0]===sp));
   for(let k=0;t.length<6&&k<pool.length;k++)t.push([pool[k],lo]);return scaled(t,i===CHAMP?8:2)}
 // ================= CHAMPION TOURNAMENT (George's idea) =================
 // Eight trainers: you, the five island champions, Rex, and Challenger Zara.
