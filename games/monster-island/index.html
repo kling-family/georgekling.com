@@ -681,8 +681,8 @@ const TOUR_M=[
   ['W7','Winners final',['w','W5'],['w','W6']],
   ['L5','Second chance',['w','L3'],['w','L4']],
   ['L6','Second chance final',['w','L5'],['l','W7']],
-  ['GF','Grand final',['w','W7'],['w','L6']]].map(([id,round,a,b])=>({id,round,a,b}));
-const TOUR_COLS=[['Winners bracket',[['W1','W2','W3','W4'],['W5','W6'],['W7']]],['Second-chance bracket',[['L1','L2'],['L3','L4'],['L5'],['L6']]],['Grand final',[['GF']]]];
+  ['GF','Tournament final',['w','W7'],['w','L6']]].map(([id,round,a,b])=>({id,round,a,b}));
+const TOUR_COLS=[['Winners bracket',[['W1','W2','W3','W4'],['W5','W6'],['W7']]],['Second-chance bracket',[['L1','L2'],['L3','L4'],['L5'],['L6']]],['Tournament final',[['GF']]]];
 const tName=id=>id==='you'?'You':id==='rex'?'Rival Rex':id==='zara'?TOUR_NEW.name:ISLES[id].champ.name;
 const tM=id=>TOUR_M.find(m=>m.id===id);
 function tWho(src){const T=S.tourney;if(src[0]==='s')return T.seed[src[1]];const r=T.res[src[1]];return r?(src[0]==='w'?r.w:r.l):null}
@@ -727,12 +727,14 @@ function tourney(msg){
 // after you beat the Grand Champion, Rex shows up with a team at the very same levels as the champion's
 const REX_LINE='Rex: "Hey, you beat me to the champion of islands. Well, now I\'ll just beat you."';
 // Preview links only (never the real site): ?champion jumps straight to Champion Island with a ready test player, ?tournament straight to the tournament bracket, ?winnersfinal or ?final to a new bracket where you're already in the winners final or grand final
-function previewChamp(){if(!/netlify\.app$|^localhost$/.test(location.hostname)||!/[?&](champion|tournament|winnersfinal|final)\b/.test(location.search))return false;
+function previewChamp(){if(!/netlify\.app$|^localhost$/.test(location.hostname)||!/[?&](champion|tournament|winnersfinal|tournamentfinal|final)\b/.test(location.search))return false;
   const id='pchamp',ps=profiles();if(!ps.some(q=>q.id===id)){ps.push({id,name:'Champion Test',color:4});saveProfiles(ps)}PROFILE=ps.find(q=>q.id===id);
   if(!readSave(id)){S={starter:'flicklet',team:[['flarion',28],['tidalord',27],['bloomroar',27],['stormhare',26],['mudzilla',26],['phantomkin',26]].map(([sp,l])=>mk(sp,l)),unlocked:MAIN+1,beaten:[0,1,2,3,4],caught:{flicklet:1,bubblop:1,sproutle:1},coins:800,supers:5,pos:{},lookSeen:1,look:{},compass:1,buddy:{name:'Pip',d:{}},gift:1,onboard:1};save()}
   S=load();const skipTo=(id,msg)=>{S.at=CHAMP;newTourney();let n;while((n=tNext())&&n.id!==id){const [a,b]=tPair(n);if(a==='you'||b==='you')S.tourney.res[n.id]={w:'you',l:a==='you'?b:a};else tSim(n)}save();tourney(msg)};
   if(/[?&]winnersfinal\b/.test(location.search))skipTo('W7','Skipped ahead to the winners final!');
-  else if(/[?&]final\b/.test(location.search))skipTo('GF','Skipped ahead to the grand final!');
+  else if(/[?&]tournamentfinal\b/.test(location.search))skipTo('GF','Skipped ahead to the tournament final!');
+  // ?final: you already won the tournament, so the next battle is the real Grand Champion
+  else if(/[?&]final\b/.test(location.search)){skipTo('GF');const [a,b]=tPair(tNext());S.tourney.res.GF={w:'you',l:a==='you'?b:a};save();tourney()}
   else if(/[?&]tournament\b/.test(location.search)){S.at=CHAMP;tourney()}else map();return true}
 function rexFinalTeam(champ){const base=S.starter||'bubblop',ctr={flicklet:'bubblop',bubblop:'sproutle',sproutle:'flicklet'}[base]||'flicklet',lv=champ.map(t=>t[1]).sort((a,b)=>a-b);
   const others=[['cindermaw','fire'],['tidefang','water'],['mossbrute','leaf'],['boulderon','stone'],['thunderhop','storm'],['nightcoil','shadow']].filter(x=>x[1]!==SP[ctr].el).map(x=>x[0]);
