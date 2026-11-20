@@ -1794,7 +1794,7 @@ function openShop(h){
   const list=()=>{const stock=shopStock(Wd.i,h.k);
     wrap.innerHTML=`<div class="box">${head('Teach your monsters new moves, even from other elements! Just not opposites: Fire and Water, Leaf and Shadow, Stone and Storm.')}
       <div class="items"><button class="item" data-n="__net" ${S.coins<120?'disabled':''}>Super Net<small>Always catches a wild monster. Save it for a rare one!</small><span class="price">120 coins</span></button>
-      ${stock.map(n=>{const mv=MOVEDEX[n],p=movePrice(n);return `<button class="item" data-n="${n}" ${S.coins<p?'disabled':''}>${n} <small>${chip(mv.el)} power ${mv.pow}${mv.first?', always goes first':''}${mv.acc&&!fullBlast(mv)?', can miss':''}${fullBlast(mv)?', Full Blast: never misses, can\'t be dodged':''}</small><span class="price">${p} coins</span></button>`}).join('')}</div>
+      ${stock.map(n=>{const mv=MOVEDEX[n],p=movePrice(n);return `<button class="item" data-n="${n}" ${S.coins<p?'disabled':''}>${n} <small>${chip(mv.el)} power ${mv.pow}${mv.first?', always goes first':''}${mv.acc&&!fullBlast(mv)?', can miss':''}${fullBlast(mv)?', Full Blast: never misses, can\'t be dodged, 6 per battle':''}</small><span class="price">${p} coins</span></button>`}).join('')}</div>
       <div class="row"><button class="btn ghost sm" id="sx">Leave the shop</button></div></div>`;
     wrap.querySelector('#sx').onclick=close;
     wrap.querySelectorAll('.item').forEach(b=>b.onclick=()=>{SFX.select();const n=b.dataset.n;if(n==='__net'){if(S.coins<120)return;S.coins-=120;S.supers++;SFX.coin();save();toast('You bought a Super Net!');return list()}pickMon(n)});
@@ -2272,7 +2272,7 @@ function menu(){
 }
 function fightMenu(){
   const e=enemy();
-  opts([...movesOf(active()).map(m=>{const x=mult(m.el,SP[e.sp].el);return {label:m.name+(fullBlast(m)?' <span class="fb">FULL BLAST</span>':''),sub:`${EL[m.el].n}, power ${m.pow}${m.first?', goes first':''}${m.acc&&!fullBlast(m)?', can miss':''}${fullBlast(m)?', never misses, can\'t be dodged':''}${x>1?', STRONG!':x<1?', weak':''}`,go:()=>turn(m)}}),{label:'Back',id:'bk',go:menu}]);
+  opts([...movesOf(active()).map(m=>{const x=mult(m.el,SP[e.sp].el);const p=active(),out=!canUse(p,m);return {label:m.name+(fullBlast(m)?' <span class="fb">FULL BLAST</span>':''),off:out,sub:out?'No Full Blasts left this battle!':`${EL[m.el].n}, power ${m.pow}${m.first?', goes first':''}${m.acc&&!fullBlast(m)?', can miss':''}${fullBlast(m)?`, never misses, can\'t be dodged, ${fbLeft(p)} of ${FB_MAX} left`:''}${x>1?', STRONG!':x<1?', weak':''}`,go:()=>turn(m)}}),{label:'Back',id:'bk',go:menu}]);
 }
 function netMenu(){
   if(!S.supers)return throwNet(false);
@@ -2287,11 +2287,15 @@ function swapMenu(forced){
   if(!forced)list.push({label:'Back',id:'bk',go:menu});
   opts(list);
 }
-function enemyMove(e,p){const ms=movesOf(e);if(Math.random()<(B&&!B.wild?.1:.3))return ms[rnd(0,ms.length-1)];return ms.reduce((a,m)=>m.pow*mult(m.el,SP[p.sp].el)>a.pow*mult(a.el,SP[p.sp].el)?m:a)}
+function enemyMove(e,p){const all=movesOf(e),ms=all.filter(m=>canUse(e,m)).length?all.filter(m=>canUse(e,m)):all;if(Math.random()<(B&&!B.wild?.1:.3))return ms[rnd(0,ms.length-1)];return ms.reduce((a,m)=>m.pow*mult(m.el,SP[p.sp].el)>a.pow*mult(a.el,SP[p.sp].el)?m:a)}
 // George's dodge idea: Dodge gives a 50% chance to avoid an attack. Full Blast moves (power 90+ and signature moves) can't be dodged,
 // and using a Full Blast move leaves your monster too worn out to dodge on the next turn
 const fullBlast=mv=>!!mv&&(mv.pow>=90||!!mv.sig);
+// each monster can only use Full Blast moves 6 times per battle, and every monster gets its own 6 (George's idea)
+const FB_MAX=6,fbUsed=m=>(B&&B.fb&&B.fb.get(m))||0,fbLeft=m=>FB_MAX-fbUsed(m);
+const canUse=(m,mv)=>!fullBlast(mv)||fbLeft(m)>0||movesOf(m).every(x=>fullBlast(x));
 async function attack(a,d,mv,side,dodging){
+  if(fullBlast(mv)&&B){B.fb=B.fb||new Map();B.fb.set(a,fbUsed(a)+1)}
   await say(`${side==='e'?(B.wild?'Wild ':'Their '):''}${nm(a)} used ${mv.name}!${mv.sig?' Its signature move!':''}`,mv.sig?700:350);
   anim(side==='p'?'part':'eart',side==='p'?'lunge-r':'lunge-l',300);await sleep(120);
   if(mv.acc&&!fullBlast(mv)&&Math.random()>mv.acc){await sleep(250);popText(side==='p'?'eart':'part','MISS','#9fb6d8',30);await say(`${nm(a)} missed!`,500);return}
