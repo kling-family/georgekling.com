@@ -194,7 +194,7 @@ const STORIES = [
   { id:'noah', ready:true, blurb:'Build the ark, lead the animals in two by two, ride out the flood, send out the dove, and see the first rainbow.', endVerse:'"I have put my rainbow in the clouds. It is the sign of my promise."', endRef:'Genesis 9:13', before:"Adam and Eve disobeyed God and had to leave the garden. Many, many years went by, and the world filled up with people. But most of them became mean and violent and forgot about God. One man still loved God and did what was right. His name was Noah.", title:'Noah\u2019s Ark', who:'You are Noah', ref:'Genesis 6 to 9' },
   { id:'abraham', ready:true, blurb:'Leave your home when God calls, follow His light to a new land, build an altar, and try to count the stars.', endVerse:'"Look up at the sky and count the stars, if you can. That is how many children you will have."', endRef:'Genesis 15:5', before:"After the flood, Noah's family grew into lots of families who spread out all over the world. Hundreds of years later, God spoke to a man named Abram. God told him to leave his home and go to a new land, and promised to make his family into a great nation. Later God changed his name to Abraham.", title:'Abraham and the Stars', who:'You are Abraham', ref:'Genesis 12 and 15' },
   { id:'joseph', ready:true, blurb:'Get a colorful coat, get thrown in a well by your brothers, explain Pharaoh’s dreams, store up grain, and forgive your brothers.', endVerse:'"You planned to hurt me, but God planned it for good, to save many lives."', endRef:'Genesis 50:20', before:"God kept His promise. Abraham and his wife Sarah had a son named Isaac when they were very old. Isaac had a son named Jacob, and Jacob had twelve sons. Jacob loved one son, Joseph, more than the others, and his brothers got very jealous.", title:'Joseph and His Colorful Coat', who:'You are Joseph', ref:'Genesis 37 to 45' },
-  { id:'babymoses', before:"Joseph's whole family moved to Egypt to live with him, and they were safe there. Their family grew and grew for 400 years, and they were called the Israelites. Then a new king of Egypt, called Pharaoh, was afraid of them. He made them slaves, and he ordered that every Israelite baby boy be thrown in the river.", title:'Baby Moses in the Basket', who:'You are Miriam, his big sister', ref:'Exodus 2' },
+  { id:'babymoses', ready:true, blurb:'Gather reeds for a basket, hide by the Nile to watch your baby brother, and be brave enough to talk to the princess.', endVerse:'"She named him Moses, because she said, I pulled him out of the water."', endRef:'Exodus 2:10', before:"Joseph's whole family moved to Egypt to live with him, and they were safe there. Their family grew and grew for 400 years, and they were called the Israelites. Then a new king of Egypt, called Pharaoh, was afraid of them. He made them slaves, and he ordered that every Israelite baby boy be thrown in the river.", title:'Baby Moses in the Basket', who:'You are Miriam, his big sister', ref:'Exodus 2' },
   { id:'bush', before:"The princess of Egypt found baby Moses and raised him in the palace. When Moses grew up, he saw an Egyptian beating an Israelite slave, and Moses killed the Egyptian. Then Moses ran away to the desert. He lived there for 40 years and became a shepherd.", title:'Moses and the Burning Bush', who:'You are Moses', ref:'Exodus 3' },
   { id:'redsea', before:"God sent Moses back to Egypt to tell Pharaoh, \u201cLet my people go!\u201d Pharaoh said no again and again, so God sent ten plagues on Egypt, like frogs, bugs, hail, and darkness. After the last plague, Pharaoh finally let the Israelites go. But then he changed his mind and chased after them with his whole army.", title:'Moses and the Red Sea', who:'You are Moses', ref:'Exodus 14' },
   { id:'jericho', before:"God led the Israelites through the desert for 40 years. He gave them food called manna and gave Moses the Ten Commandments. When Moses died, God chose Joshua to lead the people into the land He had promised to Abraham. But the first city in their way, Jericho, had huge walls.", title:'Joshua and the Walls of Jericho', who:'You are Joshua', ref:'Joshua 6' },
@@ -1748,9 +1748,159 @@ function jumpJoseph(q){ // ?step=go | pharaoh | grain | famine
   if(q==='pharaoh'||q==='grain'||q==='famine'){ josephToEgypt(); P.x=0; P.z=4; P.yaw=0; goJoseph(q); }
 }
 
+/* ================= Story 5: Baby Moses in the Basket ================= */
+const BANK_X=-10, BASKET_AT={x:-12.6,z:-2}, HIDE_AT={x:-8.6,z:5.5}, HOME_AT={x:22.6,z:5.4};
+function groundNile(x,z){ let h=0.15*Math.sin(x*0.11)*Math.cos(z*0.09)+0.1*Math.sin(z*0.23);
+  if(x<BANK_X) h-=smooth(clamp((BANK_X-x)/3.5,0,1))*1.8;
+  const r=Math.hypot(x-10,z); if(r>70&&x>BANK_X) h+=Math.pow(r-70,1.2)*0.12; return h; }
+const reedHand=new THREE.Group(); { for(let i=0;i<7;i++){ const s=new THREE.Mesh(new THREE.CylinderGeometry(0.01,0.012,0.7,4), mat(0x5f8a3a)); s.position.set((i%3-1)*0.025,0,(Math.floor(i/3)-1)*0.025); s.rotation.z=(i%3-1)*0.1; reedHand.add(s);
+    const top=new THREE.Mesh(new THREE.SphereGeometry(0.05,6,4), mat(0x7a9a4a)); top.scale.set(1,0.5,1); top.position.set(s.position.x,0.36,s.position.z); reedHand.add(top); }
+  reedHand.position.set(0.2,-0.28,-0.6); reedHand.rotation.z=0.4; reedHand.visible=false; view.add(reedHand); }
+function papyrus(g,x,z,s=1){ const o=new THREE.Group(); const n=5+((x*7+z*3)&3);
+  for(let i=0;i<n;i++){ const a=i/n*Math.PI*2+x, rr=0.25*s; const h=(1.8+((i*5)%4)*0.35)*s; const st=new THREE.Mesh(new THREE.CylinderGeometry(0.02*s,0.03*s,h,4), mat(0x5f8a3a)); st.position.set(Math.cos(a)*rr,h/2,Math.sin(a)*rr); st.rotation.set(Math.sin(a)*0.12,0,Math.cos(a)*0.12); o.add(st);
+    const head=new THREE.Mesh(new THREE.ConeGeometry(0.22*s,0.3*s,7,1,true), mat(0x7aa04a,{side:THREE.DoubleSide})); head.rotation.x=Math.PI; head.position.set(st.position.x*1.4,h+0.05,st.position.z*1.4); o.add(head); }
+  o.position.set(x,ground(x,z),z); g.add(o); return o; }
+function basketMesh(){ const o=new THREE.Group(); const c=document.createElement('canvas'); c.width=c.height=64; const x=c.getContext('2d'); for(let i=0;i<8;i++){ for(let j=0;j<8;j++){ x.fillStyle=(i+j)%2?'#8a6a3a':'#a8844a'; x.fillRect(i*8,j*8,8,8); } }
+  const t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(6,2);
+  const b=new THREE.Mesh(new THREE.SphereGeometry(0.5,20,10,0,Math.PI*2,Math.PI*0.5,Math.PI*0.5), new THREE.MeshLambertMaterial({map:t,side:THREE.DoubleSide})); b.scale.set(0.75,0.5,1.25); b.position.y=0.25; o.add(b);
+  const rim=new THREE.Mesh(new THREE.TorusGeometry(0.5,0.04,6,24), mat(0x6a4a2a)); rim.rotation.x=Math.PI/2; rim.scale.set(0.75,1.25,1); rim.position.y=0.25; o.add(rim);
+  const blanket=new THREE.Mesh(new THREE.SphereGeometry(0.3,12,8), mat(0xe8e0cc)); blanket.scale.set(0.9,0.4,1.4); blanket.position.set(0,0.2,-0.05); o.add(blanket);
+  const head=new THREE.Mesh(new THREE.SphereGeometry(0.11,14,10), mat(0xc68a5e)); head.position.set(0,0.27,0.3); o.add(head);
+  const hair=new THREE.Mesh(new THREE.SphereGeometry(0.112,12,8,0,Math.PI*2,0,Math.PI*0.45), mat(0x2a1a10)); hair.position.copy(head.position); hair.rotation.x=0.8; o.add(hair);
+  const lid=new THREE.Mesh(new THREE.SphereGeometry(0.5,20,10,0,Math.PI*2,0,Math.PI*0.5), new THREE.MeshLambertMaterial({map:t,side:THREE.DoubleSide})); lid.scale.set(0.75,0.35,1.25); lid.position.y=0.25; o.add(lid); o.userData.lid=lid;
+  return o; }
+function buildMoses(){
+  ground=groundNile; resetLook();
+  const g=new THREE.Group(); scene.add(g); world={group:g, reeds:[], maids:[]}; const W=world, r=rnd(55);
+  { const N=150, geo=new THREE.PlaneGeometry(300,300,N,N); geo.rotateX(-Math.PI/2); const pos=geo.attributes.position, cols=[], c=new THREE.Color(), a=new THREE.Color(0xdcc896), b=new THREE.Color(0xc9ae78), mud=new THREE.Color(0x6a6a3e);
+    for(let i=0;i<pos.count;i++){ const x=pos.getX(i), z=pos.getZ(i), h=groundNile(x,z); pos.setY(i,h); const n=0.5+0.5*Math.sin(x*0.5+z*0.9)*Math.cos(x*0.27-z*0.4); c.copy(a).lerp(b,n*0.8); c.lerp(mud,smooth(clamp((BANK_X+6-x)/6,0,1))*0.8); c.multiplyScalar(1.08); cols.push(c.r,c.g,c.b); }
+    geo.setAttribute('color',new THREE.Float32BufferAttribute(cols,3)); geo.computeVertexNormals(); const uv=geo.attributes.uv; for(let i=0;i<uv.count;i++) uv.setXY(i,uv.getX(i)*90,uv.getY(i)*90);
+    const m=new THREE.Mesh(geo,new THREE.MeshLambertMaterial({vertexColors:true,map:GROUND_TEX})); m.userData.noCast=true; g.add(m); }
+  grassField(g, touch?5000:10000, ()=>{ const x=(Math.random()-0.5)*110, z=(Math.random()-0.5)*110; if(x<BANK_X+0.5) return null; const nearRiver=clamp(1-(x-BANK_X)/14,0,1); if(Math.random()>0.15+nearRiver*0.85) return null; return [x,z,0x8a9a4a]; });
+  const river=new THREE.Mesh(new THREE.PlaneGeometry(80,320), new THREE.MeshPhongMaterial({color:0x3f7f8a,specular:0x9fb8c8,shininess:50})); river.rotation.x=-Math.PI/2; river.position.set(BANK_X-40-1.2,-0.75,0); g.add(river);
+  // papyrus all along the bank, thick around the hiding place
+  const offLine=(x,z)=>{ const ax=HIDE_AT.x,az=HIDE_AT.z,bx=BASKET_AT.x,bz=BASKET_AT.z, dx=bx-ax,dz=bz-az, k=clamp(((x-ax)*dx+(z-az)*dz)/(dx*dx+dz*dz),0,1); return Math.hypot(x-ax-dx*k,z-az-dz*k); };
+  for(let i=0;i<70;i++){ const z=(r()-0.5)*110, x=BANK_X-0.6-r()*3.2; if(Math.hypot(x-BASKET_AT.x,z-BASKET_AT.z)<1.4||offLine(x,z)<1.8||(z>-26&&z<-2&&x>BANK_X-1.8)) continue; W.reeds.push(papyrus(g,x,z,0.8+r()*0.5)); }
+  [[-1.6,0.5],[-1.2,1.6],[0,2],[1.2,1.6],[1.6,0.4],[-1.9,-0.7],[1.9,-0.9],[-0.6,2.6]].forEach(([dx,dz])=>papyrus(g,HIDE_AT.x+dx,HIDE_AT.z+dz,0.75));
+  // the three clumps of papyrus Miriam gathers
+  W.gather=[[-9.2,20],[-9.4,26],[-9.0,31]].map(([x,z])=>{ const p=papyrus(g,x,z,1.0); return p; });
+  // Miriam's village: mud-brick houses and palms
+  [[22,2],[30,10],[28,-6],[38,2],[20,16],[36,-14]].forEach(([x,z])=>house(g,x,z)); // Miriam's home is the one at (22,2)
+  for(let i=0;i<26;i++){ const x=4+r()*45, z=(r()-0.5)*80; if(Math.abs(x-HOME_AT.x)<5&&Math.abs(z-HOME_AT.z)<5) continue; palm(g,x,z,0.8+r()*0.4); }
+  for(let i=0;i<12;i++){ palm(g,BANK_X+2+r()*4,(r()-0.5)*90,0.9+r()*0.3); }
+  pyramid(g,70,-120,26); pyramid(g,100,-140,34);
+  // the palace steps where the princess comes down to the river
+  { const st=mat(0xe6d6b0); for(let i=0;i<4;i++){ const s=new THREE.Mesh(new THREE.BoxGeometry(6,0.3,1.2), st); s.position.set(BANK_X+3-i*1.0,groundNile(BANK_X+3-i,-24)+0.15-i*0.35,-24); g.add(s); }
+    for(const sx of [-3.2,3.2]){ const c=new THREE.Mesh(new THREE.CylinderGeometry(0.35,0.4,4,12), st); c.position.set(BANK_X+4,2,-24+sx); g.add(c); } }
+  // Mom (Jochebed) and the basket
+  W.mom=person({tunic:0x7a5a8a,hair:0x2a1a10,longHair:true,h:1.65}); place(W.mom,HOME_AT.x,HOME_AT.z,0); g.add(W.mom);
+  W.basket=basketMesh(); W.basket.visible=false; g.add(W.basket);
+  // the princess and her helpers
+  W.princess=person({tunic:0xf6f2e6,sash:0xe2b23a,hair:0x120c08,longHair:true,crown:true,h:1.7,skin:0xb07a4e}); W.princess.visible=false; g.add(W.princess);
+  for(let i=0;i<3;i++){ const m=person({tunic:[0xe8dcc0,0xd8c8a0,0xe0d0b0][i],hair:0x120c08,longHair:true,h:1.62,skin:0xb07a4e}); m.visible=false; g.add(m); W.maids.push(m); }
+  W.beacon=makeBeacon(); W.beacon.visible=false; g.add(W.beacon);
+  P.x=HOME_AT.x; P.z=HOME_AT.z+4; P.yaw=0; P.pitch=0; P.eye=1.25; P.speed=4.8; P.roll=0;
+  story={id:'babymoses', step:'', t:0, lock:true, target:null, near:null, gathered:0, carrying:false, momFollow:false, fadeSky:null};
+  hand.visible=false; basket.visible=false; sling.visible=false; fruitHand.visible=false; if(typeof logHand!=='undefined'){ logHand.visible=false; leafHand.visible=false; } if(typeof coatView!=='undefined'){ coatView.visible=false; sheafHand.visible=false; } reedHand.visible=false;
+  goMoses('intro');
+}
+function mosesBasketOn(x,z){ const B=world.basket; B.visible=true; B.position.set(x,groundNile(x,z),z); B.userData.float=false; }
+function goMoses(step){
+  const S=story, W=world; S.step=step; $('prompt').classList.add('hidden');
+  if(step==='intro'){
+    S.lock=true; setGoal('Listen'); lookAt(W.mom.position.x,1.3,W.mom.position.z,1);
+    say([[SAY_BIBLE,'Pharaoh was afraid of the Israelites, so he gave a terrible order: every Israelite baby boy must be thrown into the Nile River.','Exodus 1:22'],
+      [SAY_BIBLE,'An Israelite woman named Jochebed had a baby boy. She saw that he was a beautiful baby, and she hid him for three months.','Exodus 2:1-2'],
+      ['You are Miriam','You are Miriam, his big sister.',''],
+      ['Mom','He is getting too big to hide, Miriam. I have a plan. Go down to the river and bring me papyrus reeds, so I can make a basket.','Exodus 2:3']], ()=>goMoses('reeds'));
+  }
+  if(step==='reeds'){ S.lock=false; mosesReedGoal(); }
+  if(step==='weave'){
+    S.lock=true; S.target=null; setGoal('Listen');
+    say([[SAY_BIBLE,'She made a basket out of papyrus reeds and covered it with tar and pitch so the water could not get in.','Exodus 2:3', ()=>{ mosesBasketOn(W.mom.position.x+0.8,W.mom.position.z+0.4); }],
+      [SAY_BIBLE,'Then she put the baby in the basket.','Exodus 2:3'],
+      ['Mom','Come with me to the river, Miriam.','']], ()=>{ S.momFollow=true; W.basket.visible=false; goMoses('river'); });
+  }
+  if(step==='river'){ S.lock=false; setGoal('Walk with Mom to the <b>river</b>'); S.target={position:new THREE.Vector3(BANK_X+1.5,0,BASKET_AT.z)}; }
+  if(step==='float'){
+    S.lock=true; S.target=null; S.momFollow=false; setGoal('Listen'); S.momTo={x:BANK_X+0.2,z:BASKET_AT.z+0.6};
+    say([[SAY_BIBLE,'She set the basket in the tall reeds by the bank of the Nile River.','Exodus 2:3', ()=>{ const B=W.basket; B.visible=true; B.userData.float=true; B.position.set(BASKET_AT.x,-0.75,BASKET_AT.z); lookAt(BASKET_AT.x,-0.5,BASKET_AT.z,1); }],
+      ['Mom','Stay here and watch him, Miriam. See what happens to him.','Exodus 2:4']], ()=>{ S.momTo={x:HOME_AT.x,z:HOME_AT.z}; goMoses('hide'); });
+  }
+  if(step==='hide'){ S.lock=false; setGoal('<b>Hide</b> in the reeds and watch the basket'); S.target={position:new THREE.Vector3(HIDE_AT.x,0,HIDE_AT.z)}; }
+  if(step==='princess'){
+    S.lock=true; S.target=null; setGoal('Listen'); S.crouch=true; S.princessWalk=true; mosesPrincessStart();
+    say([[SAY_BIBLE,'Then Pharaoh’s daughter, the princess, came down to the river to wash. Her servants walked along the riverbank.','Exodus 2:5'],
+      [SAY_BIBLE,'She saw the basket in the reeds and sent one of her servants to get it.','Exodus 2:5', ()=>{ S.maidFetch=1; }],
+      [SAY_BIBLE,'She opened it and saw the baby. He was crying, and she felt sorry for him.','Exodus 2:6', ()=>{ S.openLid=1; }],
+      ['Princess','This must be one of the Israelite babies.','Exodus 2:6']], ()=>{ S.crouch=false; goMoses('talk'); });
+  }
+  if(step==='talk'){ S.lock=false; setGoal('Go talk to the <b>princess</b>'); S.target=W.princess; }
+  if(step==='ask'){
+    S.lock=true; S.target=null; setGoal('Listen'); faceTo(W.princess,P.x,P.z);
+    say([['You are Miriam','Should I go and get one of the Israelite women to feed the baby for you?','Exodus 2:7'],
+      ['Princess','Yes, go.','Exodus 2:8']], ()=>goMoses('fetch'));
+  }
+  if(step==='fetch'){ S.lock=false; setGoal('Run home and get <b>Mom</b>!'); S.target=W.mom; }
+  if(step==='back'){ S.lock=false; S.momFollow=true; setGoal('Bring Mom to the <b>princess</b>'); S.target=W.princess; }
+  if(step==='end'){
+    S.lock=true; S.target=null; S.momFollow=false; setGoal('Listen'); S.momTo={x:W.princess.position.x+1.2,z:W.princess.position.z+0.4};
+    say([['Princess','Take this baby and feed him for me, and I will pay you.','Exodus 2:9'],
+      [SAY_BIBLE,'So Miriam’s mom took her own baby home and took care of him, and she was even paid for it!','Exodus 2:9', ()=>{ W.basket.visible=false; S.momHasBaby=true; }],
+      [SAY_BIBLE,'When the boy grew older, she took him to the princess, and he became her son.','Exodus 2:10'],
+      [SAY_BIBLE,'She named him Moses, which sounds like the word for “pull out,” because she said, “I pulled him out of the water.”','Exodus 2:10']], ()=>finishStory());
+  }
+}
+function mosesReedGoal(){ const S=story; if(S.carrying){ setGoal('Bring the reeds to <b>Mom</b>'); S.target=world.mom; } else { setGoal(`Pick papyrus reeds by the river (${S.gathered} of 3)`); S.target=world.gather.find(p=>!p.userData.cut)||null; } }
+function mosesPrincessStart(){ const W=world; const x0=BANK_X+3, z0=-25; W.princess.visible=true; W.princess.position.set(x0,groundNile(x0,z0),z0); W.maids.forEach((m,i)=>{ m.visible=true; m.position.set(x0+0.8+i*0.5,groundNile(x0,z0-2-i*1.4),z0-2-i*1.4); }); }
+function updateMoses(dt, now){
+  const S=story, W=world, t=(S.t+=dt);
+  P.eye+= ((S.crouch?0.85:1.25)-P.eye)*Math.min(1,dt*3);
+  const walkTo=(p,tx,tz,sp)=>{ const dx=tx-p.position.x, dz=tz-p.position.z, d=Math.hypot(dx,dz); if(d>0.25){ const v=Math.min(sp,d*2)*dt; p.position.x+=dx/d*v; p.position.z+=dz/d*v; p.rotation.y=Math.atan2(dx,dz); animWalk(p,dt,1); return false; } return true; };
+  // Mom walks with you, or where the story needs her
+  const M=W.mom; if(S.momFollow){ const fx=-Math.sin(P.yaw), fz=-Math.cos(P.yaw), rx=Math.cos(P.yaw), rz=-Math.sin(P.yaw); const tx=P.x+fx*3.2+rx*0.9, tz=P.z+fz*3.2+rz*0.9; if(Math.hypot(tx-M.position.x,tz-M.position.z)>16){ M.position.x=tx; M.position.z=tz; } walkTo(M,tx,tz,6); }
+  else if(S.momTo){ if(walkTo(M,S.momTo.x,S.momTo.z,2.4)) { if(S.step!=='hide'&&S.step!=='princess') faceTo(M,P.x,P.z); } }
+  else if(dist2(M)<8) faceTo(M,P.x,P.z);
+  M.position.y=groundNile(M.position.x,M.position.z);
+  // the basket bobs on the water
+  const B=W.basket; if(B.visible&&B.userData.float){ B.position.y=-0.78+Math.sin(t*1.6)*0.03; B.rotation.z=Math.sin(t*1.2)*0.05; B.rotation.y=0.3+Math.sin(t*0.4)*0.08; }
+  if(S.openLid){ const L=B.userData.lid; L.rotation.x=Math.max(L.rotation.x-dt*1.5,-1.7); L.position.z=Math.max(L.position.z-dt*0.4,-0.5); }
+  // the princess and her servants
+  if(S.princessWalk){ const pz=BASKET_AT.z-1.8, px=BANK_X+1.0; if(walkTo(W.princess,px,pz,1.3)){ if(['princess','talk'].includes(S.step)) faceTo(W.princess,BASKET_AT.x,BASKET_AT.z); else faceTo(W.princess,P.x,P.z); } W.princess.position.y=groundNile(W.princess.position.x,W.princess.position.z);
+    W.maids.forEach((m,i)=>{ if(i===0&&S.maidFetch){ if(S.maidFetch===1){ if(walkTo(m,BASKET_AT.x+0.9,BASKET_AT.z,1.6)){ S.maidFetch=2; B.userData.float=false; } }
+        else { const holder=walkTo(m,px+0.2,pz+1.2,1.4)?W.princess:m; if(holder===W.princess) faceTo(m,W.princess.position.x,W.princess.position.z); B.position.set(holder.position.x+Math.sin(holder.rotation.y)*0.5,holder.position.y+0.9,holder.position.z+Math.cos(holder.rotation.y)*0.5); B.rotation.set(0,holder.rotation.y,0); B.scale.setScalar(0.8); } }
+      else { if(walkTo(m,px+1.2+i*0.6,pz-1.5-i*0.8,1.3)) faceTo(m,BASKET_AT.x,BASKET_AT.z); }
+      m.position.y=Math.max(groundNile(m.position.x,m.position.z),-0.75); }); }
+  if(S.momHasBaby) faceTo(M,P.x,P.z);
+  // what you can do
+  let near=null;
+  if(S.step==='reeds'){
+    if(!S.carrying){ const p=S.target; if(p && Math.hypot(p.position.x-P.x,p.position.z-P.z)<2.4) near={label:'Pick the reeds', fn:()=>{ p.userData.cut=1; p.scale.y=0.25; S.carrying=true; reedHand.visible=true; S.gathered++; mosesReedGoal(); }}; }
+    else if(dist2(M)<2.6) near={label:'Give Mom the reeds', fn:()=>{ S.carrying=false; reedHand.visible=false; if(S.gathered>=3) goMoses('weave'); else { say([['Mom','Good, Miriam! I need a little more.','']], mosesReedGoal); } }};
+  }
+  if(S.step==='river' && Math.hypot(P.x-(BANK_X+1.5),P.z-BASKET_AT.z)<3) goMoses('float');
+  if(S.step==='hide' && Math.hypot(P.x-HIDE_AT.x,P.z-HIDE_AT.z)<1.8){ S.step='hiding'; S.target=null; setGoal('Watch quietly...'); S.crouch=true; lookAt(BASKET_AT.x,-0.4,BASKET_AT.z,1.5); setTimeout(()=>{ if(story&&story.step==='hiding') goMoses('princess'); },1800); }
+  if(S.step==='talk' && dist2(W.princess)<3) near={label:'Talk to the princess', fn:()=>goMoses('ask')};
+  if(S.step==='fetch' && dist2(M)<2.6) near={label:'Tell Mom', fn:()=>{ say([['You are Miriam','Mom! Come quick! The princess found him, and she wants an Israelite woman to feed him!',''],['Mom','Then let’s go!','']], ()=>goMoses('back')); }};
+  if(S.step==='back' && dist2(W.princess)<3.2) goMoses('end');
+  S.near=near;
+  const pr=$('prompt');
+  if(near && !saying()){ pr.textContent=(touch?'':'Space: ')+near.label; pr.classList.remove('hidden'); $('act').textContent=near.label.split(' ')[0]; }
+  else { pr.classList.add('hidden'); $('act').textContent= saying()?'Next':'Use'; }
+  showBeacon(t);
+}
+function boundsMoses(){ P.x=clamp(P.x,BANK_X-0.3,55); P.z=clamp(P.z,-55,55); }
+function jumpMoses(q){ // ?step=river | hide | talk
+  const S=story, W=world; sayQ.length=0; $('say').classList.add('hidden'); sayCb=null; S.gathered=3; W.gather.forEach(p=>{p.userData.cut=1; p.scale.y=0.25;});
+  if(q==='river'){ S.momFollow=true; goMoses('river'); }
+  if(q==='hide'||q==='talk'){ const B=W.basket; B.visible=true; B.userData.float=true; B.position.set(BASKET_AT.x,-0.75,BASKET_AT.z); P.x=BANK_X+2; P.z=BASKET_AT.z+5; P.yaw=0; goMoses('hide'); }
+  if(q==='talk'){ P.x=HIDE_AT.x; P.z=HIDE_AT.z; mosesPrincessStart(); S.princessWalk=true; S.maidFetch=2; S.openLid=1; W.princess.position.set(BANK_X+1,0,BASKET_AT.z-1.8); goMoses('talk'); }
+}
+
 /* David's story hooks */
 function boundsDavid(){ P.x=clamp(P.x,-34,34); P.z=clamp(P.z,-60,72); }
 const IMPL = {
+  babymoses: { build:buildMoses, go:goMoses, update:updateMoses, bounds:boundsMoses, locked:S=>S.lock },
   joseph: { build:buildJoseph, go:goJoseph, update:updateJoseph, bounds:boundsJoseph, locked:S=>S.lock || choosing() },
   abraham: { build:buildAbraham, go:goAbraham, update:updateAbraham, bounds:boundsAbraham, locked:S=>S.lock },
   noah:  { build:buildNoah,  go:goNoah,  update:updateNoah,  bounds:boundsNoah,  locked:S=>S.lock },
@@ -1763,7 +1913,7 @@ function stopStory(){
   running=false; story=null;
   if(world){ scene.remove(world.group); world.group.traverse(o=>{ if(o.geometry) o.geometry.dispose(); }); world=null; }
   sayQ.length=0; sayCb=null; $('say').classList.add('hidden'); $('armor').classList.add('hidden'); $('cross').classList.add('hidden'); $('meter').classList.add('hidden'); $('stones').classList.add('hidden');
-  basket.visible=hand.visible=sling.visible=fruitHand.visible=false; if(typeof logHand!=='undefined'){ logHand.visible=false; leafHand.visible=false; } if(typeof coatView!=='undefined'){ coatView.visible=false; sheafHand.visible=false; } $('cForm').style.display=''; P.roll=0; $('fade').style.opacity=0; $('choice').classList.add('hidden'); hand.material=handMat; resetLook();
+  basket.visible=hand.visible=sling.visible=fruitHand.visible=false; if(typeof logHand!=='undefined'){ logHand.visible=false; leafHand.visible=false; } if(typeof coatView!=='undefined'){ coatView.visible=false; sheafHand.visible=false; } if(typeof reedHand!=='undefined') reedHand.visible=false; $('cForm').style.display=''; P.roll=0; $('fade').style.opacity=0; $('choice').classList.add('hidden'); hand.material=handMat; resetLook();
 }
 function startStory(id){
   stopStory(); trackPlay();
@@ -1773,7 +1923,7 @@ function startStory(id){
   const q=new URLSearchParams(location.search).get('step'); if(q && story) jumpTo(q); // preview links for testing
 }
 function jumpTo(q){ // ?step=stones or ?step=sling
-  const S=story; if(story.id==='adam') return jumpAdam(q); if(story.id==='noah') return jumpNoah(q); if(story.id==='abraham') return jumpAbraham(q); if(story.id==='joseph') return jumpJoseph(q);
+  const S=story; if(story.id==='adam') return jumpAdam(q); if(story.id==='noah') return jumpNoah(q); if(story.id==='abraham') return jumpAbraham(q); if(story.id==='joseph') return jumpJoseph(q); if(story.id==='babymoses') return jumpMoses(q);
   if(q==='stones'||q==='sling'){ world.lamb.userData.following=true; world.lamb.userData.goal={x:world.flock.x+1,z:world.flock.z}; world.lamb.position.set(world.flock.x+1,0,world.flock.z); world.israel.forEach(p=>p.position.z+=12); }
   if(q==='stones'){ P.x=0; P.z=STREAM_Z+4; P.yaw=0; sayQ.length=0; $('say').classList.add('hidden'); go('stones'); }
   if(q==='sling'){ world.stones.forEach(s=>s.visible=false); S.stonesHeld=5; S.stonesLeft=5; P.x=0; P.z=-20; P.yaw=0; world.goliath.position.set(0,ground(0,-36),-36); sayQ.length=0; $('say').classList.add('hidden'); $('stones').classList.remove('hidden'); updateStonesHud(); go('sling'); }
@@ -1784,7 +1934,7 @@ function finishStory(){
   const nextReady=READY[READY.indexOf(s)+1], nextAny=STORIES[STORIES.indexOf(s)+1];
   $('fade').style.opacity=0.6;
   setTimeout(()=>{
-    $('endWho').textContent='You saw what '+({david:'David',adam:'Adam',noah:'Noah',abraham:'Abraham',joseph:'Joseph'}[s.id]||'they')+' did.';
+    $('endWho').textContent='You saw what '+({david:'David',adam:'Adam',noah:'Noah',abraham:'Abraham',joseph:'Joseph',babymoses:'Miriam'}[s.id]||'they')+' did.';
     $('endVerse').textContent=s.endVerse; $('endRef').textContent=s.endRef;
     $('endUnlock').textContent= nextReady ? 'You unlocked '+nextReady.title+'!' : (nextAny ? 'Next up: '+nextAny.title+'. It is coming soon!' : 'You finished every story!');
     $('endNext').innerHTML = nextAny ? '<b>What happens next</b>'+nextAny.before : '';
