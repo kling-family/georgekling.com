@@ -178,7 +178,7 @@ function trackPlay(){ if(trackPlay.done) return; trackPlay.done=1; try{ const go
 // Every story, in the order it happened. Stories with ready:true can be played.
 const STORIES = [
   { id:'adam', ready:true, blurb:'Watch God make the world, name the animals, meet Eve, and see what happened in the Garden of Eden.', endVerse:'"God made clothes out of animal skins for Adam and his wife and dressed them."', endRef:'Genesis 3:21', before:"This is where the whole Bible begins. Before there was a world, before there were people or animals or even light, there was only God. In this story you will watch God make everything, day by day. Then you will become Adam, the very first person.", title:'Adam and Eve', who:'You are Adam', ref:'Genesis 1 to 3' },
-  { id:'noah', before:"Adam and Eve disobeyed God and had to leave the garden. Many, many years went by, and the world filled up with people. But most of them became mean and violent and forgot about God. One man still loved God and did what was right. His name was Noah.", title:'Noah\u2019s Ark', who:'You are Noah', ref:'Genesis 6 to 9' },
+  { id:'noah', ready:true, blurb:'Build the ark, lead the animals in two by two, ride out the flood, send out the dove, and see the first rainbow.', endVerse:'"I have put my rainbow in the clouds. It is the sign of my promise."', endRef:'Genesis 9:13', before:"Adam and Eve disobeyed God and had to leave the garden. Many, many years went by, and the world filled up with people. But most of them became mean and violent and forgot about God. One man still loved God and did what was right. His name was Noah.", title:'Noah\u2019s Ark', who:'You are Noah', ref:'Genesis 6 to 9' },
   { id:'abraham', before:"After the flood, Noah's family grew into lots of families who spread out all over the world. Hundreds of years later, God spoke to a man named Abram. God told him to leave his home and go to a new land, and promised to make his family into a great nation. Later God changed his name to Abraham.", title:'Abraham and the Stars', who:'You are Abraham', ref:'Genesis 12 and 15' },
   { id:'joseph', before:"God kept His promise. Abraham and his wife Sarah had a son named Isaac when they were very old. Isaac had a son named Jacob, and Jacob had twelve sons. Jacob loved one son, Joseph, more than the others, and his brothers got very jealous.", title:'Joseph and His Colorful Coat', who:'You are Joseph', ref:'Genesis 37 to 45' },
   { id:'babymoses', before:"Joseph's whole family moved to Egypt to live with him, and they were safe there. Their family grew and grew for 400 years, and they were called the Israelites. Then a new king of Egypt, called Pharaoh, was afraid of them. He made them slaves, and he ordered that every Israelite baby boy be thrown in the river.", title:'Baby Moses in the Basket', who:'You are Miriam, his big sister', ref:'Exodus 2' },
@@ -1122,9 +1122,266 @@ function jumpAdam(q){ // ?step=name, ?step=serpent, ?step=leave
   if(q==='serpent'||q==='leave'){ W.animals.forEach(a=>{ a.userData.named='x'; }); place(W.eve,-2,14); W.eve.visible=true; P.x=-1; P.z=16; P.yaw=0; goAdam(q==='serpent'?'middle':'leave'); if(q==='leave'){ P.x=30; P.z=0; P.yaw=-Math.PI/2; hand.visible=true; } }
 }
 
+
+/* ================= Story: Noah's Ark ================= */
+// Noah's field with the ark site in the middle (ark runs along x, door on the +z side).
+// After the flood the land is swapped for the mountains of Ararat, with the ark resting on a peak.
+const ARK={len:44, wid:7.5, wallH:4.0, roofY:5.0, floor:0.5, door:{x0:4.5,x1:7.5}};
+let noahLand='plain';
+function groundPlain(x,z){
+  let h=0.6+0.35*Math.sin(x*0.09)*Math.cos(z*0.08)+0.25*Math.sin(x*0.03+z*0.05);
+  const r=Math.hypot(x,z); if(r>70) h+=Math.pow(r-70,1.2)*0.25;
+  const fx=Math.max(0,Math.abs(x)-24), fz=Math.max(0,Math.abs(z)-9); const k=smooth(Math.hypot(fx,fz)/6); return lerp(0.6,h,k);
+}
+function groundArarat(x,z){
+  const r=Math.hypot(x,z);
+  let h=24-Math.pow(Math.max(0,r-11),1.15)*0.42+0.6*Math.sin(x*0.15)*Math.cos(z*0.13);
+  for(const [px,pz,ph] of [[-70,-60,27],[80,-50,25],[-20,-110,30],[60,70,22],[-80,40,23]]){ const d=Math.hypot(x-px,z-pz); h=Math.max(h, ph-d*0.45); }
+  const fx=Math.max(0,Math.abs(x)-24), fz=Math.max(0,Math.abs(z)-10); h=lerp(24,h,smooth(Math.hypot(fx,fz)/5));
+  return Math.max(h,-2);
+}
+function groundNoah(x,z){
+  if(story && story.inside && world && world.ark){ const A=world.ark; let y=A.position.y+ARK.floor; if(x>-2.2&&x<2.2&&z<-1.4) y+=2.5; return y; }
+  return noahLand==='plain'?groundPlain(x,z):groundArarat(x,z);
+}
+function plankTex(){ const c=document.createElement('canvas'); c.width=c.height=256; const x=c.getContext('2d');
+  for(let i=0;i<16;i++){ const v=150+Math.random()*60; x.fillStyle=`rgb(${v},${v*0.82|0},${v*0.62|0})`; x.fillRect(0,i*16,256,16); x.fillStyle='rgba(40,25,10,.55)'; x.fillRect(0,i*16,256,1.5);
+    for(let j=0;j<3;j++){ const px=Math.random()*256; x.fillRect(px,i*16,1.5,16); } for(let k=0;k<20;k++){ x.fillStyle='rgba(60,40,20,.18)'; x.fillRect(Math.random()*256,i*16+Math.random()*16,20+Math.random()*40,1); } }
+  const t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; return t; }
+function cypress(g,x,z,s){ const t=new THREE.Group(); const tr=new THREE.Mesh(TRUNK_GEO, mat(0x5a3e26)); tr.scale.set(0.2*s,1.2*s,0.2*s); tr.position.y=0.6*s; t.add(tr);
+  const c=new THREE.Mesh(LEAF_GEO[(Math.abs(x|0))%6], mat(0x2f5a2c)); c.scale.set(0.9*s,3.2*s,0.9*s); c.position.y=3.6*s; t.add(c);
+  const c2=new THREE.Mesh(LEAF_GEO[(Math.abs(z|0))%6], mat(0x3a6a34)); c2.scale.set(0.7*s,2.0*s,0.7*s); c2.position.y=5.6*s; t.add(c2);
+  t.position.set(x,ground(x,z),z); g.add(t); return t; }
+function logMesh(){ const m=new THREE.Mesh(new THREE.CylinderGeometry(0.18,0.2,2.4,10), mat(0x7a5634)); m.rotation.z=Math.PI/2; return m; }
+const logHand=new THREE.Group(); { const l=logMesh(); l.scale.set(0.35,0.35,0.35); logHand.add(l); logHand.position.set(0.05,-0.32,-0.6); logHand.rotation.y=0.5; logHand.visible=false; view.add(logHand); }
+const leafHand=new THREE.Mesh(new THREE.SphereGeometry(0.05,10,6), mat(0x6c9a44)); leafHand.scale.set(0.45,0.12,1); leafHand.position.set(0.2,-0.2,-0.55); leafHand.visible=false; view.add(leafHand);
+
+function buildArk(g){
+  const A=new THREE.Group(); g.add(A); const tex=plankTex();
+  const hullM=new THREE.MeshLambertMaterial({color:0xa07848, map:tex}); const inM=new THREE.MeshLambertMaterial({color:0xc8a070, map:tex, side:THREE.DoubleSide});
+  const box=(w,h,d,x,y,z,m)=>{ const b=new THREE.Mesh(new THREE.BoxGeometry(w,h,d), m||hullM); b.position.set(x,y,z); return b; };
+  const L=ARK.len, W=ARK.wid, H=ARK.wallH;
+  const st=[new THREE.Group(),new THREE.Group(),new THREE.Group(),new THREE.Group()]; st.forEach(s=>{ s.visible=false; A.add(s); });
+  // 1: keel and floor
+  st[0].add(box(L,0.5,W,0,0.25,0)); st[0].add(box(L-0.6,0.06,W-0.6,0,ARK.floor+0.01,0,inM));
+  // 2: ribs
+  for(let x=-L/2+1;x<=L/2-1;x+=3) for(const sz of [-1,1]){ st[1].add(box(0.25,H,0.25,x,H/2+0.25,sz*(W/2-0.1))); }
+  // 3: walls, ends and the door
+  const dx0=ARK.door.x0, dx1=ARK.door.x1;
+  st[2].add(box(L,H,0.3,0,H/2+0.25,-W/2)); // back wall
+  st[2].add(box(dx0+L/2,H,0.3,(-L/2+dx0)/2,H/2+0.25,W/2)); st[2].add(box(L/2-dx1,H,0.3,(dx1+L/2)/2,H/2+0.25,W/2)); st[2].add(box(dx1-dx0,H-3,0.3,(dx0+dx1)/2,H-1.25,W/2));
+  for(const sx of [-1,1]){ st[2].add(box(0.3,H,W,sx*L/2,H/2+0.25,0)); const bow=box(2.2,H*0.9,W*0.7,sx*(L/2+0.9),H/2+0.1,0); bow.rotation.z=sx*-0.25; st[2].add(bow); }
+  const door=new THREE.Group(); door.position.set((dx0+dx1)/2,0.5,W/2+0.15); const dp=box(dx1-dx0,3,0.2,0,1.5,0); door.add(dp); st[2].add(door); A.userData.door=door;
+  // 4: roof with a window gap all around under it
+  for(let x=-L/2;x<=L/2;x+=4) for(const sz of [-1,1]) st[3].add(box(0.2,ARK.roofY-H,0.2,x,H+0.25+(ARK.roofY-H)/2,sz*(W/2-0.1)));
+  for(const sz of [-1,1]){ const r=box(L+1,0.25,W/2+0.6,0,ARK.roofY+0.85,sz*W/4); r.rotation.x=sz*0.38; st[3].add(r); }
+  const shutter=box(4,ARK.roofY-H+0.3,0.15,0,H+0.6,-W/2-0.05); st[3].add(shutter); A.userData.shutter=shutter;
+  // inside: the window platform, stalls, hay, lanterns
+  const inside=new THREE.Group(); inside.visible=false; A.add(inside); A.userData.inside=inside;
+  inside.add(box(4.4,2.5,1.9,0,ARK.floor+1.25,-W/2+1.1,inM)); for(let i=0;i<5;i++) inside.add(box(0.6,0.12,0.5,2.5,ARK.floor+0.5*i+0.25,-W/2+1.6-i*0.0,inM));
+  for(let x=-L/2+3;x<L/2-2;x+=5) for(const sz of [-1,1]){ if(Math.abs(x)<3&&sz<0) continue; inside.add(box(0.12,1.0,2.2,x,ARK.floor+0.5,sz*(W/2-1.25),inM)); }
+  for(let i=0;i<10;i++){ const h=new THREE.Mesh(LEAF_GEO[i%6], mat(0xd9c070)); h.scale.set(0.7,0.3,0.6); h.position.set(-20+i*4.3,ARK.floor+0.2,(i%2?1:-1)*(W/2-0.8)); inside.add(h); }
+  for(const lx of [-15,-5,14]){ const lp=new THREE.Mesh(new THREE.SphereGeometry(0.12,10,8), new THREE.MeshBasicMaterial({color:0xffd27a})); lp.position.set(lx,3.4,0); inside.add(lp); lp.add(glowSprite(0xffc060,1.6)); const pl=new THREE.PointLight(0xffc27a,1.1,16); pl.position.copy(lp.position); inside.add(pl); }
+  A.userData.stages=st; A.userData.mats=[hullM]; return A;
+}
+function rainbow(){ const g=new THREE.Group(); const C=[0xe8443a,0xf28c28,0xf5d042,0x5fb84a,0x3f8fd8,0x4a4ab8,0x8a4ac8];
+  C.forEach((c,i)=>{ const t=new THREE.Mesh(new THREE.TorusGeometry(70-i*1.4,0.75,6,80,Math.PI), new THREE.MeshBasicMaterial({color:c,transparent:true,opacity:0,fog:false,depthWrite:false})); g.add(t); }); return g; }
+
+const NOAH_PAIRS=['elephant','giraffe','lion','sheep','rabbit','bird'];
+const PAIR_NAME={elephant:'elephants',giraffe:'giraffes',lion:'lions',sheep:'sheep',rabbit:'rabbits',bird:'birds'};
+function makeBeast(kind,g){ if(kind==='sheep'){ const s=sheep(g,0,0,1); g.remove(s); return s; } const a=animal(kind); if(kind==='bird'){ a.remove(a.children[a.children.length-1]); } return a; }
+
+function buildNoah(){
+  noahLand='plain'; ground=groundNoah; resetLook();
+  const g=new THREE.Group(); scene.add(g); world={group:g, pairs:[], family:[], logs:[]}; const W=world, r=rnd(21);
+  // two lands: before and after the flood
+  const mkLand=(fn,S,colA,colB,grassCol)=>{ const grp=new THREE.Group(); g.add(grp); const N=150, geo=new THREE.PlaneGeometry(S,S,N,N); geo.rotateX(-Math.PI/2);
+    const pos=geo.attributes.position, cols=[], c=new THREE.Color(), a=new THREE.Color(colA), b=new THREE.Color(colB), rock=new THREE.Color(0x9a8f7a);
+    for(let i=0;i<pos.count;i++){ const x=pos.getX(i), z=pos.getZ(i), h=fn(x,z); pos.setY(i,h); const n=0.5+0.5*Math.sin(x*0.5+z*0.9)*Math.cos(x*0.27-z*0.4); c.copy(a).lerp(b,n*0.8);
+      if(fn===groundArarat && h>14 && Math.hypot(x,z)>14) c.lerp(rock,clamp((h-14)/10,0,0.7)); c.multiplyScalar(1.1); cols.push(c.r,c.g,c.b); }
+    geo.setAttribute('color',new THREE.Float32BufferAttribute(cols,3)); geo.computeVertexNormals(); const uv=geo.attributes.uv; for(let i=0;i<uv.count;i++) uv.setXY(i,uv.getX(i)*90,uv.getY(i)*90);
+    const m=new THREE.Mesh(geo,new THREE.MeshLambertMaterial({vertexColors:true,map:GROUND_TEX})); m.userData.noCast=true; grp.add(m);
+    const save=ground; ground=fn; grassField(grp, touch?7000:14000, ()=>{ const x=(Math.random()-0.5)*110, z=(Math.random()-0.5)*110; if(Math.abs(x)<23.5&&Math.abs(z)<4.5) return null; if(fn===groundArarat&&fn(x,z)<12) return null; return [x,z,grassCol]; }); ground=save; return grp; };
+  W.plain=mkLand(groundPlain,300,0x8aa856,0xa8a866,0x86a44e);
+  W.ararat=mkLand(groundArarat,300,0x6f9a4a,0x8a9a5a,0x6f9f44); W.ararat.visible=false;
+  // Noah's house, cypress forest, olive trees
+  ground=groundPlain;
+  house(g,-12,30); house(g,-20,26);
+  for(let i=0;i<60;i++){ const x=26+r()*30, z=14+r()*36; cypress(g,x,z,0.9+r()*0.5); }
+  for(let i=0;i<40;i++){ const x=(r()-0.5)*150, z=(r()-0.5)*150; if(Math.abs(x)<34&&Math.abs(z)<24) continue; if(x>20&&z>10&&z<55) continue; tree(g,x,z,0.9+r()*0.5); }
+  for(let i=0;i<30;i++){ const x=(r()-0.5)*120, z=(r()-0.5)*120; if(Math.abs(x)<25&&Math.abs(z)<10) continue; rock(g,x,z,0.3+r()*0.6); }
+  W.plainProps=g.children.slice(2); // everything built so far except the two lands
+  // logs to carry
+  [[30,12],[34,16],[29,19],[38,13]].forEach(([x,z],i)=>{ const l=logMesh(); l.position.set(x,ground(x,z)+0.2,z); l.rotation.y=i*0.7; g.add(l); W.logs.push(l); });
+  // the ark
+  const A=buildArk(g); A.position.set(0,0.6,0); W.ark=A; W.arkBase=0.6;
+  // animals in pairs, waiting in the field
+  const spots=[[-14,14],[-24,8],[6,25],[14,22],[-28,-12],[16,-14]];
+  NOAH_PAIRS.forEach((k,i)=>{ const pr={kind:k, a:[], home:spots[i], boarded:false};
+    for(let j=0;j<2;j++){ const b=makeBeast(k,g); const x=spots[i][0]+j*(k==='elephant'?3:1.6), z=spots[i][1]+j*0.8; place(b,x,z,r()*6); if(j) b.scale.multiplyScalar(0.92); g.add(b); b.userData.home={x,z}; pr.a.push(b); }
+    const inA=[]; for(let j=0;j<2;j++){ const b=makeBeast(k,g); b.position.set(-18+i*6.5+j*1.6,ARK.floor,(i%2?1:-1)*(ARK.wid/2-1.3)); b.rotation.y=(i%2?Math.PI:0); b.visible=false; if(k==='elephant'||k==='giraffe') b.scale.multiplyScalar(0.8); A.add(b); inA.push(b); } pr.inside=inA;
+    W.pairs.push(pr); });
+  // Noah's family: his wife, three sons and their wives
+  const fam=[{tunic:0x8a5a7a,longHair:true,hair:0x8a8a84,skin:0xc08458,h:1.66},{tunic:0x5a6a8a,beard:0x3a2614},{tunic:0x7a4a3a,beard:0x2a1a0e},{tunic:0x4a6a4a,beard:0x4a3020},
+    {tunic:0xb08a5a,longHair:true,hair:0x3a2614,h:1.64},{tunic:0x6a8aa0,longHair:true,hair:0x2a1a0e,h:1.62},{tunic:0xa86a5a,longHair:true,hair:0x5a3216,h:1.63}];
+  fam.forEach((f,i)=>{ const p=person(Object.assign({skin:0xc68a5e},f)); place(p,-8+i*1.3,24-(i%2)*1.2,Math.PI*0.9); g.add(p); p.userData.home={x:p.position.x,z:p.position.z}; W.family.push(p); });
+  // God's light, rain, birds, rainbow, altar, water
+  const god=new THREE.Group(); god.add(new THREE.Mesh(new THREE.SphereGeometry(0.35,16,12), new THREE.MeshBasicMaterial({color:0xfffbe8}))); god.add(glowSprite(0xfff1b8,5)); god.add(glowSprite(0xffffff,2)); const gl=new THREE.PointLight(0xfff1c8,1.2,14); god.add(gl); god.visible=false; g.add(god); W.god=god;
+  const water=new THREE.Mesh(new THREE.PlaneGeometry(700,700), new THREE.MeshPhongMaterial({color:0x2f6f9a,specular:0x9fb8c8,shininess:60,transparent:true,opacity:.92})); water.rotation.x=-Math.PI/2; water.position.y=-3; g.add(water); W.water=water; W.wl=-3; W.wlTo=-3;
+  { const n=touch?1500:3000, geo=new THREE.BufferGeometry(), v=new Float32Array(n*6); for(let i=0;i<n;i++){ let x,z; do{ x=(Math.random()-0.5)*56; z=(Math.random()-0.5)*56; }while(Math.abs(x)<ARK.len/2+2.5&&Math.abs(z)<ARK.wid/2+0.4); const y=Math.random()*30; v.set([x,y,z,x+0.05,y-0.7,z],i*6); }
+    geo.setAttribute('position',new THREE.BufferAttribute(v,3)); const rain=new THREE.LineSegments(geo,new THREE.LineBasicMaterial({color:0xc8d8e8,transparent:true,opacity:.55})); rain.visible=false; rain.frustumCulled=false; g.add(rain); W.rain=rain; }
+  const raven=animal('bird'); raven.remove(raven.children[raven.children.length-1]); raven.traverse(o=>{ if(o.isMesh) o.material=mat(0x1a1a1e); }); raven.visible=false; g.add(raven); W.raven=raven;
+  const dove=animal('bird'); dove.remove(dove.children[dove.children.length-1]); dove.traverse(o=>{ if(o.isMesh&&o.material.color&&o.material.color.getHex()!==0x1a1208&&o.material.color.getHex()!==0xffffff) o.material=mat(o.material.color.getHex()===0xf5b52a?0xe8a87a:0xf6f4ee); }); dove.visible=false; g.add(dove); W.dove=dove;
+  const leaf=new THREE.Mesh(new THREE.SphereGeometry(0.08,8,6), mat(0x6c9a44)); leaf.scale.set(0.5,0.15,1); leaf.position.set(0,1.42,0.42); leaf.visible=false; dove.add(leaf); W.doveLeaf=leaf;
+  const rb=rainbow(); rb.position.set(0,8,140); g.add(rb); W.rainbow=rb;
+  W.beacon=makeBeacon(); W.beacon.visible=false; g.add(W.beacon);
+  P.x=-6; P.z=20; P.yaw=Math.atan2(-(-9+6),-(26-20)); P.pitch=0; P.eye=1.7; P.speed=4.4; P.roll=0;
+  ground=groundNoah;
+  story={id:'noah', step:'', t:0, lock:true, inside:false, stage:0, carrying:false, led:0, target:null, near:null, rock:0, birdFly:null};
+  hand.visible=false; basket.visible=false; sling.visible=false; fruitHand.visible=false; logHand.visible=false; leafHand.visible=false;
+  goNoah('intro');
+}
+function arkStage(n){ const st=world.ark.userData.stages; for(let i=0;i<n;i++) st[i].visible=true; }
+function noahGod(x,z,y){ const G=world.god; G.visible=true; G.userData.to={x,z,y:y||2.4}; if(!G.userData.placed){ G.position.set(x,ground(x,z)+(y||2.4),z); G.userData.placed=1; } }
+function nearestPair(){ let b=null,bd=1e9; world.pairs.forEach(p=>{ if(p.led) return; const d=dist2(p.a[0]); if(d<bd){bd=d;b=p;} }); return b; }
+function goInside(){ const S=story; $('fade').style.background='#0b0b14'; $('fade').style.opacity=1; setTimeout(()=>{ S.inside=true; world.ark.userData.inside.visible=true; P.x=6; P.z=1.5; P.yaw=Math.PI/2; P.pitch=0; logHand.visible=false; $('fade').style.opacity=0; goNoah('shut'); },700); }
+function birdFlight(b, path, cb){ story.birdFly={b, path, t:0, cb}; b.visible=true; }
+
+function goNoah(step){
+  const S=story, W=world; S.step=step; $('prompt').classList.add('hidden');
+  if(step==='intro'){
+    S.lock=true; setGoal('Listen'); noahGod(-9,26);
+    say([[SAY_BIBLE,'Many years after Adam and Eve, the world was full of people. But they had become very wicked, and every thought in their hearts was evil all the time.','Genesis 6:5'],
+      [SAY_BIBLE,'God was sorry that He had made people, and His heart was full of pain. But Noah loved God and did what was right.','Genesis 6:6-9'],
+      ['You are Noah','You are Noah, a good man who walks with God.',''],
+      ['God','I am going to send a flood to cover the whole earth. Build yourself an ark out of cypress wood. Make it 300 cubits long, 50 cubits wide, and 30 cubits high.','Genesis 6:13-15'],
+      ['God','Put a roof on it with a window, and put a door in the side. Cover it with pitch inside and outside.','Genesis 6:14-16'],
+      ['God','Bring into the ark two of every kind of animal, a male and a female, to keep them alive with you. You will go in, with your wife, your sons, and your sons’ wives.','Genesis 6:18-20'],
+      [SAY_BIBLE,'Noah did everything just as God commanded him.','Genesis 6:22']], ()=>{ W.god.visible=false; goNoah('wood'); });
+  }
+  if(step==='wood'){ S.lock=false; woodGoal(); }
+  if(step==='pitch'){ S.lock=false; setGoal('Cover the ark with <b>pitch</b> so no water gets in'); S.target={position:new THREE.Vector3(-4,0,5.5)}; }
+  if(step==='animals'){ S.lock=false; animalGoal(); }
+  if(step==='family'){
+    S.lock=true; S.target=null; setGoal('Listen'); S.famWalk=true;
+    say([[SAY_BIBLE,'Pairs of all the animals came to Noah and went into the ark, two by two, just as God had commanded.','Genesis 7:8-9'],
+      [SAY_BIBLE,'Noah’s wife, his sons Shem, Ham, and Japheth, and their wives went into the ark too.','Genesis 7:7, 7:13']], ()=>goNoah('board'));
+  }
+  if(step==='board'){ S.lock=false; setGoal('Go into the <b>ark</b>'); S.target={position:new THREE.Vector3(6,0,9)}; }
+  if(step==='shut'){
+    S.lock=false; setGoal('Listen'); S.famIn=true;
+    say([[SAY_BIBLE,'Then the Lord shut the door behind them.','Genesis 7:16', ()=>{ S.doorTo=0; }],
+      [SAY_BIBLE,'Seven days later, all the springs of the deep burst open, and the windows of the sky were opened. Rain fell on the earth for forty days and forty nights.','Genesis 7:10-12', ()=>{ W.rain.visible=true; skyTo(0x5a6470,3000); hemi.intensity=0.35; sun.intensity=0.25; W.wlTo=8; S.rockTo=1; }],
+      [SAY_BIBLE,'The water rose higher and higher and lifted the ark up off the ground, and the ark floated on the water.','Genesis 7:17-18', ()=>{ W.wlTo=20; }],
+      [SAY_BIBLE,'The water covered even the highest mountains. Every living thing on the land died. Only Noah and those with him in the ark were left alive.','Genesis 7:19-23', ()=>{ W.wlTo=34; }],
+      [SAY_BIBLE,'The water flooded the earth for 150 days.','Genesis 7:24'],
+      [SAY_BIBLE,'But God remembered Noah and all the animals in the ark. He sent a wind, the rain stopped, and the water began to go down.','Genesis 8:1-3', ()=>{ W.rain.visible=false; skyTo(0x9fc4e2,3000); hemi.intensity=0.5; sun.intensity=0.9; noahLand='ararat'; W.plain.visible=false; W.plainProps.forEach(o=>o.visible=false); W.logs.forEach(l=>l.visible=false); W.pairs.forEach(p=>p.a.forEach(a=>a.visible=false)); W.ararat.visible=true; W.arkBase=groundArarat(0,0); W.wlTo=29; }],
+      [SAY_BIBLE,'The ark came to rest on the mountains of Ararat. The water kept going down until the tops of the mountains could be seen.','Genesis 8:4-5', ()=>{ S.rockTo=0; W.wlTo=21; }]], ()=>goNoah('window'));
+  }
+  if(step==='window'){ S.lock=false; setGoal('Climb up to the <b>window</b>'); S.target={position:new THREE.Vector3(0,0,-2.4)}; }
+  if(step==='raven'||step==='dove1'||step==='dove2'||step==='dove3'){ S.lock=false; }
+  if(step==='out'){
+    S.lock=true; setGoal('Listen'); noahGod(4,1.5,2.6+0); W.god.position.set(4,W.ark.position.y+ARK.floor+2.4,0.5);
+    say([[SAY_BIBLE,'By the time Noah was 601 years old, the earth was completely dry.','Genesis 8:13-14', ()=>{ W.wlTo=-3; }],
+      ['God','Come out of the ark, you and your wife, your sons and their wives. Bring out every animal with you, so they can have babies and fill the earth again.','Genesis 8:15-17', ()=>{ S.doorTo=1; }]], ()=>{ W.god.visible=false; goNoah('exit'); });
+  }
+  if(step==='exit'){ S.lock=false; setGoal('Go out of the <b>ark</b>'); S.target={position:new THREE.Vector3(6,0,2.6)}; }
+  if(step==='altar'){ S.lock=false; setGoal('Build an <b>altar</b> to thank God'); S.target={position:new THREE.Vector3(-2,0,13)}; }
+  if(step==='rainbow'){
+    S.lock=true; S.target=null; setGoal('Listen');
+    lookAt(-2,45,140,2);
+    say([[SAY_BIBLE,'Noah built an altar and gave thanks to the Lord.','Genesis 8:20'],
+      ['God','As long as the earth lasts, there will always be planting and harvest, cold and heat, summer and winter, day and night.','Genesis 8:22'],
+      ['God','I make this promise to you and to every living thing: never again will a flood destroy the whole earth.','Genesis 9:8-11', ()=>{ S.rainbowOn=true; }],
+      ['God','I have put my rainbow in the clouds. It is the sign of my promise. Whenever the rainbow appears, I will remember my promise.','Genesis 9:13-16']], ()=>finishStory());
+  }
+}
+function woodGoal(){ setGoal(story.carrying?'Carry the wood to the <b>ark</b>':`Get cypress wood for the ark (${story.stage} of 4)`); }
+function animalGoal(){ setGoal(`Lead the animals into the ark, <b>two by two</b> (${story.led} of ${NOAH_PAIRS.length})`); }
+
+function updateNoah(dt, now){
+  const S=story, W=world, t=(S.t+=dt), A=W.ark;
+  if(S.fadeSky){ const f=S.fadeSky; f.t+=dt; const k=smooth(f.t/f.dur); scene.background.copy(f.from).lerp(f.to,k); if(k>=1) S.fadeSky=null; }
+  // water and the floating ark
+  W.wl+= (W.wlTo-W.wl)*Math.min(1,dt*0.35); W.water.position.y=W.wl; W.water.visible=W.wl>-2.5;
+  const ay=Math.max(W.arkBase, W.wl-0.3); A.position.y+= (ay-A.position.y)*Math.min(1,dt*2);
+  S.rock+=((S.rockTo||0)-S.rock)*Math.min(1,dt*0.5); A.rotation.z=Math.sin(t*0.7)*0.03*S.rock; A.rotation.x=Math.sin(t*0.53)*0.02*S.rock; P.roll=S.inside?Math.sin(t*0.7)*0.03*S.rock:0;
+  if(S.doorTo!==undefined){ const d=A.userData.door; const want=S.doorTo?Math.PI/2*0.92:0; d.rotation.x+=(want-d.rotation.x)*Math.min(1,dt*1.5); }
+  if(W.rain.visible){ W.rain.position.set(A.position.x,A.position.y-8,A.position.z); const p=W.rain.geometry.attributes.position, a=p.array; for(let i=0;i<a.length;i+=6){ a[i+1]-=dt*22; a[i+4]-=dt*22; if(a[i+1]<0){ a[i+1]+=30; a[i+4]+=30; } } p.needsUpdate=true; }
+  // God's light
+  const G=W.god; if(G.visible&&G.userData.to&&!S.inside){ const to=G.userData.to, ty=ground(to.x,to.z)+to.y; G.position.x+=(to.x-G.position.x)*Math.min(1,dt); G.position.z+=(to.z-G.position.z)*Math.min(1,dt); G.position.y+=(ty+Math.sin(t*1.5)*0.15-G.position.y)*Math.min(1,dt*2); }
+  // animals: graze, or walk to the ark when led
+  W.pairs.forEach((pr,pi)=>pr.a.forEach((a,j)=>{ if(!a.visible) return; const u=a.userData; let tx,tz,sp=0.7;
+    if(pr.led){ const ramp={x:6+(j?0.9:-0.9),z:9}; const inDoor={x:6,z:1.5}; if(!u.atRamp){ tx=ramp.x; tz=ramp.z; if(Math.hypot(a.position.x-tx,a.position.z-tz)<0.6) u.atRamp=1; } else { tx=inDoor.x; tz=inDoor.z; if(Math.hypot(a.position.x-tx,a.position.z-tz)<0.8){ a.visible=false; pr.inside[j].visible=true; } } sp=2.6; }
+    else { u.tt=(u.tt||0)-dt; if(u.tt<=0||!u.goal){ u.tt=3+((pi+j)%3); u.goal={x:u.home.x+Math.sin(t+pi*2+j)*2, z:u.home.z+Math.cos(t*1.2+pi)*2}; } tx=u.goal.x; tz=u.goal.z; }
+    const dx=tx-a.position.x, dz=tz-a.position.z, d=Math.hypot(dx,dz); if(d>0.2){ const v=Math.min(sp,d)*dt; a.position.x+=dx/d*v; a.position.z+=dz/d*v; a.rotation.y=Math.atan2(dx,dz); if(u.legs4) sheepWalk(a,dt,sp>1?1:0.6); }
+    a.position.y=(a.userData.wings?0.2:0)+ground(a.position.x,a.position.z)+(u.hop?Math.abs(Math.sin(t*6+j))*0.12:0); if(u.wings) wingFlap(u.wings,t+j,8); }));
+  W.pairs.forEach(pr=>pr.inside.forEach((b,j)=>{ if(b.userData.wings) wingFlap(b.userData.wings,t+j,2); }));
+  // family walks into the ark
+  W.family.forEach((p,i)=>{ if(!p.visible) return; if(S.famWalk){ const u=p.userData; const tx=u.ramp?6:6+(i-3)*0.5, tz=u.ramp?1.5:9.5; if(!u.ramp && Math.hypot(p.position.x-tx,p.position.z-tz)<0.7) u.ramp=1;
+      const dx=tx-p.position.x, dz=tz-p.position.z, d=Math.hypot(dx,dz); if(d>0.3 && t>i*0.6){ const v=Math.min(2.2,d)*dt; p.position.x+=dx/d*v; p.position.z+=dz/d*v; p.rotation.y=Math.atan2(dx,dz); animWalk(p,dt,1); } if(u.ramp && d<0.6) p.visible=false; p.position.y=groundPlain(p.position.x,p.position.z); }
+    else if(dist2(p)<7) faceTo(p,P.x,P.z); });
+  // birds flying from the window
+  if(S.birdFly){ const f=S.birdFly; f.t+=dt; const k=f.t/f.path.dur; const pt=f.path.at(Math.min(1,k)); f.b.position.copy(pt); const nx=f.path.at(Math.min(1,k+0.01)); f.b.lookAt(nx.x,nx.y,nx.z); wingFlap(f.b.userData.wings,t,14); if(k>=1){ S.birdFly=null; if(f.cb) f.cb(); } }
+  // rainbow fades in
+  if(S.rainbowOn) W.rainbow.children.forEach(m=>{ m.material.opacity=Math.min(0.55,m.material.opacity+dt*0.15); });
+
+  // things to use
+  let near=null;
+  if(S.step==='wood'){
+    if(!S.carrying){ let best=null,bd=1e9; W.logs.forEach(l=>{ if(!l.visible) return; const d=dist2(l); if(d<bd){bd=d;best=l;} }); S.target=best;
+      if(best&&bd<2.6) near={label:'Pick up the wood', fn:()=>{ best.visible=false; S.carrying=true; logHand.visible=true; woodGoal(); }}; }
+    else { S.target={position:new THREE.Vector3(clamp(P.x,-20,20),0,6.5)}; if(Math.abs(P.x)<26&&Math.abs(P.z)<8.5) near={label:'Build with the wood', fn:()=>{ S.carrying=false; logHand.visible=false; S.stage++; arkStage(S.stage); shake=0.3;
+        if(S.stage>=4){ S.target=null; say([[SAY_BIBLE,'Noah worked for many, many years, building the ark just the way God said.','Genesis 6:22']], ()=>goNoah('pitch')); } else woodGoal(); }}; }
+  }
+  if(S.step==='pitch' && Math.abs(P.z)<8.5 && Math.abs(P.x)<26) near={label:'Cover it with pitch', fn:()=>{ A.userData.mats[0].color.set(0x5a4028); S.step='pitched'; S.target=null;
+    say([[SAY_BIBLE,'Noah covered the ark with pitch, a thick sticky tar, inside and outside, so the water could not get in.','Genesis 6:14'],
+         ['God','Go into the ark, you and your whole family. In seven days I will send rain on the earth.','Genesis 7:1-4', ()=>{ noahGod(P.x+3,P.z+2); S.doorTo=1; }]], ()=>{ W.god.visible=false; goNoah('animals'); }); }};
+  if(S.step==='animals'){ const pr=nearestPair(); S.target=pr?pr.a[0]:null;
+    if(pr && dist2(pr.a[0])<(pr.kind==='elephant'||pr.kind==='giraffe'?5:3.5)) near={label:'Lead the '+PAIR_NAME[pr.kind]+' to the ark', fn:()=>{ pr.led=true; S.led++; animalGoal(); if(S.led>=NOAH_PAIRS.length){ S.target=null; setTimeout(()=>goNoah('family'),1500); } }}; }
+  if(S.step==='board' && Math.hypot(P.x-6,P.z-9)<3.5) near={label:'Go into the ark', fn:()=>{ S.step='boarding'; goInside(); }};
+  if(S.step==='window' && P.z<-1.4 && Math.abs(P.x)<2.2) near={label:'Open the window', fn:()=>{ A.userData.shutter.visible=false; S.target=null; goNoah('raven'); setGoal('Send out the <b>raven</b>'); }};
+  const win=()=>new THREE.Vector3(0,A.position.y+ARK.wallH+0.6,-ARK.wid/2-0.4);
+  const flyOut=(back)=>{ const s0=win(), far=new THREE.Vector3(s0.x+(back?-25:-60),s0.y+(back?10:20),s0.z-(back?40:120)); const path={dur:back?6:5, at:k=>{ if(!back) return s0.clone().lerp(far,k); const kk=k<0.5?k*2:(1-k)*2; return s0.clone().lerp(far,smooth(kk)); }}; return path; };
+  if(S.step==='raven' && !S.birdFly) near={label:'Send out the raven', fn:()=>{ S.step='ravenGone'; birdFlight(W.raven, flyOut(false), ()=>{ W.raven.visible=false; say([[SAY_BIBLE,'After forty days, Noah opened the window and sent out a raven. It kept flying back and forth until the water dried up.','Genesis 8:6-7']], ()=>{ goNoah('dove1'); setGoal('Send out the <b>dove</b>'); }); }); }};
+  if(S.step==='dove1' && !S.birdFly) near={label:'Send out the dove', fn:()=>{ S.step='d1'; birdFlight(W.dove, flyOut(true), ()=>{ W.dove.visible=false; say([[SAY_BIBLE,'Then Noah sent out a dove. But it could not find anywhere to land, because water still covered the ground. So it came back, and Noah reached out and brought it into the ark.','Genesis 8:8-9']], ()=>{ goNoah('dove2'); setGoal('Wait seven days, then send out the <b>dove</b> again'); }); }); }};
+  if(S.step==='dove2' && !S.birdFly) near={label:'Send the dove again', fn:()=>{ S.step='d2'; W.doveLeaf.visible=false; const path=flyOut(true); const at=path.at; path.at=k=>{ if(k>0.5) W.doveLeaf.visible=true; return at(k); }; birdFlight(W.dove, path, ()=>{ W.dove.visible=false; leafHand.visible=true; say([[SAY_BIBLE,'Seven days later Noah sent out the dove again. In the evening it came back with a fresh olive leaf in its beak! Then Noah knew the water was going down.','Genesis 8:10-11']], ()=>{ leafHand.visible=false; W.wlTo=12; goNoah('dove3'); setGoal('Wait seven more days, then send out the <b>dove</b>'); }); }); }};
+  if(S.step==='dove3' && !S.birdFly) near={label:'Send the dove one more time', fn:()=>{ S.step='d3'; W.doveLeaf.visible=false; birdFlight(W.dove, flyOut(false), ()=>{ W.dove.visible=false; say([[SAY_BIBLE,'Noah waited seven more days and sent out the dove again. This time it did not come back.','Genesis 8:12']], ()=>goNoah('out')); }); }};
+  if(S.step==='exit' && Math.hypot(P.x-6,P.z-2)<2.2) near={label:'Go out of the ark', fn:()=>{ S.step='leaving'; $('fade').style.opacity=1; setTimeout(()=>{ S.inside=false; A.userData.inside.visible=false; P.x=6; P.z=10; P.yaw=0; P.roll=0;
+      W.pairs.forEach((pr,i)=>pr.inside.forEach((b,j)=>{ b.visible=false; const a=pr.a[j]; a.visible=true; const x=7+i*2.6+j*1.2, z=11+j*1.5+(i%2)*2; place(a,x,z); a.userData.home={x:x+i*2,z:z+6+i*2}; a.userData.goal=null; pr.led=false; }));
+      W.family.forEach((p,i)=>{ p.visible=true; place(p,-9+i*1.1,11+(i%2),0); p.userData.ramp=0; }); S.famWalk=false; S.famIn=false;
+      $('fade').style.opacity=0; say([[SAY_BIBLE,'So Noah came out of the ark with his family, and all the animals came out too, kind by kind.','Genesis 8:18-19']], ()=>goNoah('altar')); },700); }};
+  if(S.step==='altar' && Math.hypot(P.x+2,P.z-13)<3) near={label:'Build an altar', fn:()=>{ S.step='built';
+      const al=new THREE.Group(); for(let i=0;i<14;i++){ const st=new THREE.Mesh(ROCK_GEO[i%4], mat(0x9a8f7a)); st.scale.setScalar(0.35); st.position.set(Math.cos(i*1.3)*0.6*(i<9?1:0.5),0.25+(i>=9?0.45:0),Math.sin(i*1.3)*0.6*(i<9?1:0.5)); al.add(st); }
+      const fire=new THREE.Group(); fire.add(glowSprite(0xff8a30,2.2)); fire.add(glowSprite(0xffd060,1.2)); fire.position.y=1.1; al.add(fire); const fl=new THREE.PointLight(0xff9a40,1,8); fl.position.y=1.2; al.add(fl);
+      al.position.set(-2,ground(-2,13),13); W.group.add(al); goNoah('rainbow'); }};
+  S.near=near;
+
+  const pr=$('prompt');
+  if(near && !saying()){ pr.textContent=(touch?'':'Space: ')+near.label; pr.classList.remove('hidden'); $('act').textContent=near.label.split(' ')[0]; }
+  else { pr.classList.add('hidden'); $('act').textContent= saying()?'Next':'Use'; }
+  showBeacon(t);
+}
+function boundsNoah(){
+  const S=story;
+  if(S.inside){ P.x=clamp(P.x,-ARK.len/2+0.8,ARK.len/2-0.8); P.z=clamp(P.z,-ARK.wid/2+0.5,ARK.wid/2-0.5); return; }
+  P.x=clamp(P.x,-60,60); P.z=clamp(P.z,-60,60);
+  if(Math.abs(P.x)<ARK.len/2+1.2 && Math.abs(P.z)<ARK.wid/2+0.7 && world.ark.userData.stages[0].visible){ P.z = P.z>=0 ? ARK.wid/2+0.7 : -(ARK.wid/2+0.7); }
+  if(noahLand==='ararat'){ const r=Math.hypot(P.x,P.z); if(r>30){ P.x*=30/r; P.z*=30/r; } }
+}
+function jumpNoah(q){ // ?step=animals | flood | window | exit
+  const S=story, W=world; sayQ.length=0; $('say').classList.add('hidden'); sayCb=null; W.god.visible=false;
+  arkStage(4); S.stage=4; W.logs.forEach(l=>l.visible=false); W.ark.userData.mats[0].color.set(0x5a4028); S.doorTo=1;
+  if(q==='animals'){ P.x=0; P.z=16; P.yaw=0; goNoah('animals'); }
+  if(q==='flood'||q==='window'||q==='exit'){ W.pairs.forEach(pr=>{ pr.led=true; pr.a.forEach(a=>a.visible=false); pr.inside.forEach(b=>b.visible=true); }); W.family.forEach(p=>p.visible=false); S.inside=true; W.ark.userData.inside.visible=true; P.x=6; P.z=1.5; P.yaw=Math.PI/2; }
+  if(q==='flood') goNoah('shut');
+  if(q==='window'||q==='exit'){ S.doorTo=0; noahLand='ararat'; W.plain.visible=false; W.plainProps.forEach(o=>o.visible=false); W.ararat.visible=true; W.arkBase=groundArarat(0,0); W.wl=W.wlTo=21; W.ark.position.y=W.arkBase; S.rock=S.rockTo=0; scene.background.set(0x9fc4e2); goNoah(q==='window'?'window':'out'); }
+}
+
 /* David's story hooks */
 function boundsDavid(){ P.x=clamp(P.x,-34,34); P.z=clamp(P.z,-60,72); }
 const IMPL = {
+  noah:  { build:buildNoah,  go:goNoah,  update:updateNoah,  bounds:boundsNoah,  locked:S=>S.lock },
   adam:  { build:buildAdam,  go:goAdam,  update:updateAdam,  bounds:boundsAdam,  locked:S=>S.lock || choosing() },
   david: { build:buildDavid, go:goDavid, update:updateDavid, bounds:boundsDavid, locked:S=>S.step==='taunt'||S.step==='shout'||S.step==='fall'||(S.step==='sling'&&!!S.flying) },
 };
@@ -1134,7 +1391,7 @@ function stopStory(){
   running=false; story=null;
   if(world){ scene.remove(world.group); world.group.traverse(o=>{ if(o.geometry) o.geometry.dispose(); }); world=null; }
   sayQ.length=0; sayCb=null; $('say').classList.add('hidden'); $('armor').classList.add('hidden'); $('cross').classList.add('hidden'); $('meter').classList.add('hidden'); $('stones').classList.add('hidden');
-  basket.visible=hand.visible=sling.visible=fruitHand.visible=false; $('fade').style.opacity=0; $('choice').classList.add('hidden'); hand.material=handMat; resetLook();
+  basket.visible=hand.visible=sling.visible=fruitHand.visible=false; if(typeof logHand!=='undefined'){ logHand.visible=false; leafHand.visible=false; } P.roll=0; $('fade').style.opacity=0; $('choice').classList.add('hidden'); hand.material=handMat; resetLook();
 }
 function startStory(id){
   stopStory(); trackPlay();
@@ -1144,7 +1401,7 @@ function startStory(id){
   const q=new URLSearchParams(location.search).get('step'); if(q && story) jumpTo(q); // preview links for testing
 }
 function jumpTo(q){ // ?step=stones or ?step=sling
-  const S=story; if(story.id==='adam') return jumpAdam(q);
+  const S=story; if(story.id==='adam') return jumpAdam(q); if(story.id==='noah') return jumpNoah(q);
   if(q==='stones'||q==='sling'){ world.lamb.userData.following=true; world.lamb.userData.goal={x:world.flock.x+1,z:world.flock.z}; world.lamb.position.set(world.flock.x+1,0,world.flock.z); world.israel.forEach(p=>p.position.z+=12); }
   if(q==='stones'){ P.x=0; P.z=STREAM_Z+4; P.yaw=0; sayQ.length=0; $('say').classList.add('hidden'); go('stones'); }
   if(q==='sling'){ world.stones.forEach(s=>s.visible=false); S.stonesHeld=5; S.stonesLeft=5; P.x=0; P.z=-20; P.yaw=0; world.goliath.position.set(0,ground(0,-36),-36); sayQ.length=0; $('say').classList.add('hidden'); $('stones').classList.remove('hidden'); updateStonesHud(); go('sling'); }
@@ -1155,7 +1412,7 @@ function finishStory(){
   const nextReady=READY[READY.indexOf(s)+1], nextAny=STORIES[STORIES.indexOf(s)+1];
   $('fade').style.opacity=0.6;
   setTimeout(()=>{
-    $('endWho').textContent='You saw what '+({david:'David',adam:'Adam'}[s.id]||'they')+' did.';
+    $('endWho').textContent='You saw what '+({david:'David',adam:'Adam',noah:'Noah'}[s.id]||'they')+' did.';
     $('endVerse').textContent=s.endVerse; $('endRef').textContent=s.endRef;
     $('endUnlock').textContent= nextReady ? 'You unlocked '+nextReady.title+'!' : (nextAny ? 'Next up: '+nextAny.title+'. It is coming soon!' : 'You finished every story!');
     $('endNext').innerHTML = nextAny ? '<b>What happens next</b>'+nextAny.before : '';
@@ -1264,7 +1521,7 @@ function frame(now){
     const bobY = moving ? Math.sin(P.bob)*(story.armor?0.07:0.035) : 0;
     let shx=0,shy=0; if(shake>0){ shake=Math.max(0,shake-dt*1.4); shx=(Math.random()-0.5)*0.08*shake; shy=(Math.random()-0.5)*0.08*shake; }
     camera.position.set(P.x+shx, ground(P.x,P.z)+P.eye+bobY+shy, P.z);
-    camera.rotation.set(P.pitch, P.yaw, 0, 'YXZ');
+    camera.rotation.set(P.pitch, P.yaw, P.roll||0, 'YXZ');
     view.position.y = moving ? Math.abs(Math.sin(P.bob))*-0.02 : 0;
     basket.rotation.z = Math.sin(P.bob)*0.05;
     if(world.water) world.water.material.opacity=0.8+0.06*Math.sin(now*0.003);
