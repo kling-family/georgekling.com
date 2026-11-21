@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Through the Eyes of the Bible | a game by George</title>
+<meta name="description" content="See Bible stories through the eyes of the people who lived them. Finish one story to unlock the next. A game by George.">
+<meta property="og:title" content="Through the Eyes of the Bible">
+<meta property="og:description" content="See Bible stories through the eyes of the people who lived them. A game by George.">
+<meta property="og:image" content="https://georgekling.com/games/through-the-eyes.jpg">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<script data-goatcounter="https://georgekling.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--sand:#f3e2b8;--sand-d:#d9bd7c;--ink:#2a1d0e;--gold:#f5c542;--gold-d:#b8860b;--sky:#7fb8e6;--night:#1c2440;--red:#c4452f;--green:#4f8a3c}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;overflow:hidden;background:#cfe3f2;font-family:'Fredoka',system-ui,sans-serif;color:var(--ink);-webkit-user-select:none;user-select:none;touch-action:none}
+  #game{position:fixed;inset:0;display:block;width:100%;height:100%}
+  .hidden{display:none !important}
+  button{font-family:inherit;font-weight:600;cursor:pointer;border:none;border-radius:14px;background:linear-gradient(#ffe08a,var(--gold));color:var(--ink);box-shadow:0 4px 0 var(--gold-d),0 8px 16px rgba(0,0,0,.25);padding:10px 18px;font-size:18px}
+  button:active{transform:translateY(3px);box-shadow:0 1px 0 var(--gold-d)}
+  button:focus-visible{outline:3px solid #fff;outline-offset:3px}
+  button.ghost{background:rgba(255,246,227,.9);box-shadow:0 3px 0 #a88f5c}
+
+  /* Menu */
+  #menu{position:fixed;inset:0;overflow-y:auto;touch-action:pan-y;background:radial-gradient(120% 90% at 50% 0%,#ffe7b0 0%,#e9c27a 40%,#8a5a2b 100%);padding:max(16px,env(safe-area-inset-top)) 16px 48px}
+  #menu .in{max-width:760px;margin:0 auto;display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center}
+  .back{align-self:flex-start;color:var(--ink);font-weight:600;text-decoration:none;font-size:15px;opacity:.8}
+  .back:hover{opacity:1;text-decoration:underline}
+  .logo small{display:block;font-size:.42em;font-weight:700;letter-spacing:.04em;margin-bottom:.1em}
+  .logo{font-family:'Cinzel',Georgia,serif;font-weight:900;font-size:clamp(40px,10vw,76px);line-height:1;margin:8px 0 0;color:#fff8e1;text-shadow:0 3px 0 #7a4a1a,0 8px 22px rgba(60,30,0,.45)}
+  .by{letter-spacing:.24em;text-transform:uppercase;font-size:13px;font-weight:600;color:#5a3a14}
+  .intro{max-width:46ch;font-size:18px;margin:4px 0 8px}
+  .stories{display:grid;gap:16px;width:100%;grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
+  .story{background:#fff8e6;border:3px solid #7a4a1a;border-radius:16px;padding:14px;text-align:left;display:flex;flex-direction:column;gap:6px;box-shadow:0 10px 20px -10px rgba(60,30,0,.6);position:relative}
+  .story h3{font-family:'Cinzel',Georgia,serif;margin:0;font-size:21px;line-height:1.15}
+  .story .who{font-size:15px;color:#6b4a22;margin:0}
+  .story p{margin:0;font-size:15px}
+  .story button{margin-top:6px;align-self:flex-start}
+  .story.locked{background:#e8dcc0;border-style:dashed;color:#6b5a40}
+  .story .num{font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;color:#9a6a2a}
+  .done-stamp{position:absolute;right:10px;top:10px;transform:rotate(8deg);border:2px solid var(--red);color:var(--red);border-radius:4px;padding:0 6px;font-weight:700;font-size:13px;letter-spacing:.1em}
+  .how{font-size:14px;max-width:52ch;color:#4a3216}
+
+  /* HUD */
+  #hud{position:fixed;inset:0;pointer-events:none}
+  #goal{position:absolute;top:max(10px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);background:rgba(42,29,14,.78);color:#fff6e3;border:2px solid var(--gold);border-radius:14px;padding:6px 14px;font-size:17px;text-align:center;max-width:min(92vw,560px)}
+  #goal b{color:var(--gold)}
+  #arrow{position:absolute;top:calc(max(10px,env(safe-area-inset-top)) + 52px);left:50%;width:34px;height:34px;margin-left:-17px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.5))}
+  #menuBtn{position:absolute;top:max(10px,env(safe-area-inset-top));left:10px;pointer-events:auto;font-size:15px;padding:6px 12px}
+  #say{position:absolute;left:50%;bottom:max(20px,env(safe-area-inset-bottom));transform:translateX(-50%);width:min(94vw,640px);background:rgba(255,248,230,.96);border:3px solid #7a4a1a;border-radius:16px;padding:12px 16px 10px;pointer-events:auto;cursor:pointer;box-shadow:0 10px 24px rgba(0,0,0,.35)}
+  #say .who{font-family:'Cinzel',Georgia,serif;font-weight:700;color:#7a4a1a;font-size:17px}
+  #say .txt{font-size:19px;line-height:1.35;margin:2px 0 4px}
+  #say .ref{font-size:13px;color:#8a6a3a}
+  #say .tap{float:right;font-size:13px;color:#8a6a3a}
+  #prompt{position:absolute;left:50%;top:58%;transform:translateX(-50%);background:rgba(42,29,14,.75);color:#fff6e3;padding:6px 14px;border-radius:12px;font-size:17px;white-space:nowrap}
+  #cross{position:absolute;left:50%;top:50%;width:18px;height:18px;margin:-9px 0 0 -9px;border:2px solid rgba(255,255,255,.85);border-radius:50%;box-shadow:0 0 0 1px rgba(0,0,0,.4)}
+  #meter{position:absolute;left:50%;top:calc(50% + 26px);width:120px;height:10px;margin-left:-60px;background:rgba(0,0,0,.45);border-radius:6px;overflow:hidden;border:2px solid #fff}
+  #meter i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ffe08a,#ff8a3d)}
+  #stones{position:absolute;right:12px;top:max(10px,env(safe-area-inset-top));background:rgba(42,29,14,.78);color:#fff6e3;border-radius:12px;padding:6px 12px;font-size:16px}
+  #armor{position:absolute;inset:0;background:radial-gradient(ellipse 70% 62% at 50% 55%,transparent 60%,rgba(90,70,40,.85) 61%,rgba(60,45,25,.97) 75%);}
+  #fade{position:absolute;inset:0;background:#fff8e6;opacity:0;transition:opacity .8s}
+  #act{position:absolute;right:max(18px,env(safe-area-inset-right));bottom:max(22px,env(safe-area-inset-bottom));width:96px;height:96px;border-radius:50%;pointer-events:auto;font-size:15px;line-height:1.1;padding:6px;display:none}
+  #stick{position:absolute;left:max(24px,env(safe-area-inset-left));bottom:max(28px,env(safe-area-inset-bottom));width:120px;height:120px;border-radius:50%;background:rgba(255,248,230,.25);border:2px solid rgba(255,248,230,.6);display:none}
+  #stick i{position:absolute;left:50%;top:50%;width:54px;height:54px;margin:-27px 0 0 -27px;border-radius:50%;background:rgba(255,248,230,.85)}
+  body.touch #act,body.touch #stick{display:block}
+  body.touch #say{bottom:auto;top:calc(max(10px,env(safe-area-inset-top)) + 90px)}
+  #keys{position:absolute;left:12px;bottom:12px;background:rgba(42,29,14,.6);color:#fff6e3;font-size:13px;padding:6px 10px;border-radius:10px}
+  body.touch #keys{display:none}
+
+  /* End card */
+  #end{position:fixed;inset:0;display:grid;place-items:center;background:rgba(42,29,14,.55);padding:16px}
+  #end .card{background:#fff8e6;border:4px solid #7a4a1a;border-radius:20px;max-width:520px;width:100%;padding:22px;text-align:center;display:flex;flex-direction:column;gap:10px;align-items:center}
+  #end h2{font-family:'Cinzel',Georgia,serif;margin:0;font-size:30px}
+  #end .verse{font-size:19px;font-style:italic;margin:4px 0}
+  #end .ref{font-size:14px;color:#8a6a3a}
+  #end .next{font-size:16px;text-align:left;background:#f3e2b8;border-radius:12px;padding:10px 14px}
+  #end .next b{display:block;color:#7a4a1a}
+  #end .unlock{font-weight:600;color:var(--green)}
+  #before{position:fixed;inset:0;display:flex;background:radial-gradient(120% 90% at 50% 0%,#ffe7b0 0%,#e9c27a 40%,#8a5a2b 100%);padding:16px;overflow-y:auto;touch-action:pan-y}
+  #before .card{margin:auto;background:#fff8e6;border:4px solid #7a4a1a;border-radius:20px;max-width:600px;width:100%;padding:22px 24px;display:flex;flex-direction:column;gap:8px}
+  #before .num{font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;color:#9a6a2a}
+  #before h2{font-family:'Cinzel',Georgia,serif;margin:0;font-size:30px;line-height:1.1}
+  #before h3{margin:10px 0 0;font-size:16px;color:#7a4a1a;letter-spacing:.04em}
+  #before p{margin:0;font-size:19px;line-height:1.5}
+  #before .ref{font-size:14px;color:#8a6a3a}
+  #before .youare{font-weight:600;color:var(--green);margin-top:6px}
+  #before .row{display:flex;gap:12px;justify-content:flex-end;margin-top:10px}
+  .story details{font-size:14px;margin-top:2px}
+  .story summary{cursor:pointer;color:#7a4a1a;font-weight:600}
+  #loading{position:fixed;inset:0;display:grid;place-items:center;background:#e9c27a;font-size:22px}
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<div id="hud" class="hidden">
+  <div id="armor" class="hidden"></div>
+  <div id="cross" class="hidden"></div>
+  <div id="meter" class="hidden"><i></i></div>
+  <div id="goal"></div>
+  <svg id="arrow" viewBox="0 0 34 34" class="hidden"><path d="M17 3 L30 28 L17 21 L4 28 Z" fill="#f5c542" stroke="#2a1d0e" stroke-width="2.5" stroke-linejoin="round"/></svg>
+  <div id="stones" class="hidden"></div>
+  <div id="prompt" class="hidden"></div>
+  <div id="stick"><i></i></div>
+  <button id="act">Use</button>
+  <div id="keys">WASD or arrows to walk &middot; drag to look &middot; Space to use</div>
+  <div id="say" class="hidden"><span class="tap">tap or Space &#9656;</span><div class="who"></div><div class="txt"></div><div class="ref"></div></div>
+  <button id="menuBtn" class="ghost">&#9776; Stories</button>
+  <div id="fade"></div>
+</div>
+
+<div id="menu" class="hidden">
+  <div class="in">
+    <a class="back" href="/games/">&larr; Back to George's games</a>
+    <h1 class="logo"><small>Through the Eyes of</small>the Bible</h1>
+    <div class="by">A game by George</div>
+    <p class="intro">See each story through the eyes of the person who lived it. Finish a story to unlock the next one.</p>
+    <div class="stories" id="storyList"></div>
+    <p class="how"><b>How to play:</b> WASD or arrow keys to walk, drag to look around, Space or E to use things. On a tablet, walk with the circle on the left, drag to look, and press the big button.</p>
+  </div>
+</div>
+
+<div id="before" class="hidden">
+  <div class="card">
+    <div class="num" id="bNum"></div>
+    <h2 id="bTitle"></h2>
+    <div class="ref" id="bRef"></div>
+    <h3>What happened before this story</h3>
+    <p id="bText"></p>
+    <p class="youare" id="bWho"></p>
+    <div class="row"><button class="ghost" id="bBack">Back</button><button id="bGo">Begin</button></div>
+  </div>
+</div>
+
+<div id="end" class="hidden">
+  <div class="card">
+    <h2>Story complete</h2>
+    <div id="endWho"></div>
+    <div class="verse" id="endVerse"></div>
+    <div class="ref" id="endRef"></div>
+    <div class="unlock" id="endUnlock"></div>
+    <div class="next" id="endNext"></div>
+    <button id="endBtn">Back to the stories</button>
+  </div>
+</div>
+
+<div id="loading">Loading...</div>
+
+<script src="../monster-island/three.min.js"></script>
+<script>
+'use strict';
+/* ================= Save ================= */
+const SAVE_KEY = 'throughTheEyes.save.v1';
+function readSave(){ try{ const d = JSON.parse(localStorage.getItem(SAVE_KEY)||'null'); return d && Array.isArray(d.done) ? d : {done:[]}; }catch(e){ return {done:[]}; } }
+function writeSave(d){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(d)); }catch(e){} }
+let SAVE = readSave();
+
+function trackPlay(){ if(trackPlay.done) return; trackPlay.done=1; try{ const go=()=>window.goatcounter&&window.goatcounter.count&&window.goatcounter.count({path:'/games/through-the-eyes/play',title:'Through the Eyes of the Bible: someone started playing'}); if(window.goatcounter&&window.goatcounter.count) go(); else setTimeout(go,3000); }catch(e){} }
+
+/* ================= Story list ================= */
+// Every story, in the order it happened. Stories with ready:true can be played.
+const STORIES = [
+  { id:'adam', before:"In the very beginning, there was nothing at all. Then God made the light, the sky, the land, the sea, the plants, the animals, and the stars. Last of all, God made the first man and woman, Adam and Eve, and gave them a beautiful garden to live in called Eden.", title:'Adam and Eve', who:'You are Adam', ref:'Genesis 1 to 3' },
+  { id:'noah', before:"Adam and Eve disobeyed God and had to leave the garden. Many, many years went by, and the world filled up with people. But most of them became mean and violent and forgot about God. One man still loved God and did what was right. His name was Noah.", title:'Noah\u2019s Ark', who:'You are Noah', ref:'Genesis 6 to 9' },
+  { id:'abraham', before:"After the flood, Noah's family grew into lots of families who spread out all over the world. Hundreds of years later, God spoke to a man named Abram. God told him to leave his home and go to a new land, and promised to make his family into a great nation. Later God changed his name to Abraham.", title:'Abraham and the Stars', who:'You are Abraham', ref:'Genesis 12 and 15' },
+  { id:'joseph', before:"God kept His promise. Abraham and his wife Sarah had a son named Isaac when they were very old. Isaac had a son named Jacob, and Jacob had twelve sons. Jacob loved one son, Joseph, more than the others, and his brothers got very jealous.", title:'Joseph and His Colorful Coat', who:'You are Joseph', ref:'Genesis 37 to 45' },
+  { id:'babymoses', before:"Joseph's whole family moved to Egypt to live with him, and they were safe there. Their family grew and grew for 400 years, and they were called the Israelites. Then a new king of Egypt, called Pharaoh, was afraid of them. He made them slaves, and he ordered that every Israelite baby boy be thrown in the river.", title:'Baby Moses in the Basket', who:'You are Miriam, his big sister', ref:'Exodus 2' },
+  { id:'bush', before:"The princess of Egypt found baby Moses and raised him in the palace. When Moses grew up, he saw an Egyptian beating an Israelite slave, and Moses killed the Egyptian. Then Moses ran away to the desert. He lived there for 40 years and became a shepherd.", title:'Moses and the Burning Bush', who:'You are Moses', ref:'Exodus 3' },
+  { id:'redsea', before:"God sent Moses back to Egypt to tell Pharaoh, \u201cLet my people go!\u201d Pharaoh said no again and again, so God sent ten plagues on Egypt, like frogs, bugs, hail, and darkness. After the last plague, Pharaoh finally let the Israelites go. But then he changed his mind and chased after them with his whole army.", title:'Moses and the Red Sea', who:'You are Moses', ref:'Exodus 14' },
+  { id:'jericho', before:"God led the Israelites through the desert for 40 years. He gave them food called manna and gave Moses the Ten Commandments. When Moses died, God chose Joshua to lead the people into the land He had promised to Abraham. But the first city in their way, Jericho, had huge walls.", title:'Joshua and the Walls of Jericho', who:'You are Joshua', ref:'Joshua 6' },
+  { id:'gideon', before:"The Israelites moved into the promised land. But over and over, they forgot God and worshiped fake gods. Each time, enemies attacked them. When they cried out to God for help, He sent a leader called a judge to save them. This time the enemy was the Midianites, and they were stealing all of Israel's food.", title:'Gideon\u2019s 300', who:'You are Gideon', ref:'Judges 6 and 7' },
+  { id:'samson', before:"Gideon's 300 men beat the huge Midianite army, and Israel had peace for 40 years. But then the people forgot God again, and the Philistines ruled over them. An angel told a woman her son would be very special. He would never cut his hair, and God would make him super strong. That son was Samson.", title:'Samson', who:'You are Samson', ref:'Judges 13 to 16' },
+  { id:'david', before:"After Samson, the people of Israel wanted a king like the other nations had. God chose a tall man named Saul to be the first king. But Saul stopped obeying God. So God sent the prophet Samuel to Bethlehem to pick a new king, and Samuel chose the youngest son of Jesse, a shepherd boy named David. But David would not be king for a long time. And the Philistines were still at war with Israel.", ready:true, title:'David and Goliath', who:'You are David, a shepherd boy', ref:'1 Samuel 17',
+    blurb:'Find a lost lamb, bring food to your brothers, and face the giant with five smooth stones.',
+    endVerse:'"The battle is the Lord\u2019s."', endRef:'1 Samuel 17:47' },
+  { id:'elijah', before:"David became a great king. His son Solomon was very wise and built a beautiful temple for God. After Solomon, the kingdom split into two parts. One of the worst kings was Ahab. He and his wife Jezebel made the people worship a fake god called Baal. So God sent no rain for three years, and God's prophet Elijah came to face Ahab.", title:'Elijah and the Fire on the Mountain', who:'You are Elijah', ref:'1 Kings 18' },
+  { id:'jonah', before:"Elijah showed everyone that the Lord is the real God. After Elijah, God kept sending prophets to warn His people and other nations. Nineveh was a huge city in the enemy country of Assyria, and its people were very wicked. God told a prophet named Jonah to go there and warn them. But Jonah did not want to go.", title:'Jonah and the Big Fish', who:'You are Jonah', ref:'Jonah 1 to 3' },
+  { id:'daniel', before:"Even after Jonah, God's people kept turning away from Him. So God let the army of Babylon take over Jerusalem and carry many of the people far away. One of them was a young man named Daniel. He kept praying to God every day, and he became one of the king's most important helpers. Later the Persians took over Babylon, and King Darius ruled.", title:'Daniel in the Lions\u2019 Den', who:'You are Daniel', ref:'Daniel 6' },
+  { id:'esther', before:"God protected Daniel. After many years, some of God's people went back home to rebuild Jerusalem, but many stayed in Persia. The king of Persia, Xerxes, picked a young Jewish woman named Esther to be his new queen. Nobody knew she was Jewish. Then the king's evil helper Haman made a plan to destroy all the Jewish people.", title:'Esther the Brave Queen', who:'You are Esther', ref:'Esther 4 to 7' },
+  // New Testament
+  { id:'christmas', before:"Esther saved her people. After that, God's people waited about 400 years for the Savior God had promised. Then an angel named Gabriel visited a young woman named Mary in Nazareth. He told her she would have a baby, the Son of God, and she would name Him Jesus. Mary and Joseph had to travel to Bethlehem, David's hometown, and there was no room for them anywhere.", title:'The First Christmas', who:'You are a shepherd', ref:'Luke 2' },
+  { id:'wisemen', before:"The shepherds found baby Jesus lying in a manger, just like the angel said. Far away in the east, wise men who studied the stars saw a brand new star. They knew it meant a new king had been born, so they set out on a long trip to find Him.", title:'The Wise Men and the Star', who:'You are one of the wise men', ref:'Matthew 2' },
+  { id:'storm', before:"King Herod tried to hurt baby Jesus, but His family escaped to Egypt and later moved back to Nazareth. Jesus grew up and, when He was about 30, He began teaching about God and healing sick people. He picked twelve friends, called disciples, to follow Him. Some of them, like Peter, were fishermen.", title:'Jesus Calms the Storm', who:'You are Peter', ref:'Mark 4' },
+  { id:'loaves', before:"Jesus kept teaching and doing miracles, and more and more people came to see Him. One day a huge crowd followed Him out to a hillside far from any town. They stayed all day listening, and it got late. Everyone was hungry, and there was no food to buy.", title:'Five Loaves and Two Fish', who:'You are the boy with the lunch', ref:'John 6' },
+  { id:'water', before:"Jesus fed more than 5,000 people with one boy's lunch, and there were twelve baskets of leftovers! Right after that, Jesus sent His disciples ahead in a boat across the lake while He went up the mountain alone to pray. In the middle of the night, a strong wind blew against their boat.", title:'Peter Walks on Water', who:'You are Peter', ref:'Matthew 14' },
+  { id:'zacchaeus', before:"Jesus and His disciples traveled all around, and Jesus taught that God loves everyone, even people others hate. Now Jesus was on His way to Jerusalem, and He walked through the city of Jericho. A man there named Zacchaeus was a tax collector. He cheated people and got rich, so nobody liked him.", title:'Zacchaeus Climbs a Tree', who:'You are Zacchaeus', ref:'Luke 19' },
+  { id:'easter', before:"Jesus rode into Jerusalem on a donkey, and crowds waved palm branches. But the leaders were jealous and wanted to get rid of Him. Jesus ate a last supper with His disciples. Then He was arrested and died on a cross on a Friday, taking the punishment for everyone's sins. His body was put in a tomb with a huge stone in front.", title:'The First Easter', who:'You are Mary Magdalene', ref:'John 20' },
+  { id:'paul', before:"Jesus rose from the dead and visited His friends for 40 days. Then He went up to heaven and sent the Holy Spirit to help them. The disciples told everyone about Jesus, and many people believed. But a man named Saul hated the followers of Jesus. He put them in jail, and he set off to the city of Damascus to arrest even more.", title:'Paul on the Road to Damascus', who:'You are Paul', ref:'Acts 9' },
+];
+const READY = STORIES.filter(s=>s.ready);
+// A ready story opens when the ready story before it is done (or you already finished it).
+function isUnlocked(s){ const i=READY.indexOf(s); return i===0 || SAVE.done.includes(s.id) || SAVE.done.includes(READY[i-1].id); }
+
+function showMenu(){
+  stopStory();
+  $('menu').classList.remove('hidden');
+  $('hud').classList.add('hidden');
+  $('end').classList.add('hidden'); $('before').classList.add('hidden');
+  const list = $('storyList'); list.innerHTML='';
+  STORIES.forEach((s,i)=>{
+    const el = document.createElement('div');
+    if(!s.ready){
+      el.className='story locked';
+      el.innerHTML=`<div class="num">Story ${i+1}</div><h3>${s.title}</h3><p class="who">${s.ref}</p><p>&#128274; Coming soon</p><details><summary>What happened before</summary>${s.before}</details>`;
+    } else {
+      const open=isUnlocked(s), done=SAVE.done.includes(s.id);
+      el.className='story'+(open?'':' locked');
+      el.innerHTML=`<div class="num">Story ${i+1}</div>${done?'<div class="done-stamp">DONE</div>':''}
+        <h3>${s.title}</h3><p class="who">${s.who}</p>
+        <p>${open?s.blurb:'&#128274; Finish '+READY[READY.indexOf(s)-1].title+' to unlock this one.'}</p>
+        ${open?`<button>${done?'Play again':'Start'}</button>`:''}<p class="who">${s.ref}</p><details><summary>What happened before</summary>${s.before}</details>`;
+      if(open) el.querySelector('button').onclick=()=>showBefore(s.id);
+    }
+    list.appendChild(el);
+  });
+}
+
+/* ================= Helpers ================= */
+const $ = id=>document.getElementById(id);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const lerp=(a,b,t)=>a+(b-a)*t;
+const smooth=t=>{t=clamp(t,0,1);return t*t*(3-2*t);};
+function rnd(seed){ let s=seed>>>0; return ()=>{ s=(s*1664525+1013904223)>>>0; return s/4294967296; }; }
+
+/* ================= Three.js setup ================= */
+const canvas = $('game');
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
+
+const scene = new THREE.Scene();
+const SKY = new THREE.Color(0xa9d3f0);
+scene.background = SKY;
+scene.fog = new THREE.Fog(0xb9d6ee, 70, 190);
+const camera = new THREE.PerspectiveCamera(70, 1, 0.05, 400);
+scene.add(camera);
+scene.add(new THREE.HemisphereLight(0xeaf2ff, 0x6a5a3a, 0.6));
+const sun = new THREE.DirectionalLight(0xfff0d0, 0.7); sun.position.set(40,80,30); scene.add(sun);
+
+function resize(){ const w=innerWidth,h=innerHeight; renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix(); }
+addEventListener('resize', resize); resize();
+
+const M = {}; // material cache
+function mat(c, opts){ const k=c+JSON.stringify(opts||{}); return M[k] || (M[k]=new THREE.MeshLambertMaterial(Object.assign({color:c},opts||{}))); }
+
+/* ================= World: Bethlehem fields to the Valley of Elah ================= */
+// The story runs north (toward -z): Jesse's house and sheep (z 45..70), Israel's camp (z ~ 5),
+// the brook in the valley (z ~ -16), Goliath and the Philistine camp (z -45..-70).
+const STREAM_Z = -16;
+function ground(x,z){
+  let h = 0;
+  h += 1.4*smooth((Math.abs(z-STREAM_Z)-3)/16);               // valley dips at the brook
+  h -= 1.3*(1-smooth((Math.abs(z-STREAM_Z))/3.2));
+  const ax=Math.abs(x); h += Math.pow(Math.max(0,ax-22),1.25)*0.32; // hills on both sides
+  h += 0.45*Math.sin(x*0.21)*Math.cos(z*0.17) + 0.3*Math.sin(x*0.07+z*0.11);
+  if(z>30) h += 0.8*Math.sin(z*0.08+x*0.05);                  // rolling fields near Bethlehem
+  return h;
+}
+function pathX(z){ return z>STREAM_Z ? 3*Math.sin(z*0.06) : 0; }
+
+let world = null; // everything for the current story lives here so it can be cleared
+
+function buildTerrain(g){
+  const S=240, N=160;
+  const geo = new THREE.PlaneGeometry(S,S,N,N); geo.rotateX(-Math.PI/2);
+  const pos = geo.attributes.position, cols=[];
+  const grass=new THREE.Color(0x6f9a48), dry=new THREE.Color(0xb3a466), dirt=new THREE.Color(0xd6bf8a), rock=new THREE.Color(0xa89a80), wet=new THREE.Color(0x6f8f4a);
+  const c=new THREE.Color();
+  for(let i=0;i<pos.count;i++){
+    const x=pos.getX(i), z=pos.getZ(i)-20; pos.setZ(i,z);
+    const h=ground(x,z); pos.setY(i,h);
+    const n = 0.5+0.5*Math.sin(x*0.9+z*1.3)*Math.cos(x*0.37-z*0.5);
+    c.copy(grass).lerp(dry, clamp(0.1+0.4*n+(z<0?0.2:0),0,0.85));
+    if(Math.abs(x)>24) c.lerp(rock, clamp((Math.abs(x)-24)/14,0,0.7));
+    if(Math.abs(z-STREAM_Z)<4) c.lerp(wet,0.6);
+    const px=pathX(z); if(Math.abs(x-px)<1.6 && z>STREAM_Z+3 && z<72) c.lerp(dirt,0.85);
+    cols.push(c.r,c.g,c.b);
+  }
+  geo.setAttribute('color', new THREE.Float32BufferAttribute(cols,3));
+  geo.computeVertexNormals();
+  g.add(new THREE.Mesh(geo, new THREE.MeshLambertMaterial({vertexColors:true})));
+  // brook
+  const w = new THREE.Mesh(new THREE.PlaneGeometry(120,3.4,1,1), new THREE.MeshLambertMaterial({color:0x4fa3d8, transparent:true, opacity:.85}));
+  w.rotation.x=-Math.PI/2; w.position.set(0,ground(0,STREAM_Z)+0.55,STREAM_Z); g.add(w); world.water=w;
+  // distant mountains
+  const mtn=mat(0x9aa7b8);
+  for(let i=0;i<22;i++){ const a=i/22*Math.PI*2, r=150+((i*37)%30);
+    const m=new THREE.Mesh(new THREE.ConeGeometry(18+(i*13)%16, 18+(i*7)%20, 6), mtn); m.position.set(Math.cos(a)*r, 4, Math.sin(a)*r-20); g.add(m); }
+}
+
+function tree(g,x,z,s=1){
+  const t=new THREE.Group();
+  const trunk=new THREE.Mesh(new THREE.CylinderGeometry(0.14*s,0.22*s,1.6*s,6), mat(0x6b4a2a)); trunk.position.y=0.8*s; t.add(trunk);
+  const leaf=mat(0x7d9461);
+  [[0,1.9,0,0.95],[0.55,1.7,0.2,0.7],[-0.5,1.75,-0.2,0.72],[0.1,2.3,-0.3,0.6]].forEach(([a,b,c,r])=>{
+    const m=new THREE.Mesh(new THREE.IcosahedronGeometry(r*s,0), leaf); m.position.set(a*s,b*s,c*s); t.add(m); });
+  t.position.set(x,ground(x,z),z); g.add(t);
+}
+function rock(g,x,z,s=1){
+  const m=new THREE.Mesh(new THREE.DodecahedronGeometry(s,0), mat(0xb3a58a)); m.scale.y=0.6;
+  m.position.set(x,ground(x,z)+s*0.25,z); m.rotation.y=x*z; g.add(m); return m;
+}
+
+/* People: simple blocky figures. opts: tunic, skin, hair, beard, h (height), crown, helmet, spear, shield, sash */
+function person(o){
+  o=Object.assign({tunic:0xb5743a, skin:0xc68a5e, hair:0x3a2614, beard:null, h:1.75, sash:null},o);
+  const g=new THREE.Group(), s=o.h/1.75;
+  const body=new THREE.Mesh(new THREE.CylinderGeometry(0.22,0.34,1.0,8), mat(o.tunic)); body.position.y=0.95; g.add(body);
+  if(o.sash){ const sh=new THREE.Mesh(new THREE.CylinderGeometry(0.235,0.255,0.12,8), mat(o.sash)); sh.position.y=1.0; g.add(sh); }
+  const legs=[];
+  for(const sx of [-0.11,0.11]){ const l=new THREE.Mesh(new THREE.BoxGeometry(0.12,0.5,0.14), mat(o.skin)); l.geometry.translate(0,-0.25,0); l.position.set(sx,0.5,0); g.add(l); legs.push(l); }
+  const arms=[];
+  for(const sx of [-0.3,0.3]){ const a=new THREE.Mesh(new THREE.BoxGeometry(0.11,0.6,0.12), mat(o.tunic)); a.geometry.translate(0,-0.28,0); a.position.set(sx,1.38,0); a.rotation.z=sx>0?-0.12:0.12; g.add(a); arms.push(a); }
+  const head=new THREE.Mesh(new THREE.SphereGeometry(0.19,12,10), mat(o.skin)); head.position.y=1.62; g.add(head);
+  const hair=new THREE.Mesh(new THREE.SphereGeometry(0.2,12,8,0,Math.PI*2,0,Math.PI*0.55), mat(o.hair)); hair.position.y=1.64; hair.rotation.x=-0.25; g.add(hair);
+  for(const sx of [-0.07,0.07]){ const e=new THREE.Mesh(new THREE.SphereGeometry(0.025,6,6), mat(0x1a1208)); e.position.set(sx,1.65,0.17); g.add(e); }
+  if(o.beard){ const b=new THREE.Mesh(new THREE.SphereGeometry(0.15,10,8,0,Math.PI*2,Math.PI*0.45,Math.PI*0.55), mat(o.beard)); b.position.set(0,1.58,0.05); g.add(b); }
+  if(o.crown){ const c=new THREE.Mesh(new THREE.CylinderGeometry(0.17,0.16,0.12,10,1,true), mat(0xf5c542,{side:THREE.DoubleSide})); c.position.y=1.82; g.add(c); }
+  if(o.helmet){ const hm=new THREE.Mesh(new THREE.SphereGeometry(0.215,12,8,0,Math.PI*2,0,Math.PI*0.5), mat(o.helmet)); hm.position.y=1.66; g.add(hm);
+    const crest=new THREE.Mesh(new THREE.BoxGeometry(0.05,0.14,0.36), mat(0xb03a22)); crest.position.y=1.9; g.add(crest); }
+  if(o.spear){ const sp=new THREE.Mesh(new THREE.CylinderGeometry(0.025,0.025,2.6,5), mat(0x6b4a2a)); sp.position.set(0.36,1.2,0.08);
+    const tip=new THREE.Mesh(new THREE.ConeGeometry(0.06,0.25,5), mat(0xb0b0b8)); tip.position.y=1.4; sp.add(tip); g.add(sp); g.userData.spear=sp; }
+  if(o.shield){ const sd=new THREE.Mesh(new THREE.CylinderGeometry(0.34,0.34,0.06,14), mat(o.shield)); sd.rotation.x=Math.PI/2; sd.position.set(-0.36,1.05,0.12); g.add(sd); }
+  g.scale.setScalar(s);
+  g.userData.legs=legs; g.userData.arms=arms; g.userData.head=head; g.userData.h=o.h; g.userData.walk=0;
+  // soft shadow
+  const sh=new THREE.Mesh(new THREE.CircleGeometry(0.42,14), new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:.18,depthWrite:false}));
+  sh.rotation.x=-Math.PI/2; sh.position.y=0.03; g.add(sh);
+  return g;
+}
+function place(o,x,z,face){ o.position.set(x,ground(x,z),z); if(face!==undefined) o.rotation.y=face; return o; }
+function faceTo(o,x,z){ o.rotation.y=Math.atan2(x-o.position.x, z-o.position.z); }
+function animWalk(p,dt,speed){
+  const u=p.userData; u.walk+=dt*speed*6;
+  const a=Math.sin(u.walk)*0.6*clamp(speed,0,1.2);
+  if(u.legs){ u.legs[0].rotation.x=a; u.legs[1].rotation.x=-a; }
+  if(u.arms && !u.armsBusy){ u.arms[0].rotation.x=-a*0.7; u.arms[1].rotation.x=a*0.7; }
+}
+
+function sheep(g,x,z,s=1){
+  const o=new THREE.Group();
+  const wool=mat(0xf4efe2), dark=mat(0x2b2520);
+  const b=new THREE.Mesh(new THREE.SphereGeometry(0.45,10,8), wool); b.scale.set(1,0.8,1.35); b.position.y=0.62; o.add(b);
+  for(let i=0;i<5;i++){ const p=new THREE.Mesh(new THREE.SphereGeometry(0.22,8,6), wool); p.position.set(Math.sin(i*1.3)*0.25,0.86,(i-2)*0.2); o.add(p); }
+  const h=new THREE.Mesh(new THREE.SphereGeometry(0.17,8,8), dark); h.scale.set(0.9,1,1.25); h.position.set(0,0.82,0.6); o.add(h);
+  for(const ex of [-0.13,0.13]){ const ear=new THREE.Mesh(new THREE.BoxGeometry(0.14,0.05,0.07), dark); ear.position.set(ex,0.88,0.55); o.add(ear); }
+  const legs=[]; for(const [lx,lz] of [[-.2,.35],[.2,.35],[-.2,-.35],[.2,-.35]]){ const l=new THREE.Mesh(new THREE.BoxGeometry(0.08,0.4,0.08), dark); l.geometry.translate(0,-0.2,0); l.position.set(lx,0.4,lz); o.add(l); legs.push(l); }
+  o.userData.legs4=legs; o.userData.walk=Math.random()*6;
+  o.scale.setScalar(s); place(o,x,z,Math.random()*6); g.add(o); return o;
+}
+function sheepWalk(o,dt,speed){ const u=o.userData; u.walk+=dt*speed*9; const a=Math.sin(u.walk)*0.5*clamp(speed,0,1); u.legs4[0].rotation.x=a; u.legs4[3].rotation.x=a; u.legs4[1].rotation.x=-a; u.legs4[2].rotation.x=-a; }
+
+function tent(g,x,z,color,s=1){
+  const t=new THREE.Group();
+  const roof=new THREE.Mesh(new THREE.ConeGeometry(2.2*s,2.4*s,4), mat(color)); roof.rotation.y=Math.PI/4; roof.position.y=1.2*s; t.add(roof);
+  const pole=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.05,0.5,4), mat(0x6b4a2a)); pole.position.y=2.55*s; t.add(pole);
+  t.position.set(x,ground(x,z)-0.05,z); t.rotation.y=(x*7+z*3)%1; g.add(t); return t;
+}
+function house(g,x,z){
+  const h=new THREE.Group();
+  const wall=new THREE.Mesh(new THREE.BoxGeometry(5,2.6,4), mat(0xe6d3a8)); wall.position.y=1.3; h.add(wall);
+  const roof=new THREE.Mesh(new THREE.BoxGeometry(5.3,0.25,4.3), mat(0xb59a6a)); roof.position.y=2.7; h.add(roof);
+  const door=new THREE.Mesh(new THREE.BoxGeometry(0.9,1.7,0.05), mat(0x5a3a1e)); door.position.set(0.6,0.85,2.02); h.add(door);
+  const win=new THREE.Mesh(new THREE.BoxGeometry(0.6,0.5,0.05), mat(0x3a2a18)); win.position.set(-1.4,1.7,2.02); h.add(win);
+  h.position.set(x,ground(x,z)-0.1,z); g.add(h); return h;
+}
+function wallStones(g,x0,z0,x1,z1){ // little stone sheepfold wall
+  const n=Math.ceil(Math.hypot(x1-x0,z1-z0)/0.7);
+  for(let i=0;i<=n;i++){ const t=i/n, x=lerp(x0,x1,t), z=lerp(z0,z1,t); const m=new THREE.Mesh(new THREE.DodecahedronGeometry(0.38,0), mat(0xc2b394)); m.position.set(x,ground(x,z)+0.25,z); m.rotation.set(i,i*2,0); g.add(m); }
+}
+
+/* Beacon: a soft column of light where you need to go next */
+function makeBeacon(){
+  const m=new THREE.Mesh(new THREE.CylinderGeometry(0.6,0.6,30,16,1,true), new THREE.MeshBasicMaterial({color:0xfff1a8,transparent:true,opacity:.28,depthWrite:false,side:THREE.DoubleSide}));
+  m.geometry.translate(0,15,0); return m;
+}
+
+/* ================= First-person view: your hands ================= */
+const view = new THREE.Group(); camera.add(view);
+const basket = new THREE.Group();
+{ const b=new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.15,0.18,12), mat(0xb08a4a)); basket.add(b);
+  const bread=new THREE.Mesh(new THREE.SphereGeometry(0.1,8,6), mat(0xd9a05a)); bread.scale.set(1.4,0.6,1); bread.position.set(0.05,0.1,0); basket.add(bread);
+  const grain=new THREE.Mesh(new THREE.SphereGeometry(0.08,8,6), mat(0xe8d08a)); grain.position.set(-0.08,0.1,0.03); basket.add(grain);
+  basket.position.set(0.32,-0.36,-0.65); basket.visible=false; view.add(basket); }
+const handMat = mat(0xc68a5e);
+const hand = new THREE.Mesh(new THREE.BoxGeometry(0.09,0.09,0.32), handMat); hand.position.set(0.3,-0.32,-0.55); hand.visible=false; view.add(hand);
+const sling = new THREE.Group();
+{ const cordMat=new THREE.LineBasicMaterial({color:0x5a3a1e});
+  const cg=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0),new THREE.Vector3(0,-0.28,0)]);
+  sling.add(new THREE.Line(cg,cordMat));
+  const pouch=new THREE.Mesh(new THREE.SphereGeometry(0.024,8,6), mat(0x8a6a3a)); pouch.position.y=-0.28; sling.add(pouch);
+  const st=new THREE.Mesh(new THREE.SphereGeometry(0.018,8,6), mat(0x9a9488)); st.position.y=-0.29; sling.add(st); sling.userData.stone=st;
+  sling.position.set(0.34,-0.16,-0.75); sling.visible=false; view.add(sling); }
+
+/* ================= Player ================= */
+const P = { x:0, z:0, yaw:0, pitch:0, eye:1.45, speed:4.2, bob:0, lockLook:null };
+const keys = {};
+let joy = {x:0,y:0};
+
+/* ================= Story engine ================= */
+let story=null;        // {id, step, ...}
+let running=false;
+const sayQ=[]; let sayCb=null;
+function say(lines, cb){ // lines: [[who, text, ref?], ...]
+  sayQ.length=0; lines.forEach(l=>sayQ.push(l)); sayCb=cb||null; nextSay();
+}
+function nextSay(){
+  const el=$('say');
+  if(!sayQ.length){ el.classList.add('hidden'); const cb=sayCb; sayCb=null; if(cb) cb(); return; }
+  const [who,txt,ref]=sayQ.shift();
+  el.querySelector('.who').textContent=who||'';
+  el.querySelector('.txt').textContent=txt;
+  el.querySelector('.ref').textContent=ref||'';
+  el.classList.remove('hidden');
+  sayBusyUntil = performance.now()+350;
+}
+let sayBusyUntil=0;
+function saying(){ return !$('say').classList.contains('hidden'); }
+function setGoal(html){ $('goal').innerHTML=html; $('goal').classList.toggle('hidden',!html); }
+function lookAt(x,y,z,dur=1.2){ P.lockLook={x,y,z,t:0,dur}; }
+
+/* ================= Story 1: David and Goliath ================= */
+function buildDavid(){
+  const g=new THREE.Group(); scene.add(g);
+  world={group:g, sheep:[], israel:[], phil:[], stones:[], update:[]};
+  buildTerrain(g);
+  const r=rnd(7);
+  // olive trees and rocks, kept off the path
+  for(let i=0;i<120;i++){ const x=(r()-0.5)*90, z=-75+r()*150; if(Math.abs(x-pathX(z))<5) continue; if(Math.abs(z-STREAM_Z)<4) continue; if(z<-30&&z>-58&&Math.abs(x)<14) continue; if(Math.abs(x)<16&&z>-6&&z<14) continue; tree(g,x,z,0.8+r()*0.6); }
+  for(let i=0;i<70;i++){ const x=(r()-0.5)*100, z=-80+r()*160; if(Math.abs(x-pathX(z))<3) continue; if(Math.abs(z-STREAM_Z)<3) continue; rock(g,x,z,0.3+r()*0.8); }
+
+  // Bethlehem: Jesse's house, the sheepfold, the flock
+  house(g,-9,64);
+  const jesse=place(person({tunic:0x7a5c8a, beard:0xe8e2d6, hair:0xd8d2c6, h:1.72, sash:0xd9b86a}),-6,60,Math.PI); g.add(jesse);
+  world.jesse=jesse;
+  wallStones(g,6,50,14,50); wallStones(g,14,50,14,58); wallStones(g,14,58,6,58);
+  world.flock={x:9,z:54};
+  for(let i=0;i<9;i++){ const s=sheep(g,7+r()*6,51+r()*6); s.userData.home={x:s.position.x,z:s.position.z}; world.sheep.push(s); }
+  const lamb=sheep(g,-24,40,0.62); world.lamb=lamb; lamb.userData.following=false;
+  rock(g,-25.5,38.8,1.3); rock(g,-22.5,38.5,1.0);
+
+  // Israel's camp on the near hill
+  const tc=[0xe8dcc0,0xd9c9a0,0xc9b48a];
+  for(let i=0;i<14;i++){ const x=(i%7-3)*5.5+(i>6?2.5:0), z=i>6?10:4; if(Math.abs(x)<3) continue; tent(g,x,z,tc[i%3]); }
+  const saulTent=tent(g,11,-1,0x6a3a7a,1.35); world.saulTent=saulTent;
+  const saul=place(person({tunic:0x6a2a5a, beard:0x2a1a0e, h:1.95, crown:true, sash:0xf5c542}),9,1.6,Math.PI*0.75); g.add(saul); world.saul=saul;
+  const eliab=place(person({tunic:0x8a5a3a, beard:0x3a2614, spear:true, shield:0x8a6a3a, h:1.82}),-3,-1,Math.PI); g.add(eliab); world.eliab=eliab;
+  for(let i=0;i<16;i++){ const x=-14+i*1.9, z=-4-(i%2)*1.2; if(Math.abs(x+3)<1) continue;
+    const p=place(person({tunic:[0x8a5a3a,0x7a6a4a,0x6a4a2a][i%3], beard:0x2a1a0e, spear:true, shield:0x8a6a3a, helmet:i%3===0?0x8a7a5a:null}),x,z,Math.PI); g.add(p); world.israel.push(p); }
+
+  // Philistines on the far hill
+  for(let i=0;i<12;i++){ const x=(i%6-2.5)*6, z=i>5?-70:-63; tent(g,x,z,[0x8a2a2a,0x6a2a3a][i%2]); }
+  for(let i=0;i<18;i++){ const x=-16+i*1.9, z=-55-(i%2)*1.3;
+    const p=place(person({tunic:[0x5a2a2a,0x3a3a4a][i%2], helmet:0xb8903a, spear:true, shield:0xb8903a}),x,z,0); g.add(p); world.phil.push(p); }
+
+  // Goliath and his shield-bearer
+  const gol=place(person({tunic:0x4a3a2a, skin:0xb07a52, beard:0x1a1008, helmet:0xc8a040, spear:true, shield:0xc8a040, h:1.75}),0,-46,0);
+  gol.scale.setScalar(1.75); // the scale is set after: makes him about three meters tall
+  gol.userData.spear.scale.set(2.2,1.4,2.2);
+  // bronze scale armor
+  const armor=new THREE.Mesh(new THREE.CylinderGeometry(0.25,0.32,0.7,8), mat(0xb8903a)); armor.position.y=1.1; gol.add(armor);
+  g.add(gol); world.goliath=gol; gol.userData.home={x:0,z:-46};
+  const bearer=place(person({tunic:0x5a2a2a, helmet:0xb8903a, shield:0xc8a040}),0.6,-43.5,0); g.add(bearer); world.bearer=bearer;
+
+  // five smooth stones in the brook
+  const sp=[[-3,STREAM_Z-0.6],[2.5,STREAM_Z+0.7],[6,STREAM_Z-0.2],[-7,STREAM_Z+0.5],[0.5,STREAM_Z-1.1]];
+  sp.forEach(([x,z])=>{ const s=new THREE.Mesh(new THREE.SphereGeometry(0.16,10,8), new THREE.MeshLambertMaterial({color:0xd8d2c4, emissive:0x554a20})); s.scale.y=0.7; s.position.set(x,ground(x,z)+0.62,z); g.add(s); world.stones.push(s); });
+
+  world.beacon=makeBeacon(); g.add(world.beacon);
+
+  // player starts in the field near the sheep
+  P.x=2; P.z=48; P.yaw=Math.PI*0.15; P.pitch=0; P.eye=1.42; P.speed=4.2;
+  story={id:'david', step:'', armor:false, stonesHeld:0, stonesLeft:0, charge:0, charging:false, flying:null, golFall:0, golWalk:false, cheer:0, t:0, target:null, armorWalk:0};
+  basket.visible=false; hand.visible=false; sling.visible=false;
+  go('intro');
+}
+
+const SAY_BIBLE = 'Bible';
+function go(step){
+  const S=story; S.step=step;
+  $('prompt').classList.add('hidden');
+  if(step==='intro'){
+    setGoal('Listen');
+    say([[SAY_BIBLE,'Long ago, in the fields near Bethlehem, a young shepherd named David took care of his father’s sheep.','1 Samuel 16:11'],
+         ['You are David','One of the lambs has wandered off. Better go find it!']], ()=>go('lamb'));
+  }
+  if(step==='lamb'){ setGoal('Find the <b>lost lamb</b>'); S.target=world.lamb; }
+  if(step==='lambHome'){ setGoal('Lead the lamb back to the <b>sheepfold</b>'); S.target={position:new THREE.Vector3(world.flock.x,0,world.flock.z)}; }
+  if(step==='jesse'){
+    setGoal('Go see your father <b>Jesse</b>'); S.target=world.jesse;
+  }
+  if(step==='camp'){ setGoal('Walk to the army camp in the <b>Valley of Elah</b>'); S.target={position:new THREE.Vector3(pathX(8),0,8)}; }
+  if(step==='shout'){
+    S.target=null; setGoal('Listen');
+    lookAt(world.goliath.position.x, world.goliath.position.y+4.5, world.goliath.position.z, 1.4);
+    shake=1.2;
+    say([[SAY_BIBLE,'Across the valley stood a giant named Goliath. He was over nine feet tall and wore bronze armor.','1 Samuel 17:4-5'],
+         ['Goliath','Choose a man and let him come down to fight me! If he wins, we will be your servants!','1 Samuel 17:8-9'],
+         [SAY_BIBLE,'When the soldiers of Israel saw Goliath, they ran away from him. They were very afraid.','1 Samuel 17:24'],
+         ['Eliab, your brother','Why did you come down here? Who is watching the sheep?','1 Samuel 17:28'],
+         ['You are David','Who is this man, that he makes fun of the armies of the living God?','1 Samuel 17:26']], ()=>go('saul'));
+    world.israel.forEach((p,i)=>{ p.userData.flee=1.6+(i%3)*0.4; });
+    basket.visible=false;
+  }
+  if(step==='saul'){ setGoal('Go to <b>King Saul’s tent</b>'); S.target=world.saul; }
+  if(step==='armor'){
+    S.target=null; setGoal('Listen');
+    say([['King Saul','You can’t fight him. You are only a boy, and he has been a warrior since he was young.','1 Samuel 17:33'],
+         ['You are David','I have killed a lion and a bear that came to take my sheep. The Lord saved me from the lion and the bear. He will save me from this giant too.','1 Samuel 17:34-37'],
+         ['King Saul','Go, and the Lord be with you. Here, wear my armor.','1 Samuel 17:37-38']], ()=>{
+      S.armor=true; $('armor').classList.remove('hidden'); P.speed=1.4; S.armorWalk=0; clank=1;
+      setGoal('Try walking in <b>Saul’s armor</b>'); go('armorWalk');
+    });
+  }
+  if(step==='armorWalk'){ /* handled in update */ }
+  if(step==='armorOff'){
+    say([['You are David','I can’t go in these. I’m not used to them.','1 Samuel 17:39']], ()=>{
+      S.armor=false; $('armor').classList.add('hidden'); P.speed=4.2;
+      say([[SAY_BIBLE,'So David took off the armor. He picked up his shepherd’s staff and his sling.','1 Samuel 17:39-40']], ()=>go('stones'));
+    });
+  }
+  if(step==='stones'){ hand.visible=true; S.target=nearestStone(); updateStoneGoal(); $('stones').classList.remove('hidden'); updateStonesHud(); }
+  if(step==='meet'){ setGoal('Walk out to meet <b>Goliath</b>'); S.target=world.goliath; S.golWalk=true; }
+  if(step==='taunt'){
+    S.target=null; setGoal('Listen'); S.golWalk=false;
+    lookAt(world.goliath.position.x, world.goliath.position.y+4.6, world.goliath.position.z, 1.0);
+    say([['Goliath','Am I a dog, that you come at me with sticks? Come here, and I will feed you to the birds!','1 Samuel 17:43-44'],
+         ['You are David','You come against me with a sword and a spear. But I come against you in the name of the Lord, the God of the armies of Israel!','1 Samuel 17:45'],
+         ['You are David','Everyone here will know that the Lord does not save with sword and spear. The battle is the Lord’s!','1 Samuel 17:47']], ()=>go('sling'));
+  }
+  if(step==='sling'){
+    hand.visible=false; sling.visible=true; sling.userData.stone.visible=true; $('cross').classList.remove('hidden');
+    setGoal(touch?'Aim at Goliath’s forehead. <b>Hold the button</b> to swing, let go to throw!':'Aim at Goliath’s forehead. <b>Hold Space</b> (or the mouse button) to swing, let go to throw!');
+    $('act').textContent='Hold to swing';
+    S.golWalk=true;
+  }
+  if(step==='fall'){
+    $('cross').classList.add('hidden'); $('meter').classList.add('hidden'); sling.visible=false; setGoal('');
+    S.golWalk=false; S.golFall=0.0001;
+    say([[SAY_BIBLE,'David put his hand in his bag, took out a stone, and slung it. The stone hit the Philistine on the forehead, and he fell face down on the ground.','1 Samuel 17:49']], ()=>{
+      world.phil.forEach((p,i)=>p.userData.flee=2+(i%4)*0.5); if(world.bearer) world.bearer.userData.flee=3;
+      world.israel.forEach(p=>{ p.userData.flee=0; p.userData.charge=1; });
+      S.cheer=1;
+      say([[SAY_BIBLE,'When the Philistines saw that their champion was dead, they ran away. The soldiers of Israel shouted and chased after them.','1 Samuel 17:51-52'],
+           ['You are David','The battle is the Lord’s!','1 Samuel 17:47']], ()=>finishStory());
+    });
+  }
+}
+function nearestStone(){ let best=null,bd=1e9; world.stones.forEach(s=>{ if(!s.visible) return; const d=Math.hypot(s.position.x-P.x,s.position.z-P.z); if(d<bd){bd=d;best=s;} }); return best; }
+function updateStoneGoal(){ setGoal(`Pick up <b>five smooth stones</b> from the brook (${story.stonesHeld} of 5)`); }
+function updateStonesHud(){ const n=story.step==='stones'?story.stonesHeld:story.stonesLeft; $('stones').textContent='●'.repeat(n)+'○'.repeat(5-n)+'  stones'; }
+
+let shake=0, clank=0;
+
+function updateDavid(dt){
+  const S=story, W=world, t=(S.t+=dt);
+  // sheep wander near home
+  W.sheep.forEach((s,i)=>{
+    const u=s.userData; u.tt=(u.tt||0)-dt;
+    if(u.tt<=0){ u.tt=2+((i*7+t*3)%4); u.goal={x:u.home.x+Math.sin(t+i)*2, z:u.home.z+Math.cos(t*1.3+i)*2}; }
+    const dx=u.goal.x-s.position.x, dz=u.goal.z-s.position.z, d=Math.hypot(dx,dz);
+    if(d>0.2){ const v=Math.min(0.6,d)*dt; s.position.x+=dx/d*v; s.position.z+=dz/d*v; s.rotation.y=Math.atan2(dx,dz); sheepWalk(s,dt,0.6); }
+    s.position.y=ground(s.position.x,s.position.z);
+  });
+  // lamb
+  const L=W.lamb, lu=L.userData;
+  if(lu.following){
+    const tx=lu.goal? lu.goal.x : P.x-Math.sin(P.yaw)*-1.6, tz=lu.goal? lu.goal.z : P.z-Math.cos(P.yaw)*-1.6;
+    const dx=tx-L.position.x, dz=tz-L.position.z, d=Math.hypot(dx,dz);
+    if(d>(lu.goal?0.2:1.8)){ const v=Math.min(5,d*1.6)*dt; L.position.x+=dx/d*v; L.position.z+=dz/d*v; L.rotation.y=Math.atan2(dx,dz); sheepWalk(L,dt,1); }
+  } else {
+    L.rotation.y+=Math.sin(t*0.7)*dt*0.5; // nibbling grass
+  }
+  L.position.y=ground(L.position.x,L.position.z);
+  // people idle and run
+  [...W.israel, ...W.phil, W.bearer].forEach((p,i)=>{
+    if(!p) return; const u=p.userData;
+    if(u.flee>0){ const dir = W.phil.includes(p)||p===W.bearer ? -1 : 1; p.rotation.y = dir>0?0:Math.PI; p.position.z+=dir*u.flee*dt*2.2; u.flee=Math.max(0,u.flee-dt*0.35); p.position.y=ground(p.position.x,p.position.z); animWalk(p,dt,1.2); }
+    else if(u.charge){ p.rotation.y=Math.PI; p.position.z-=dt*3.5; p.position.y=ground(p.position.x,p.position.z); animWalk(p,dt,1.2); if(u.arms){ u.armsBusy=true; u.arms[1].rotation.x=-2.6+Math.sin(t*8+i)*0.3; } }
+  });
+  // Jesse looks at you when close
+  const dj=Math.hypot(W.jesse.position.x-P.x,W.jesse.position.z-P.z); if(dj<8) faceTo(W.jesse,P.x,P.z);
+  // Goliath strides and swings his spear
+  const G=W.goliath, gu=G.userData;
+  if(S.golWalk && !S.golFall){
+    const dx=P.x-G.position.x, dz=P.z-G.position.z, d=Math.hypot(dx,dz);
+    G.rotation.y=Math.atan2(dx,dz);
+    const stopAt = S.step==='sling' ? 10 : 22;
+    if(d>stopAt && (S.step==='sling' || S.step==='meet')){ const v=Math.min(1.1, d-stopAt)*dt; G.position.x+=dx/d*v; G.position.z+=dz/d*v; animWalk(G,dt,0.6); if(W.bearer){ W.bearer.position.x+=dx/d*v; W.bearer.position.z+=dz/d*v; W.bearer.position.y=ground(W.bearer.position.x,W.bearer.position.z); W.bearer.rotation.y=G.rotation.y; animWalk(W.bearer,dt,0.6);} }
+    G.position.y=ground(G.position.x,G.position.z);
+  } else if(!S.golFall){ G.rotation.y=Math.sin(t*0.4)*0.25; }
+  if(S.golFall>0 && S.golFall<1){ S.golFall=Math.min(1,S.golFall+dt*0.9); G.rotation.x=Math.PI/2*smooth(S.golFall)*S.golFall; if(S.golFall>=1) shake=1.5; }
+
+  // stones glow
+  W.stones.forEach((s,i)=>{ if(s.visible) s.material.emissive.setRGB(0.25+0.15*Math.sin(t*4+i),0.22+0.12*Math.sin(t*4+i),0.08); });
+
+  // step logic and nearby things to use
+  let near=null;
+  if(S.step==='lamb' && dist2(L)<3.2) near={label:'Pick up the lamb', fn:()=>{ lu.following=true; say([['You are David','There you are, little one. Let’s get you home.']], ()=>go('lambHome')); }};
+  if(S.step==='lambHome' && Math.hypot(L.position.x-W.flock.x,L.position.z-W.flock.z)<4.5){
+    lu.following=true; lu.goal={x:W.flock.x+1,z:W.flock.z}; lu.home={x:W.flock.x+1,z:W.flock.z};
+    S.step='lambDone';
+    say([[SAY_BIBLE,'David was a good shepherd. He kept his sheep safe from lions and bears.','1 Samuel 17:34-35'],
+         ['Jesse, your father','David! Come here, my son.']], ()=>go('jesse'));
+  }
+  if(S.step==='jesse' && dist2(W.jesse)<3.2) near={label:'Talk to Jesse', fn:()=>{
+    S.step='jesseTalk';
+    say([['Jesse, your father','Your three oldest brothers are with King Saul’s army, fighting the Philistines.','1 Samuel 17:13'],
+         ['Jesse, your father','Take this grain and these ten loaves of bread to your brothers at the camp. See how they are doing.','1 Samuel 17:17-18'],
+         [SAY_BIBLE,'Early in the morning, David left the sheep with someone to watch them, took the food, and went.','1 Samuel 17:20']], ()=>{ basket.visible=true; go('camp'); });
+  }};
+  if(S.step==='camp' && P.z<14) go('shout');
+  if(S.step==='saul' && dist2(W.saul)<3.6) near={label:'Talk to King Saul', fn:()=>{ faceTo(W.saul,P.x,P.z); go('armor'); }};
+  if(S.step==='armorWalk'){ S.armorWalk+=Math.hypot(P.vx||0,P.vz||0)*dt; if(S.armorWalk>2.5 && !saying()){ S.step='armorOff2'; go('armorOff'); } if(S.armorWalk>0.5) setGoal('So heavy! Keep trying to walk...'); }
+  if(S.step==='stones'){
+    S.target=nearestStone();
+    const s=S.target; if(s && dist2(s)<2.2) near={label:'Pick up the stone', fn:()=>{ s.visible=false; S.stonesHeld++; updateStonesHud(); clank=0.3;
+      if(S.stonesHeld>=5){ S.stonesLeft=5; S.target=null; say([[SAY_BIBLE,'David chose five smooth stones from the brook and put them in his shepherd’s bag.','1 Samuel 17:40']], ()=>go('meet')); }
+      else updateStoneGoal(); }};
+  }
+  if(S.step==='meet'){ const d=Math.hypot(G.position.x-P.x,G.position.z-P.z); if(d<26) go('taunt'); }
+  if(S.step==='sling') updateSling(dt);
+
+  // show the use prompt
+  S.near=near;
+  const pr=$('prompt');
+  if(near && !saying()){ pr.textContent=(touch?'':'Space: ')+near.label; pr.classList.remove('hidden'); $('act').textContent=near.label.split(' ').slice(0,2).join(' '); }
+  else { pr.classList.add('hidden'); if(S.step!=='sling') $('act').textContent= saying()?'Next':'Use'; }
+
+  // beacon and arrow
+  const tg=S.target, bc=W.beacon;
+  if(tg && !saying()){ bc.visible=true; bc.position.set(tg.position.x, ground(tg.position.x,tg.position.z), tg.position.z); bc.material.opacity=0.18+0.1*Math.sin(t*3);
+    const ang=Math.atan2(tg.position.x-P.x, tg.position.z-P.z); // world angle
+    const rel = ang - (P.yaw+Math.PI); // camera looks toward -z at yaw 0
+    $('arrow').style.transform=`rotate(${-rel*180/Math.PI}deg)`; $('arrow').classList.remove('hidden'); }
+  else { bc.visible=false; $('arrow').classList.add('hidden'); }
+
+  // walls: keep the story in order
+  const minZ = ['stones'].includes(S.step) ? STREAM_Z-2.5 : (['meet','taunt','sling','fall'].includes(S.step) ? -40 : -3.5);
+  if(P.z<minZ){ P.z=minZ; if(!saying() && !S.wallMsg){ S.wallMsg=1; say([['You are David', S.step==='stones'?'I should get my stones first.':'I’m not supposed to go that way yet.']], ()=>{ setTimeout(()=>S.wallMsg=0,3000); }); } }
+}
+function dist2(o){ return Math.hypot(o.position.x-P.x,o.position.z-P.z); }
+
+/* The sling: hold to spin it faster, let go to throw */
+const tmpV=new THREE.Vector3(), tmpV2=new THREE.Vector3();
+function goliathHead(out){ const h=world.goliath.userData.head; return h.getWorldPosition(out); }
+function updateSling(dt){
+  const S=story;
+  const holding = actHeld && !saying();
+  if(S.flying){
+    const f=S.flying; f.t+=dt;
+    if(f.assist){ const k=Math.min(1,f.t/f.dur); f.m.position.lerpVectors(f.from,f.to,k); f.m.position.y+=Math.sin(k*Math.PI)*0.6;
+      if(k>=1){ world.group.remove(f.m); S.flying=null; go('fall'); } }
+    else { f.vel.y-=9.8*dt; f.m.position.addScaledVector(f.vel,dt);
+      if(f.m.position.y<ground(f.m.position.x,f.m.position.z)||f.t>2.5){ world.group.remove(f.m); S.flying=null;
+        if(S.stonesLeft<=0){ S.stonesLeft=5; updateStonesHud(); say([['You are David','Let me get more stones from my bag. Aim right at his forehead.']]); }
+        else say([['You are David','Missed! I still have '+S.stonesLeft+(S.stonesLeft===1?' stone.':' stones.')+' Aim for his forehead.']]);
+        sling.userData.stone.visible=S.stonesLeft>0; } }
+    return;
+  }
+  if(holding){ S.charging=true; S.charge=Math.min(1,S.charge+dt*1.1); }
+  if(S.charging){ sling.rotation.z += dt*(6+S.charge*18); sling.rotation.x=0.3; } else { sling.rotation.z=0.15*Math.sin(performance.now()*0.002); sling.rotation.x=0; }
+  $('meter').classList.toggle('hidden', !S.charging); $('meter').firstElementChild.style.width=(S.charge*100)+'%';
+  if(S.charging && !holding){
+    S.charging=false; const c=S.charge; S.charge=0; $('meter').classList.add('hidden');
+    if(c<0.35){ say([['You are David','I need to swing it faster. Hold it longer before letting go!']]); return; }
+    // throw
+    S.stonesLeft--; updateStonesHud(); sling.userData.stone.visible=false;
+    const m=new THREE.Mesh(new THREE.SphereGeometry(0.07,8,6), mat(0x9a9488));
+    camera.getWorldPosition(tmpV); m.position.copy(tmpV); world.group.add(m);
+    const dir=new THREE.Vector3(); camera.getWorldDirection(dir);
+    goliathHead(tmpV2); const toHead=tmpV2.clone().sub(tmpV); const dist=toHead.length(); toHead.normalize();
+    const ang=dir.angleTo(toHead);
+    if(ang<0.16){ S.flying={m, assist:true, from:tmpV.clone(), to:tmpV2.clone(), t:0, dur:dist/30}; }
+    else S.flying={m, assist:false, vel:dir.multiplyScalar(22+c*10).add(new THREE.Vector3(0,2,0)), t:0};
+  }
+}
+
+/* ================= Start / finish ================= */
+function stopStory(){
+  running=false; story=null;
+  if(world){ scene.remove(world.group); world.group.traverse(o=>{ if(o.geometry) o.geometry.dispose(); }); world=null; }
+  sayQ.length=0; sayCb=null; $('say').classList.add('hidden'); $('armor').classList.add('hidden'); $('cross').classList.add('hidden'); $('meter').classList.add('hidden'); $('stones').classList.add('hidden');
+  basket.visible=hand.visible=sling.visible=false; $('fade').style.opacity=0;
+}
+function startStory(id){
+  stopStory(); trackPlay();
+  $('menu').classList.add('hidden'); $('end').classList.add('hidden'); $('hud').classList.remove('hidden');
+  if(id==='david') buildDavid();
+  running=true;
+  const q=new URLSearchParams(location.search).get('step'); if(q && story) jumpTo(q); // preview links for testing
+}
+function jumpTo(q){ // ?step=stones or ?step=sling
+  const S=story;
+  if(q==='stones'||q==='sling'){ world.lamb.userData.following=true; world.lamb.userData.goal={x:world.flock.x+1,z:world.flock.z}; world.lamb.position.set(world.flock.x+1,0,world.flock.z); world.israel.forEach(p=>p.position.z+=12); }
+  if(q==='stones'){ P.x=0; P.z=STREAM_Z+4; P.yaw=0; sayQ.length=0; $('say').classList.add('hidden'); go('stones'); }
+  if(q==='sling'){ world.stones.forEach(s=>s.visible=false); S.stonesHeld=5; S.stonesLeft=5; P.x=0; P.z=-20; P.yaw=0; world.goliath.position.set(0,ground(0,-36),-36); sayQ.length=0; $('say').classList.add('hidden'); $('stones').classList.remove('hidden'); updateStonesHud(); go('sling'); }
+}
+function finishStory(){
+  const s=STORIES.find(x=>x.id===story.id);
+  if(!SAVE.done.includes(s.id)){ SAVE.done.push(s.id); writeSave(SAVE); }
+  const nextReady=READY[READY.indexOf(s)+1], nextAny=STORIES[STORIES.indexOf(s)+1];
+  $('fade').style.opacity=0.6;
+  setTimeout(()=>{
+    $('endWho').textContent='You saw what '+(s.id==='david'?'David':'they')+' did.';
+    $('endVerse').textContent=s.endVerse; $('endRef').textContent=s.endRef;
+    $('endUnlock').textContent= nextReady ? 'You unlocked '+nextReady.title+'!' : (nextAny ? 'Next up: '+nextAny.title+'. It is coming soon!' : 'You finished every story!');
+    $('endNext').innerHTML = nextAny ? '<b>What happens next</b>'+nextAny.before : '';
+    $('endNext').classList.toggle('hidden', !nextAny);
+    $('end').classList.remove('hidden');
+  },900);
+}
+$('endBtn').onclick=showMenu;
+function showBefore(id){
+  const s=STORIES.find(x=>x.id===id), i=STORIES.indexOf(s);
+  $('menu').classList.add('hidden'); $('before').classList.remove('hidden');
+  $('bNum').textContent='Story '+(i+1)+' of '+STORIES.length; $('bTitle').textContent=s.title; $('bRef').textContent=s.ref;
+  $('bText').textContent=s.before; $('bWho').textContent=s.who+'. See what happened through your own eyes.';
+  $('bGo').onclick=()=>{ $('before').classList.add('hidden'); startStory(id); };
+  $('bGo').focus();
+}
+$('bBack').onclick=()=>{ $('before').classList.add('hidden'); showMenu(); };
+$('menuBtn').onclick=showMenu;
+
+/* ================= Input ================= */
+const touch = matchMedia('(pointer:coarse)').matches || ('ontouchstart' in window);
+if(touch) document.body.classList.add('touch');
+let actHeld=false;
+function pressAct(){
+  if(!running) return;
+  if(saying()){ if(performance.now()>sayBusyUntil) nextSay(); return; }
+  if(story && story.near){ const n=story.near; story.near=null; n.fn(); return; }
+  if(story && story.step==='sling') actHeld=true;
+}
+function releaseAct(){ actHeld=false; }
+addEventListener('keydown',e=>{
+  const k=e.key.toLowerCase(); if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k)) e.preventDefault();
+  if(k===' '||k==='e'||k==='enter'){ if(!e.repeat) pressAct(); else if(story&&story.step==='sling'&&!saying()) actHeld=true; return; }
+  if(k==='escape'){ if(running) showMenu(); return; }
+  keys[k]=true;
+});
+addEventListener('keyup',e=>{ const k=e.key.toLowerCase(); keys[k]=false; if(k===' '||k==='e'||k==='enter') releaseAct(); });
+addEventListener('blur',()=>{ for(const k in keys) keys[k]=false; actHeld=false; });
+$('say').addEventListener('pointerdown',e=>{ e.stopPropagation(); if(performance.now()>sayBusyUntil) nextSay(); });
+const actBtn=$('act');
+actBtn.addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); pressAct(); });
+actBtn.addEventListener('pointerup',e=>{ e.preventDefault(); releaseAct(); });
+actBtn.addEventListener('pointercancel',releaseAct);
+actBtn.addEventListener('pointerleave',releaseAct);
+
+// look by dragging (mouse or finger); joystick on the left for touch
+const drags=new Map(); let stickId=null;
+canvas.addEventListener('pointerdown',e=>{
+  if(!running) return;
+  if(touch && e.clientX<innerWidth*0.4 && e.clientY>innerHeight*0.45 && stickId===null){ stickId=e.pointerId; stickMove(e); return; }
+  drags.set(e.pointerId,{x:e.clientX,y:e.clientY,moved:0,t:performance.now()});
+  if(!touch && story && story.step==='sling' && !saying()) actHeld=true;
+});
+addEventListener('pointermove',e=>{
+  if(e.pointerId===stickId){ stickMove(e); return; }
+  const d=drags.get(e.pointerId); if(!d) return;
+  const dx=e.clientX-d.x, dy=e.clientY-d.y; d.x=e.clientX; d.y=e.clientY; d.moved+=Math.abs(dx)+Math.abs(dy);
+  const sens = touch?0.006:0.005;
+  P.yaw-=dx*sens; P.pitch=clamp(P.pitch-dy*sens,-1.1,1.1); P.lockLook=null;
+});
+function endPointer(e){
+  if(e.pointerId===stickId){ stickId=null; joy.x=joy.y=0; $('stick').firstElementChild.style.transform=''; return; }
+  const d=drags.get(e.pointerId); drags.delete(e.pointerId);
+  if(!touch && story && story.step==='sling') actHeld=false;
+  if(d && d.moved<8 && performance.now()-d.t<400 && running && !(story&&story.step==='sling')){ if(saying()) { if(performance.now()>sayBusyUntil) nextSay(); } else if(story&&story.near) pressAct(); }
+}
+addEventListener('pointerup',endPointer); addEventListener('pointercancel',endPointer);
+function stickMove(e){
+  const r=$('stick').getBoundingClientRect(), cx=r.left+r.width/2, cy=r.top+r.height/2;
+  let dx=e.clientX-cx, dy=e.clientY-cy; const d=Math.hypot(dx,dy), m=50; if(d>m){dx*=m/d;dy*=m/d;}
+  joy.x=dx/m; joy.y=dy/m; $('stick').firstElementChild.style.transform=`translate(${dx}px,${dy}px)`;
+}
+
+/* ================= Main loop ================= */
+let last=performance.now();
+function frame(now){
+  requestAnimationFrame(frame);
+  const dt=Math.min(0.05,(now-last)/1000); last=now;
+  if(running && story){
+    // movement
+    let f=0,s=0,turn=0;
+    if(keys['w']||keys['arrowup']) f+=1; if(keys['s']||keys['arrowdown']) f-=1;
+    if(keys['a']) s-=1; if(keys['d']) s+=1;
+    if(keys['arrowleft']) turn+=1; if(keys['arrowright']) turn-=1;
+    f-=joy.y; s+=joy.x*0.8;
+    const locked = story.step==='taunt' || story.step==='shout' || story.step==='fall' || story.step==='sling' && !!story.flying;
+    if(locked){ f=0; s=0; }
+    P.yaw+=turn*dt*2.0;
+    const len=Math.hypot(f,s); if(len>1){f/=len;s/=len;}
+    const sy=Math.sin(P.yaw), cy=Math.cos(P.yaw);
+    const vx=(-sy*f + cy*s)*P.speed, vz=(-cy*f - sy*s)*P.speed;
+    P.vx=vx; P.vz=vz;
+    P.x=clamp(P.x+vx*dt,-34,34); P.z=clamp(P.z+vz*dt,-60,72);
+    if(story.step==='sling'||story.step==='fall'){ /* stay where you are */ }
+    const moving=Math.hypot(vx,vz)>0.1; if(moving) P.bob+=dt*(story.armor?5:9);
+    if(moving && story.armor && Math.sin(P.bob)>0.97) clank=0.5;
+    // auto-look
+    if(P.lockLook){ const L=P.lockLook; L.t+=dt; const k=smooth(L.t/L.dur)*0.15+0.02;
+      const dx=L.x-P.x, dz=L.z-P.z, dy=L.y-(ground(P.x,P.z)+P.eye);
+      const wantYaw=Math.atan2(-dx,-dz), wantPitch=Math.atan2(dy,Math.hypot(dx,dz));
+      let dyaw=((wantYaw-P.yaw+Math.PI)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)-Math.PI;
+      P.yaw+=dyaw*k; P.pitch+=(wantPitch-P.pitch)*k; if(L.t>L.dur+0.6) P.lockLook=null; }
+    updateDavid(dt);
+    // camera
+    const bobY = moving ? Math.sin(P.bob)*(story.armor?0.07:0.035) : 0;
+    let shx=0,shy=0; if(shake>0){ shake=Math.max(0,shake-dt*1.4); shx=(Math.random()-0.5)*0.08*shake; shy=(Math.random()-0.5)*0.08*shake; }
+    camera.position.set(P.x+shx, ground(P.x,P.z)+P.eye+bobY+shy, P.z);
+    camera.rotation.set(P.pitch, P.yaw, 0, 'YXZ');
+    view.position.y = moving ? Math.abs(Math.sin(P.bob))*-0.02 : 0;
+    basket.rotation.z = Math.sin(P.bob)*0.05;
+    if(world.water) world.water.material.opacity=0.8+0.06*Math.sin(now*0.003);
+    if(story.cheer) story.cheer+=dt;
+  }
+  renderer.render(scene,camera);
+}
+
+/* ================= Boot ================= */
+$('loading').classList.add('hidden');
+const qs=new URLSearchParams(location.search);
+if(qs.get('story')) startStory(qs.get('story')); else showMenu();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

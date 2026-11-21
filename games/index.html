@@ -143,6 +143,8 @@
   /* Dragon Kingdom: knightly blackletter title over its cover art */
   .dk-title { position:absolute; left:0; right:0; top:5%; text-align:center; font-family:"UnifrakturCook", "Young Serif", Georgia, serif; font-weight:700;
     font-size:clamp(1.5rem, 3.2vw, 2.2rem); line-height:1; white-space:nowrap; color:#f5c542; text-shadow:2px 2px 0 #7a1f1a, 0 0 14px rgba(0,0,0,.35); pointer-events:none; }
+.tte-title { position:absolute; left:0; right:0; top:6%; text-align:center; font-family:"Young Serif", Georgia, serif; font-size:clamp(1.6rem, 3.4vw, 2.3rem); line-height:1; color:#FFF6EA; text-shadow:0 2px 0 #7a4a1a, 0 0 14px rgba(0,0,0,.3); pointer-events:none; font-weight:400; }
+  .tte-title small { display:block; font-size:.5em; letter-spacing:.06em; margin-bottom:4px; }
   h3.dk, figcaption .dk { font-family:"UnifrakturCook", "Young Serif", Georgia, serif; font-weight:700; font-size:1.7rem; letter-spacing:.5px; }
   figcaption .dk { font-size:1.3rem; }
 </style>
@@ -190,10 +192,12 @@
           <p>Dragons are attacking the kingdom, and the Dragon King's crown controls them all. <b>Part 1:</b> rescue Bea the Builder, build a bridge, and battle the Swamp Dragon. <b>Part 2:</b> sail to the Big Island, beat the goblins the Dragon King pays in gold, free the villagers, and build them a village out of wood. <b>Part 3:</b> storm the Dragon's Treasury on Volcano Island and face the Thunder Dragon. <b>Part 4:</b> fly the Thunder Dragon to Dragon Castle, call down lightning on stone gargoyles, and defeat the evil sorcerer who turns himself into the Dragon King! <b>After The End:</b> fly anywhere on the 🗺️ map for side quests: the Fire Dragon, Ice Island and its secret caves, Dino Island and the Raptor Queen, plus a bow, building, and much more! Your game saves on this device.</p>
           <p><b>How to play:</b> WASD or arrow keys to walk, drag to look around, and use the buttons at the bottom (or keys 1 to 5). On a tablet, steer with your left thumb and hold the big sword and shield buttons with your right.</p>
         </article>
-        <article class="cart soon">
-          <div class="screen"><div><strong>Coming soon</strong>George's next game</div></div>
-          <h3>Next game</h3>
-          <p>George is already thinking about it.</p>
+        <article class="cart">
+          <a class="screen play" href="/games/through-the-eyes/"><b class="tte-title"><small>Through the Eyes of</small>the Bible</b><img src="/games/through-the-eyes.jpg" alt="Through the Eyes of the Bible: looking through David's eyes at the giant Goliath and his shield-bearer across the Valley of Elah" width="1200" height="900"><span>&#9654; Play</span></a>
+          <h3>Through the Eyes of the Bible</h3>
+          <p class="made"><span class="stamp">MADE NOV 2026</span> <span class="plays" id="tte-plays" hidden></span></p>
+          <p>See the big stories of the Bible through the eyes of the people who lived them, from Adam and Eve all the way to Paul. There's no winning: finish a story to unlock the next one. Before each story you learn what happened in between, so it's easy to follow. <b>Ready now:</b> David and Goliath. Find a lost lamb, bring bread to your brothers, try on King Saul's armor, and face the giant with five smooth stones. More stories are on the way!</p>
+          <p><b>How to play:</b> WASD or arrow keys to walk, drag to look around, Space to use things. On a tablet, walk with the circle on the left and press the big button. Your stories save on this device.</p>
         </article>
       </div>
     </section>
@@ -206,6 +210,7 @@
   </footer>
 <script>
 fetch('https://georgekling.goatcounter.com/counter/'+encodeURIComponent('/games/monster-island/play')+'.json').then(r=>r.ok?r.json():null).then(d=>{const el=document.getElementById('mi-plays');if(!d||!d.count||!el)return;el.textContent=d.count==1?'Played once':'Played '+d.count+' times';el.hidden=false}).catch(()=>{});
+fetch('https://georgekling.goatcounter.com/counter/'+encodeURIComponent('/games/through-the-eyes/play')+'.json').then(r=>r.ok?r.json():null).then(d=>{const el=document.getElementById('tte-plays');if(!d||!d.count||!el)return;el.textContent=d.count==1?'Played once':'Played '+d.count+' times';el.hidden=false}).catch(()=>{});
 fetch('https://georgekling.goatcounter.com/counter/'+encodeURIComponent('/games/dragon-kingdom/play')+'.json').then(r=>r.ok?r.json():null).then(d=>{const el=document.getElementById('dk-plays');if(!d||!d.count||!el)return;el.textContent=d.count==1?'Played once':'Played '+d.count+' times';el.hidden=false}).catch(()=>{});
 </script>
 </body>
