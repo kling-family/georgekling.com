@@ -195,7 +195,7 @@ const STORIES = [
   { id:'abraham', ready:true, blurb:'Leave your home when God calls, follow His light to a new land, build an altar, and try to count the stars.', endVerse:'"Look up at the sky and count the stars, if you can. That is how many children you will have."', endRef:'Genesis 15:5', before:"After the flood, Noah's family grew into lots of families who spread out all over the world. Hundreds of years later, God spoke to a man named Abram. God told him to leave his home and go to a new land, and promised to make his family into a great nation. Later God changed his name to Abraham.", title:'Abraham and the Stars', who:'You are Abraham', ref:'Genesis 12 and 15' },
   { id:'joseph', ready:true, blurb:'Get a colorful coat, get thrown in a well by your brothers, explain Pharaoh’s dreams, store up grain, and forgive your brothers.', endVerse:'"You planned to hurt me, but God planned it for good, to save many lives."', endRef:'Genesis 50:20', before:"God kept His promise. Abraham and his wife Sarah had a son named Isaac when they were very old. Isaac had a son named Jacob, and Jacob had twelve sons. Jacob loved one son, Joseph, more than the others, and his brothers got very jealous.", title:'Joseph and His Colorful Coat', who:'You are Joseph', ref:'Genesis 37 to 45' },
   { id:'babymoses', ready:true, blurb:'Gather reeds for a basket, hide by the Nile to watch your baby brother, and be brave enough to talk to the princess.', endVerse:'"She named him Moses, because she said, I pulled him out of the water."', endRef:'Exodus 2:10', before:"Joseph's whole family moved to Egypt to live with him, and they were safe there. Their family grew and grew for 400 years, and they were called the Israelites. Then a new king of Egypt, called Pharaoh, was afraid of them. He made them slaves, and he ordered that every Israelite baby boy be thrown in the river.", title:'Baby Moses in the Basket', who:'You are Miriam, his big sister', ref:'Exodus 2' },
-  { id:'bush', before:"The princess of Egypt found baby Moses and raised him in the palace. When Moses grew up, he saw an Egyptian beating an Israelite slave, and Moses killed the Egyptian. Then Moses ran away to the desert. He lived there for 40 years and became a shepherd.", title:'Moses and the Burning Bush', who:'You are Moses', ref:'Exodus 3' },
+  { id:'bush', ready:true, blurb:'Lead your sheep to the mountain of God, see a bush that burns but never burns up, and hear God call your name.', endVerse:'"I will be with you."', endRef:'Exodus 3:12', before:"The princess of Egypt found baby Moses and raised him in the palace. When Moses grew up, he saw an Egyptian beating an Israelite slave, and Moses killed the Egyptian. Then Moses ran away to the desert. He lived there for 40 years and became a shepherd.", title:'Moses and the Burning Bush', who:'You are Moses', ref:'Exodus 3' },
   { id:'redsea', before:"God sent Moses back to Egypt to tell Pharaoh, \u201cLet my people go!\u201d Pharaoh said no again and again, so God sent ten plagues on Egypt, like frogs, bugs, hail, and darkness. After the last plague, Pharaoh finally let the Israelites go. But then he changed his mind and chased after them with his whole army.", title:'Moses and the Red Sea', who:'You are Moses', ref:'Exodus 14' },
   { id:'jericho', before:"God led the Israelites through the desert for 40 years. He gave them food called manna and gave Moses the Ten Commandments. When Moses died, God chose Joshua to lead the people into the land He had promised to Abraham. But the first city in their way, Jericho, had huge walls.", title:'Joshua and the Walls of Jericho', who:'You are Joshua', ref:'Joshua 6' },
   { id:'gideon', before:"The Israelites moved into the promised land. But over and over, they forgot God and worshiped fake gods. Each time, enemies attacked them. When they cried out to God for help, He sent a leader called a judge to save them. This time the enemy was the Midianites, and they were stealing all of Israel's food.", title:'Gideon\u2019s 300', who:'You are Gideon', ref:'Judges 6 and 7' },
@@ -1897,9 +1897,134 @@ function jumpMoses(q){ // ?step=river | hide | talk
   if(q==='talk'){ P.x=HIDE_AT.x; P.z=HIDE_AT.z; mosesPrincessStart(); S.princessWalk=true; S.maidFetch=2; S.openLid=1; W.princess.position.set(BANK_X+1,0,BASKET_AT.z-1.8); goMoses('talk'); }
 }
 
+/* ================= Story 6: Moses and the Burning Bush ================= */
+const BUSH_AT={x:0,z:-30};
+function groundHoreb(x,z){ let h=0.4*Math.sin(x*0.09)*Math.cos(z*0.07)+0.25*Math.sin(x*0.21+z*0.13);
+  const d=Math.hypot(x*0.9,z+78); h+=Math.max(0,46-d*0.95)*0.95; // Mount Horeb
+  const r=Math.hypot(x,z+10); if(r>62) h+=Math.pow(r-62,1.2)*0.25; return h; }
+const staffHand=new THREE.Group(); { const s=new THREE.Mesh(new THREE.CylinderGeometry(0.022,0.028,1.6,7), mat(0x6b4a2a)); s.position.y=0.35; staffHand.add(s); const k=new THREE.Mesh(new THREE.SphereGeometry(0.04,8,6), mat(0x5a3a1e)); k.position.y=1.15; staffHand.add(k);
+  staffHand.position.set(0.42,-0.95,-0.8); staffHand.rotation.set(-0.45,0,-0.2); staffHand.visible=false; view.add(staffHand); }
+function snakeMesh(){ const o=new THREE.Group(); const pts=[]; for(let i=0;i<14;i++) pts.push([Math.sin(i*0.9)*0.25,0.07,i*0.12-0.8]); const body=tubeOf(pts,0.07,0.025,0x6a6a3a); o.add(body); o.userData.body=body;
+  const h=blob(o,0x5a5a2e,0.09,0.9,0.6,1.4,pts[0][0],0.08,-0.88); eyes(o,0.05,0.12,-0.98,0.015); o.userData.head=h; return o; }
+function buildBush(){
+  ground=groundHoreb; resetLook();
+  const g=new THREE.Group(); scene.add(g); world={group:g, flock:[], trail:[]}; const W=world, r=rnd(66);
+  { const N=160, geo=new THREE.PlaneGeometry(300,300,N,N); geo.rotateX(-Math.PI/2); const pos=geo.attributes.position, cols=[], c=new THREE.Color(), a=new THREE.Color(0xd2b680), b=new THREE.Color(0xbf9a66), rk=new THREE.Color(0x9a8068);
+    for(let i=0;i<pos.count;i++){ const x=pos.getX(i), z=pos.getZ(i), h=groundHoreb(x,z); pos.setY(i,h); const n=0.5+0.5*Math.sin(x*0.5+z*0.9)*Math.cos(x*0.27-z*0.4); c.copy(a).lerp(b,n*0.8).lerp(rk,clamp((h-3)/20,0,0.8)); c.multiplyScalar(1.05); cols.push(c.r,c.g,c.b); }
+    geo.setAttribute('color',new THREE.Float32BufferAttribute(cols,3)); geo.computeVertexNormals(); const uv=geo.attributes.uv; for(let i=0;i<uv.count;i++) uv.setXY(i,uv.getX(i)*90,uv.getY(i)*90);
+    const m=new THREE.Mesh(geo,new THREE.MeshLambertMaterial({vertexColors:true,map:GROUND_TEX})); m.userData.noCast=true; g.add(m); }
+  grassField(g, touch?3000:6000, ()=>{ const x=(Math.random()-0.5)*110, z=(Math.random()-0.5)*110; if(Math.random()>0.35||groundHoreb(x,z)>4) return null; return [x,z,0x9a945a]; });
+  // scrubby desert bushes and rocks
+  const scrub=(x,z,s)=>{ const o=new THREE.Group(); for(let i=0;i<5;i++){ const m=new THREE.Mesh(LEAF_GEO[i%6], mat(i%2?0x6a7a44:0x7a8a50)); m.scale.set(0.5*s,0.4*s,0.5*s); m.position.set(Math.cos(i*1.7)*0.35*s,0.35*s+(i%2)*0.2*s,Math.sin(i*1.7)*0.35*s); o.add(m); } o.position.set(x,ground(x,z),z); g.add(o); return o; };
+  for(let i=0;i<50;i++){ const x=(r()-0.5)*110, z=(r()-0.5)*110+5; if(Math.hypot(x-BUSH_AT.x,z-BUSH_AT.z)<6) continue; scrub(x,z,0.7+r()*0.6); }
+  for(let i=0;i<40;i++){ const x=(r()-0.5)*120, z=(r()-0.5)*120; if(Math.hypot(x-BUSH_AT.x,z-BUSH_AT.z)<5) continue; rock(g,x,z,0.4+r()*0.9); }
+  for(let i=0;i<6;i++) palm(g,30+r()*10,30+r()*15,0.8+r()*0.3);
+  tent(g,34,38,0x7a5236,1.1); tent(g,40,32,0x8a5a3a);
+  // the burning bush: a real bush, with fire that never burns it up
+  { const b=scrub(BUSH_AT.x,BUSH_AT.z,1.6); b.traverse(o=>{ if(o.isMesh) o.material=mat(0x5f7a3a); }); W.bush=b;
+    const fire=new THREE.Group(); W.fire=fire; for(let i=0;i<9;i++){ const sp=glowSprite(i%3===0?0xffd060:0xff7a20, 0.9+(i%3)*0.4); sp.position.set(Math.cos(i*2.1)*0.5,0.6+(i%4)*0.35,Math.sin(i*2.1)*0.5); sp.userData.base=sp.position.clone(); fire.add(sp); }
+    const big=glowSprite(0xffa040,4.2); big.position.y=1.0; fire.add(big);
+    W.flames=[]; for(let i=0;i<14;i++){ const fm=new THREE.Mesh(new THREE.ConeGeometry(0.22+(i%3)*0.08,1.3+(i%4)*0.35,8,1,true), new THREE.MeshBasicMaterial({color:i%3===0?0xffe070:(i%3===1?0xff9a28:0xff6a18),transparent:true,opacity:i%3===0?0.95:0.85,depthWrite:false,side:THREE.DoubleSide,fog:false}));
+      const a=i*2.4, rr=i<4?0.2:0.5+(i%3)*0.2; fm.position.set(Math.cos(a)*rr,1.35+(i%4)*0.2,Math.sin(a)*rr+0.25); fm.userData.base=fm.position.clone(); fm.userData.flame=1; fire.add(fm); W.flames.push(fm); } const pl=new THREE.PointLight(0xff8a30,2.2,22); pl.position.y=1.2; fire.add(pl); W.fireLight=pl;
+    fire.position.set(BUSH_AT.x,ground(BUSH_AT.x,BUSH_AT.z),BUSH_AT.z); g.add(fire); }
+  // Moses' flock
+  for(let i=0;i<12;i++){ const s=sheep(g,(r()-0.5)*6,18+(r()-0.5)*5,0.8+r()*0.2); s.userData.off={x:(r()-0.5)*5,z:(r()-0.5)*4}; W.flock.push(s); }
+  W.snake=snakeMesh(); W.snake.visible=false; g.add(W.snake);
+  W.beacon=makeBeacon(); W.beacon.visible=false; g.add(W.beacon);
+  P.x=0; P.z=24; P.yaw=0; P.pitch=0; P.eye=1.75; P.speed=4.6; P.roll=0;
+  story={id:'bush', step:'', t:0, lock:true, target:null, near:null, follow:false, fadeSky:null};
+  hand.visible=false; basket.visible=false; sling.visible=false; fruitHand.visible=false; if(typeof logHand!=='undefined'){ logHand.visible=false; leafHand.visible=false; } if(typeof coatView!=='undefined'){ coatView.visible=false; sheafHand.visible=false; } if(typeof reedHand!=='undefined') reedHand.visible=false;
+  staffHand.visible=true;
+  goBush('intro');
+}
+function goBush(step){
+  const S=story, W=world; S.step=step; $('prompt').classList.add('hidden');
+  if(step==='intro'){
+    S.lock=true; setGoal('Listen');
+    say([[SAY_BIBLE,'Moses lived in the desert of Midian for 40 years. He married Zipporah and took care of the sheep of her father, Jethro.','Exodus 2:21, 3:1'],
+      ['You are Moses','You are Moses. You are 80 years old, and you are a shepherd now.',''],
+      [SAY_BIBLE,'Back in Egypt, the Israelites were still slaves. They cried out to God for help, and God heard them.','Exodus 2:23-25'],
+      [SAY_BIBLE,'One day Moses led the flock to the far side of the desert, to Horeb, the mountain of God.','Exodus 3:1']], ()=>goBush('lead'));
+  }
+  if(step==='lead'){ S.lock=false; S.follow=true; setGoal('Lead the sheep toward <b>Mount Horeb</b>'); S.target={position:new THREE.Vector3(BUSH_AT.x+4,0,BUSH_AT.z+22)}; }
+  if(step==='see'){
+    S.lock=true; S.target=null; setGoal('Listen'); lookAt(BUSH_AT.x,groundHoreb(BUSH_AT.x,BUSH_AT.z)+1.2,BUSH_AT.z,1.5);
+    say([[SAY_BIBLE,'There the angel of the Lord appeared to Moses in flames of fire from inside a bush. Moses saw that the bush was on fire, but it did not burn up!','Exodus 3:2'],
+      ['You are Moses','What a strange sight! I will go over and see why the bush doesn’t burn up.','Exodus 3:3']], ()=>goBush('approach'));
+  }
+  if(step==='approach'){ S.lock=false; S.follow=false; setGoal('Go and look at the <b>bush</b>'); S.target={position:new THREE.Vector3(BUSH_AT.x,0,BUSH_AT.z+6)}; }
+  if(step==='call'){
+    S.lock=true; S.target=null; setGoal('Listen'); lookAt(BUSH_AT.x,groundHoreb(BUSH_AT.x,BUSH_AT.z)+1.2,BUSH_AT.z,1);
+    say([['God','Moses! Moses!','Exodus 3:4'],
+      ['You are Moses','Here I am.','Exodus 3:4'],
+      ['God','Do not come any closer. Take off your sandals, because the place where you are standing is holy ground.','Exodus 3:5']], ()=>goBush('sandals'));
+  }
+  if(step==='sandals'){ S.lock=true; setGoal('Take off your <b>sandals</b>'); }
+  if(step==='talk'){
+    S.lock=true; setGoal('Listen');
+    say([['God','I am the God of your father, the God of Abraham, the God of Isaac, and the God of Jacob.','Exodus 3:6'],
+      [SAY_BIBLE,'Moses hid his face, because he was afraid to look at God.','Exodus 3:6', ()=>{ P.lockLook=null; S.lookDown=true; }],
+      ['God','I have seen how my people are suffering in Egypt. I have heard them crying, and I have come to rescue them and bring them to a good land.','Exodus 3:7-8', ()=>{ S.lookDown=false; lookAt(BUSH_AT.x,groundHoreb(BUSH_AT.x,BUSH_AT.z)+1.2,BUSH_AT.z,1.5); }],
+      ['God','So now, go. I am sending you to Pharaoh to bring my people out of Egypt.','Exodus 3:10'],
+      ['You are Moses','Who am I to go to Pharaoh and bring the Israelites out of Egypt?','Exodus 3:11'],
+      ['God','I will be with you.','Exodus 3:12'],
+      ['You are Moses','If the people ask me your name, what should I tell them?','Exodus 3:13'],
+      ['God','I AM WHO I AM. Tell them: I AM has sent me to you.','Exodus 3:14'],
+      ['You are Moses','What if they don’t believe me?','Exodus 4:1'],
+      ['God','What is that in your hand?','Exodus 4:2'],
+      ['You are Moses','A staff.','Exodus 4:2'],
+      ['God','Throw it on the ground.','Exodus 4:3']], ()=>goBush('throw'));
+  }
+  if(step==='throw'){ S.lock=true; setGoal('Throw your <b>staff</b> on the ground'); }
+  if(step==='grab'){ S.lock=false; setGoal('Reach out and grab the snake by the <b>tail</b>'); S.target={position:W.snake.position}; }
+  if(step==='last'){
+    S.lock=true; S.target=null; setGoal('Listen'); lookAt(BUSH_AT.x,groundHoreb(BUSH_AT.x,BUSH_AT.z)+1.2,BUSH_AT.z,1);
+    say([['God','This is so they will believe that the Lord, the God of Abraham, Isaac, and Jacob, appeared to you.','Exodus 4:5'],
+      ['You are Moses','Lord, I have never been good with words. I speak slowly. Please send someone else.','Exodus 4:10-13'],
+      ['God','Your brother Aaron is a good speaker. He is already on his way to meet you. I will help both of you speak and teach you what to do.','Exodus 4:14-15'],
+      ['God','Take this staff in your hand, so you can do the miraculous signs with it.','Exodus 4:17'],
+      [SAY_BIBLE,'So Moses took his wife and his sons, and he took the staff of God in his hand, and went back to Egypt.','Exodus 4:20']], ()=>finishStory());
+  }
+}
+function updateBush(dt, now){
+  const S=story, W=world, t=(S.t+=dt);
+  // the fire dances but the bush never burns up
+  W.fire.children.forEach((c,i)=>{ if(c.userData.flame){ const k=0.75+0.35*Math.sin(t*11+i*1.7)+0.15*Math.sin(t*23+i); c.scale.set(1,k,1); c.position.y=c.userData.base.y+(k-1)*0.3; c.rotation.y=t*2+i; } else if(c.userData.base){ c.position.y=c.userData.base.y+Math.sin(t*6+i)*0.12; c.scale.setScalar((0.9+(i%3)*0.4)*(0.85+0.25*Math.sin(t*9+i*1.3))); } }); W.fireLight.intensity=2+Math.sin(t*11)*0.3+Math.sin(t*7.3)*0.2;
+  if(S.lookDown) P.pitch+=(-0.9-P.pitch)*Math.min(1,dt*3);
+  // a trail so the sheep follow you in a bunch
+  const tr=W.trail, lp=tr[tr.length-1]; if(!lp || Math.hypot(P.x-lp.x,P.z-lp.z)>0.5){ tr.push({x:P.x,z:P.z}); if(tr.length>200) tr.shift(); }
+  W.flock.forEach((s,i)=>{ let tx=null,tz=null;
+    if(S.follow){ const k=tr.length-1-8-(i%4)*2; if(k>=0){ tx=tr[k].x+s.userData.off.x; tz=tr[k].z+s.userData.off.z; } }
+    else { const u=s.userData; u.tt=(u.tt||0)-dt; if(u.tt<=0||!u.goal){ u.tt=3+(i%4); u.goal={x:s.position.x+(Math.random()-0.5)*2,z:s.position.z+(Math.random()-0.5)*2}; } tx=u.goal.x; tz=u.goal.z; }
+    if(tx!==null){ const dx=tx-s.position.x, dz=tz-s.position.z, d=Math.hypot(dx,dz); if(d>0.4){ if(d>20){ s.position.x=tx; s.position.z=tz; } const v=Math.min(S.follow?5:0.5,d*1.6)*dt; s.position.x+=dx/d*v; s.position.z+=dz/d*v; s.rotation.y=Math.atan2(dx,dz); sheepWalk(s,dt,S.follow?1:0.5); } }
+    s.position.y=ground(s.position.x,s.position.z); });
+  // the snake slithers
+  const SN=W.snake; if(SN.visible){ SN.rotation.y+=Math.sin(t*1.3)*dt*0.6; SN.userData.body.scale.x=1+Math.sin(t*6)*0.15; }
+  if(S.backTo){ const b=S.backTo; P.x+=(b.x-P.x)*Math.min(1,dt*4); P.z+=(b.z-P.z)*Math.min(1,dt*4); if(Math.hypot(b.x-P.x,b.z-P.z)<0.05) S.backTo=null; }
+  let near=null;
+  if(S.step==='lead' && Math.hypot(P.x-BUSH_AT.x,P.z-BUSH_AT.z)<26) goBush('see');
+  if(S.step==='approach' && Math.hypot(P.x-BUSH_AT.x,P.z-BUSH_AT.z)<7.5) goBush('call');
+  if(S.step==='sandals') near={label:'Take off your sandals', fn:()=>{ S.barefoot=true; shake=0.08; goBush('talk'); }};
+  if(S.step==='throw') near={label:'Throw down the staff', fn:()=>{ staffHand.visible=false; const fx=-Math.sin(P.yaw), fz=-Math.cos(P.yaw); const x=P.x+fx*2.2, z=P.z+fz*2.2; SN.position.set(x,ground(x,z),z); SN.rotation.y=P.yaw+Math.PI; SN.visible=true; shake=0.3; S.backTo={x:P.x-fx*3,z:P.z-fz*3};
+      say([[SAY_BIBLE,'Moses threw the staff on the ground, and it turned into a snake! Moses ran away from it.','Exodus 4:3'],['God','Reach out your hand and take it by the tail.','Exodus 4:4']], ()=>goBush('grab')); }};
+  if(S.step==='grab' && dist2(SN)<2.4) near={label:'Grab it by the tail', fn:()=>{ SN.visible=false; staffHand.visible=true; shake=0.2; S.step='grabbed'; say([[SAY_BIBLE,'Moses reached out and caught the snake, and it turned back into a staff in his hand!','Exodus 4:4']], ()=>goBush('last')); }};
+  S.near=near;
+  const pr=$('prompt');
+  if(near && !saying()){ pr.textContent=(touch?'':'Space: ')+near.label; pr.classList.remove('hidden'); $('act').textContent=near.label.split(' ')[0]; }
+  else { pr.classList.add('hidden'); $('act').textContent= saying()?'Next':'Use'; }
+  showBeacon(t);
+}
+function boundsBush(){ P.x=clamp(P.x,-55,55); P.z=clamp(P.z,-55,55); const d=Math.hypot(P.x-BUSH_AT.x,P.z-BUSH_AT.z); if(d<2.5){ P.x=BUSH_AT.x+(P.x-BUSH_AT.x)/(d||1)*2.5; P.z=BUSH_AT.z+(P.z-BUSH_AT.z)/(d||1)*2.5; } }
+function jumpBush(q){ // ?step=approach | throw
+  const S=story, W=world; sayQ.length=0; $('say').classList.add('hidden'); sayCb=null;
+  if(q==='approach'){ P.x=0; P.z=-14; goBush('approach'); }
+  if(q==='throw'){ P.x=0; P.z=BUSH_AT.z+6.5; P.yaw=0; S.barefoot=true; goBush('throw'); }
+}
+
 /* David's story hooks */
 function boundsDavid(){ P.x=clamp(P.x,-34,34); P.z=clamp(P.z,-60,72); }
 const IMPL = {
+  bush: { build:buildBush, go:goBush, update:updateBush, bounds:boundsBush, locked:S=>S.lock },
   babymoses: { build:buildMoses, go:goMoses, update:updateMoses, bounds:boundsMoses, locked:S=>S.lock },
   joseph: { build:buildJoseph, go:goJoseph, update:updateJoseph, bounds:boundsJoseph, locked:S=>S.lock || choosing() },
   abraham: { build:buildAbraham, go:goAbraham, update:updateAbraham, bounds:boundsAbraham, locked:S=>S.lock },
@@ -1913,7 +2038,7 @@ function stopStory(){
   running=false; story=null;
   if(world){ scene.remove(world.group); world.group.traverse(o=>{ if(o.geometry) o.geometry.dispose(); }); world=null; }
   sayQ.length=0; sayCb=null; $('say').classList.add('hidden'); $('armor').classList.add('hidden'); $('cross').classList.add('hidden'); $('meter').classList.add('hidden'); $('stones').classList.add('hidden');
-  basket.visible=hand.visible=sling.visible=fruitHand.visible=false; if(typeof logHand!=='undefined'){ logHand.visible=false; leafHand.visible=false; } if(typeof coatView!=='undefined'){ coatView.visible=false; sheafHand.visible=false; } if(typeof reedHand!=='undefined') reedHand.visible=false; $('cForm').style.display=''; P.roll=0; $('fade').style.opacity=0; $('choice').classList.add('hidden'); hand.material=handMat; resetLook();
+  basket.visible=hand.visible=sling.visible=fruitHand.visible=false; if(typeof logHand!=='undefined'){ logHand.visible=false; leafHand.visible=false; } if(typeof coatView!=='undefined'){ coatView.visible=false; sheafHand.visible=false; } if(typeof reedHand!=='undefined') reedHand.visible=false; if(typeof staffHand!=='undefined') staffHand.visible=false; $('cForm').style.display=''; P.roll=0; $('fade').style.opacity=0; $('choice').classList.add('hidden'); hand.material=handMat; resetLook();
 }
 function startStory(id){
   stopStory(); trackPlay();
@@ -1923,7 +2048,7 @@ function startStory(id){
   const q=new URLSearchParams(location.search).get('step'); if(q && story) jumpTo(q); // preview links for testing
 }
 function jumpTo(q){ // ?step=stones or ?step=sling
-  const S=story; if(story.id==='adam') return jumpAdam(q); if(story.id==='noah') return jumpNoah(q); if(story.id==='abraham') return jumpAbraham(q); if(story.id==='joseph') return jumpJoseph(q); if(story.id==='babymoses') return jumpMoses(q);
+  const S=story; if(story.id==='adam') return jumpAdam(q); if(story.id==='noah') return jumpNoah(q); if(story.id==='abraham') return jumpAbraham(q); if(story.id==='joseph') return jumpJoseph(q); if(story.id==='babymoses') return jumpMoses(q); if(story.id==='bush') return jumpBush(q);
   if(q==='stones'||q==='sling'){ world.lamb.userData.following=true; world.lamb.userData.goal={x:world.flock.x+1,z:world.flock.z}; world.lamb.position.set(world.flock.x+1,0,world.flock.z); world.israel.forEach(p=>p.position.z+=12); }
   if(q==='stones'){ P.x=0; P.z=STREAM_Z+4; P.yaw=0; sayQ.length=0; $('say').classList.add('hidden'); go('stones'); }
   if(q==='sling'){ world.stones.forEach(s=>s.visible=false); S.stonesHeld=5; S.stonesLeft=5; P.x=0; P.z=-20; P.yaw=0; world.goliath.position.set(0,ground(0,-36),-36); sayQ.length=0; $('say').classList.add('hidden'); $('stones').classList.remove('hidden'); updateStonesHud(); go('sling'); }
@@ -1934,7 +2059,7 @@ function finishStory(){
   const nextReady=READY[READY.indexOf(s)+1], nextAny=STORIES[STORIES.indexOf(s)+1];
   $('fade').style.opacity=0.6;
   setTimeout(()=>{
-    $('endWho').textContent='You saw what '+({david:'David',adam:'Adam',noah:'Noah',abraham:'Abraham',joseph:'Joseph',babymoses:'Miriam'}[s.id]||'they')+' did.';
+    $('endWho').textContent='You saw what '+({david:'David',adam:'Adam',noah:'Noah',abraham:'Abraham',joseph:'Joseph',babymoses:'Miriam',bush:'Moses'}[s.id]||'they')+' did.';
     $('endVerse').textContent=s.endVerse; $('endRef').textContent=s.endRef;
     $('endUnlock').textContent= nextReady ? 'You unlocked '+nextReady.title+'!' : (nextAny ? 'Next up: '+nextAny.title+'. It is coming soon!' : 'You finished every story!');
     $('endNext').innerHTML = nextAny ? '<b>What happens next</b>'+nextAny.before : '';
