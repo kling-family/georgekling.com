@@ -192,7 +192,7 @@ function trackPlay(){ if(trackPlay.done) return; trackPlay.done=1; try{ const go
 const STORIES = [
   { id:'adam', ready:true, blurb:'Watch God make the world, name the animals, meet Eve, and see what happened in the Garden of Eden.', endVerse:'"God made clothes out of animal skins for Adam and his wife and dressed them."', endRef:'Genesis 3:21', before:"This is where the whole Bible begins. Before there was a world, before there were people or animals or even light, there was only God. In this story you will watch God make everything, day by day. Then you will become Adam, the very first person.", title:'Adam and Eve', who:'You are Adam', ref:'Genesis 1 to 3' },
   { id:'noah', ready:true, blurb:'Build the ark, lead the animals in two by two, ride out the flood, send out the dove, and see the first rainbow.', endVerse:'"I have put my rainbow in the clouds. It is the sign of my promise."', endRef:'Genesis 9:13', before:"Adam and Eve disobeyed God and had to leave the garden. Many, many years went by, and the world filled up with people. But most of them became mean and violent and forgot about God. One man still loved God and did what was right. His name was Noah.", title:'Noah\u2019s Ark', who:'You are Noah', ref:'Genesis 6 to 9' },
-  { id:'abraham', before:"After the flood, Noah's family grew into lots of families who spread out all over the world. Hundreds of years later, God spoke to a man named Abram. God told him to leave his home and go to a new land, and promised to make his family into a great nation. Later God changed his name to Abraham.", title:'Abraham and the Stars', who:'You are Abraham', ref:'Genesis 12 and 15' },
+  { id:'abraham', ready:true, blurb:'Leave your home when God calls, follow His light to a new land, build an altar, and try to count the stars.', endVerse:'"Look up at the sky and count the stars, if you can. That is how many children you will have."', endRef:'Genesis 15:5', before:"After the flood, Noah's family grew into lots of families who spread out all over the world. Hundreds of years later, God spoke to a man named Abram. God told him to leave his home and go to a new land, and promised to make his family into a great nation. Later God changed his name to Abraham.", title:'Abraham and the Stars', who:'You are Abraham', ref:'Genesis 12 and 15' },
   { id:'joseph', before:"God kept His promise. Abraham and his wife Sarah had a son named Isaac when they were very old. Isaac had a son named Jacob, and Jacob had twelve sons. Jacob loved one son, Joseph, more than the others, and his brothers got very jealous.", title:'Joseph and His Colorful Coat', who:'You are Joseph', ref:'Genesis 37 to 45' },
   { id:'babymoses', before:"Joseph's whole family moved to Egypt to live with him, and they were safe there. Their family grew and grew for 400 years, and they were called the Israelites. Then a new king of Egypt, called Pharaoh, was afraid of them. He made them slaves, and he ordered that every Israelite baby boy be thrown in the river.", title:'Baby Moses in the Basket', who:'You are Miriam, his big sister', ref:'Exodus 2' },
   { id:'bush', before:"The princess of Egypt found baby Moses and raised him in the palace. When Moses grew up, he saw an Egyptian beating an Israelite slave, and Moses killed the Egyptian. Then Moses ran away to the desert. He lived there for 40 years and became a shepherd.", title:'Moses and the Burning Bush', who:'You are Moses', ref:'Exodus 3' },
@@ -1391,9 +1391,161 @@ function jumpNoah(q){ // ?step=animals | flood | window | exit
   if(q==='window'||q==='exit'){ S.doorTo=0; noahLand='ararat'; W.plain.visible=false; W.plainProps.forEach(o=>o.visible=false); W.ararat.visible=true; W.arkBase=groundArarat(0,0); W.wl=W.wlTo=(q==='window'?24.8:14); W.ark.position.y=W.arkBase; S.rock=S.rockTo=0; scene.background.set(0x9fc4e2); goNoah(q==='window'?'window':'out'); }
 }
 
+/* ================= Story 3: Abraham and the Stars ================= */
+const ABE_PATH=[[0,32],[12,8],[-6,-22],[0,-50]]; // the way God's light leads, from Haran to Canaan
+function groundAbraham(x,z){
+  let h=0.7*Math.sin(x*0.05)*Math.cos(z*0.04)+0.4*Math.sin(x*0.13+z*0.07)+0.25*Math.sin(z*0.21-x*0.05);
+  const r=Math.hypot(x*0.8,z*0.55); if(r>52) h+=Math.pow(r-52,1.3)*0.25; // hills all around
+  return h;
+}
+function buildAbraham(){
+  ground=groundAbraham; resetLook();
+  const g=new THREE.Group(); scene.add(g); world={group:g, family:[], flock:[], trail:[]}; const W=world, r=rnd(33);
+  { const S=300, N=150, geo=new THREE.PlaneGeometry(S,S,N,N); geo.rotateX(-Math.PI/2);
+    const pos=geo.attributes.position, cols=[], c=new THREE.Color(), sand=new THREE.Color(0xd8bf8a), sand2=new THREE.Color(0xc9a872), green=new THREE.Color(0x8ea25a), green2=new THREE.Color(0xa0a866);
+    for(let i=0;i<pos.count;i++){ const x=pos.getX(i), z=pos.getZ(i), h=groundAbraham(x,z); pos.setY(i,h); const n=0.5+0.5*Math.sin(x*0.5+z*0.9)*Math.cos(x*0.27-z*0.4);
+      const south=smooth(clamp((-z-10)/40,0,1)); c.copy(sand).lerp(sand2,n*0.8).lerp(green.clone().lerp(green2,n),south*0.85); cols.push(c.r,c.g,c.b); }
+    geo.setAttribute('color',new THREE.Float32BufferAttribute(cols,3)); geo.computeVertexNormals(); const uv=geo.attributes.uv; for(let i=0;i<uv.count;i++) uv.setXY(i,uv.getX(i)*90,uv.getY(i)*90);
+    const m=new THREE.Mesh(geo,new THREE.MeshLambertMaterial({vertexColors:true,map:GROUND_TEX})); m.userData.noCast=true; g.add(m); }
+  // grass gets thicker as you go south into Canaan
+  grassField(g, touch?6000:12000, ()=>{ const x=(Math.random()-0.5)*120, z=(Math.random()-0.5)*150; const south=clamp((-z+5)/50,0,1); if(Math.random()>0.12+south*0.88) return null; return [x,z,south>0.5?0x7f9a48:0xa89a5a]; });
+  // Haran: a few houses, tents, palms
+  [[-14,46],[-22,52],[14,54],[22,44]].forEach(([x,z])=>house(g,x,z));
+  tent(g,-6,40,0x8a5a3a); tent(g,7,42,0x6e4a32,0.9); W.myTent=tent(g,1,46,0x9a6a40,1.05);
+  for(let i=0;i<14;i++){ const x=(r()-0.5)*90, z=40+r()*30; if(Math.abs(x)<10&&z<52) continue; tree(g,x,z,0.8+r()*0.4); }
+  for(let i=0;i<40;i++){ const x=(r()-0.5)*130, z=(r()-0.5)*150; if(Math.abs(x)<14&&z>-60&&z<36) continue; rock(g,x,z,0.3+r()*0.7); }
+  // Canaan: olive trees and the great tree of Moreh at Shechem
+  for(let i=0;i<30;i++){ const x=(r()-0.5)*110, z=-30-r()*45; if(Math.abs(x)<10&&z>-62) continue; tree(g,x,z,0.9+r()*0.5); }
+  const moreh=tree(g,-6,-56,2.3); W.moreh=moreh;
+  // the camp that appears later, under the great tree
+  const camp=new THREE.Group(); g.add(camp); camp.visible=false; W.camp=camp;
+  tent(camp,-12,-48,0x8a5a3a,1.1); tent(camp,9,-52,0x6e4a32); tent(camp,-2,-64,0x9a6a40,1.2);
+  const fire=new THREE.Group(); for(let i=0;i<7;i++){ const st=new THREE.Mesh(ROCK_GEO[i%4], mat(0x6a6258)); st.scale.setScalar(0.18); st.position.set(Math.cos(i)*0.45,0.08,Math.sin(i)*0.45); fire.add(st); }
+  fire.add(glowSprite(0xff8a30,1.6)); fire.children[fire.children.length-1].position.y=0.5; fire.add(glowSprite(0xffd060,0.8)); fire.children[fire.children.length-1].position.y=0.45;
+  const fl=new THREE.PointLight(0xff9a40,1.4,18); fl.position.y=0.8; fire.add(fl); fire.position.set(3,groundAbraham(3,-48),-48); camp.add(fire); W.fire=fire;
+  // Abram's family and helpers
+  const fam=[{name:'Sarai',tunic:0x3f6aa0,hair:0x2a1a10,longHair:true,h:1.65,skin:0xc68a5e},{name:'Lot',tunic:0x7a8a4a,hair:0x3a2614,beard:0x3a2614,h:1.74},
+             {name:'helper',tunic:0xa08a60,hair:0x2a1a10,h:1.7},{name:'helper',tunic:0x8a6a4a,hair:0x1a120a,beard:0x1a120a,h:1.72}];
+  fam.forEach((f,i)=>{ const p=person(f); place(p,[-3,5,-8,9][i],[42,44,46,48][i],Math.PI); g.add(p); p.userData.name=f.name; W.family.push(p); });
+  W.sarai=W.family[0]; W.lot=W.family[1];
+  for(let i=0;i<10;i++){ const s=sheep(g,-10+(i%5)*1.4,54+Math.floor(i/5)*1.6,0.8+r()*0.2); s.userData.off={x:(r()-0.5)*4,z:(r()-0.5)*3}; W.flock.push(s); }
+  // God's light
+  const god=new THREE.Group(); god.add(new THREE.Mesh(new THREE.SphereGeometry(0.35,16,12), new THREE.MeshBasicMaterial({color:0xfffbe8}))); god.add(glowSprite(0xfff1b8,5)); god.add(glowSprite(0xffffff,2)); const gl=new THREE.PointLight(0xfff1c8,1.2,14); god.add(gl); god.visible=false; g.add(god); W.god=god;
+  // the stars: thousands of them, shown a few at a time
+  { const n=7000, v=new Float32Array(n*3), rr=rnd(77); for(let i=0;i<n;i++){ const a=rr()*Math.PI*2, el=Math.asin(0.04+rr()*0.96), R=280; v.set([Math.cos(a)*Math.cos(el)*R, Math.sin(el)*R, Math.sin(a)*Math.cos(el)*R],i*3); }
+    const geo=new THREE.BufferGeometry(); geo.setAttribute('position',new THREE.BufferAttribute(v,3)); geo.setDrawRange(0,0);
+    const sm=new THREE.PointsMaterial({color:0xffffff,size:touch?2.2:1.8,sizeAttenuation:false,fog:false,transparent:true,opacity:0,depthWrite:false});
+    const stars=new THREE.Points(geo,sm); stars.frustumCulled=false; stars.renderOrder=-9; g.add(stars); W.stars=stars;
+    const nb=260, vb=new Float32Array(nb*3); for(let i=0;i<nb;i++){ const a=rr()*Math.PI*2, el=Math.asin(0.08+rr()*0.92), R=279; vb.set([Math.cos(a)*Math.cos(el)*R, Math.sin(el)*R, Math.sin(a)*Math.cos(el)*R],i*3); }
+    const gb=new THREE.BufferGeometry(); gb.setAttribute('position',new THREE.BufferAttribute(vb,3));
+    const big=new THREE.Points(gb,new THREE.PointsMaterial({color:0xfff4d8,size:touch?3.6:3,sizeAttenuation:false,fog:false,transparent:true,opacity:0,depthWrite:false})); big.frustumCulled=false; big.renderOrder=-9; g.add(big); W.bigStars=big; }
+  W.beacon=makeBeacon(); W.beacon.visible=false; g.add(W.beacon);
+  P.x=1; P.z=30; P.yaw=Math.PI; P.pitch=0; P.eye=1.7; P.speed=4.6; P.roll=0;
+  story={id:'abraham', step:'', t:0, lock:true, target:null, near:null, follow:false, leg:0, told:{}, count:0, starA:0, shown:0, fadeSky:null};
+  hand.visible=false; basket.visible=false; sling.visible=false; fruitHand.visible=false; if(typeof logHand!=='undefined'){ logHand.visible=false; leafHand.visible=false; }
+  goAbraham('intro');
+}
+function abeGod(x,z,y){ const G=world.god; G.visible=true; G.userData.to={x,z,y:y||2.6}; if(!G.userData.placed){ G.position.set(x,ground(x,z)+(y||2.6),z); G.userData.placed=1; } }
+function abeNight(){ const S=story, W=world;
+  scene.background.set(0x0b1330); scene.fog.near=25; scene.fog.far=150; hemi.intensity=0.16; sun.intensity=0.06; W.camp.visible=true; S.night=true;
+  W.family.forEach((p,i)=>{ place(p,[0.6,5.4,-1.5,4.6][i],[-46.5,-49.5,-50,-46][i]); faceTo(p,3,-48); }); W.flock.forEach((s,i)=>place(s,14+(i%5)*1.5,-58+Math.floor(i/5)*1.6,Math.random()*6));
+  P.x=3; P.z=-43.5; P.yaw=0; P.pitch=0; }
+function goAbraham(step){
+  const S=story, W=world; S.step=step; $('prompt').classList.add('hidden');
+  if(step==='intro'){
+    S.lock=true; setGoal('Listen'); abeGod(1,35,3.2);
+    say([[SAY_BIBLE,'Abram lived in the city of Haran with his wife Sarai and his nephew Lot.','Genesis 11:31'],
+      ['You are Abram','You are Abram. You are 75 years old, and you and Sarai have no children.',''],
+      ['God','Leave your country, your relatives, and your father’s home, and go to the land I will show you.','Genesis 12:1'],
+      ['God','I will make you into a great nation, and I will bless you. I will make your name great, and all the families on earth will be blessed through you.','Genesis 12:2-3'],
+      [SAY_BIBLE,'Abram did not know where he was going. But he trusted God, and he obeyed.','Hebrews 11:8']], ()=>{ W.god.visible=false; goAbraham('pack'); });
+  }
+  if(step==='pack'){ S.lock=false; abePackGoal(); }
+  if(step==='journey'){ S.lock=false; S.follow=true; S.leg=0; abeGod(ABE_PATH[0][0],ABE_PATH[0][1]); setGoal('Follow God’s light to the land He will show you'); S.target=null; }
+  if(step==='arrive'){
+    S.lock=true; S.target=null; setGoal('Listen'); lookAt(W.moreh.position.x,6,W.moreh.position.z,1.5);
+    say([[SAY_BIBLE,'They traveled a long, long way and came to the land of Canaan, to the great tree of Moreh at Shechem.','Genesis 12:5-6'],
+      ['God','I will give this land to your children and grandchildren.','Genesis 12:7']], ()=>goAbraham('altar'));
+  }
+  if(step==='altar'){ S.lock=false; setGoal('Build an <b>altar</b> to the Lord'); S.target={position:new THREE.Vector3(1,0,-54)}; }
+  if(step==='years'){
+    S.lock=true; S.target=null; setGoal('Listen');
+    say([[SAY_BIBLE,'So Abram built an altar there to the Lord, who had appeared to him.','Genesis 12:7'],
+      [SAY_BIBLE,'Many years went by. God gave Abram lots of sheep, goats, cattle, silver, and gold. But Abram and Sarai still had no children.','Genesis 13:2, 15:2', ()=>{ $('fade').style.background='#0b0b14'; $('fade').style.opacity=1; setTimeout(()=>{ abeNight(); W.god.visible=false; W.god.userData.placed=0; abeGod(3,-38,3.2); $('fade').style.opacity=0; },800); }],
+      ['God','Do not be afraid, Abram. I am your shield, and I will give you a great reward.','Genesis 15:1'],
+      ['You are Abram','Lord God, what can you give me? I still have no children. One of my servants will get everything I have.','Genesis 15:2-3'],
+      ['God','No, you will have a son of your very own.','Genesis 15:4'],
+      ['God','Come outside. Look up at the sky and count the stars, if you can.','Genesis 15:5']], ()=>goAbraham('count'));
+  }
+  if(step==='count'){ S.lock=true; S.count=0; lookAt(P.x,60,P.z-60,2); setGoal('Look up and <b>count the stars</b>'); }
+  if(step==='promise'){
+    S.lock=true; setGoal('Listen');
+    say([['God','That is how many children and grandchildren you will have!','Genesis 15:5'],
+      [SAY_BIBLE,'Abram believed the Lord, and God was pleased with him because he trusted Him.','Genesis 15:6'],
+      [SAY_BIBLE,'God changed Abram’s name to Abraham, which means “father of many.” And Sarai became Sarah.','Genesis 17:5, 17:15'],
+      [SAY_BIBLE,'When Abraham was 100 years old and Sarah was 90, God gave them a baby boy, just as He promised. They named him Isaac, which means “he laughs.”','Genesis 21:1-6']], ()=>finishStory());
+  }
+}
+function abePackGoal(){ const S=story, T=S.told; const left=[!T.sarai&&'Sarai',!T.lot&&'Lot'].filter(Boolean);
+  if(left.length){ setGoal('Tell '+left.join(' and ')+' that God says to go'); S.target=!T.sarai?world.sarai:world.lot; }
+  else if(!T.tent){ setGoal('Take down your <b>tent</b>'); S.target=world.myTent; }
+  else { S.target=null; goAbraham('journey'); } }
+function updateAbraham(dt, now){
+  const S=story, W=world, t=(S.t+=dt);
+  if(S.fadeSky){ const f=S.fadeSky; f.t+=dt; const k=smooth(f.t/f.dur); scene.background.copy(f.from).lerp(f.to,k); if(k>=1) S.fadeSky=null; }
+  // God's light glides to where it should be
+  const G=W.god; if(G.visible&&G.userData.to){ const to=G.userData.to, ty=ground(to.x,to.z)+to.y; const k=Math.min(1,dt*0.9); G.position.x+=(to.x-G.position.x)*k; G.position.z+=(to.z-G.position.z)*k; G.position.y+=(ty+Math.sin(t*1.5)*0.15-G.position.y)*Math.min(1,dt*2); }
+  // a trail of where you have walked, so your family can follow in a line
+  const tr=W.trail, lp=tr[tr.length-1]; if(!lp || Math.hypot(P.x-lp.x,P.z-lp.z)>0.5){ tr.push({x:P.x,z:P.z}); if(tr.length>200) tr.shift(); }
+  W.family.forEach((p,i)=>{ let tx=null,tz=null;
+    if(S.follow){ const k=tr.length-1-6*(i+1); if(k>=0){ tx=tr[k].x+(i%2?0.7:-0.7); tz=tr[k].z; } }
+    if(tx!==null){ const dx=tx-p.position.x, dz=tz-p.position.z, d=Math.hypot(dx,dz); if(d>0.4){ if(d>16){ p.position.x=tx; p.position.z=tz; } const v=Math.min(5.5,d*2)*dt; p.position.x+=dx/d*v; p.position.z+=dz/d*v; p.rotation.y=Math.atan2(dx,dz); animWalk(p,dt,1); } }
+    else if(dist2(p)<8) faceTo(p,P.x,P.z);
+    p.position.y=ground(p.position.x,p.position.z); });
+  W.flock.forEach((s,i)=>{ let tx=null,tz=null;
+    if(S.follow){ const k=tr.length-1-30-(i%5)*2; if(k>=0){ tx=tr[k].x+s.userData.off.x; tz=tr[k].z+s.userData.off.z; } }
+    if(tx!==null){ const dx=tx-s.position.x, dz=tz-s.position.z, d=Math.hypot(dx,dz); if(d>0.5){ if(d>20){ s.position.x=tx; s.position.z=tz; } const v=Math.min(5,d*1.6)*dt; s.position.x+=dx/d*v; s.position.z+=dz/d*v; s.rotation.y=Math.atan2(dx,dz); sheepWalk(s,dt,1); } }
+    s.position.y=ground(s.position.x,s.position.z); });
+  // the night sky
+  const want=S.night?1:0; S.starA+=(want-S.starA)*Math.min(1,dt*0.8); W.stars.material.opacity=S.starA*0.95; W.bigStars.material.opacity=S.starA;
+  W.stars.position.copy(camera.position); W.bigStars.position.copy(camera.position);
+  if(S.night){ const target=S.step==='count'||S.step==='promise'||S.step==='end' ? Math.min(7000, 400+S.count*S.count*90) : 400; S.shown+=(target-S.shown)*Math.min(1,dt*1.5); W.stars.geometry.setDrawRange(0,S.shown|0);
+    const f=W.fire; f.children.forEach((c,i)=>{ if(c.isSprite) c.scale.setScalar((i%2?0.8:1.6)*(0.9+0.12*Math.sin(t*9+i))); }); }
+  // what you can do
+  let near=null;
+  if(S.step==='pack'){ const T=S.told;
+    if(!T.sarai && dist2(W.sarai)<3) near={label:'Talk to Sarai', fn:()=>{ T.sarai=1; say([['You are Abram','Sarai, God has spoken to me. He wants us to leave Haran and go to a new land that He will show us.',''],['Sarai','Then we will go, wherever God leads us.','']], abePackGoal); }};
+    else if(!T.lot && dist2(W.lot)<3) near={label:'Talk to Lot', fn:()=>{ T.lot=1; say([['You are Abram','Lot, pack your things. God has told us to go to a new land.',''],['Lot','I will come with you, Uncle Abram.','Genesis 12:4']], abePackGoal); }};
+    else if(T.sarai && T.lot && !T.tent && dist2(W.myTent)<4) near={label:'Take down the tent', fn:()=>{ T.tent=1; W.myTent.visible=false; shake=0.15; say([[SAY_BIBLE,'Abram took Sarai, Lot, all their helpers, and everything they owned, and they set out for the land of Canaan.','Genesis 12:5']], abePackGoal); }};
+  }
+  if(S.step==='journey'){ const wp=ABE_PATH[S.leg]; if(Math.hypot(P.x-wp[0],P.z-wp[1])<7){ S.leg++; if(S.leg>=ABE_PATH.length){ G.visible=false; goAbraham('arrive'); } else abeGod(ABE_PATH[S.leg][0],ABE_PATH[S.leg][1]); } }
+  if(S.step==='altar' && Math.hypot(P.x-1,P.z+54)<3.5) near={label:'Build an altar', fn:()=>{ S.step='built'; S.follow=false;
+      const al=new THREE.Group(); for(let i=0;i<14;i++){ const st=new THREE.Mesh(ROCK_GEO[i%4], mat(0x9a8f7a)); st.scale.setScalar(0.35); st.position.set(Math.cos(i*1.3)*0.6*(i<9?1:0.5),0.25+(i>=9?0.45:0),Math.sin(i*1.3)*0.6*(i<9?1:0.5)); al.add(st); }
+      const fr=new THREE.Group(); fr.add(glowSprite(0xff8a30,2.2)); fr.add(glowSprite(0xffd060,1.2)); fr.position.y=1.1; al.add(fr); const pl=new THREE.PointLight(0xff9a40,1,8); pl.position.y=1.2; al.add(pl);
+      al.position.set(1,ground(1,-54),-54); W.group.add(al); goAbraham('years'); }};
+  if(S.step==='count'){ near={label:S.count<10?'Count a star':'Keep counting', fn:()=>{ S.count++; shake=0.04;
+      const shownCount=S.count<=10?S.count:Math.round(10+Math.pow(S.count-10,2.6)*37);
+      setGoal(`Stars counted: <b>${shownCount.toLocaleString()}</b>`+(S.count>=10?'... there are too many!':''));
+      if(S.count>=15){ S.step='promise-wait'; setTimeout(()=>goAbraham('promise'),900); } }}; }
+  S.near=near;
+  const pr=$('prompt');
+  if(near && !saying()){ pr.textContent=(touch?'':'Space: ')+near.label; pr.classList.remove('hidden'); $('act').textContent=near.label.split(' ')[0]; }
+  else { pr.classList.add('hidden'); $('act').textContent= saying()?'Next':'Use'; }
+  showBeacon(t);
+}
+function boundsAbraham(){ P.x=clamp(P.x,-55,55); P.z=clamp(P.z,-80,70); }
+function jumpAbraham(q){ // ?step=journey | altar | count
+  const S=story, W=world; sayQ.length=0; $('say').classList.add('hidden'); sayCb=null; W.god.visible=false;
+  S.told={sarai:1,lot:1,tent:1}; W.myTent.visible=false;
+  if(q==='journey') goAbraham('journey');
+  if(q==='altar'){ P.x=1; P.z=-49; P.yaw=0; W.family.forEach((p,i)=>place(p,-2+i*1.5,-45)); goAbraham('altar'); }
+  if(q==='count'){ abeNight(); abeGod(3,-38,3.2); goAbraham('count'); }
+}
+
 /* David's story hooks */
 function boundsDavid(){ P.x=clamp(P.x,-34,34); P.z=clamp(P.z,-60,72); }
 const IMPL = {
+  abraham: { build:buildAbraham, go:goAbraham, update:updateAbraham, bounds:boundsAbraham, locked:S=>S.lock },
   noah:  { build:buildNoah,  go:goNoah,  update:updateNoah,  bounds:boundsNoah,  locked:S=>S.lock },
   adam:  { build:buildAdam,  go:goAdam,  update:updateAdam,  bounds:boundsAdam,  locked:S=>S.lock || choosing() },
   david: { build:buildDavid, go:goDavid, update:updateDavid, bounds:boundsDavid, locked:S=>S.step==='taunt'||S.step==='shout'||S.step==='fall'||(S.step==='sling'&&!!S.flying) },
@@ -1414,7 +1566,7 @@ function startStory(id){
   const q=new URLSearchParams(location.search).get('step'); if(q && story) jumpTo(q); // preview links for testing
 }
 function jumpTo(q){ // ?step=stones or ?step=sling
-  const S=story; if(story.id==='adam') return jumpAdam(q); if(story.id==='noah') return jumpNoah(q);
+  const S=story; if(story.id==='adam') return jumpAdam(q); if(story.id==='noah') return jumpNoah(q); if(story.id==='abraham') return jumpAbraham(q);
   if(q==='stones'||q==='sling'){ world.lamb.userData.following=true; world.lamb.userData.goal={x:world.flock.x+1,z:world.flock.z}; world.lamb.position.set(world.flock.x+1,0,world.flock.z); world.israel.forEach(p=>p.position.z+=12); }
   if(q==='stones'){ P.x=0; P.z=STREAM_Z+4; P.yaw=0; sayQ.length=0; $('say').classList.add('hidden'); go('stones'); }
   if(q==='sling'){ world.stones.forEach(s=>s.visible=false); S.stonesHeld=5; S.stonesLeft=5; P.x=0; P.z=-20; P.yaw=0; world.goliath.position.set(0,ground(0,-36),-36); sayQ.length=0; $('say').classList.add('hidden'); $('stones').classList.remove('hidden'); updateStonesHud(); go('sling'); }
@@ -1425,7 +1577,7 @@ function finishStory(){
   const nextReady=READY[READY.indexOf(s)+1], nextAny=STORIES[STORIES.indexOf(s)+1];
   $('fade').style.opacity=0.6;
   setTimeout(()=>{
-    $('endWho').textContent='You saw what '+({david:'David',adam:'Adam',noah:'Noah'}[s.id]||'they')+' did.';
+    $('endWho').textContent='You saw what '+({david:'David',adam:'Adam',noah:'Noah',abraham:'Abraham'}[s.id]||'they')+' did.';
     $('endVerse').textContent=s.endVerse; $('endRef').textContent=s.endRef;
     $('endUnlock').textContent= nextReady ? 'You unlocked '+nextReady.title+'!' : (nextAny ? 'Next up: '+nextAny.title+'. It is coming soon!' : 'You finished every story!');
     $('endNext').innerHTML = nextAny ? '<b>What happens next</b>'+nextAny.before : '';
