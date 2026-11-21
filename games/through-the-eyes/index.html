@@ -1319,7 +1319,7 @@ function updateNoah(dt, now){
   W.wl+= (W.wlTo-W.wl)*Math.min(1,dt*0.35); W.water.position.y=W.wl; W.water.visible=W.wl>-2.5;
   const ay=Math.max(W.arkBase, W.wl+0.3); A.position.y= ay>A.position.y||!S.inside ? ay : A.position.y+(ay-A.position.y)*Math.min(1,dt*2); // never lags behind rising water, so no water gets in
   S.rock+=((S.rockTo||0)-S.rock)*Math.min(1,dt*0.5); A.rotation.z=Math.sin(t*0.7)*0.012*S.rock; A.rotation.x=Math.sin(t*0.53)*0.02*S.rock; P.roll=S.inside?Math.sin(t*0.7)*0.03*S.rock:0;
-  if(S.doorTo!==undefined){ const d=A.userData.door; const want=S.doorTo?Math.PI/2*0.92:0; d.rotation.x+=(want-d.rotation.x)*Math.min(1,dt*1.5); }
+  if(S.doorTo!==undefined){ const d=A.userData.door; const land=noahLand==='plain'?groundPlain:groundArarat, gL=land((ARK.door.x0+ARK.door.x1)/2, ARK.wid/2+3)-A.position.y; const want=S.doorTo?Math.acos(clamp((gL-0.5)/3,-1,1)):0; /* open door lies on the ground as a ramp */ d.rotation.x+=(want-d.rotation.x)*Math.min(1,dt*1.5); }
   if(W.rain.visible){ W.rain.position.set(A.position.x,A.position.y-8,A.position.z); const p=W.rain.geometry.attributes.position, a=p.array; for(let i=0;i<a.length;i+=6){ a[i+1]-=dt*22; a[i+4]-=dt*22; if(a[i+1]<0){ a[i+1]+=30; a[i+4]+=30; } } p.needsUpdate=true; }
   // God's light
   const G=W.god; if(G.visible&&G.userData.to&&!S.inside){ const to=G.userData.to, ty=ground(to.x,to.z)+to.y; G.position.x+=(to.x-G.position.x)*Math.min(1,dt); G.position.z+=(to.z-G.position.z)*Math.min(1,dt); G.position.y+=(ty+Math.sin(t*1.5)*0.15-G.position.y)*Math.min(1,dt*2); }
