@@ -983,8 +983,11 @@ function updateAdam(dt, now){
   // Eve follows you, or walks where the story needs her
   const E=W.eve; if(E.visible){ let tx=null,tz=null;
     if(S.eveTo){ tx=S.eveTo.x; tz=S.eveTo.z; }
-    else if(S.eveFollow){ const bx=P.x+Math.cos(P.yaw)*1.4+Math.sin(P.yaw)*1.0, bz=P.z-Math.sin(P.yaw)*1.4+Math.cos(P.yaw)*1.0; if(Math.hypot(bx-E.position.x,bz-E.position.z)>1.2){ tx=bx; tz=bz; } }
-    if(tx!==null){ const dx=tx-E.position.x, dz=tz-E.position.z, d=Math.hypot(dx,dz); if(d>0.15){ const v=Math.min(4.6,d*1.8)*dt; E.position.x+=dx/d*v; E.position.z+=dz/d*v; E.rotation.y=Math.atan2(dx,dz); animWalk(E,dt,1); } else if(S.eveTo && S.step==='eat') faceTo(E,P.x,P.z); }
+    else if(S.eveFollow){ // she walks a little ahead of you and to the right, so you can always see her
+      const fx=-Math.sin(P.yaw), fz=-Math.cos(P.yaw), rx=Math.cos(P.yaw), rz=-Math.sin(P.yaw);
+      const side=0.6*Math.min(1,camera.aspect), bx=P.x+fx*4.5+rx*side, bz=P.z+fz*4.5+rz*side; if(Math.hypot(bx-E.position.x,bz-E.position.z)>0.5){ tx=bx; tz=bz; } }
+    if(tx!==null && S.eveFollow && !S.eveTo && Math.hypot(tx-E.position.x,tz-E.position.z)>14){ E.position.x=tx-Math.sin(P.yaw)*-3; E.position.z=tz-Math.cos(P.yaw)*-3; }
+    if(tx!==null){ const dx=tx-E.position.x, dz=tz-E.position.z, d=Math.hypot(dx,dz); if(d>0.15){ const v=Math.min(6.5,d*2.6)*dt; E.position.x+=dx/d*v; E.position.z+=dz/d*v; E.rotation.y=Math.atan2(dx,dz); animWalk(E,dt,1); } else if(S.eveTo && S.step==='eat') faceTo(E,P.x,P.z); }
     else faceTo(E,P.x,P.z);
     E.position.y=ground(E.position.x,E.position.z); }
   if(W.serpent.visible){ W.serpentHead.rotation.y=Math.sin(t*2)*0.3; }
