@@ -1355,8 +1355,10 @@ function buildPart2(){
     const y = heightAt2(cp.x,cp.z);
     const camp = {i:ci, x:cp.x, z:cp.z, cleared:false, gobs:[], cage:null, cageCol:null, seen:false};
     // tents
-    [[-4,-3],[4,-3.5]].forEach(([dx,dz],k)=>{ const t = m2(new THREE.ConeGeometry(2,2.6,4), M(k?0x7a5a3a:0x6b4a2a), cp.x+dx, y+1.3, cp.z+dz); t.rotation.y = Math.PI/4; P2.occ.push(t);
-      m2(new THREE.ConeGeometry(0.6,1.4,3), M(0x2a1d10), cp.x+dx, y+0.7, cp.z+dz+1.3); col(cp.x+dx, cp.z+dz, 1.6); });
+    const doorTri = new THREE.Shape(); doorTri.moveTo(-0.55,0); doorTri.lineTo(0.55,0); doorTri.lineTo(0,1.25); doorTri.lineTo(-0.55,0);
+    [[-4,-3],[4,-3.5]].forEach(([dx,dz],k)=>{ const ty = heightAt2(cp.x+dx, cp.z+dz); const t = m2(new THREE.ConeGeometry(2,2.6,4), M(k?0x7a5a3a:0x6b4a2a), cp.x+dx, ty+1.3, cp.z+dz); t.rotation.y = Math.PI/4;
+      const door = m2(new THREE.ShapeGeometry(doorTri), M(0x2a1d10, {side:THREE.DoubleSide}), cp.x+dx, ty+0.02, cp.z+dz+Math.SQRT2+0.04); door.rotation.x = -Math.atan(Math.SQRT2/2.6); door.castShadow = false;   // a dark doorway flat on the tent's front
+      col(cp.x+dx, cp.z+dz, 1.6); });
     // campfire
     const fire = new THREE.Group(); fire.position.set(cp.x, y, cp.z+2); add(fire);
     for(let k=0;k<5;k++){ const lg = m2(new THREE.CylinderGeometry(0.1,0.1,1.1,6), M(0x5a3815), 0,0.15,0, fire); lg.rotation.set(Math.PI/2, k*1.26, 0.3); }
@@ -1365,8 +1367,9 @@ function buildPart2(){
     P2.fires.push([fl,fl2]); col(cp.x, cp.z+2, 0.7);
     // spiky fence posts
     for(let k=0;k<9;k++){ const a = -0.6 + k*0.42 + Math.PI/2; const px = cp.x+Math.cos(a)*7.5, pz = cp.z+Math.sin(a)*7.5;
-      const post = m2(new THREE.CylinderGeometry(0.12,0.16,1.6,5), M(0x6b4a24), px, heightAt2(px,pz)+0.8, pz); post.rotation.z = Math.cos(a)*0.2; post.rotation.x = -Math.sin(a)*0.2;
-      m2(new THREE.ConeGeometry(0.12,0.4,5), M(0x6b4a24), px, heightAt2(px,pz)+1.8, pz); }
+      const stake = new THREE.Group(); stake.position.set(px, heightAt2(px,pz)-0.15, pz); stake.rotation.z = Math.cos(a)*0.2; stake.rotation.x = -Math.sin(a)*0.2; add(stake);
+      m2(new THREE.CylinderGeometry(0.12,0.16,1.75,6), M(0x6b4a24), 0, 0.875, 0, stake);
+      m2(new THREE.ConeGeometry(0.12,0.4,6), M(0x6b4a24), 0, 1.95, 0, stake); }
     // the cage with a villager inside
     const v = VILLAGERS[cp.vill];
     const person = beaModel(v.look); person.position.set(cp.x, y, cp.z-1); add(person);
@@ -3897,18 +3900,23 @@ function animate(dt){
     } else {
       // orbit around the knight: looking down raises the camera, looking up lowers it.
       // The camera always aims at the knight, and moves in front of trees/houses so he is never hidden.
-      const back = 6.5, elev = Math.max(0.05, Math.min(1.25, 0.42 - S.pitch));
+      const back = 6.5, elev0 = Math.max(0.05, Math.min(1.25, 0.42 - S.pitch));
       const headP = new THREE.Vector3(S.x, gy + 1.5, S.z);
-      const dir = new THREE.Vector3(-Math.cos(S.yaw)*Math.cos(elev), Math.sin(elev), -Math.sin(S.yaw)*Math.cos(elev));
-      let dCam = back;
-      camRay.set(headP, dir); camRay.far = back;
       const occ = (S.part===2 && P2 ? P2.occ : (S.part===3 && P3 ? P3.occ : (S.part===4 && P4 ? P4.occ : (S.part===5 && P5 ? P5.occ : (S.part===6 && P6 ? P6.occ : L1occ))))).filter(o=>o.visible && o.parent && o.parent.visible !== false && o!==S.towerG);
-      const hit = camRay.intersectObjects(occ, true)[0];
-      if(hit) dCam = Math.max(1.3, hit.distance - 0.4);
-      const target = headP.clone().addScaledVector(dir, dCam);
-      const gh = S.part===2 ? heightAt2(target.x, target.z) : (S.part===3 && P3 ? heightAt3(target.x, target.z) : (S.part===4 && P4 ? heightAt4(target.x, target.z) : (S.part===5 && P5 ? heightAt5(target.x, target.z) : (S.part===6 && P6 ? heightAt6(target.x, target.z) : heightAt(target.x, target.z)))));
-      target.y = Math.max(target.y, gh + 0.6);
-      if(camPos.lengthSq()===0 || hit) camPos.copy(target); else camPos.lerp(target, Math.min(1, dt*8));
+      const gAt = (x,z)=> S.part===2 ? heightAt2(x,z) : (S.part===3 && P3 ? heightAt3(x,z) : (S.part===4 && P4 ? heightAt4(x,z) : (S.part===5 && P5 ? heightAt5(x,z) : (S.part===6 && P6 ? heightAt6(x,z) : heightAt(x,z)))));
+      // how far back can the camera go at this height before a tree, house or hill gets in the way?
+      const probe = e => { const dir = new THREE.Vector3(-Math.cos(S.yaw)*Math.cos(e), Math.sin(e), -Math.sin(S.yaw)*Math.cos(e));
+        let d = back; camRay.set(headP, dir); camRay.far = back;
+        const hit = camRay.intersectObjects(occ, true)[0]; if(hit) d = Math.max(1.3, hit.distance - 0.4);
+        for(let k=1;k<=12;k++){ const t = d*k/12; if(gAt(headP.x+dir.x*t, headP.z+dir.z*t) + 0.35 > headP.y+dir.y*t){ d = Math.max(1.3, t - 0.6); break; } }
+        return {e, dir, d}; };
+      // if something is right behind the knight, lift the camera up and look over it instead of squashing into his back
+      let best = probe(elev0);
+      for(const lift of [0.3, 0.6, 0.9]){ if(best.d >= back*0.75) break; const pr = probe(Math.min(1.25, elev0+lift)); if(pr.d > best.d + 0.5) best = pr; }
+      const elev = best.e, blocked = best.d < back - 0.01;
+      const target = headP.clone().addScaledVector(best.dir, best.d);
+      target.y = Math.max(target.y, gAt(target.x, target.z) + 0.6);
+      if(camPos.lengthSq()===0 || (blocked && best.d < 2.5)) camPos.copy(target); else camPos.lerp(target, Math.min(1, dt*8));
       camera.position.copy(camPos);
       const ahead = 1.8 * (1 - (elev-0.05)/1.2);
       camera.lookAt(S.x + Math.cos(S.yaw)*ahead, gy + 1.3 + Math.max(0, S.pitch)*1.6, S.z + Math.sin(S.yaw)*ahead);
