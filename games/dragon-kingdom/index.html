@@ -17,7 +17,7 @@
   :root{--red:#d7382f;--orange:#f28c28;--green:#3f9a3a;--cream:#fff6e3;--gold:#f5c542}
   *{box-sizing:border-box}
   html,body{margin:0;height:100%;overflow:hidden;background:#87c6ee;font-family:'Fredoka',system-ui,sans-serif;color:var(--cream);-webkit-user-select:none;user-select:none;touch-action:none}
-  #game{position:fixed;inset:0;display:block}
+  #game{position:fixed;inset:0;display:block;filter:contrast(1.1) saturate(1.12) brightness(.97)}  /* a touch richer, like a photo */
   .hidden{display:none !important}
   button{font-family:inherit;font-weight:600;cursor:pointer;border:none;border-radius:12px;background:var(--orange);color:#2a1300;box-shadow:0 4px 0 #a2540f;padding:8px 14px;font-size:18px}
   button:active{transform:translateY(3px);box-shadow:0 1px 0 #a2540f}
@@ -228,6 +228,90 @@
 
 <script src="../monster-island/three.min.js"></script>
 <script>
+// ================= SMOOTHER SHAPES =================
+// Makes every shape in the game a little rounder without changing its size, so nothing looks blocky:
+// boxes get soft rounded edges, and round things (balls, poles, cones, rings) get more sides.
+// Shapes with 3 or 4 sides on purpose (grass, reeds, roofs, spikes, fangs) are left sharp.
+(() => {
+  const BaseBox = THREE.BoxGeometry, BaseCyl = THREE.CylinderGeometry, BaseCone = THREE.ConeGeometry,
+        BaseSphere = THREE.SphereGeometry, BaseTorus = THREE.TorusGeometry;
+  const more = (n, def, lo, hi) => { n = n || def; return n <= 4 ? n : Math.min(hi, Math.max(lo, Math.round(n * 2))); };
+  // rounded box: same size as a normal box, edges curved with a radius that fits its thinnest side
+  class RoundBox extends BaseBox {
+    constructor(w = 1, h = 1, d = 1) {
+      const k = 5;                                           // 2 curve steps on each edge + the flat middle
+      super(1, 1, 1, k, k, k);
+      this.parameters = { width: w, height: h, depth: d, widthSegments: 1, heightSegments: 1, depthSegments: 1 };
+      const r = Math.min(Math.min(w, h, d) * 0.22, 0.3);
+      if (!(r > 0)) { this.scale(w, h, d); return; }
+      const half = 0.5 / k, inner = [w / 2 - r, h / 2 - r, d / 2 - r];
+      const pos = this.attributes.position, nor = this.attributes.normal, v = [0, 0, 0];
+      for (let i = 0; i < pos.count; i++) {
+        v[0] = pos.getX(i); v[1] = pos.getY(i); v[2] = pos.getZ(i);
+        const n = v.map(c => c - Math.sign(c) * half);       // the middle strip stays flat, the outer strips bend
+        const len = Math.hypot(n[0], n[1], n[2]) || 1;
+        for (let a = 0; a < 3; a++) n[a] /= len;
+        pos.setXYZ(i, Math.sign(v[0]) * inner[0] + n[0] * r, Math.sign(v[1]) * inner[1] + n[1] * r, Math.sign(v[2]) * inner[2] + n[2] * r);
+        nor.setXYZ(i, n[0], n[1], n[2]);
+      }
+      this.computeBoundingSphere();
+    }
+  }
+  class SmoothCyl extends BaseCyl {
+    constructor(rt, rb, h, rs, hs, open, ts, tl) { super(rt, rb, h, more(rs, 8, 16, 24), hs, open, ts, tl); }
+  }
+  class SmoothCone extends BaseCone {
+    constructor(r, h, rs, hs, open, ts, tl) { super(r, h, more(rs, 8, 16, 24), hs, open, ts, tl); }
+  }
+  class SmoothSphere extends BaseSphere {
+    constructor(r, ws, hs, ps, pl, ts, tl) { super(r, more(ws, 32, 16, 32), more(hs, 16, 12, 20), ps, pl, ts, tl); }
+  }
+  class SmoothTorus extends BaseTorus {
+    constructor(r, tube, rs, ts, arc) { super(r, tube, more(rs, 12, 12, 24), more(ts, 48, 24, 64), arc); }
+  }
+  THREE.BoxGeometry = RoundBox; THREE.CylinderGeometry = SmoothCyl; THREE.ConeGeometry = SmoothCone;
+  THREE.SphereGeometry = SmoothSphere; THREE.TorusGeometry = SmoothTorus;
+})();
+
+// ================= SURFACE TEXTURE =================
+// Gives every painted surface a natural, uneven look (like real wood, bark, stone, leaves and cloth)
+// by gently varying its color in a pattern tied to where it is in the world. Colors stay George's;
+// they just get light and dark patches and fine grain. Shiny metal gets only a touch, see-through things none.
+(() => {
+  const Base = THREE.MeshStandardMaterial;
+  const NOISE = `
+    varying vec3 vDkW; uniform float dkAmt;
+    float dkH(vec3 p){ p = fract(p*0.3183099 + .1); p *= 17.0; return fract(p.x*p.y*p.z*(p.x+p.y+p.z)); }
+    float dkN(vec3 x){ vec3 i = floor(x), f = fract(x); f = f*f*(3.0-2.0*f);
+      return mix(mix(mix(dkH(i),dkH(i+vec3(1,0,0)),f.x), mix(dkH(i+vec3(0,1,0)),dkH(i+vec3(1,1,0)),f.x),f.y),
+                 mix(mix(dkH(i+vec3(0,0,1)),dkH(i+vec3(1,0,1)),f.x), mix(dkH(i+vec3(0,1,1)),dkH(i+vec3(1,1,1)),f.x),f.y), f.z); }
+    float dkDetail(vec3 p){
+      float n = dkN(p*0.7)*0.45 + dkN(p*2.6)*0.33 + dkN(p*9.0)*0.22;          // big patches, medium blotches, fine grain
+      return 1.0 + dkAmt*(n - 0.5)*2.4;
+    }`;
+  class Textured extends Base {
+    constructor(o){
+      super(o);
+      const amt = this.transparent ? 0 : (this.metalness > 0.3 ? 0.06 : (this.vertexColors ? 0.16 : 0.22));
+      if(this.metalness > 0.3) this.envMapIntensity = 1.8;          // polished steel and gold catch the sky
+      if(amt > 0) this.onBeforeCompile = sh => {
+        sh.uniforms.dkAmt = {value: amt};
+        sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vDkW;')
+          .replace('#include <project_vertex>', `#include <project_vertex>
+            vec4 dkW = vec4(transformed, 1.0);
+            #ifdef USE_INSTANCING
+              dkW = instanceMatrix * dkW;
+            #endif
+            vDkW = (modelMatrix * dkW).xyz;`);
+        sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>' + NOISE)
+          .replace('#include <color_fragment>', '#include <color_fragment>\n diffuseColor.rgb *= dkDetail(vDkW);');
+      };
+    }
+  }
+  THREE.MeshStandardMaterial = Textured;
+})();
+</script>
+<script>
 (() => {
 'use strict';
 // ================= SETUP =================
@@ -257,8 +341,13 @@ function resize(){
   if(typeof fpLayout==='function' && FP) fpLayout();
 }
 window.addEventListener('resize', resize); resize();
+// phones and tablets sometimes report the new screen size a moment after turning, so check again shortly after
+['orientationchange'].forEach(ev=>window.addEventListener(ev, ()=>{ setTimeout(resize, 250); setTimeout(resize, 800); }));
+if(window.visualViewport) window.visualViewport.addEventListener('resize', ()=>setTimeout(resize, 100));
+let lastW = 0, lastH = 0;
+function watchSize(){ if(window.innerWidth !== lastW || window.innerHeight !== lastH){ lastW = window.innerWidth; lastH = window.innerHeight; resize(); } }
 
-const M = (c, o={}) => new THREE.MeshStandardMaterial(Object.assign({color:c, roughness:.85, metalness:0, flatShading:true}, o));
+const M = (c, o={}) => new THREE.MeshStandardMaterial(Object.assign({color:c, roughness:.85, metalness:0, flatShading:false}, o));
 function mesh(geo, mat, x=0, y=0, z=0, parent=scene){
   const m = new THREE.Mesh(geo, mat); m.position.set(x,y,z); m.castShadow = true; m.receiveShadow = true; parent.add(m); return m;
 }
@@ -284,10 +373,49 @@ const LC = {x:(LAND.x0+LAND.x1)/2, hx:(LAND.x1-LAND.x0)/2, hz:(LAND.z1-LAND.z0)/
   camera.userData.sky = sky;
 })();
 
+// --- a little more real: soft light from the whole sky ---
+// The sky and ground colors are baked into a light map, so every surface gets gentle sky light from above,
+// warm bounce light from below, and shiny things (armor, swords, water, potions) reflect the sky.
+const ENV_K = 0.3;                          // how strong the sky light is
+const SKY_ENV = (() => {
+  const es = new THREE.Scene(), g = new THREE.SphereGeometry(10, 32, 16), cols = [], c = new THREE.Color();
+  const top = new THREE.Color(0x4a90d8), mid = new THREE.Color(0xbfe0f7), low = new THREE.Color(0x9a8a62);
+  const p = g.attributes.position;
+  for(let i=0;i<p.count;i++){ const h = p.getY(i)/10;
+    if(h > 0) c.copy(mid).lerp(top, Math.min(1, h*1.4)); else c.copy(mid).lerp(low, Math.min(1, -h*3));
+    cols.push(c.r*ENV_K, c.g*ENV_K, c.b*ENV_K); }
+  g.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3));
+  es.add(new THREE.Mesh(g, new THREE.MeshBasicMaterial({vertexColors:true, side:THREE.BackSide})));
+  const sunBlob = new THREE.Mesh(new THREE.SphereGeometry(1.2, 16, 12), new THREE.MeshBasicMaterial({color:new THREE.Color(0xfff2d0).multiplyScalar(2.5)}));
+  sunBlob.position.copy(SUN_OFF).normalize().multiplyScalar(8.5); es.add(sunBlob);
+  const pm = new THREE.PMREMGenerator(renderer); const tex = pm.fromScene(es, 0.02).texture; pm.dispose();
+  return tex;
+})();
+scene.environment = SKY_ENV;
+hemi.intensity = 0.32; hemi.groundColor.setHex(0x4a3f28); sun.intensity = 0.95;  // the sky light above does part of the soft fill; a bit more sun for crisper shadows
+// fine grain for sand, grass, rock and snow, so the ground isn't one flat paint color
+const groundGrain = (() => {
+  const N = 256, cv = document.createElement('canvas'); cv.width = cv.height = N; const cx = cv.getContext('2d');
+  const img = cx.createImageData(N, N), rnd = rng(9123), layers = [[8, .5], [32, .3], [128, .2]], v = new Float32Array(N*N);
+  layers.forEach(([cells, amt]) => {                              // smooth, tiling bumps at three sizes
+    const grid = []; for(let i=0;i<cells*cells;i++) grid.push(rnd());
+    const at = (x,y) => grid[((y+cells)%cells)*cells + ((x+cells)%cells)];
+    for(let y=0;y<N;y++) for(let x=0;x<N;x++){
+      const fx = x/N*cells, fy = y/N*cells, ix = Math.floor(fx), iy = Math.floor(fy), tx = smooth(0,1,fx-ix), ty = smooth(0,1,fy-iy);
+      const a = at(ix,iy)*(1-tx) + at(ix+1,iy)*tx, b = at(ix,iy+1)*(1-tx) + at(ix+1,iy+1)*tx;
+      v[y*N+x] += (a*(1-ty) + b*ty) * amt;
+    } });
+  for(let i=0;i<N*N;i++){ const k = Math.round(255*(0.84 + v[i]*0.22)); img.data[i*4] = img.data[i*4+1] = img.data[i*4+2] = Math.min(255,k); img.data[i*4+3] = 255; }
+  cx.putImageData(img, 0, 0);
+  const t = new THREE.CanvasTexture(cv); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+  return t;
+})();
+function grainFor(geo){ const t = groundGrain.clone(); t.needsUpdate = true; t.repeat.set(geo.parameters.width/7, geo.parameters.height/7); return t; }
+
 // --- puffy clouds ---
 const skyClouds = [];
 (() => {
-  const cm = new THREE.MeshStandardMaterial({color:0xffffff, roughness:1, emissive:0xbcd4e6, emissiveIntensity:.35, flatShading:true});
+  const cm = new THREE.MeshStandardMaterial({color:0xffffff, roughness:1, emissive:0xbcd4e6, emissiveIntensity:.35, flatShading:false});
   for(let i=0;i<16;i++){
     const g = new THREE.Group();
     const n = 4+Math.floor(Math.random()*4);
@@ -348,15 +476,15 @@ function heightAtRaw(x,z){
   }
   geo.setAttribute('color', new THREE.Float32BufferAttribute(cols,3));
   geo.computeVertexNormals();
-  const ground = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({vertexColors:true, roughness:.95, metalness:0}));
+  const ground = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({vertexColors:true, map:grainFor(geo), roughness:.95, metalness:0}));
   ground.receiveShadow = true; scene.add(ground);
 })();
 
 // --- sea with moving waves ---
 const seaGeo = new THREE.PlaneGeometry(520, 520, 64, 64); seaGeo.rotateX(-Math.PI/2);
 const seaBase = Float32Array.from(seaGeo.attributes.position.array);
-const sea = new THREE.Mesh(seaGeo, new THREE.MeshStandardMaterial({color:0x2a8fd0, roughness:.22, metalness:.15, transparent:true, opacity:.82, flatShading:true}));
-sea.position.y = -0.3; sea.receiveShadow = true; scene.add(sea);
+const sea = new THREE.Mesh(seaGeo, new THREE.MeshStandardMaterial({color:0x2a8fd0, roughness:.22, metalness:.15, transparent:true, opacity:.82, flatShading:false}));
+sea.position.y = -0.3; sea.receiveShadow = true; scene.add(sea); sea.material.envMapIntensity = 1.2;   // water mirrors the sky a little
 function waveSea(t){
   const a = seaGeo.attributes.position;
   for(let i=0;i<a.count;i++){
@@ -406,8 +534,8 @@ scatter(2600, bladeGeo, M(0x6cbf4a), ()=>{ const x=-9+Math.random()*18.5, z=-23+
 scatter(800, bladeGeo, M(0x4f7e36), ()=>{ const x=RIVER_X1+1+Math.random()*23, z=-23+Math.random()*46; return clear(x,z) && Math.hypot(x-28,z)>8 ? {x,z,s:.85+Math.random()*.3, rx:(Math.random()-.5)*.1} : null; });
 const flowerGeo = new THREE.IcosahedronGeometry(0.13, 0); flowerGeo.translate(0,0.42,0);
 const stemGeo = new THREE.CylinderGeometry(0.015,0.015,0.42,4).translate(0,0.21,0), stemMat = M(0x3f8a2e);
-scatter(320, flowerGeo, new THREE.MeshStandardMaterial({color:0xffffff, roughness:.6, flatShading:true}), ()=>{ const x=-9+Math.random()*18, z=-23+Math.random()*46; return clear(x,z) && Math.abs(x-12)>2.8 ? {x,z,s:.9+Math.random()*.2}:null; }, [0xd7382f,0xf28c28,0xfff2e0,0xf5c542,0xe85a9a], {geo:stemGeo, mat:stemMat});
-scatter(140, new THREE.ConeGeometry(0.16,0.12,5), new THREE.MeshStandardMaterial({color:0xffffff, roughness:.5, flatShading:true}), ()=>{ const x=-39+Math.random()*28, z=-23+Math.random()*46; return clear(x,z)?{x,z,y:0.03}:null; }, [0xfde3d0,0xf7b7a3,0xffffff,0xf2c48a]);
+scatter(320, flowerGeo, new THREE.MeshStandardMaterial({color:0xffffff, roughness:.6, flatShading:false}), ()=>{ const x=-9+Math.random()*18, z=-23+Math.random()*46; return clear(x,z) && Math.abs(x-12)>2.8 ? {x,z,s:.9+Math.random()*.2}:null; }, [0xd7382f,0xf28c28,0xfff2e0,0xf5c542,0xe85a9a], {geo:stemGeo, mat:stemMat});
+scatter(140, new THREE.ConeGeometry(0.16,0.12,5), new THREE.MeshStandardMaterial({color:0xffffff, roughness:.5, flatShading:false}), ()=>{ const x=-39+Math.random()*28, z=-23+Math.random()*46; return clear(x,z)?{x,z,y:0.03}:null; }, [0xfde3d0,0xf7b7a3,0xffffff,0xf2c48a]);
 scatter(180, new THREE.DodecahedronGeometry(0.14,0), M(0xa9a59a), ()=>{ const x=-39+Math.random()*80, z=-23+Math.random()*46; return Math.abs(x-12)>3?{x,z,y:0.02,s:.6+Math.random()}:null; });
 
 // marsh reeds with fluffy tops + lily pads
@@ -433,7 +561,7 @@ const smoke = [];
   mesh(new THREE.CylinderGeometry(10, 34, 4, 18), M(0xd8bf86), 0,0,0, v);
   mesh(new THREE.CylinderGeometry(5, 26, 34, 14, 3), M(0x5a4636), 0,18,0, v);
   mesh(new THREE.CylinderGeometry(4.6, 5, 1, 14), new THREE.MeshBasicMaterial({color:0xff5a1a}), 0,35.2,0, v);
-  for(let i=0;i<8;i++){ const p = new THREE.Mesh(new THREE.IcosahedronGeometry(3,1), new THREE.MeshStandardMaterial({color:0x6b6b70, transparent:true, opacity:.55, flatShading:true}));
+  for(let i=0;i<8;i++){ const p = new THREE.Mesh(new THREE.IcosahedronGeometry(3,1), new THREE.MeshStandardMaterial({color:0x6b6b70, transparent:true, opacity:.55, flatShading:false}));
     p.name='far'; p.position.set(120, 38+i*4, -70); scene.add(p); smoke.push({m:p, k:i}); }
   const c = new THREE.Group(); c.name='far'; c.position.set(170, -0.5, 80); scene.add(c);
   mesh(new THREE.CylinderGeometry(14, 30, 10, 16), M(0x6a6a5a), 0,4,0, c);
@@ -456,7 +584,20 @@ function addCol(x,z,r,obj){ const c={x,z,r,obj}; colliders.push(c); return c; }
 
 // palm trees (choppable): curved, banded trunk, drooping fronds, coconuts
 const trees = [];
-const trunkA = M(0x8b5a2b), trunkB = M(0x74482a), frondA = M(0x2a7f34), frondB = M(0x37913d), nutM = M(0x5a3815);
+const trunkA = M(0x8b5a2b), trunkB = M(0x74482a), frondA = M(0x2a7f34,{side:THREE.DoubleSide}), frondB = M(0x37913d,{side:THREE.DoubleSide}), nutM = M(0x5a3815);
+// a palm leaf: pointy at both ends, folded a little along the middle, the same size as the old flat leaf
+const leafGeos = {};
+function leafGeo(len, w){
+  const key = len.toFixed(2)+'_'+w; if(leafGeos[key]) return leafGeos[key];
+  const N = 10, pos = [], idx = [];
+  for(let i=0;i<=N;i++){
+    const t = i/N, x = -len/2 + t*len, hw = w/2 * Math.pow(Math.sin(Math.PI*Math.min(1, t*1.15)), 0.7), sag = -Math.sin(Math.PI*t)*0.06;
+    pos.push(x, sag - hw*0.25, -hw,  x, sag + w*0.06*(1-t), 0,  x, sag - hw*0.25, hw);
+    if(i<N){ const a = i*3, b = a+3; idx.push(a,b,a+1, a+1,b,b+1, a+1,b+1,a+2, a+2,b+1,b+2); }
+  }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos,3)); g.setIndex(idx); g.computeVertexNormals();
+  return leafGeos[key] = g;
+}
 function palm(x,z){
   const g = new THREE.Group(); g.position.set(x,heightAt(x,z),z); g.rotation.y = Math.random()*6.28; scene.add(g); L1occ.push(g);
   const bend = 0.8+Math.random()*0.8, segs = 7, sh = 0.7;
@@ -472,8 +613,8 @@ function palm(x,z){
     const a = i/8*Math.PI*2 + Math.random()*0.3;
     const fr = new THREE.Group(); fr.position.copy(top); fr.rotation.y = a; g.add(fr);
     const len = 1.5+Math.random()*0.4;
-    const s1 = mesh(new THREE.BoxGeometry(len, 0.05, 0.5), i%2?frondA:frondB, len/2, 0.15, 0, fr); s1.rotation.z = 0.25;
-    const s2 = mesh(new THREE.BoxGeometry(len*1.1, 0.05, 0.3), i%2?frondB:frondA, len*1.45, -0.25, 0, fr); s2.rotation.z = -0.5;
+    const s1 = mesh(leafGeo(len, 0.62), i%2?frondA:frondB, len/2, 0.15, 0, fr); s1.rotation.z = 0.25;
+    const s2 = mesh(leafGeo(len*1.1, 0.42), i%2?frondB:frondA, len*1.45, -0.25, 0, fr); s2.rotation.z = -0.5;
   }
   for(let i=0;i<3;i++) mesh(new THREE.SphereGeometry(0.17,8,6), nutM, top.x+Math.cos(i*2.1)*0.25, top.y-0.25, Math.sin(i*2.1)*0.25, g);
   const t = {g, x, z, hits:0, alive:true, col:addCol(x,z,0.7)};
@@ -488,7 +629,7 @@ const rockM = M(0x8d8f93), rockM2 = M(0x7a7c80);
 
 // boat
 (() => {
-  const g = new THREE.Group(); g.position.set(-42,0,0); scene.add(g);
+  const g = new THREE.Group(); g.position.set(-42,0,0); scene.add(g); L1occ.push(g);   // the camera stays in front of the sail, so it never fills the screen
   mesh(new THREE.BoxGeometry(5,1,2), M(0x8b4a1f), 0,0.1,0, g);
   mesh(new THREE.CylinderGeometry(0.1,0.1,5), M(0x5a3815), 0,3,0, g);
   const sail = mesh(new THREE.PlaneGeometry(2.4,3), M(0xd7382f,{side:THREE.DoubleSide}), 0.6,3.3,0, g); sail.rotation.y = Math.PI/2;
@@ -704,7 +845,14 @@ for(let k=0;k<5;k++){ const pm = mesh(new THREE.SphereGeometry(0.1-k*0.008,10,8)
 // cape: three panels so it can sway
 const cape = new THREE.Group(); cape.position.set(-0.3,1.78,0); knight.add(cape);
 { const cm = M(0xd7382f,{side:THREE.DoubleSide, flatShading:false});
-  [[0,0.5,0.06],[1,0.46,0.12],[2,0.42,0.2]].forEach(([k,w,tilt])=>{ const pn = mesh(new THREE.BoxGeometry(0.04,0.44,w), cm, -k*0.05, -0.22-k*0.42, 0, cape); pn.rotation.z = -tilt; });
+  // one soft piece of cloth (same size as the old three panels): flares out behind, wraps a little round the back, with gentle folds
+  { const C = 12, R = 14, H = 1.3, pos = [], idx = [];
+    for(let j=0;j<=R;j++){ const t = j/R, hw = 0.25 - 0.04*t;
+      for(let i=0;i<=C;i++){ const u = i/C*2-1, z = u*hw;
+        pos.push(-0.1*t - 0.14*t*t + 0.07*u*u + 0.018*Math.sin(u*Math.PI*2.5)*t, -t*H, z); } }
+    for(let j=0;j<R;j++) for(let i=0;i<C;i++){ const a = j*(C+1)+i, b = a+C+1; idx.push(a,b,a+1, a+1,b,b+1); }
+    const cg = new THREE.BufferGeometry(); cg.setAttribute('position', new THREE.Float32BufferAttribute(pos,3)); cg.setIndex(idx); cg.computeVertexNormals();
+    mesh(cg, cm, 0, 0, 0, cape); }
   mesh(new THREE.SphereGeometry(0.06,8,8), gold, 0.08,0.0,0.3, cape); mesh(new THREE.SphereGeometry(0.06,8,8), gold, 0.08,0.0,-0.3, cape); }
 // sword arm (right side = -z when facing +x)
 const tpArm = new THREE.Group(); tpArm.position.set(0.05,1.62,-0.42); knight.add(tpArm);
@@ -742,7 +890,11 @@ const fpShield = new THREE.Group(); fpShield.scale.setScalar(0.55); fpShield.pos
 fpShield.add(shieldModel());
 const fpAxe = new THREE.Group(); fpAxe.scale.setScalar(0.5); fpAxe.position.set(0.55,-0.6,-1); fpAxe.rotation.set(-0.3,0,-0.3); camera.add(fpAxe); fpAxe.visible=false;
 mesh(new THREE.CylinderGeometry(0.05,0.05,1.1), M(0x6b4a24), 0,0.3,0, fpAxe);
-mesh(new THREE.BoxGeometry(0.06,0.35,0.4), M(0xb8c0c8), 0,0.75,0.15, fpAxe);
+{ // axe head: a curved steel blade instead of a plain block (same spot and size)
+  const ax = new THREE.Shape(); ax.moveTo(-0.2,0.07); ax.lineTo(0.02,0.1); ax.quadraticCurveTo(0.12,0.12,0.2,0.2); ax.quadraticCurveTo(0.27,0,0.2,-0.2); ax.quadraticCurveTo(0.12,-0.12,0.02,-0.1); ax.lineTo(-0.2,-0.07); ax.lineTo(-0.2,0.07);
+  const ag = new THREE.ExtrudeGeometry(ax, {depth:0.03, bevelEnabled:true, bevelThickness:0.015, bevelSize:0.012, bevelSegments:3, curveSegments:16});
+  ag.translate(0,0,-0.015); ag.rotateY(-Math.PI/2);
+  mesh(ag, M(0xb8c0c8, {metalness:.35, roughness:.35}), 0,0.75,0.15, fpAxe); }
 // Knight's eyes: size the sword and shield from the screen's WIDTH and stand them up from the bottom edge,
 // so they look the same on a wide phone, an iPad and a computer (big shield on the left, tall sword on the right).
 var FP = {};
@@ -758,11 +910,31 @@ function fpLayout(){
   FP.swS = 1.82*g*hh;
   FP.swX = hw*0.58; FP.swY = hh*(-1 + 2*0.04*g) + 0.11*FP.swS;
   FP.k = Math.min(1.6, hw/0.92);                          // how far a swing or a block travels across the screen
+  // lift the shield and sword above the buttons at the bottom of the screen, so you can always see them
+  const H = window.innerHeight || 1, W = window.innerWidth || 1;
+  const box = id => { const el = document.getElementById(id); if(!el || el.closest('.hidden')) return null; const r = el.getBoundingClientRect(); return r.height ? r : null; };
+  const bar = box('bar'), tact = box('tact'), joy = box('joy');
+  const barUp = bar ? (H - bar.top)/H : 0;                 // share of the screen the item bar covers
+  const joyUp = (joy && a < 1) ? (H - joy.top)/H - 0.06 : 0; // on tall phones the shield peeks out above the joystick
+  FP.shY += 2*hhS*Math.max(barUp, joyUp);
+  FP.swRz = -0.35;                                        // how far the sword leans to the right
+  if(a < 1){ FP.swS *= 1.5; FP.swX = hw*0.06; FP.swRz = -0.12; }   // tall phones: a bigger, more upright sword between the shield and the side buttons
+  const swordAt = 0.5 + 0.5*0.58;                         // where the sword sits across the screen (0 = left, 1 = right)
+  if(a < 1 && document.body.classList.contains('touch')){
+    // phone held upright: always stand the sword just above the big buttons, even on a short screen
+    const tactUp = tact ? (H - tact.top)/H : 0.3;
+    FP.swY += 2*hh*Math.min(0.6, Math.max(0.25, tactUp));
+  } else if(tact){
+    const tactUp = (H - tact.top)/H;
+    if(tactUp < 0.42) FP.swY += 2*hh*tactUp;              // tall screens: stand the sword just above the big buttons
+    else { FP.swX = Math.min(FP.swX, (tact.left/W*2 - 1)*hw - 0.06*FP.swS); FP.swY += 2*hh*barUp; }   // wide phones: just left of them
+  } else if(bar && bar.right/W > swordAt - 0.04) FP.swY += 2*hh*barUp*0.8;
   fpSword.scale.setScalar(FP.swS); fpSword.position.set(FP.swX, FP.swY, -1);
   fpAxe.scale.setScalar(FP.swS*1.1); fpAxe.position.set(FP.swX, FP.swY - 0.05, -1);
   fpShield.scale.setScalar(FP.shS); fpShield.position.set(FP.shX, FP.shY, FP.shZ);
 }
 fpLayout();
+if(window.ResizeObserver){ const ro = new ResizeObserver(()=>fpLayout()); ['bar','tact'].forEach(id=>{ const el = document.getElementById(id); if(el) ro.observe(el); }); }   // re-place them when the buttons appear or change
 
 // ================= DRAGON =================
 const SM = (c, o={}) => M(c, Object.assign({flatShading:false, roughness:.55}, o));
@@ -1078,7 +1250,7 @@ function buildPart2(){
     cols.push(c.r, c.g, c.b);
   }
   geo.setAttribute('color', new THREE.Float32BufferAttribute(cols,3)); geo.computeVertexNormals();
-  const ground = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({vertexColors:true, roughness:.95})); ground.receiveShadow = true; add(ground);
+  const ground = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({vertexColors:true, map:grainFor(geo), roughness:.95})); ground.receiveShadow = true; add(ground);
 
   // shore foam
   { const pts = [];
@@ -1096,7 +1268,7 @@ function buildPart2(){
   // boat you arrive in
   { const g = new THREE.Group(); g.position.set(-61,0,0); add(g);
     m2(new THREE.BoxGeometry(5,1,2), M(0x8b4a1f), 0,0.1,0, g); m2(new THREE.CylinderGeometry(0.1,0.1,5), M(0x5a3815), 0,3,0, g);
-    const sail = m2(new THREE.PlaneGeometry(2.4,3), M(0xd7382f,{side:THREE.DoubleSide}), 0.6,3.3,0, g); sail.rotation.y = Math.PI/2; }
+    const sail = m2(new THREE.PlaneGeometry(2.4,3), M(0xd7382f,{side:THREE.DoubleSide}), 0.6,3.3,0, g); sail.rotation.y = Math.PI/2; P2.occ.push(g); }
 
   // grass, flowers, mushrooms (instanced)
   function scatter2(count, geo, mat, place, colors, extra){
@@ -1112,7 +1284,7 @@ function buildPart2(){
   const away = (x,z,dd=4)=> Math.hypot(x-VILLAGE.x,z-VILLAGE.z)>12 && CAMPS.every(cp=>Math.hypot(x-cp.x,z-cp.z)>7) && Math.hypot(x-LAKE.x,z-LAKE.z)>LAKE.r+1.5;
   const rp = ()=>{ const a = r()*6.28, d = Math.sqrt(r())*0.9; return {x:Math.cos(a)*ISL.rx*d, z:Math.sin(a)*ISL.rz*d}; };
   scatter2(4200, bladeGeo, M(0x6cbf4a), ()=>{ const p = rp(); return away(p.x,p.z) ? Object.assign(p,{s:.85+r()*.3, rx:(r()-.5)*.1}) : null; });
-  scatter2(420, flowerGeo, new THREE.MeshStandardMaterial({color:0xffffff, roughness:.6, flatShading:true}), ()=>{ const p = rp(); return away(p.x,p.z)?Object.assign(p,{s:.9+r()*.2}):null; }, [0xd7382f,0xf28c28,0xfff2e0,0xf5c542,0xe85a9a,0x8fb8ff], {geo:stemGeo, mat:stemMat});
+  scatter2(420, flowerGeo, new THREE.MeshStandardMaterial({color:0xffffff, roughness:.6, flatShading:false}), ()=>{ const p = rp(); return away(p.x,p.z)?Object.assign(p,{s:.9+r()*.2}):null; }, [0xd7382f,0xf28c28,0xfff2e0,0xf5c542,0xe85a9a,0x8fb8ff], {geo:stemGeo, mat:stemMat});
   const shroom = new THREE.Group();
   // mushrooms: red cap on a white stalk
   scatter2(90, new THREE.SphereGeometry(0.22,10,6,0,Math.PI*2,0,Math.PI/2).translate(0,0.25,0), M(0xd7382f), ()=>{ const p = rp(); return p.z<-10 && away(p.x,p.z)?p:null; }, null,
@@ -1129,7 +1301,7 @@ function buildPart2(){
       for(let k=0;k<3;k++) m2(new THREE.ConeGeometry(1.7-k*0.4, 1.9, 8), k%2?pineL:pineL2, 0,1.9+k*1.05,0, g);
     } else {
       m2(new THREE.CylinderGeometry(0.25,0.38,2.2,7), pineT, 0,1.1,0, g);
-      [[0,3,0,1.4],[0.9,2.6,0.4,1],[-0.8,2.7,-0.3,1.05],[0.2,2.6,-0.9,0.95]].forEach(([a,b,c2,rr],k)=> m2(new THREE.IcosahedronGeometry(rr,0), k%2?oakL:oakL2, a,b,c2, g));
+      [[0,3,0,1.4],[0.9,2.6,0.4,1],[-0.8,2.7,-0.3,1.05],[0.2,2.6,-0.9,0.95]].forEach(([a,b,c2,rr],k)=> m2(new THREE.IcosahedronGeometry(rr,2), k%2?oakL:oakL2, a,b,c2, g));
     }
     if(!choppable) return null;
     const t = {g, x, z, hits:0, alive:true, col:col(x,z,0.7)}; P2.trees.push(t); return t;
@@ -1607,14 +1779,14 @@ function buildPart3(){
     cols.push(c.r, c.g, c.b);
   }
   geo.setAttribute('color', new THREE.Float32BufferAttribute(cols,3)); geo.computeVertexNormals();
-  const ground = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({vertexColors:true, roughness:.95, flatShading:true})); ground.receiveShadow = true; add(ground);
+  const ground = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({vertexColors:true, map:grainFor(geo), roughness:.95, flatShading:false})); ground.receiveShadow = true; add(ground);
 
   // the volcano itself, right behind the treasury
   const vol = new THREE.Group(); vol.position.set(78, -0.5, 0); add(vol);
   m3(new THREE.CylinderGeometry(9, 42, 46, 18, 3), M(0x4a3630), 0,23,0, vol);
   m3(new THREE.CylinderGeometry(8.6, 9, 1, 18), new THREE.MeshBasicMaterial({color:0xff5a1a}), 0,46.2,0, vol);
   P3.volSmoke = [];
-  for(let i=0;i<8;i++){ const pf = new THREE.Mesh(new THREE.IcosahedronGeometry(4,1), new THREE.MeshStandardMaterial({color:0x5a5a60, transparent:true, opacity:.5, flatShading:true})); add(pf); P3.volSmoke.push({m:pf,k:i}); }
+  for(let i=0;i<8;i++){ const pf = new THREE.Mesh(new THREE.IcosahedronGeometry(4,1), new THREE.MeshStandardMaterial({color:0x5a5a60, transparent:true, opacity:.5, flatShading:false})); add(pf); P3.volSmoke.push({m:pf,k:i}); }
   // glowing lava streams down the volcano
   for(let k=0;k<3;k++){ const st = m3(new THREE.BoxGeometry(2.2, 40, 0.5), new THREE.MeshBasicMaterial({color:0xff6a1a}), 78-26, 20, -12+k*12, R); st.rotation.z = -0.95; st.castShadow=false; }
 
@@ -2299,7 +2471,7 @@ function buildPart4(){
     cols.push(c.r, c.g, c.b);
   }
   geo.setAttribute('color', new THREE.Float32BufferAttribute(cols,3)); geo.computeVertexNormals();
-  const ground = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({vertexColors:true, roughness:.95, flatShading:true})); ground.receiveShadow = true; add(ground);
+  const ground = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({vertexColors:true, map:grainFor(geo), roughness:.95, flatShading:false})); ground.receiveShadow = true; add(ground);
 
   const stone = M(0x7a7684), stone2 = M(0x6a6674), dark = M(0x3a3644), roofM = M(0x5a2a4a), banner = M(0x4a2a6a, {side:THREE.DoubleSide});
   const wallSeg = (x1,z1,x2,z2,h=7,th=1.6)=>{ const len = Math.hypot(x2-x1,z2-z1), w = m4(new THREE.BoxGeometry(len, h, th), stone, (x1+x2)/2, 0.4+h/2, (z1+z2)/2); w.rotation.y = -Math.atan2(z2-z1, x2-x1); P4.occ.push(w);
@@ -3380,7 +3552,7 @@ document.querySelectorAll('[data-act]').forEach(b=>{
 window.addEventListener('keydown', e=>{ if(e.repeat) return; if(['Digit1','KeyJ','Space'].includes(e.code) && dlg.classList.contains('hidden')) keys.swordHeld = true; });
 window.addEventListener('keyup', e=>{ if(['Digit1','KeyJ','Space'].includes(e.code)) keys.swordHeld = false; });
 
-function setCam(c){ cam = c; $('camFP').classList.toggle('on', c==='fp'); $('camTP').classList.toggle('on', c==='tp'); }
+function setCam(c){ cam = c; if(c==='fp') fpLayout(); $('camFP').classList.toggle('on', c==='fp'); $('camTP').classList.toggle('on', c==='tp'); }
 $('camFP').addEventListener('click', ()=>setCam('fp'));
 $('camTP').addEventListener('click', ()=>setCam('tp'));
 
@@ -3503,6 +3675,7 @@ const camPos = new THREE.Vector3(), camLook = new THREE.Vector3(), camRay = new 
 let time = 0;
 function tick(){
   requestAnimationFrame(tick);
+  watchSize();
   const dt = Math.min(clock.getDelta(), 0.05); time += dt;
   if(running && !paused) update(dt);
   animate(dt);
@@ -3656,7 +3829,7 @@ function animate(dt){
     fpAxe.visible = fp && usingAxe;
     fpShield.visible = fp && S.shield;
     const sw = S.swing>0 ? S.swing/0.35 : 0;
-    fpSword.rotation.set(-0.3 - Math.sin(sw*Math.PI)*1.2, 0, -0.35 + Math.sin(sw*Math.PI)*0.9);
+    fpSword.rotation.set(-0.3 - Math.sin(sw*Math.PI)*1.2, 0, FP.swRz + Math.sin(sw*Math.PI)*0.9);
     fpSword.position.x = FP.swX - Math.sin(sw*Math.PI)*0.4*FP.k;
     const ch = S.chop>0 ? S.chop/0.4 : 0;
     fpAxe.rotation.set(-0.3 - Math.sin(ch*Math.PI)*1.3, 0, -0.3);
@@ -4597,7 +4770,7 @@ function buildPart5(){
     cols.push(c.r, c.g, c.b);
   }
   geo.setAttribute('color', new THREE.Float32BufferAttribute(cols,3)); geo.computeVertexNormals();
-  const ground = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({vertexColors:true, roughness:.9, flatShading:true})); ground.receiveShadow = true; add(ground);
+  const ground = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({vertexColors:true, map:grainFor(geo), roughness:.9, flatShading:false})); ground.receiveShadow = true; add(ground);
 
   // the frozen lake
   const lake = m5(new THREE.CircleGeometry(LAKE5.r, 40), new THREE.MeshStandardMaterial({color:0xbfe6ff, roughness:.12, metalness:.15}), LAKE5.x, heightAt5Raw(LAKE5.x,LAKE5.z)+0.06, LAKE5.z);
@@ -5057,7 +5230,7 @@ function buildModel(k){
     for(let i=0;i<3;i++) for(let j=0;j<3;j++){
       const x = -1 + i, z = -1 + j;
       if((i+j)%2){ m(new THREE.ConeGeometry(0.12, 0.35, 6), M(0xf28c28), x, 0.3, z).rotation.x = Math.PI; m(new THREE.ConeGeometry(0.15, 0.35, 5), M(0x3f9a3a), x, 0.55, z); }
-      else m(new THREE.IcosahedronGeometry(0.28, 0), M(0x4f9a3a), x, 0.4, z);
+      else m(new THREE.IcosahedronGeometry(0.28, 2), M(0x4f9a3a), x, 0.4, z);
     }
     [[-1.6,0,0.1,3.4],[1.6,0,0.1,3.4]].forEach(([x,z,w,d])=>m(new THREE.BoxGeometry(w, 0.5, d), wood, x, 0.25, z));
   } else if(k==='well'){
@@ -5382,11 +5555,11 @@ function buildPart6(){
     cols.push(c.r, c.g, c.b);
   }
   geo.setAttribute('color', new THREE.Float32BufferAttribute(cols,3)); geo.computeVertexNormals();
-  const ground = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({vertexColors:true, roughness:.95, flatShading:true})); ground.receiveShadow = true; add(ground);
+  const ground = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({vertexColors:true, map:grainFor(geo), roughness:.95, flatShading:false})); ground.receiveShadow = true; add(ground);
   // the hot spring, with steam
   const spring = m6(new THREE.CircleGeometry(SPRING6.r-0.4, 32), new THREE.MeshStandardMaterial({color:0x5ad0c8, roughness:.15, emissive:0x0a3a3a}), SPRING6.x, 0.05, SPRING6.z); spring.rotation.x = -Math.PI/2;
   for(let i=0;i<10;i++){ const a = i/10*6.28; const st = m6(new THREE.DodecahedronGeometry(0.6,0), M(0x8a8a80), SPRING6.x + Math.cos(a)*SPRING6.r, 0.3, SPRING6.z + Math.sin(a)*SPRING6.r); st.rotation.set(r()*3, r()*3, 0); }
-  for(let i=0;i<8;i++){ const pf = new THREE.Mesh(new THREE.IcosahedronGeometry(0.8,1), new THREE.MeshStandardMaterial({color:0xffffff, transparent:true, opacity:.35, flatShading:true, depthWrite:false})); add(pf); P6.steam.push({m:pf, k:i}); }
+  for(let i=0;i<8;i++){ const pf = new THREE.Mesh(new THREE.IcosahedronGeometry(0.8,1), new THREE.MeshStandardMaterial({color:0xffffff, transparent:true, opacity:.35, flatShading:false, depthWrite:false})); add(pf); P6.steam.push({m:pf, k:i}); }
   // a smoking volcano far in the north-east corner
   const vol = new THREE.Group(); vol.position.set(50, -0.5, 36); add(vol);
   m6(new THREE.CylinderGeometry(4, 16, 18, 14, 2), M(0x5a4a3a), 0, 9, 0, vol);
@@ -5403,7 +5576,7 @@ function buildPart6(){
         const lf = m6(new THREE.BoxGeometry(2.2, 0.05, 0.5), palmL, 1.0, -0.3, 0, fr); lf.rotation.z = -0.35; }
     } else {
       m6(new THREE.CylinderGeometry(0.28, 0.42, 3, 7), trunk, 0, 1.5, 0, g);
-      [[0,3.6,0,1.6],[1,3.2,0.5,1.2],[-0.9,3.3,-0.4,1.25],[0.2,3.1,-1,1.1],[-0.3,4.3,0.4,1]].forEach(([a,b,c2,rr],k)=>m6(new THREE.IcosahedronGeometry(rr,0), k%2?leaf:leaf2, a,b,c2, g));
+      [[0,3.6,0,1.6],[1,3.2,0.5,1.2],[-0.9,3.3,-0.4,1.25],[0.2,3.1,-1,1.1],[-0.3,4.3,0.4,1]].forEach(([a,b,c2,rr],k)=>m6(new THREE.IcosahedronGeometry(rr,2), k%2?leaf:leaf2, a,b,c2, g));
     }
     P6.trees.push({g, x, z, hits:0, alive:true, fall:-1, col:col(x, z, 0.6*s)});
   }
@@ -6104,6 +6277,7 @@ function caveAnimate(dt){
     if(inside){ scene.fog.near = 8; scene.fog.far = 70; scene.fog.color.setHex(0x2a3a5a); scene.background.setHex(0x2a3a5a); }
     else if(scene.fog.near !== 80 && !P5.blizzard){ scene.fog.near = 80; scene.fog.far = 300; scene.fog.color.setHex(0xe6eef6); scene.background.setHex(0xe6eef6); }
   }
+  scene.environment = inside ? null : SKY_ENV;            // no blue sky light deep inside the cave
   P5.snow.visible = !inside;
 }
 
