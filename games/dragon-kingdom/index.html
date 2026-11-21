@@ -530,7 +530,7 @@ function scatter(count, geo, mat, place, colors, extra){
   }
   im.count = n; im.frustumCulled = false; scene.add(im); if(im2){ im2.count = n; im2.receiveShadow = true; scene.add(im2); } return im;
 }
-const clear = (x,z) => [[-28,-8],[0,-12],[2,6],[12,0],[28,0],[-36,0]].every(([a,b])=>Math.hypot(x-a,z-b)>3.5);
+const clear = (x,z) => [[-28,-8],[0,-12],[2,6],[12,0],[28,0],[-36,0]].every(([a,b])=>Math.hypot(x-a,z-b)>3.5) && Math.hypot(x-2,z-6)>4.3;   // keep the big house's floor clear
 // a tuft of thin grass blades that sway in the wind (like the Bible game)
 const bladeGeo = (() => {
   const v = [], nm = [], rr = rng(4242);
@@ -757,10 +757,11 @@ let cageCol = addCol(0,-12,1.4);
 
 // house plot
 const PLOT = {x:2, z:6};
-const plotMark = new THREE.Group(); plotMark.position.set(PLOT.x,0,PLOT.z); scene.add(plotMark);
+const HOUSE_K = 1.5;                                   // houses are 1.5 times bigger than before (Alison asked)
+const plotMark = new THREE.Group(); plotMark.position.set(PLOT.x,0,PLOT.z); plotMark.scale.setScalar(HOUSE_K); scene.add(plotMark);
 for(let i=0;i<4;i++){ const s = mesh(new THREE.BoxGeometry(i%2?0.2:4, 0.25, i%2?4:0.2), M(0x6b4a24), 0,0.12,0, plotMark); s.position[i%2?'x':'z'] = (i<2?-2:2); }
 mesh(new THREE.CylinderGeometry(0.05,0.05,1.2), M(0x6b4a24), 2,0.6,2, plotMark);
-const house = new THREE.Group(); house.position.set(PLOT.x,0,PLOT.z); house.visible=false; scene.add(house); L1occ.push(house);
+const house = new THREE.Group(); house.position.set(PLOT.x,0,PLOT.z); house.scale.setScalar(HOUSE_K); house.visible=false; scene.add(house); L1occ.push(house);
 mesh(new THREE.BoxGeometry(3.6,2.4,3.6), M(0xf2e2c2), 0,1.2,0, house);
 const roof = mesh(new THREE.ConeGeometry(3,1.8,4), M(0xd7382f), 0,3.3,0, house); roof.rotation.y=Math.PI/4;
 mesh(new THREE.BoxGeometry(0.9,1.5,0.1), M(0x6b4a24), 0,0.75,1.81, house);
@@ -1394,10 +1395,10 @@ function buildPart2(){
     P2.villageFire = [fl, fl2]; P2.fires.push([fl,fl2]); col(VILLAGE.x, VILLAGE.z, 1.2);
     PLOTS.forEach((pl,i)=>{
       const py = heightAt2(pl.x,pl.z);
-      const mark = new THREE.Group(); mark.position.set(pl.x, py, pl.z); add(mark);
+      const mark = new THREE.Group(); mark.position.set(pl.x, py, pl.z); mark.scale.setScalar(HOUSE_K); add(mark);
       for(let k=0;k<4;k++){ const sd = m2(new THREE.BoxGeometry(k%2?0.2:4.2, 0.25, k%2?4.2:0.2), M(0x6b4a24), 0,0.12,0, mark); sd.position[k%2?'x':'z'] = (k<2?-2.1:2.1); }
       [[-2.1,-2.1],[2.1,-2.1],[-2.1,2.1],[2.1,2.1]].forEach(([a,b])=> m2(new THREE.CylinderGeometry(0.06,0.06,1),M(0xf5c542),a,0.5,b,mark));
-      const cab = cabinModel([0xd7382f, 0x3f9a3a, 0xf28c28, 0x2f6fb5][i]); cab.position.set(pl.x, py, pl.z); cab.rotation.y = -pl.face; cab.visible = false; add(cab); P2.occ.push(cab);
+      const cab = cabinModel([0xd7382f, 0x3f9a3a, 0xf28c28, 0x2f6fb5][i]); cab.position.set(pl.x, py, pl.z); cab.rotation.y = -pl.face; cab.scale.setScalar(HOUSE_K); cab.visible = false; add(cab); P2.occ.push(cab);
       P2.plots.push({x:pl.x, z:pl.z, face:pl.face, mark, cab, col:null});
     });
     const bea2 = beaModel(); bea2.position.set(VILLAGE.x+3, y, VILLAGE.z+2.5); add(bea2); P2.bea = bea2;
@@ -1446,7 +1447,7 @@ function p2Reset(){ // fresh Part 2 state on the already-built world
   P2.camps.forEach(c=>{ c.cleared=false; c.seen=false; c.cage.visible=true; if(!P2.cols.includes(c.cageCol)) P2.cols.push(c.cageCol); });
   P2.gobs.forEach(g=>{ g.state='idle'; g.hp=g.max; g.x=g.hx; g.z=g.hz; g.m.visible=true; });
   P2.vill.forEach((v,i)=>{ v.freed=false; const cp = CAMPS[v.camp]; v.m.position.set(cp.x, heightAt2(cp.x,cp.z), cp.z-1); });
-  P2.plots.forEach(p=>{ p.cab.visible=false; p.cab.scale.setScalar(1); p.mark.visible=true; if(p.col){ P2.cols.splice(P2.cols.indexOf(p.col),1); p.col=null; } });
+  P2.plots.forEach(p=>{ p.cab.visible=false; p.cab.scale.setScalar(HOUSE_K); p.mark.visible=true; if(p.col){ P2.cols.splice(P2.cols.indexOf(p.col),1); p.col=null; } });
   P2.built=[false,false,false,false]; P2.home=[-1,-1,-1,-1]; P2.freed=[false,false,false,false]; P2.swordLvl=0; P2.done=false; P2.warned={};
   P2.farm.visible=false; P2.dock.visible=false; P2.villageFire.forEach(f=>f.visible=false);
 }
@@ -1480,7 +1481,7 @@ function p2PickPumpkin(pk){
   if(!S.seenPumpkin){ S.seenPumpkin = true;
     say([['Pip the Farmer','You picked a pumpkin! 🎃 I\'ll bake it into a pumpkin pie for you. 🥧'], ['Pip the Farmer','Pumpkins grow back in about a minute, so come pick more any time! Eat pie (9) to hit harder for 90 seconds.']]); }
 }
-function p2NearPlot(){ let best=null, bd=4.9; P2.plots.forEach(p=>{ if(p.cab.visible) return; const d=dist(p.x,p.z); if(d<bd){bd=d;best=p;} }); return best; }
+function p2NearPlot(){ let best=null, bd=3.2*HOUSE_K+0.2; P2.plots.forEach(p=>{ if(p.cab.visible) return; const d=dist(p.x,p.z); if(d<bd){bd=d;best=p;} }); return best; }
 function p2NearCage(){ return P2.camps.find(c=>c.cage.visible && dist(c.x,c.z-1)<3.2); }
 function p2NearPerson(){
   if(dist(P2.bea.position.x,P2.bea.position.z)<3) return {who:'bea'};
@@ -1567,11 +1568,11 @@ function p2Build(){
 }
 function placeHome(pi, who, animate){
   const p = P2.plots[pi];
-  p.cab.visible = true; p.mark.visible = false; p.col = {x:p.x, z:p.z, r:2.6}; P2.cols.push(p.col);
-  if(dist(p.x,p.z)<3.4){ S.x = p.x + Math.cos(p.face)*-4.2; S.z = p.z + Math.sin(p.face)*-4.2; }
+  p.cab.visible = true; p.mark.visible = false; p.col = {x:p.x, z:p.z, r:2.6*HOUSE_K}; P2.cols.push(p.col);
+  if(dist(p.x,p.z)<2.6*HOUSE_K+0.8){ S.x = p.x + Math.cos(p.face)*-(2.6*HOUSE_K+1.6); S.z = p.z + Math.sin(p.face)*-(2.6*HOUSE_K+1.6); }
   if(animate){ p.cab.scale.setScalar(0.01); p.grow = 0; spawnChips(p.x, heightAt2(p.x,p.z)+2, p.z, 0xa8743f, 20); }
   const v = P2.vill[who]; const door = -p.face;
-  v.m.position.set(p.x - Math.cos(p.face)*3.2, heightAt2(p.x,p.z), p.z - Math.sin(p.face)*3.2);
+  v.m.position.set(p.x - Math.cos(p.face)*(3.2*HOUSE_K+0.4), heightAt2(p.x,p.z), p.z - Math.sin(p.face)*(3.2*HOUSE_K+0.4));
   if(who===0) [tpSword, fpSword].forEach(sw=>sw.children[0].material.emissive.setHex(0xaa3300));
   if(who===2) P2.farm.visible = true;
   if(who===3) P2.dock.visible = true;
@@ -1724,7 +1725,7 @@ function p2Animate(dt){
   P2.picks.forEach(p=>{ if(!p.taken){ p.m.position.y = p.base + Math.sin(time*3+p.x)*0.12; p.m.rotation.y += dt; } p.glow.visible = !p.taken; p.glow.material.opacity = 0.35 + Math.sin(time*4+p.x)*0.2; });
   P2.pumpkins.forEach(pk=>{ if(!pk.m.visible){ pk.regrow -= dt; if(pk.regrow<=0){ pk.m.visible = true; pk.m.scale.setScalar(0.01); pk.grow = 0; } } else if(pk.grow!==undefined && pk.grow<1){ pk.grow = Math.min(1, pk.grow+dt*1.5); pk.m.scale.setScalar(Math.max(0.01, pk.grow)); } });
   P2.fires.forEach(([a,b],i)=>{ a.scale.set(1, 0.85+Math.sin(time*13+i)*0.15, 1); b.scale.set(1, 0.8+Math.sin(time*17+i)*0.2, 1); });
-  P2.plots.forEach(p=>{ if(p.grow!==undefined && p.grow<1){ p.grow = Math.min(1, p.grow+dt*1.2); const s = p.grow<1 ? 1 - Math.pow(1-p.grow,3) : 1; p.cab.scale.set(1, s, 1); } });
+  P2.plots.forEach(p=>{ if(p.grow!==undefined && p.grow<1){ p.grow = Math.min(1, p.grow+dt*1.2); const s = p.grow<1 ? 1 - Math.pow(1-p.grow,3) : 1; p.cab.scale.set(HOUSE_K, s*HOUSE_K, HOUSE_K); } });
   P2.foam.material.opacity = 0.45 + Math.sin(time*1.6)*0.25;
   // people turn to face you
   const face = (m)=>{ if(Math.hypot(S.x-m.position.x,S.z-m.position.z)<14) m.rotation.y = -Math.atan2(S.z-m.position.z, S.x-m.position.x) + Math.PI/2; };
@@ -3186,8 +3187,8 @@ function applySave(d){
   (d.trees||[]).forEach((h,i)=>{ const t = trees[i]; if(!t) return;
     if(h<0){ t.alive=false; t.g.visible=false; const k = colliders.indexOf(t.col); if(k>=0) colliders.splice(k,1); } else t.hits = h; });
   if(S.sword) lid.rotation.x = -1.9;
-  if(S.freed){ cage.visible=false; const k = colliders.indexOf(cageCol); if(k>=0) colliders.splice(k,1); bea.position.set(PLOT.x+3, 0, PLOT.z+3.2); }
-  if(S.house){ house.visible=true; plotMark.visible=false; houseCol = addCol(PLOT.x,PLOT.z,2.4); }
+  if(S.freed){ cage.visible=false; const k = colliders.indexOf(cageCol); if(k>=0) colliders.splice(k,1); bea.position.set(PLOT.x+4.3, 0, PLOT.z+4.4); }
+  if(S.house){ house.visible=true; plotMark.visible=false; houseCol = addCol(PLOT.x,PLOT.z,2.4*HOUSE_K); }
   if(S.bridge){ bridge.visible=true; bridgeSpot.visible=false; }
   if(S.won){ D.gone = true; dragon.visible = false; }
   S.gold = v.gold||0; S.maxHp = v.maxHp||30; S.part3done = !!v.part3done; S.potSpeed = v.potSpeed||0; S.potStr = v.potStr||0; S.seenSpeed = !!v.seenSpeed; S.seenStr = !!v.seenStr; S.carrot = v.carrot||0; S.pie = v.pie||0; S.seenFood = !!v.seenFood; S.seenPumpkin = !!v.seenPumpkin;
@@ -3343,7 +3344,7 @@ function currentPrompt(){
   if(!S.sword && dist(chest.position.x,chest.position.z)<3) return '👋 Use (E) to open the chest';
   if(!S.freed && dist(0,-12)<3.5) return S.sword ? '👋 Use (E) to cut the vines' : '👋 Use (E) to talk';
   if(S.freed && dist(bea.position.x,bea.position.z)<3) return '👋 Use (E) to talk to Bea';
-  if(S.freed && !S.house && dist(PLOT.x,PLOT.z)<4) return '🔨 Build (5) a house: 4 🪵 + 3 🪨';
+  if(S.freed && !S.house && dist(PLOT.x,PLOT.z)<4*HOUSE_K) return '🔨 Build (5) a house: 4 🪵 + 3 🪨';
   if(S.house && !S.bridge && nearBridge()) return '🔨 Build (5) a bridge: 3 🪵';
   if(nearTree()) return '🪓 Chop (4) the tree for wood';
   return null;
@@ -3371,7 +3372,7 @@ function useAct(){
     swingStart();
     S.freed = true; cage.visible=false; colliders.splice(colliders.indexOf(cageCol),1);
     spawnChips(0,1.2,-12,0x2f7a2a,14);
-    bea.position.set(PLOT.x+3, 0, PLOT.z+3.2);
+    bea.position.set(PLOT.x+4.3, 0, PLOT.z+4.4);
     updateHud();
     say([[kn(),'Hold on! *slash slash* The vines are cut!'],
          ['Bea the Builder','Thank you, brave knight! I\'m Bea. The dragons carried me off from the kingdom and dropped me here.'],
@@ -3393,9 +3394,10 @@ function buildAct(){
   if(S.part===2 && S.part4done && P2.done){ const left = BUILD_NEED - sqDoneCount(); say([['Bea the Builder', `Finish ${left} more side quest${left>1?'s':''} and I'll help you build anything you want here! An outpost, a barn, a windmill... 🔨`]]); return; }
   if(S.part===2) return p2Build();
   if(S.part>=3) return say([['Build','There is nothing to build here. This is a battle!']]);
-  if(!S.house && dist(PLOT.x,PLOT.z)<4){
+  if(!S.house && dist(PLOT.x,PLOT.z)<4*HOUSE_K){
     if(S.wood>=4 && S.stone>=3){
-      S.wood-=4; S.stone-=3; S.house=true; house.visible=true; plotMark.visible=false; houseCol = addCol(PLOT.x,PLOT.z,2.4);
+      S.wood-=4; S.stone-=3; S.house=true; house.visible=true; plotMark.visible=false; houseCol = addCol(PLOT.x,PLOT.z,2.4*HOUSE_K);
+      if(dist(PLOT.x,PLOT.z) < 2.4*HOUSE_K+0.6){ const a = Math.atan2(S.z-PLOT.z, S.x-PLOT.x) || 0; S.x = PLOT.x + Math.cos(a)*(2.4*HOUSE_K+1); S.z = PLOT.z + Math.sin(a)*(2.4*HOUSE_K+1); }   // step outside the new walls
       if(dist(PLOT.x,PLOT.z)<2.6){ S.x = PLOT.x; S.z = PLOT.z+3.2; }
       spawnChips(PLOT.x,2,PLOT.z,0xf2e2c2,16); updateHud();
       say([['Bea the Builder','*bang bang* *saw saw* ... Ta-da! My new house! 🏠'],
@@ -3782,7 +3784,7 @@ function update(dt){
   const p = paused ? null : currentPrompt();
   const pr = $('prompt'); if(p){ pr.textContent=p; pr.classList.remove('hidden'); } else pr.classList.add('hidden');
   $('sChop').classList.toggle('ready', !!nearTree());
-  $('sBuild').classList.toggle('ready', S.freed && ((!S.house && dist(PLOT.x,PLOT.z)<4) || (S.house && !S.bridge && nearBridge())));
+  $('sBuild').classList.toggle('ready', S.freed && ((!S.house && dist(PLOT.x,PLOT.z)<4*HOUSE_K) || (S.house && !S.bridge && nearBridge())));
   $('sUse').classList.toggle('ready', !!p && p.startsWith('👋'));
 }
 
@@ -4109,8 +4111,8 @@ function visitPart1(){
   Object.assign(S, {sword:true, shield:true, freed:true, house:true, bridge:true});
   lid.rotation.x = -1.9;
   cage.visible = false; { const k = colliders.indexOf(cageCol); if(k>=0) colliders.splice(k,1); }
-  bea.position.set(PLOT.x+3, 0, PLOT.z+3.2);
-  house.visible = true; plotMark.visible = false; if(!houseCol) houseCol = addCol(PLOT.x,PLOT.z,2.4);
+  bea.position.set(PLOT.x+4.3, 0, PLOT.z+4.4);
+  house.visible = true; plotMark.visible = false; if(!houseCol) houseCol = addCol(PLOT.x,PLOT.z,2.4*HOUSE_K);
   bridge.visible = true; bridgeSpot.visible = false;
   $('boss').classList.add('hidden');
   S.x = -36; S.z = 0; S.yaw = 0;
