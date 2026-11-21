@@ -61,7 +61,7 @@
   #meter i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ffe08a,#ff8a3d)}
   #stones{position:absolute;right:12px;top:max(10px,env(safe-area-inset-top));background:rgba(42,29,14,.78);color:#fff6e3;border-radius:12px;padding:6px 12px;font-size:16px}
   #armor{position:absolute;inset:0;background:radial-gradient(ellipse 70% 62% at 50% 55%,transparent 60%,rgba(90,70,40,.85) 61%,rgba(60,45,25,.97) 75%);}
-  #fade{position:absolute;inset:0;background:#fff8e6;opacity:0;transition:opacity .8s}
+  #fade{position:absolute;inset:0;background:#fff8e6;opacity:0;transition:opacity .8s;pointer-events:none}
   #act{position:absolute;right:max(18px,env(safe-area-inset-right));bottom:max(22px,env(safe-area-inset-bottom));width:96px;height:96px;border-radius:50%;pointer-events:auto;font-size:15px;line-height:1.1;padding:6px;display:none}
   #stick{position:absolute;left:max(24px,env(safe-area-inset-left));bottom:max(28px,env(safe-area-inset-bottom));width:120px;height:120px;border-radius:50%;background:rgba(255,248,230,.25);border:2px solid rgba(255,248,230,.6);display:none}
   #stick i{position:absolute;left:50%;top:50%;width:54px;height:54px;margin:-27px 0 0 -27px;border-radius:50%;background:rgba(255,248,230,.85)}
@@ -90,6 +90,12 @@
   #before .row{display:flex;gap:12px;justify-content:flex-end;margin-top:10px}
   .story details{font-size:14px;margin-top:2px}
   .story summary{cursor:pointer;color:#7a4a1a;font-weight:600}
+  #choice{position:fixed;inset:0;display:flex;padding:16px;background:rgba(42,29,14,.35)}
+  #choice .card{margin:auto;background:#fff8e6;border:4px solid #7a4a1a;border-radius:20px;max-width:440px;width:100%;padding:18px;display:flex;flex-direction:column;gap:10px;text-align:center}
+  #choice h3{font-family:'Cinzel',Georgia,serif;margin:0 0 4px;font-size:22px}
+  #cOpts{display:flex;flex-direction:column;gap:10px}
+  #cForm{display:flex;gap:8px}
+  #cInput{flex:1;min-width:0;font:inherit;font-size:18px;padding:8px 12px;border-radius:12px;border:2px solid #7a4a1a;background:#fff;color:var(--ink)}
   #loading{position:fixed;inset:0;display:grid;place-items:center;background:#e9c27a;font-size:22px}
 </style>
 </head>
@@ -147,6 +153,14 @@
   </div>
 </div>
 
+<div id="choice" class="hidden">
+  <div class="card">
+    <h3 id="cTitle"></h3>
+    <div id="cOpts"></div>
+    <form id="cForm"><input id="cInput" maxlength="18" placeholder="Or type your own" autocomplete="off"><button type="submit">Name it</button></form>
+  </div>
+</div>
+
 <div id="loading">Loading...</div>
 
 <script src="../monster-island/three.min.js"></script>
@@ -163,7 +177,7 @@ function trackPlay(){ if(trackPlay.done) return; trackPlay.done=1; try{ const go
 /* ================= Story list ================= */
 // Every story, in the order it happened. Stories with ready:true can be played.
 const STORIES = [
-  { id:'adam', before:"In the very beginning, there was nothing at all. Then God made the light, the sky, the land, the sea, the plants, the animals, and the stars. Last of all, God made the first man and woman, Adam and Eve, and gave them a beautiful garden to live in called Eden.", title:'Adam and Eve', who:'You are Adam', ref:'Genesis 1 to 3' },
+  { id:'adam', ready:true, blurb:'Watch God make the world, name the animals, meet Eve, and see what happened in the Garden of Eden.', endVerse:'"God made clothes out of animal skins for Adam and his wife and dressed them."', endRef:'Genesis 3:21', before:"This is where the whole Bible begins. Before there was a world, before there were people or animals or even light, there was only God. In this story you will watch God make everything, day by day. Then you will become Adam, the very first person.", title:'Adam and Eve', who:'You are Adam', ref:'Genesis 1 to 3' },
   { id:'noah', before:"Adam and Eve disobeyed God and had to leave the garden. Many, many years went by, and the world filled up with people. But most of them became mean and violent and forgot about God. One man still loved God and did what was right. His name was Noah.", title:'Noah\u2019s Ark', who:'You are Noah', ref:'Genesis 6 to 9' },
   { id:'abraham', before:"After the flood, Noah's family grew into lots of families who spread out all over the world. Hundreds of years later, God spoke to a man named Abram. God told him to leave his home and go to a new land, and promised to make his family into a great nation. Later God changed his name to Abraham.", title:'Abraham and the Stars', who:'You are Abraham', ref:'Genesis 12 and 15' },
   { id:'joseph', before:"God kept His promise. Abraham and his wife Sarah had a son named Isaac when they were very old. Isaac had a son named Jacob, and Jacob had twelve sons. Jacob loved one son, Joseph, more than the others, and his brothers got very jealous.", title:'Joseph and His Colorful Coat', who:'You are Joseph', ref:'Genesis 37 to 45' },
@@ -236,7 +250,7 @@ scene.background = SKY;
 scene.fog = new THREE.Fog(0xb9d6ee, 70, 190);
 const camera = new THREE.PerspectiveCamera(70, 1, 0.05, 400);
 scene.add(camera);
-scene.add(new THREE.HemisphereLight(0xeaf2ff, 0x6a5a3a, 0.6));
+const hemi = new THREE.HemisphereLight(0xeaf2ff, 0x6a5a3a, 0.6); scene.add(hemi);
 const sun = new THREE.DirectionalLight(0xfff0d0, 0.7); sun.position.set(40,80,30); scene.add(sun);
 
 function resize(){ const w=innerWidth,h=innerHeight; renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix(); }
@@ -249,7 +263,8 @@ function mat(c, opts){ const k=c+JSON.stringify(opts||{}); return M[k] || (M[k]=
 // The story runs north (toward -z): Jesse's house and sheep (z 45..70), Israel's camp (z ~ 5),
 // the brook in the valley (z ~ -16), Goliath and the Philistine camp (z -45..-70).
 const STREAM_Z = -16;
-function ground(x,z){
+let ground = groundDavid; // each story sets its own land shape
+function groundDavid(x,z){
   let h = 0;
   h += 1.4*smooth((Math.abs(z-STREAM_Z)-3)/16);               // valley dips at the brook
   h -= 1.3*(1-smooth((Math.abs(z-STREAM_Z))/3.2));
@@ -316,6 +331,7 @@ function person(o){
   const head=new THREE.Mesh(new THREE.SphereGeometry(0.19,12,10), mat(o.skin)); head.position.y=1.62; g.add(head);
   const hair=new THREE.Mesh(new THREE.SphereGeometry(0.2,12,8,0,Math.PI*2,0,Math.PI*0.55), mat(o.hair)); hair.position.y=1.64; hair.rotation.x=-0.25; g.add(hair);
   for(const sx of [-0.07,0.07]){ const e=new THREE.Mesh(new THREE.SphereGeometry(0.025,6,6), mat(0x1a1208)); e.position.set(sx,1.65,0.17); g.add(e); }
+  if(o.longHair){ const lh=new THREE.Mesh(new THREE.BoxGeometry(0.36,0.5,0.14), mat(o.hair)); lh.position.set(0,1.42,-0.12); g.add(lh); }
   if(o.beard){ const b=new THREE.Mesh(new THREE.SphereGeometry(0.15,10,8,0,Math.PI*2,Math.PI*0.45,Math.PI*0.55), mat(o.beard)); b.position.set(0,1.58,0.05); g.add(b); }
   if(o.crown){ const c=new THREE.Mesh(new THREE.CylinderGeometry(0.17,0.16,0.12,10,1,true), mat(0xf5c542,{side:THREE.DoubleSide})); c.position.y=1.82; g.add(c); }
   if(o.helmet){ const hm=new THREE.Mesh(new THREE.SphereGeometry(0.215,12,8,0,Math.PI*2,0,Math.PI*0.5), mat(o.helmet)); hm.position.y=1.66; g.add(hm);
@@ -324,7 +340,7 @@ function person(o){
     const tip=new THREE.Mesh(new THREE.ConeGeometry(0.06,0.25,5), mat(0xb0b0b8)); tip.position.y=1.4; sp.add(tip); g.add(sp); g.userData.spear=sp; }
   if(o.shield){ const sd=new THREE.Mesh(new THREE.CylinderGeometry(0.34,0.34,0.06,14), mat(o.shield)); sd.rotation.x=Math.PI/2; sd.position.set(-0.36,1.05,0.12); g.add(sd); }
   g.scale.setScalar(s);
-  g.userData.legs=legs; g.userData.arms=arms; g.userData.head=head; g.userData.h=o.h; g.userData.walk=0;
+  g.userData.body=body; g.userData.legs=legs; g.userData.arms=arms; g.userData.head=head; g.userData.h=o.h; g.userData.walk=0;
   // soft shadow
   const sh=new THREE.Mesh(new THREE.CircleGeometry(0.42,14), new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:.18,depthWrite:false}));
   sh.rotation.x=-Math.PI/2; sh.position.y=0.03; g.add(sh);
@@ -409,7 +425,7 @@ function say(lines, cb){ // lines: [[who, text, ref?], ...]
 function nextSay(){
   const el=$('say');
   if(!sayQ.length){ el.classList.add('hidden'); const cb=sayCb; sayCb=null; if(cb) cb(); return; }
-  const [who,txt,ref]=sayQ.shift();
+  const [who,txt,ref,fn]=sayQ.shift(); if(fn) fn();
   el.querySelector('.who').textContent=who||'';
   el.querySelector('.txt').textContent=txt;
   el.querySelector('.ref').textContent=ref||'';
@@ -423,6 +439,7 @@ function lookAt(x,y,z,dur=1.2){ P.lockLook={x,y,z,t:0,dur}; }
 
 /* ================= Story 1: David and Goliath ================= */
 function buildDavid(){
+  ground=groundDavid; resetLook();
   const g=new THREE.Group(); scene.add(g);
   world={group:g, sheep:[], israel:[], phil:[], stones:[], update:[]};
   buildTerrain(g);
@@ -478,7 +495,8 @@ function buildDavid(){
 }
 
 const SAY_BIBLE = 'Bible';
-function go(step){
+function go(step){ IMPL[story.id].go(step); }
+function goDavid(step){
   const S=story; S.step=step;
   $('prompt').classList.add('hidden');
   if(step==='intro'){
@@ -678,22 +696,365 @@ function updateSling(dt){
   }
 }
 
+
+/* ================= Shared bits for every story ================= */
+function resetLook(){
+  scene.background=SKY.clone(); scene.fog.color.set(0xb9d6ee); scene.fog.near=70; scene.fog.far=190;
+  hemi.intensity=0.6; sun.intensity=0.7; $('fade').style.background='#fff8e6';
+}
+function choosing(){ return !$('choice').classList.contains('hidden'); }
+function choose(title, options, cb){
+  $('cTitle').textContent=title; const box=$('cOpts'); box.innerHTML='';
+  options.forEach(o=>{ const b=document.createElement('button'); b.type='button'; b.textContent=o; b.onclick=()=>done(o); box.appendChild(b); });
+  $('cInput').value=''; $('choice').classList.remove('hidden');
+  for(const k in keys) keys[k]=false; joy.x=joy.y=0;
+  function done(v){ v=(v||'').trim(); if(!v) return; $('choice').classList.add('hidden'); cb(v); }
+  $('cForm').onsubmit=e=>{ e.preventDefault(); $('cInput').blur(); done($('cInput').value); };
+}
+function makeLabel(text){
+  const c=document.createElement('canvas'); c.width=512; c.height=128; const x=c.getContext('2d');
+  x.font='600 56px Fredoka, system-ui, sans-serif'; const w=Math.min(500,x.measureText(text).width+60);
+  x.fillStyle='rgba(255,248,230,.95)'; x.strokeStyle='#7a4a1a'; x.lineWidth=6;
+  const l=(512-w)/2; x.beginPath(); x.moveTo(l+30,10); x.arcTo(l+w,10,l+w,118,30); x.arcTo(l+w,118,l,118,30); x.arcTo(l,118,l,10,30); x.arcTo(l,10,l+w,10,30); x.fill(); x.stroke();
+  x.fillStyle='#2a1d0e'; x.textAlign='center'; x.textBaseline='middle'; x.fillText(text,256,68);
+  const t=new THREE.CanvasTexture(c); const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:t,depthTest:false,transparent:true}));
+  sp.scale.set(2.4,0.6,1); sp.renderOrder=5; return sp;
+}
+function glowSprite(color, size){
+  const c=document.createElement('canvas'); c.width=c.height=128; const x=c.getContext('2d');
+  const gr=x.createRadialGradient(64,64,0,64,64,64); gr.addColorStop(0,'rgba(255,255,255,1)'); gr.addColorStop(0.25,'rgba(255,244,200,.8)'); gr.addColorStop(1,'rgba(255,230,160,0)');
+  x.fillStyle=gr; x.fillRect(0,0,128,128);
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),color,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));
+  sp.scale.set(size,size,1); return sp;
+}
+function ownMat(mesh){ mesh.material=mesh.material.clone(); return mesh.material; }
+const fruitHand = new THREE.Mesh(new THREE.SphereGeometry(0.038,12,10), new THREE.MeshLambertMaterial({color:0xd83a2a}));
+fruitHand.position.set(0.2,-0.2,-0.62); fruitHand.visible=false; view.add(fruitHand);
+
+/* ================= Story: Adam and Eve ================= */
+// The Garden of Eden: a round garden with a pond and four rivers. The way out is on the east side (+x).
+const EDEN_R=46.5, POND={x:0,z:-22};
+const RIVERS=[[0,-70],[-72,-30],[-52,58],[46,-62]];
+function segDist(x,z,ax,az,bx,bz){ const dx=bx-ax,dz=bz-az, t=clamp(((x-ax)*dx+(z-az)*dz)/(dx*dx+dz*dz),0,1); return Math.hypot(x-ax-dx*t, z-az-dz*t); }
+function groundEden(x,z){
+  let h=0.75 + 0.45*Math.sin(x*0.13)*Math.cos(z*0.11) + 0.3*Math.sin(x*0.05+z*0.07);
+  for(const [ex,ez] of RIVERS){ const d=segDist(x,z,POND.x,POND.z,ex,ez); h-=1.7*(1-smooth(d/3.2)); }
+  const dp=Math.hypot(x-POND.x,z-POND.z); h-=1.9*(1-smooth((dp-4)/4));
+  const r=Math.hypot(x,z); if(r>EDEN_R+8) h+=Math.min(3,(r-EDEN_R-8)*0.12);
+  return Math.max(h,-1.2);
+}
+function fruitTree(g,x,z,s,color){
+  const t=new THREE.Group();
+  const trunk=new THREE.Mesh(new THREE.CylinderGeometry(0.16*s,0.26*s,1.9*s,7), mat(0x6b4a2a)); trunk.position.y=0.95*s; t.add(trunk);
+  const leaf=mat(0x4f9a3e);
+  [[0,2.3,0,1.15],[0.7,2.0,0.3,0.85],[-0.65,2.05,-0.25,0.85],[0.1,2.8,-0.2,0.75]].forEach(([a,b,c,r])=>{ const m=new THREE.Mesh(new THREE.IcosahedronGeometry(r*s,1), leaf); m.position.set(a*s,b*s,c*s); t.add(m); });
+  const fr=[]; if(color){ for(let i=0;i<9;i++){ const a=i*2.4, f=new THREE.Mesh(new THREE.SphereGeometry(0.11*s,8,6), mat(color)); f.position.set(Math.cos(a)*1.05*s, (1.75+(i%3)*0.35)*s, Math.sin(a)*1.05*s); t.add(f); fr.push(f); } }
+  t.userData.fruit=fr; t.position.set(x,ground(x,z),z); g.add(t); return t;
+}
+function palm(g,x,z,s){
+  const t=new THREE.Group(); let y=0;
+  for(let i=0;i<6;i++){ const seg=new THREE.Mesh(new THREE.CylinderGeometry(0.15*s,0.19*s,0.6*s,6), mat(0x8a6a3a)); seg.position.set(i*0.05*s,y+0.3*s,0); t.add(seg); y+=0.58*s; }
+  for(let i=0;i<7;i++){ const l=new THREE.Mesh(new THREE.BoxGeometry(0.35*s,0.04,1.9*s), mat(0x3f8a34)); l.geometry.translate(0,0,0.95*s); l.position.set(0.3*s,y,0); l.rotation.set(0.45, i/7*Math.PI*2, 0,'YXZ'); t.add(l); }
+  t.position.set(x,ground(x,z),z); g.add(t); return t;
+}
+function bush(g,x,z,s,color){ const m=new THREE.Mesh(new THREE.IcosahedronGeometry(s,1), mat(color||0x3f7f34)); m.scale.y=0.75; m.position.set(x,ground(x,z)+s*0.45,z); g.add(m); return m; }
+function legs4(o,color,h,w,spots){ const L=[]; for(const [lx,lz] of spots){ const l=new THREE.Mesh(new THREE.BoxGeometry(w,h,w), mat(color)); l.geometry.translate(0,-h/2,0); l.position.set(lx,h,lz); o.add(l); L.push(l); } o.userData.legs4=L; o.userData.walk=Math.random()*6; }
+function eyes(o,x,y,z,r=0.035){ for(const sx of [-x,x]){ const e=new THREE.Mesh(new THREE.SphereGeometry(r,6,6), mat(0x1a1208)); e.position.set(sx,y,z); o.add(e); } }
+function animal(kind){
+  const o=new THREE.Group(); let top=1.4;
+  if(kind==='lion'){
+    const c=0xd9a54a; const b=new THREE.Mesh(new THREE.SphereGeometry(0.5,12,10), mat(c)); b.scale.set(0.9,0.85,1.6); b.position.y=0.95; o.add(b);
+    const mane=new THREE.Mesh(new THREE.IcosahedronGeometry(0.5,1), mat(0x8a4a1a)); mane.position.set(0,1.3,0.72); o.add(mane);
+    const h=new THREE.Mesh(new THREE.SphereGeometry(0.32,12,10), mat(c)); h.position.set(0,1.3,0.98); o.add(h);
+    const n=new THREE.Mesh(new THREE.SphereGeometry(0.1,8,6), mat(0x3a2414)); n.position.set(0,1.27,1.28); o.add(n);
+    eyes(o,0.12,1.4,1.24); legs4(o,c,0.7,0.16,[[-.25,.5],[.25,.5],[-.25,-.5],[.25,-.5]]);
+    const tail=new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.03,0.8,5), mat(c)); tail.position.set(0,1.0,-1.0); tail.rotation.x=-0.8; o.add(tail); top=2.0;
+  } else if(kind==='elephant'){
+    const c=0x8d8d95; const b=new THREE.Mesh(new THREE.SphereGeometry(0.9,12,10), mat(c)); b.scale.set(1,0.95,1.35); b.position.y=1.9; o.add(b);
+    const h=new THREE.Mesh(new THREE.SphereGeometry(0.55,12,10), mat(c)); h.position.set(0,2.3,1.3); o.add(h);
+    for(const sx of [-1,1]){ const e=new THREE.Mesh(new THREE.CircleGeometry(0.55,12), mat(0x7d7d86,{side:THREE.DoubleSide})); e.position.set(sx*0.55,2.35,1.15); e.rotation.y=sx*1.1; o.add(e); }
+    const tr=new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.17,1.3,8), mat(c)); tr.position.set(0,1.75,1.75); tr.rotation.x=0.25; o.add(tr);
+    for(const sx of [-0.2,0.2]){ const tk=new THREE.Mesh(new THREE.ConeGeometry(0.06,0.5,6), mat(0xf4efe2)); tk.position.set(sx,1.95,1.75); tk.rotation.x=2.3; o.add(tk); }
+    eyes(o,0.25,2.45,1.75,0.05); legs4(o,c,1.3,0.36,[[-.45,.6],[.45,.6],[-.45,-.6],[.45,-.6]]); top=3.4;
+  } else if(kind==='giraffe'){
+    const c=0xe8b85a; const b=new THREE.Mesh(new THREE.SphereGeometry(0.5,12,10), mat(c)); b.scale.set(0.8,0.8,1.45); b.position.y=2.0; o.add(b);
+    const n=new THREE.Mesh(new THREE.CylinderGeometry(0.12,0.2,2.0,8), mat(c)); n.position.set(0,3.0,0.55); n.rotation.x=0.35; o.add(n);
+    const h=new THREE.Mesh(new THREE.BoxGeometry(0.26,0.26,0.55), mat(c)); h.position.set(0,3.95,0.95); o.add(h);
+    for(const sx of [-0.08,0.08]){ const hn=new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.03,0.2,5), mat(0x6b4a2a)); hn.position.set(sx,4.15,0.85); o.add(hn); }
+    for(let i=0;i<10;i++){ const sp=new THREE.Mesh(new THREE.CircleGeometry(0.1,6), mat(0x9a5a2a,{side:THREE.DoubleSide})); const a=i*1.7; sp.position.set(Math.sign(Math.sin(a))*0.41, 1.9+Math.cos(a*1.3)*0.25, (i/10-0.5)*1.2); sp.rotation.y=Math.PI/2; o.add(sp); }
+    eyes(o,0.13,4.02,1.05); legs4(o,c,1.6,0.13,[[-.22,.5],[.22,.5],[-.22,-.5],[.22,-.5]]); top=4.6;
+  } else if(kind==='rabbit'){
+    const c=0xf2ede4; const b=new THREE.Mesh(new THREE.SphereGeometry(0.25,10,8), mat(c)); b.scale.set(0.9,0.9,1.2); b.position.y=0.28; o.add(b);
+    const h=new THREE.Mesh(new THREE.SphereGeometry(0.15,10,8), mat(c)); h.position.set(0,0.48,0.24); o.add(h);
+    for(const sx of [-0.06,0.06]){ const e=new THREE.Mesh(new THREE.BoxGeometry(0.06,0.3,0.03), mat(c)); e.position.set(sx,0.72,0.2); o.add(e); }
+    const t=new THREE.Mesh(new THREE.SphereGeometry(0.08,8,6), mat(0xffffff)); t.position.set(0,0.3,-0.3); o.add(t);
+    eyes(o,0.06,0.52,0.37,0.022); legs4(o,c,0.12,0.06,[[-.1,.15],[.1,.15],[-.1,-.15],[.1,-.15]]); o.userData.hop=true; top=1.1;
+  } else if(kind==='bird'){
+    const c=0x2f7fd8; const b=new THREE.Mesh(new THREE.SphereGeometry(0.2,10,8), mat(c)); b.scale.set(0.8,0.85,1.2); b.position.y=1.25; o.add(b);
+    const h=new THREE.Mesh(new THREE.SphereGeometry(0.13,10,8), mat(0x3a9ae8)); h.position.set(0,1.45,0.16); o.add(h);
+    const bk=new THREE.Mesh(new THREE.ConeGeometry(0.05,0.18,6), mat(0xf5b52a)); bk.position.set(0,1.43,0.32); bk.rotation.x=Math.PI/2; o.add(bk);
+    const wings=[]; for(const sx of [-1,1]){ const w=new THREE.Mesh(new THREE.BoxGeometry(0.4,0.03,0.22), mat(0xe8443a)); w.geometry.translate(sx*0.2,0,0); w.position.set(sx*0.12,1.3,0); o.add(w); wings.push(w); }
+    o.userData.wings=wings; eyes(o,0.06,1.5,0.26,0.022);
+    const perch=new THREE.Mesh(new THREE.DodecahedronGeometry(0.6,0), mat(0xb3a58a)); perch.scale.y=1.6; perch.position.y=0.4; o.add(perch); top=2.0;
+  }
+  o.userData.top=top; o.userData.kind=kind; return o;
+}
+function wingFlap(w,t,sp){ w[0].rotation.z=Math.sin(t*sp)*0.7; w[1].rotation.z=-Math.sin(t*sp)*0.7; }
+function makeBirds(g){ const arr=[]; for(let i=0;i<7;i++){ const b=new THREE.Group(); const body=new THREE.Mesh(new THREE.SphereGeometry(0.18,8,6), mat([0xffffff,0xf5c542,0xe8443a][i%3])); body.scale.z=1.6; b.add(body);
+  const w=[]; for(const sx of [-1,1]){ const m=new THREE.Mesh(new THREE.BoxGeometry(0.6,0.03,0.25), body.material); m.geometry.translate(sx*0.3,0,0); b.add(m); w.push(m);} b.userData={w, r:10+i*3, a:i, sp:0.3+i*0.04, y:12+i*1.5}; g.add(b); arr.push(b); } return arr; }
+
+const ANIMAL_NAMES={ lion:['Lion','Fluffy Roar','Big Kitty'], elephant:['Elephant','Noodle Nose','Mr. Stomp'], giraffe:['Giraffe','Tall Tom','Tree Nibbler'], rabbit:['Rabbit','Hoppy','Carrot Muncher'], bird:['Bird','Sky Flapper','Sir Tweets'] };
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+function buildAdam(){
+  ground=groundEden; resetLook();
+  const g=new THREE.Group(); scene.add(g);
+  world={group:g, grow:[], animals:[], fish:[], dayObjs:{}};
+  const W=world, r=rnd(11);
+  // the sea and rivers (there from the start: "the Spirit of God was hovering over the waters")
+  const water=new THREE.Mesh(new THREE.PlaneGeometry(500,500), new THREE.MeshLambertMaterial({color:0x3f95d0,transparent:true,opacity:.88}));
+  water.rotation.x=-Math.PI/2; water.position.y=0.02; g.add(water); W.water=water;
+  // land
+  const land=new THREE.Group(); g.add(land); W.land=land;
+  { const S=260,N=170, geo=new THREE.PlaneGeometry(S,S,N,N); geo.rotateX(-Math.PI/2);
+    const pos=geo.attributes.position, cols=[], c=new THREE.Color(), lush=new THREE.Color(0x5fae45), deep=new THREE.Color(0x3f8f3a), sand=new THREE.Color(0xd9c58a), dry=new THREE.Color(0xa89466);
+    for(let i=0;i<pos.count;i++){ const x=pos.getX(i), z=pos.getZ(i), h=ground(x,z); pos.setY(i,h);
+      const n=0.5+0.5*Math.sin(x*0.7+z*1.1)*Math.cos(x*0.31-z*0.43); c.copy(lush).lerp(deep,n*0.7);
+      if(h<0.35) c.lerp(sand,clamp((0.35-h)*2,0,1));
+      const rr=Math.hypot(x,z); if(rr>EDEN_R+2) c.lerp(dry,clamp((rr-EDEN_R-2)/8,0,0.9));
+      cols.push(c.r,c.g,c.b); }
+    geo.setAttribute('color',new THREE.Float32BufferAttribute(cols,3)); geo.computeVertexNormals();
+    land.add(new THREE.Mesh(geo,new THREE.MeshLambertMaterial({vertexColors:true}))); }
+  const plants=new THREE.Group(); land.add(plants); W.plants=plants;
+  const grow=o=>{ o.userData.full=o.scale.x; o.scale.setScalar(0.001); W.grow.push(o); return o; };
+  // hedge of trees around the garden, with an opening on the east side
+  for(let i=0;i<120;i++){ const a=i/120*Math.PI*2; if(Math.abs(Math.atan2(Math.sin(a),Math.cos(a)))<0.11) continue; const rr=EDEN_R+1.5+r()*4;
+    const x=Math.cos(a)*rr, z=Math.sin(a)*rr; if(ground(x,z)<0.2) continue; grow(r()<0.3?palm(plants,x,z,1.1+r()*0.4):fruitTree(plants,x,z,1.2+r()*0.5,null)); }
+  // trees, palms, bushes and flowers inside
+  const FR=[0xf28c28,0xf5c542,0x8a3ab8,0xe8443a];
+  for(let i=0;i<70;i++){ const a=r()*Math.PI*2, rr=8+r()*36, x=Math.cos(a)*rr, z=Math.sin(a)*rr;
+    if(ground(x,z)<0.35) continue; if(Math.hypot(x,z-6)<9) continue; if(Math.abs(z)<4 && x>10) continue;
+    const t = r()<0.25 ? palm(plants,x,z,0.9+r()*0.4) : fruitTree(plants,x,z,0.8+r()*0.5, r()<0.6?FR[i%4]:null); grow(t); if(t.userData.fruit&&t.userData.fruit.length) (W.fruitTrees=W.fruitTrees||[]).push(t); }
+  for(let i=0;i<90;i++){ const x=(r()-0.5)*90, z=(r()-0.5)*90; if(Math.hypot(x,z)>EDEN_R||ground(x,z)<0.35||Math.hypot(x,z-8)<9) continue; grow(bush(plants,x,z,0.5+r()*0.5,[0x3f7f34,0x4f8f3a,0x2f6f2a][i%3])); }
+  const FL=[0xffffff,0xf5c542,0xe85a8a,0x9a5ae8,0xf28c28,0xe8443a];
+  for(let i=0;i<260;i++){ const x=(r()-0.5)*92, z=(r()-0.5)*92; if(Math.hypot(x,z)>EDEN_R||ground(x,z)<0.4) continue; const f=new THREE.Mesh(new THREE.SphereGeometry(0.09+r()*0.06,6,5), mat(FL[i%FL.length])); f.position.set(x,ground(x,z)+0.12,z); plants.add(f); grow(f); }
+  // thicket where they hide
+  W.thicket={x:-21,z:-2}; for(let i=0;i<9;i++){ const a=i/9*Math.PI*2; grow(bush(plants,W.thicket.x+Math.cos(a)*2.8,W.thicket.z+Math.sin(a)*2.8,1.1+r()*0.3,0x2f6f2a)); }
+  // the two special trees in the middle of the garden
+  const life=fruitTree(plants,-4.5,6,1.9,0xf5d042); grow(life); W.life=life;
+  life.userData.fruit.forEach(f=>{ f.material=new THREE.MeshLambertMaterial({color:0xf5d042,emissive:0x8a6a10}); });
+  const know=fruitTree(plants,4.5,6,1.8,0xd83a2a); grow(know); W.know=know;
+  // the serpent on the tree (hidden until later)
+  { const pts=[]; for(let i=0;i<=24;i++){ const t=i/24; pts.push(new THREE.Vector3(Math.cos(t*9)*0.72*(1-t*0.2), 0.3+t*1.8, Math.sin(t*9)*0.72*(1-t*0.2))); }
+    const sn=new THREE.Group(); const tube=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts),90,0.11,8,false), mat(0x4a9a3a)); sn.add(tube);
+    const hd=new THREE.Mesh(new THREE.SphereGeometry(0.16,10,8), mat(0x4a9a3a)); hd.scale.set(1,0.75,1.4); const end=pts[pts.length-1]; hd.position.set(0.2,end.y+0.1,0.9); hd.rotation.y=0.2; sn.add(hd);
+    for(const sx of [-0.07,0.07]){ const e=new THREE.Mesh(new THREE.SphereGeometry(0.03,6,6), mat(0xf5d042)); e.position.set(hd.position.x+sx,hd.position.y+0.07,hd.position.z+0.17); sn.add(e); }
+    sn.position.copy(know.position); sn.visible=false; g.add(sn); W.serpent=sn; W.serpentHead=hd; }
+  // sun and moon (day 4)
+  const sunM=new THREE.Mesh(new THREE.SphereGeometry(9,20,16), new THREE.MeshBasicMaterial({color:0xfff2b0,fog:false})); sunM.position.set(120,110,-160); sunM.add(glowSprite(0xffe9a0,60)); sunM.visible=false; g.add(sunM); W.sunM=sunM;
+  const moon=new THREE.Mesh(new THREE.SphereGeometry(5,16,12), new THREE.MeshBasicMaterial({color:0xf2f2ea,fog:false})); moon.position.set(-140,80,-120); moon.visible=false; g.add(moon); W.moon=moon;
+  // birds and fish (day 5)
+  W.birds=makeBirds(g); W.birds.forEach(b=>b.visible=false);
+  for(let i=0;i<6;i++){ const f=new THREE.Mesh(new THREE.SphereGeometry(0.16,8,6), mat([0xf28c28,0xf5c542][i%2])); f.scale.z=1.8; f.visible=false; g.add(f); W.fish.push({m:f, t:i*0.9, a:i}); }
+  // animals (day 6): five for naming, plus a few more wandering
+  const spots={lion:[-14,-12], elephant:[16,-14], giraffe:[20,18], rabbit:[-8,18], bird:[-26,12]};
+  for(const k in spots){ const a=animal(k); place(a,spots[k][0],spots[k][1],r()*6); g.add(a); a.userData.home={x:spots[k][0],z:spots[k][1]}; grow(a); W.animals.push(a); }
+  W.extra=[]; for(let i=0;i<6;i++){ const x=(r()-0.5)*60, z=(r()-0.5)*60; if(Math.hypot(x,z)>40||ground(x,z)<0.4) continue; const sh=sheep(g,x,z,0.9); sh.userData.home={x,z}; grow(sh); W.extra.push(sh); }
+  // Eve, and God shown as a warm light
+  const eve=person({tunic:0xf3ead8, skin:0xd29a6e, hair:0x5a3216, h:1.66, longHair:true}); eve.visible=false; g.add(eve); W.eve=eve; ownMat(eve.userData.body); eve.userData.arms.forEach(ownMat);
+  const god=new THREE.Group(); const core=new THREE.Mesh(new THREE.SphereGeometry(0.35,16,12), new THREE.MeshBasicMaterial({color:0xfffbe8})); god.add(core); god.add(glowSprite(0xfff1b8,5)); god.add(glowSprite(0xffffff,2));
+  const gl=new THREE.PointLight(0xfff1c8,1.2,14); god.add(gl); god.visible=false; g.add(god); W.god=god;
+  // cherub with a flaming sword at the east side (end)
+  const ch=new THREE.Group(); const cb=person({tunic:0xfaf6ea, skin:0xf0e0c8, hair:0xf5d042, h:2.3}); ch.add(cb);
+  for(const sx of [-1,1]){ const w=new THREE.Mesh(new THREE.ConeGeometry(0.8,2.6,4), new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.85})); w.scale.z=0.15; w.position.set(sx*0.9,2.2,-0.25); w.rotation.z=sx*-0.5; ch.add(w); }
+  const sw=new THREE.Group(); const blade=new THREE.Mesh(new THREE.BoxGeometry(0.12,1.9,0.04), new THREE.MeshBasicMaterial({color:0xffb030})); blade.position.y=0.95; sw.add(blade); sw.add(glowSprite(0xff7a20,3.5)); sw.position.set(0.6,1.7,0.4); ch.add(sw); ch.userData.sword=sw;
+  ch.add(glowSprite(0xfff6d8,6)); ch.visible=false; g.add(ch); W.cherub=ch;
+  W.beacon=makeBeacon(); W.beacon.visible=false; g.add(W.beacon);
+
+  // creation starts dark, with only the deep water
+  land.position.y=-4; scene.background=new THREE.Color(0x05060a); scene.fog.color.set(0x05060a); scene.fog.near=20; scene.fog.far=120; hemi.intensity=0.05; sun.intensity=0; water.material.color.set(0x0a1420);
+  P.x=-16; P.z=28; P.yaw=Math.atan2(16,28)*-1+Math.PI*0; P.yaw=Math.atan2(-(4-P.x),-(0-P.z)); P.pitch=0.05; P.eye=1.7; P.speed=4.4;
+  story={id:'adam', step:'', t:0, lock:true, named:0, target:null, near:null, eveFollow:false, dim:0, fadeSky:null};
+  hand.visible=false; basket.visible=false; sling.visible=false; fruitHand.visible=false;
+  goAdam('creation');
+}
+function skyTo(hex, ms){ const S=story; S.fadeSky={from:scene.background.clone(), to:new THREE.Color(hex), t:0, dur:(ms||1500)/1000}; }
+function godTo(x,z,y){ const G=world.god; G.visible=true; G.userData.to={x,z,y:y||2.2}; if(!G.userData.placed){ G.position.set(x,ground(x,z)+(y||2.2),z); G.userData.placed=1; } }
+
+function goAdam(step){
+  const S=story, W=world; S.step=step; $('prompt').classList.add('hidden');
+  if(step==='creation'){
+    S.lock=true; setGoal('Watch God make the world');
+    say([[SAY_BIBLE,'In the beginning, God created the heavens and the earth. The earth was empty and dark, and the Spirit of God was moving over the waters.','Genesis 1:1-2'],
+      ['Day 1','God said, “Let there be light,” and there was light. God called the light “day” and the darkness “night.”','Genesis 1:3-5', ()=>{ skyTo(0xe9eef2,2000); hemi.intensity=0.55; W.water.material.color.set(0x5a7a92); }],
+      ['Day 2','God made the sky above the waters.','Genesis 1:6-8', ()=>{ skyTo(0x8fc8f2,2000); W.water.material.color.set(0x3f95d0); }],
+      ['Day 3','God gathered the waters together, and dry land appeared. Then God made grass, plants, and trees with fruit.','Genesis 1:9-12', ()=>{ S.landRise=0.0001; }],
+      ['Day 4','God made the sun to light the day, the moon to light the night, and the stars.','Genesis 1:14-16', ()=>{ W.sunM.visible=true; W.moon.visible=true; sun.intensity=0.75; hemi.intensity=0.6; }],
+      ['Day 5','God filled the waters with fish and the sky with birds.','Genesis 1:20-21', ()=>{ W.birds.forEach(b=>b.visible=true); W.fish.forEach(f=>f.m.visible=true); }],
+      ['Day 6','God made all kinds of animals, big and small.','Genesis 1:24-25', ()=>{ S.animalsGrow=true; }],
+      [SAY_BIBLE,'Then God made a man out of the dust of the ground. He breathed into the man’s nose the breath of life, and the man became alive.','Genesis 2:7', ()=>{ $('fade').style.background='#ffffff'; $('fade').style.opacity=1; }],
+      ['You are Adam','You open your eyes for the very first time.','', ()=>{ P.x=-12; P.z=22; P.yaw=Math.atan2(-(-8+12),-(17-22)); P.pitch=0.1; godTo(-8,17); setTimeout(()=>$('fade').style.opacity=0,300); }],
+      ['God','You may eat fruit from any tree in the garden. But you must not eat from the tree of the knowledge of good and evil. If you eat from it, you will die.','Genesis 2:16-17'],
+      [SAY_BIBLE,'God put Adam in the Garden of Eden to work it and take care of it.','Genesis 2:15']], ()=>goAdam('fruit'));
+  }
+  if(step==='fruit'){ S.lock=false; setGoal('Pick some <b>fruit</b> from a tree'); }
+  if(step==='helper'){
+    S.lock=false; godTo(P.x+3,P.z-3);
+    say([['God','It is not good for the man to be alone. I will make a helper who is just right for him.','Genesis 2:18'],
+         [SAY_BIBLE,'God brought the animals to Adam to see what he would name them. Whatever Adam called each animal, that was its name.','Genesis 2:19']], ()=>goAdam('name'));
+  }
+  if(step==='name'){ nameGoal(); }
+  if(step==='sleep'){
+    S.lock=true; setGoal('');
+    say([[SAY_BIBLE,'Adam gave names to all the animals. But there was no helper just right for Adam.','Genesis 2:20'],
+         [SAY_BIBLE,'So God made Adam fall into a deep sleep.','Genesis 2:21', ()=>{ $('fade').style.background='#0b0b14'; $('fade').style.opacity=1; }],
+         [SAY_BIBLE,'While he was sleeping, God took one of Adam’s ribs. From it, God made a woman, and He brought her to Adam.','Genesis 2:21-22', ()=>{ const fx=P.x-Math.sin(P.yaw)*2.2, fz=P.z-Math.cos(P.yaw)*2.2; place(W.eve,fx,fz); faceTo(W.eve,P.x,P.z); W.eve.visible=true; W.god.visible=false; }],
+         ['You are Adam','At last! She is bone of my bones and flesh of my flesh. She will be called woman.','Genesis 2:23', ()=>{ $('fade').style.opacity=0; lookAt(W.eve.position.x, W.eve.position.y+1.5, W.eve.position.z, 0.8); }],
+         [SAY_BIBLE,'Adam named his wife Eve. God looked at everything He had made, and it was very good. On the seventh day, God rested.','Genesis 1:31, 2:2-3, 3:20']], ()=>goAdam('middle'));
+  }
+  if(step==='middle'){ S.lock=false; S.eveFollow=true; setGoal('Walk with Eve to the <b>middle of the garden</b>'); S.target={position:new THREE.Vector3(0,0,12)}; }
+  if(step==='serpent'){
+    S.lock=true; S.target=null; S.eveFollow=false; setGoal('Listen'); W.serpent.visible=true;
+    S.eveTo={x:3.2,z:7.8};
+    const hp=W.serpentHead.getWorldPosition(new THREE.Vector3()); lookAt(hp.x,hp.y,hp.z,1.2);
+    say([[SAY_BIBLE,'Now the serpent was the sneakiest of all the animals God had made.','Genesis 3:1'],
+      ['The serpent','Did God really say you must not eat from any tree in the garden?','Genesis 3:1'],
+      ['Eve','We may eat fruit from the trees. But God said we must not eat fruit from the tree in the middle of the garden, or we will die.','Genesis 3:2-3'],
+      ['The serpent','You will not die! God knows that when you eat it, your eyes will be opened, and you will be like God, knowing good and evil.','Genesis 3:4-5'],
+      [SAY_BIBLE,'Eve saw that the fruit looked good to eat, and she wanted to be wise. So she took some and ate it.','Genesis 3:6', ()=>{ const f=W.know.userData.fruit.pop(); if(f) f.visible=false; W.eve.userData.arms[1].rotation.x=-1.4; }],
+      [SAY_BIBLE,'She also gave some to her husband, who was with her.','Genesis 3:6', ()=>{ fruitHand.visible=true; S.eveTo={x:P.x+1.2,z:P.z-1.2}; }]], ()=>goAdam('eat'));
+  }
+  if(step==='eat'){ S.lock=true; setGoal('Adam ate the fruit too'); }
+  if(step==='ashamed'){
+    S.lock=true; setGoal('');
+    say([[SAY_BIBLE,'Then their eyes were opened. They knew they had disobeyed God, and they felt ashamed. They sewed fig leaves together to cover themselves.','Genesis 3:7', ()=>{ skyTo(0x9fb0bc,2500); hemi.intensity=0.45; W.eve.userData.body.material.color.set(0x5f8f3a); W.eve.userData.arms.forEach(a=>a.material.color.set(0x5f8f3a)); W.serpent.visible=false; }],
+         [SAY_BIBLE,'In the cool of the day, they heard God walking in the garden. So they hid from Him among the trees.','Genesis 3:8']], ()=>goAdam('hide'));
+  }
+  if(step==='hide'){ S.lock=false; S.eveFollow=true; setGoal('<b>Hide</b> among the trees'); S.target={position:new THREE.Vector3(W.thicket.x,0,W.thicket.z)}; }
+  if(step==='god'){
+    S.lock=true; S.target=null; S.eveFollow=false; setGoal('Listen');
+    W.god.userData.placed=0; godTo(P.x+14,P.z+2); godTo(P.x+4,P.z+0.5);
+    say([['God','Where are you?','Genesis 3:9', ()=>lookAt(P.x+4, ground(P.x,P.z)+2.2, P.z+0.5, 1.5)],
+      ['You are Adam','I heard You in the garden, and I was afraid, so I hid.','Genesis 3:10'],
+      ['God','Did you eat from the tree that I told you not to eat from?','Genesis 3:11'],
+      ['You are Adam','The woman You put here with me gave me some fruit from the tree, and I ate it.','Genesis 3:12'],
+      ['God','What is this you have done?','Genesis 3:13'],
+      ['Eve','The serpent tricked me, and I ate.','Genesis 3:13'],
+      [SAY_BIBLE,'God punished the serpent. He said one day a child of Eve would crush the serpent’s head. This was God’s very first promise of a Savior.','Genesis 3:14-15'],
+      [SAY_BIBLE,'God told Adam and Eve that now life would be hard. Work would be tiring, thorns and weeds would grow, and one day they would die.','Genesis 3:16-19'],
+      [SAY_BIBLE,'But God still loved them. He made clothes out of animal skins for Adam and Eve and dressed them.','Genesis 3:21', ()=>{ W.eve.userData.body.material.color.set(0x8a5a32); W.eve.userData.arms.forEach(a=>a.material.color.set(0x8a5a32)); hand.material=mat(0x8a5a32); hand.visible=true; }],
+      [SAY_BIBLE,'Then God sent them out of the Garden of Eden.','Genesis 3:23']], ()=>goAdam('leave'));
+  }
+  if(step==='leave'){ S.lock=false; S.eveFollow=true; W.god.visible=false; setGoal('Leave the garden through the <b>east side</b>'); S.target={position:new THREE.Vector3(EDEN_R+5,0,0)}; }
+  if(step==='cherub'){
+    S.lock=true; S.target=null; setGoal('');
+    place(W.cherub,EDEN_R-0.5,0,Math.PI/2); W.cherub.visible=true;
+    lookAt(W.cherub.position.x, W.cherub.position.y+2, 0, 1.2);
+    say([[SAY_BIBLE,'God placed angels called cherubim, and a flaming sword that flashed back and forth, on the east side of the garden. They guarded the way to the tree of life.','Genesis 3:24'],
+         [SAY_BIBLE,'Adam and Eve could never go back. But God had promised a Savior, and He would keep His promise.','Genesis 3:15']], ()=>finishStory());
+  }
+}
+function nameGoal(){ setGoal(`Give names to the <b>animals</b> (${story.named} of 5)`); }
+function nearestUnnamed(){ let b=null,bd=1e9; world.animals.forEach(a=>{ if(a.userData.named) return; const d=dist2(a); if(d<bd){bd=d;b=a;} }); return b; }
+
+function updateAdam(dt, now){
+  const S=story, W=world, t=(S.t+=dt);
+  // sky fades
+  if(S.fadeSky){ const f=S.fadeSky; f.t+=dt; const k=smooth(f.t/f.dur); scene.background.copy(f.from).lerp(f.to,k); scene.fog.color.copy(scene.background); if(k>=1){ S.fadeSky=null; scene.fog.near=70; scene.fog.far=200; } }
+  // day 3: land rises and plants grow
+  if(S.landRise){ S.landRise=Math.min(1,S.landRise+dt*0.45); W.land.position.y=-4*(1-smooth(S.landRise)); if(S.landRise>=1) S.landRise=0, S.plantsGrow=true; }
+  W.grow.forEach((o,i)=>{ const isAnimal=W.animals.includes(o)||W.extra.includes(o); const go = isAnimal ? S.animalsGrow : S.plantsGrow;
+    if(go && o.scale.x<o.userData.full){ o.userData.g=(o.userData.g||0)+dt*(0.8+(i%7)*0.12); o.scale.setScalar(Math.max(0.001,o.userData.full*smooth(o.userData.g))); } });
+  // birds circle, fish jump
+  W.birds.forEach(b=>{ if(!b.visible) return; const u=b.userData; u.a+=dt*u.sp; b.position.set(Math.cos(u.a)*u.r, u.y+Math.sin(u.a*3)*0.6, Math.sin(u.a)*u.r-4); b.rotation.y=-u.a; wingFlap(u.w,t,10); });
+  W.fish.forEach(f=>{ if(!f.m.visible) return; f.t+=dt; const k=(f.t%3)/1.1; if(k<1){ const a=f.a; f.m.position.set(POND.x+Math.cos(a)*3+k*1.5*Math.cos(a+1), Math.sin(k*Math.PI)*1.1, POND.z+Math.sin(a)*3+k*1.5*Math.sin(a+1)); f.m.rotation.x=(k-0.5)*2.2; f.m.rotation.y=a+1; } else f.m.position.y=-2; });
+  // animals wander near home; stop and look at you when you come close
+  [...W.animals, ...W.extra].forEach((a,i)=>{ const u=a.userData; if(a.scale.x<0.05) return;
+    if(u.wings) wingFlap(u.wings,t+i,u.named?3:6);
+    const d=dist2(a); if(d<6 && !u.wings){ faceTo(a,P.x,P.z); a.position.y=ground(a.position.x,a.position.z); }
+    else if(!u.wings){ u.tt=(u.tt||0)-dt; if(u.tt<=0){ u.tt=3+(i%4); u.goal={x:u.home.x+Math.sin(t+i*2)*3, z:u.home.z+Math.cos(t*1.2+i)*3}; }
+      const dx=u.goal.x-a.position.x, dz=u.goal.z-a.position.z, dd=Math.hypot(dx,dz);
+      if(dd>0.3){ const v=Math.min(0.8,dd)*dt; a.position.x+=dx/dd*v; a.position.z+=dz/dd*v; a.rotation.y=Math.atan2(dx,dz); sheepWalk(a,dt,0.6); }
+      a.position.y=ground(a.position.x,a.position.z)+(u.hop?Math.abs(Math.sin(t*6+i))*0.15:0); }
+    if(u.label) u.label.position.set(a.position.x, a.position.y+u.top*a.scale.y+0.4, a.position.z);
+  });
+  // God's light glides and glows
+  const G=W.god; if(G.visible){ const to=G.userData.to; if(to){ const ty=ground(to.x,to.z)+to.y; G.position.x+=(to.x-G.position.x)*Math.min(1,dt*0.8); G.position.z+=(to.z-G.position.z)*Math.min(1,dt*0.8); G.position.y+=(ty+Math.sin(t*1.5)*0.15-G.position.y)*Math.min(1,dt*2); } }
+  // Eve follows you, or walks where the story needs her
+  const E=W.eve; if(E.visible){ let tx=null,tz=null;
+    if(S.eveTo){ tx=S.eveTo.x; tz=S.eveTo.z; }
+    else if(S.eveFollow){ const bx=P.x+Math.cos(P.yaw)*1.4+Math.sin(P.yaw)*1.0, bz=P.z-Math.sin(P.yaw)*1.4+Math.cos(P.yaw)*1.0; if(Math.hypot(bx-E.position.x,bz-E.position.z)>1.2){ tx=bx; tz=bz; } }
+    if(tx!==null){ const dx=tx-E.position.x, dz=tz-E.position.z, d=Math.hypot(dx,dz); if(d>0.15){ const v=Math.min(4.6,d*1.8)*dt; E.position.x+=dx/d*v; E.position.z+=dz/d*v; E.rotation.y=Math.atan2(dx,dz); animWalk(E,dt,1); } else if(S.eveTo && S.step==='eat') faceTo(E,P.x,P.z); }
+    else faceTo(E,P.x,P.z);
+    E.position.y=ground(E.position.x,E.position.z); }
+  if(W.serpent.visible){ W.serpentHead.rotation.y=Math.sin(t*2)*0.3; }
+  if(W.cherub.visible){ W.cherub.userData.sword.rotation.z=Math.sin(t*5)*1.1; }
+
+  // what is near enough to use
+  let near=null;
+  if(S.step==='fruit'){ let best=null,bd=1e9; (W.fruitTrees||[]).forEach(tr=>{ const d=dist2(tr); if(d<bd&&tr.userData.fruit.some(f=>f.visible)){bd=d;best=tr;} }); S.target=best;
+    if(best && bd<3.2) near={label:'Pick some fruit', fn:()=>{ const f=best.userData.fruit.find(f=>f.visible); f.visible=false; fruitHand.material=new THREE.MeshLambertMaterial({color:f.material.color}); fruitHand.visible=true; S.step='fruitEat'; setGoal('Eat the fruit'); }}; }
+  if(S.step==='fruitEat') near={label:'Eat the fruit', fn:()=>{ fruitHand.visible=false; S.step='fruitDone'; say([['You are Adam','Mmm! God made so many good things to eat.']], ()=>goAdam('helper')); }};
+  if(S.step==='name'){ const a=nearestUnnamed(); S.target=a;
+    if(a && dist2(a)<(a.userData.kind==='elephant'||a.userData.kind==='giraffe'?4.5:3.2)) near={label:'Name this animal', fn:()=>{
+      choose('What will you name this animal?', shuffle(ANIMAL_NAMES[a.userData.kind]), name=>{
+        a.userData.named=name; const lb=makeLabel(name); W.group.add(lb); a.userData.label=lb; S.named++;
+        if(S.named>=5){ S.target=null; goAdam('sleep'); } else nameGoal(); }); }}; }
+  if(S.step==='middle' && Math.hypot(P.x-0,P.z-12)<4.5) goAdam('serpent');
+  if(S.step==='eat') near={label:'Eat the fruit', fn:()=>{ fruitHand.visible=false; S.eveTo=null; goAdam('ashamed'); }};
+  if(S.step==='hide' && Math.hypot(P.x-W.thicket.x,P.z-W.thicket.z)<3.6) goAdam('god');
+  if(S.step==='leave' && P.x>EDEN_R+3) goAdam('cherub');
+  S.near=near;
+
+  const pr=$('prompt');
+  if(near && !saying() && !choosing()){ pr.textContent=(touch?'':'Space: ')+near.label; pr.classList.remove('hidden'); $('act').textContent=near.label.split(' ').slice(0,2).join(' '); }
+  else { pr.classList.add('hidden'); $('act').textContent= saying()?'Next':'Use'; }
+  showBeacon(t);
+}
+function showBeacon(t){
+  const S=story, W=world, tg=S.target, bc=W.beacon;
+  if(tg && !saying()){ bc.visible=true; bc.position.set(tg.position.x, ground(tg.position.x,tg.position.z), tg.position.z); bc.material.opacity=0.18+0.1*Math.sin(t*3);
+    const ang=Math.atan2(tg.position.x-P.x, tg.position.z-P.z), rel=ang-(P.yaw+Math.PI);
+    $('arrow').style.transform=`rotate(${-rel*180/Math.PI}deg)`; $('arrow').classList.remove('hidden'); }
+  else { bc.visible=false; $('arrow').classList.add('hidden'); }
+}
+function boundsAdam(){
+  const r=Math.hypot(P.x,P.z), out = (story.step==='leave'||story.step==='cherub') && P.x>0 && Math.abs(P.z)<4.5;
+  if(r>EDEN_R-1 && !out){ const k=(EDEN_R-1)/r; P.x*=k; P.z*=k; }
+  P.x=clamp(P.x,-70,EDEN_R+10); P.z=clamp(P.z,-70,70);
+  if(out) P.z=clamp(P.z,-4.5,4.5);
+  if(story.step==='cherub') P.x=Math.max(P.x,EDEN_R+3);
+}
+function jumpAdam(q){ // ?step=name, ?step=serpent, ?step=leave
+  const S=story, W=world; sayQ.length=0; $('say').classList.add('hidden'); sayCb=null;
+  W.land.position.y=0; S.plantsGrow=true; S.animalsGrow=true; scene.background.set(0x8fc8f2); scene.fog.color.copy(scene.background); scene.fog.near=70; scene.fog.far=200; hemi.intensity=0.6; sun.intensity=0.75; W.water.material.color.set(0x3f95d0); W.sunM.visible=W.moon.visible=true; W.birds.forEach(b=>b.visible=true); W.fish.forEach(f=>f.m.visible=true);
+  if(q==='name'){ P.x=-10; P.z=8; goAdam('name'); }
+  if(q==='serpent'||q==='leave'){ W.animals.forEach(a=>{ a.userData.named='x'; }); place(W.eve,-2,14); W.eve.visible=true; P.x=-1; P.z=16; P.yaw=0; goAdam(q==='serpent'?'middle':'leave'); if(q==='leave'){ P.x=30; P.z=0; P.yaw=-Math.PI/2; hand.visible=true; } }
+}
+
+/* David's story hooks */
+function boundsDavid(){ P.x=clamp(P.x,-34,34); P.z=clamp(P.z,-60,72); }
+const IMPL = {
+  adam:  { build:buildAdam,  go:goAdam,  update:updateAdam,  bounds:boundsAdam,  locked:S=>S.lock || choosing() },
+  david: { build:buildDavid, go:goDavid, update:updateDavid, bounds:boundsDavid, locked:S=>S.step==='taunt'||S.step==='shout'||S.step==='fall'||(S.step==='sling'&&!!S.flying) },
+};
+
 /* ================= Start / finish ================= */
 function stopStory(){
   running=false; story=null;
   if(world){ scene.remove(world.group); world.group.traverse(o=>{ if(o.geometry) o.geometry.dispose(); }); world=null; }
   sayQ.length=0; sayCb=null; $('say').classList.add('hidden'); $('armor').classList.add('hidden'); $('cross').classList.add('hidden'); $('meter').classList.add('hidden'); $('stones').classList.add('hidden');
-  basket.visible=hand.visible=sling.visible=false; $('fade').style.opacity=0;
+  basket.visible=hand.visible=sling.visible=fruitHand.visible=false; $('fade').style.opacity=0; $('choice').classList.add('hidden'); hand.material=handMat; resetLook();
 }
 function startStory(id){
   stopStory(); trackPlay();
   $('menu').classList.add('hidden'); $('end').classList.add('hidden'); $('hud').classList.remove('hidden');
-  if(id==='david') buildDavid();
+  IMPL[id].build();
   running=true;
   const q=new URLSearchParams(location.search).get('step'); if(q && story) jumpTo(q); // preview links for testing
 }
 function jumpTo(q){ // ?step=stones or ?step=sling
-  const S=story;
+  const S=story; if(story.id==='adam') return jumpAdam(q);
   if(q==='stones'||q==='sling'){ world.lamb.userData.following=true; world.lamb.userData.goal={x:world.flock.x+1,z:world.flock.z}; world.lamb.position.set(world.flock.x+1,0,world.flock.z); world.israel.forEach(p=>p.position.z+=12); }
   if(q==='stones'){ P.x=0; P.z=STREAM_Z+4; P.yaw=0; sayQ.length=0; $('say').classList.add('hidden'); go('stones'); }
   if(q==='sling'){ world.stones.forEach(s=>s.visible=false); S.stonesHeld=5; S.stonesLeft=5; P.x=0; P.z=-20; P.yaw=0; world.goliath.position.set(0,ground(0,-36),-36); sayQ.length=0; $('say').classList.add('hidden'); $('stones').classList.remove('hidden'); updateStonesHud(); go('sling'); }
@@ -704,7 +1065,7 @@ function finishStory(){
   const nextReady=READY[READY.indexOf(s)+1], nextAny=STORIES[STORIES.indexOf(s)+1];
   $('fade').style.opacity=0.6;
   setTimeout(()=>{
-    $('endWho').textContent='You saw what '+(s.id==='david'?'David':'they')+' did.';
+    $('endWho').textContent='You saw what '+({david:'David',adam:'Adam'}[s.id]||'they')+' did.';
     $('endVerse').textContent=s.endVerse; $('endRef').textContent=s.endRef;
     $('endUnlock').textContent= nextReady ? 'You unlocked '+nextReady.title+'!' : (nextAny ? 'Next up: '+nextAny.title+'. It is coming soon!' : 'You finished every story!');
     $('endNext').innerHTML = nextAny ? '<b>What happens next</b>'+nextAny.before : '';
@@ -729,19 +1090,20 @@ const touch = matchMedia('(pointer:coarse)').matches || ('ontouchstart' in windo
 if(touch) document.body.classList.add('touch');
 let actHeld=false;
 function pressAct(){
-  if(!running) return;
+  if(!running || choosing()) return;
   if(saying()){ if(performance.now()>sayBusyUntil) nextSay(); return; }
   if(story && story.near){ const n=story.near; story.near=null; n.fn(); return; }
   if(story && story.step==='sling') actHeld=true;
 }
 function releaseAct(){ actHeld=false; }
 addEventListener('keydown',e=>{
+  if(e.target && e.target.tagName==='INPUT') return;
   const k=e.key.toLowerCase(); if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k)) e.preventDefault();
   if(k===' '||k==='e'||k==='enter'){ if(!e.repeat) pressAct(); else if(story&&story.step==='sling'&&!saying()) actHeld=true; return; }
   if(k==='escape'){ if(running) showMenu(); return; }
   keys[k]=true;
 });
-addEventListener('keyup',e=>{ const k=e.key.toLowerCase(); keys[k]=false; if(k===' '||k==='e'||k==='enter') releaseAct(); });
+addEventListener('keyup',e=>{ if(e.target && e.target.tagName==='INPUT') return; const k=e.key.toLowerCase(); keys[k]=false; if(k===' '||k==='e'||k==='enter') releaseAct(); });
 addEventListener('blur',()=>{ for(const k in keys) keys[k]=false; actHeld=false; });
 $('say').addEventListener('pointerdown',e=>{ e.stopPropagation(); if(performance.now()>sayBusyUntil) nextSay(); });
 const actBtn=$('act');
@@ -790,14 +1152,14 @@ function frame(now){
     if(keys['a']) s-=1; if(keys['d']) s+=1;
     if(keys['arrowleft']) turn+=1; if(keys['arrowright']) turn-=1;
     f-=joy.y; s+=joy.x*0.8;
-    const locked = story.step==='taunt' || story.step==='shout' || story.step==='fall' || story.step==='sling' && !!story.flying;
+    const locked = IMPL[story.id].locked(story);
     if(locked){ f=0; s=0; }
     P.yaw+=turn*dt*2.0;
     const len=Math.hypot(f,s); if(len>1){f/=len;s/=len;}
     const sy=Math.sin(P.yaw), cy=Math.cos(P.yaw);
     const vx=(-sy*f + cy*s)*P.speed, vz=(-cy*f - sy*s)*P.speed;
     P.vx=vx; P.vz=vz;
-    P.x=clamp(P.x+vx*dt,-34,34); P.z=clamp(P.z+vz*dt,-60,72);
+    P.x+=vx*dt; P.z+=vz*dt; IMPL[story.id].bounds();
     if(story.step==='sling'||story.step==='fall'){ /* stay where you are */ }
     const moving=Math.hypot(vx,vz)>0.1; if(moving) P.bob+=dt*(story.armor?5:9);
     if(moving && story.armor && Math.sin(P.bob)>0.97) clank=0.5;
@@ -807,7 +1169,7 @@ function frame(now){
       const wantYaw=Math.atan2(-dx,-dz), wantPitch=Math.atan2(dy,Math.hypot(dx,dz));
       let dyaw=((wantYaw-P.yaw+Math.PI)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)-Math.PI;
       P.yaw+=dyaw*k; P.pitch+=(wantPitch-P.pitch)*k; if(L.t>L.dur+0.6) P.lockLook=null; }
-    updateDavid(dt);
+    IMPL[story.id].update(dt, now);
     // camera
     const bobY = moving ? Math.sin(P.bob)*(story.armor?0.07:0.035) : 0;
     let shx=0,shy=0; if(shake>0){ shake=Math.max(0,shake-dt*1.4); shx=(Math.random()-0.5)*0.08*shake; shy=(Math.random()-0.5)*0.08*shake; }
