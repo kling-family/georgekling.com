@@ -3115,7 +3115,7 @@ function reset(name, title){
 }
 let D;
 function resetDragon(){
-  D = {hp:40, max:40, state:'sleep', t:0, biteCd:0, breathCd:3, mudCd:5, flash:0, gone:false};
+  D = {hp:110, max:110, state:'sleep', t:0, biteCd:0, breathCd:3, mudCd:5, tailCd:4, flash:0, gone:false, rage:false};   // tougher: more health, a tail swipe, and he gets angry at half health
   dragon.position.copy(DRAGON_HOME); dragon.visible = true; dragon.rotation.set(0,Math.PI,0);
   clouds.forEach(c=>scene.remove(c.m)); clouds.length=0; mudBalls.forEach(b=>scene.remove(b.m)); mudBalls.length=0;
   document.getElementById('boss').classList.add('hidden');
@@ -3431,7 +3431,9 @@ function swordAct(){
       let dmg = (3 + (S.fireSword?2:0) + Math.floor(Math.random()*3)) * dmgMul(); dmg = Math.round(dmg);
       if(S.mud>0) dmg = Math.ceil(dmg/2);
       D.hp -= dmg; D.flash = 0.2; spawnChips(dragon.position.x,2.5,dragon.position.z,0xff6b5a,6);
-      if(D.state!=='breath' && Math.random()<0.25){ D.state='hop'; D.t=0.5; }
+      D.tailCd -= 0.7;                                      // keep hacking at him and he answers sooner with his tail
+      if(D.state==='chase' && !D.rage && Math.random()<0.08){ D.state='hop'; D.t=0.5; }   // only sometimes flinches, and never once he's angry
+      if(!D.rage && D.hp <= D.max/2 && D.hp > 0){ D.rage = true; D.state = 'roar'; D.t = 1.0; D.tailCd = Math.min(D.tailCd, 1.5); }
       updateHud();
       if(D.hp<=0) win();
     }
@@ -3758,10 +3760,27 @@ function dragonAI(dt){
   const dp = dragon.position;
   const dx = S.x-dp.x, dz = S.z-dp.z, d = Math.hypot(dx,dz);
   const face = Math.atan2(dz,dx);
-  D.biteCd-=dt; D.breathCd-=dt; D.mudCd-=dt; D.t-=dt;
+  D.biteCd-=dt; D.breathCd-=dt; D.mudCd-=dt; D.tailCd-=dt; D.t-=dt;
   const turnTo = (a, rate)=>{ const cur = -dragon.rotation.y; dragon.rotation.y = -(cur + Math.max(-rate*dt, Math.min(rate*dt, angDiff(a,cur)))); };
   if(D.state==='roar'){ turnTo(face,3); if(D.t<=0) D.state='chase'; return; }
   if(D.state==='hop'){ if(D.t<=0) D.state='chase'; return; }
+  // tail swipe: he crouches for a moment (your chance to raise the shield or step back), then spins and whips his tail
+  if(D.state==='tailwind'){ turnTo(face,3); if(D.t<=0){ D.state='tail'; D.t=0.5; D.tailHit=false; } return; }
+  if(D.state==='tail'){
+    dragon.rotation.y -= dt*Math.PI*4;                       // one full spin in half a second
+    if(!D.tailHit && D.t < 0.3){ D.tailHit = true;
+      if(d < 6.8){
+        const hpBefore = S.hp; hurt(D.rage ? 10 : 7, dp.x, dp.z);
+        if(S.hp < hpBefore){                                 // not blocked: knocked back
+          const nx = S.x + dx/d*3, nz = S.z + dz/d*3;
+          S.x = Math.max(RIVER_X1+1.5, Math.min(LAND.x1-2, nx)); S.z = Math.max(-LAND.z1+2, Math.min(LAND.z1-2, nz));
+        }
+      }
+      spawnChips(dp.x, 0.6, dp.z, 0x4f8a36, 14);
+    }
+    if(D.t<=0){ D.state='chase'; D.tailCd = (D.rage ? 3 : 4.5) + Math.random()*2; }
+    return;
+  }
   if(D.state==='windup'){
     turnTo(face,1.5);
     if(D.t<=0){ D.state='breath'; D.t=1.4; }
@@ -3774,22 +3793,24 @@ function dragonAI(dt){
       const spread = (Math.random()-.5)*0.6;
       spawnCloud(mouth, new THREE.Vector3(Math.cos(a+spread)*7, -1.6, Math.sin(a+spread)*7));
     }
-    if(D.t<=0){ D.state='chase'; D.breathCd = 5+Math.random()*2; }
+    if(D.t<=0){ D.state='chase'; D.breathCd = (D.rage ? 3.5 : 5)+Math.random()*2; }
     return;
   }
   // chase
   turnTo(face, 2.2);
   if(d>3.6){
-    const sp = 3.4*dt, nx = dp.x + dx/d*sp, nz = dp.z + dz/d*sp;
+    const sp = (D.rage ? 4.6 : 3.8)*dt, nx = dp.x + dx/d*sp, nz = dp.z + dz/d*sp;
     if(nx>RIVER_X1+2 && nx<LAND.x1-2 && Math.abs(nz)<LAND.z1-2){ dp.x=nx; dp.z=nz; }
   }
-  if(d<4.6 && D.biteCd<=0){
-    D.biteCd = 1.6; D.state='hop'; D.t=0.35; D.bite=0.35;
-    hurt(4+Math.floor(Math.random()*3), dragon.position.x, dragon.position.z);
+  if(d<5.5 && D.tailCd<=0){
+    D.state='tailwind'; D.t = D.rage ? 0.5 : 0.7;
+  } else if(d<4.6 && D.biteCd<=0){
+    D.biteCd = D.rage ? 0.85 : 1.2; D.state='hop'; D.t=0.35; D.bite=0.35;
+    hurt((D.rage ? 7 : 5)+Math.floor(Math.random()*3), dragon.position.x, dragon.position.z);
   } else if(D.breathCd<=0 && d<14){
     D.state='windup'; D.t=1.0;
   } else if(D.mudCd<=0 && d>6){
-    D.mudCd = 4+Math.random()*2;
+    D.mudCd = (D.rage ? 2.5 : 4)+Math.random()*2;
     const a = -dragon.rotation.y;
     const from = new THREE.Vector3(dp.x+Math.cos(a)*5.6, 4.3, dp.z+Math.sin(a)*5.6);
     const dir = new THREE.Vector3(S.x-from.x, 1.2-from.y, S.z-from.z).normalize();
@@ -3865,7 +3886,7 @@ function animate(dt){
   const flap = D && (D.state==='flee' || D.state==='roar' || D.state==='windup') ? 10 : 3;
   wings.forEach(w=>{ w.piv.rotation.x = w.s*(-0.15 + Math.sin(time*flap)*0.45); });
   if(D){
-    dBody.position.y = D.state==='sleep' ? -0.3 : Math.sin(time*2)*0.1 + (D.state==='hop'?0.5:0);
+    dBody.position.y = D.state==='sleep' ? -0.3 : (D.state==='tailwind' ? -0.45 : Math.sin(time*2)*0.1 + (D.state==='hop'?0.5:0));   // crouches before the tail swipe
     head.rotation.z = D.state==='windup' ? 0.6 : (D.state==='breath' ? -0.3 : Math.sin(time*1.5)*0.1);
     collar.material.color.setHex(Math.sin(time*6)>0 ? 0xf5c542 : 0xfff2a0);
     const red = D.flash>0; D.flash = Math.max(0, D.flash-dt);
