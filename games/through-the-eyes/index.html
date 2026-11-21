@@ -169,8 +169,21 @@
 /* ================= Save ================= */
 const SAVE_KEY = 'throughTheEyes.save.v1';
 function readSave(){ try{ const d = JSON.parse(localStorage.getItem(SAVE_KEY)||'null'); return d && Array.isArray(d.done) ? d : {done:[]}; }catch(e){ return {done:[]}; } }
-function writeSave(d){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(d)); }catch(e){} }
+function writeSave(d){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(d)); }catch(e){} if(typeof writeCloud==='function') writeCloud(d); }
 let SAVE = readSave();
+// On the private Claude link, also keep progress in the artifact's own per-player storage (browser storage there may not last).
+let cloudSave=null, cloudChain=Promise.resolve();
+(async()=>{ try{
+  if(!window.claude || !window.claude.use) return;
+  const [db,user]=await Promise.all([window.claude.use('db'), window.claude.use('user')]); if(!db||!user) return;
+  const id=await user.id(); if(!id) return;
+  const ref=db.doc('data/users/'+id+'/save'); const snap=await ref.get();
+  const theirs=snap.exists && Array.isArray(snap.data().done) ? snap.data().done : [];
+  const merged=[...new Set([...theirs, ...SAVE.done])]; cloudSave=ref;
+  if(merged.length!==SAVE.done.length){ SAVE.done=merged; try{ localStorage.setItem(SAVE_KEY, JSON.stringify(SAVE)); }catch(e){} if(!$('menu').classList.contains('hidden')) showMenu(); }
+  if(merged.length!==theirs.length) writeCloud(SAVE);
+}catch(e){} })();
+function writeCloud(d){ if(!cloudSave) return; const body={done:[...d.done]}; cloudChain=cloudChain.then(()=>cloudSave.set(body)).catch(()=>{}); }
 
 function trackPlay(){ if(trackPlay.done) return; trackPlay.done=1; try{ const go=()=>window.goatcounter&&window.goatcounter.count&&window.goatcounter.count({path:'/games/through-the-eyes/play',title:'Through the Eyes of the Bible: someone started playing'}); if(window.goatcounter&&window.goatcounter.count) go(); else setTimeout(go,3000); }catch(e){} }
 
