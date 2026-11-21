@@ -1289,7 +1289,7 @@ function goNoah(step){
       [SAY_BIBLE,'The water covered even the highest mountains. Every living thing on the land died. Only Noah and those with him in the ark were left alive.','Genesis 7:19-23', ()=>{ W.wlTo=34; }],
       [SAY_BIBLE,'The water flooded the earth for 150 days.','Genesis 7:24'],
       [SAY_BIBLE,'But God remembered Noah and all the animals in the ark. He sent a wind, the rain stopped, and the water began to go down.','Genesis 8:1-3', ()=>{ W.rain.visible=false; skyTo(0x9fc4e2,3000); hemi.intensity=0.5; sun.intensity=0.9; noahLand='ararat'; W.plain.visible=false; W.plainProps.forEach(o=>o.visible=false); W.logs.forEach(l=>l.visible=false); W.pairs.forEach(p=>p.a.forEach(a=>a.visible=false)); W.ararat.visible=true; W.arkBase=groundArarat(0,0); W.wlTo=29; }],
-      [SAY_BIBLE,'The ark came to rest on the mountains of Ararat. The water kept going down until the tops of the mountains could be seen.','Genesis 8:4-5', ()=>{ S.rockTo=0; W.wlTo=23.6; }]], ()=>goNoah('window'));
+      [SAY_BIBLE,'The ark came to rest on the mountains of Ararat. The water kept going down until the tops of the mountains could be seen.','Genesis 8:4-5', ()=>{ S.rockTo=0; W.wlTo=24.8; }]], ()=>goNoah('window'));
   }
   if(step==='window'){ S.lock=false; setGoal('Climb up to the <b>window</b>'); S.target={position:new THREE.Vector3(0,0,-2.4)}; }
   if(step==='raven'||step==='dove1'||step==='dove2'||step==='dove3'){ S.lock=false; }
@@ -1388,7 +1388,7 @@ function jumpNoah(q){ // ?step=animals | flood | window | exit
   if(q==='animals'){ P.x=0; P.z=16; P.yaw=0; goNoah('animals'); }
   if(q==='flood'||q==='window'||q==='exit'){ W.pairs.forEach(pr=>{ pr.led=true; pr.a.forEach(a=>a.visible=false); pr.inside.forEach(b=>b.visible=true); }); W.family.forEach(p=>p.visible=false); S.inside=true; W.ark.userData.inside.visible=true; P.x=6; P.z=1.5; P.yaw=Math.PI/2; }
   if(q==='flood') goNoah('shut');
-  if(q==='window'||q==='exit'){ S.doorTo=0; noahLand='ararat'; W.plain.visible=false; W.plainProps.forEach(o=>o.visible=false); W.ararat.visible=true; W.arkBase=groundArarat(0,0); W.wl=W.wlTo=(q==='window'?23.6:14); W.ark.position.y=W.arkBase; S.rock=S.rockTo=0; scene.background.set(0x9fc4e2); goNoah(q==='window'?'window':'out'); }
+  if(q==='window'||q==='exit'){ S.doorTo=0; noahLand='ararat'; W.plain.visible=false; W.plainProps.forEach(o=>o.visible=false); W.ararat.visible=true; W.arkBase=groundArarat(0,0); W.wl=W.wlTo=(q==='window'?24.8:14); W.ark.position.y=W.arkBase; S.rock=S.rockTo=0; scene.background.set(0x9fc4e2); goNoah(q==='window'?'window':'out'); }
 }
 
 /* David's story hooks */
