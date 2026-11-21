@@ -193,7 +193,7 @@ const STORIES = [
   { id:'adam', ready:true, blurb:'Watch God make the world, name the animals, meet Eve, and see what happened in the Garden of Eden.', endVerse:'"God made clothes out of animal skins for Adam and his wife and dressed them."', endRef:'Genesis 3:21', before:"This is where the whole Bible begins. Before there was a world, before there were people or animals or even light, there was only God. In this story you will watch God make everything, day by day. Then you will become Adam, the very first person.", title:'Adam and Eve', who:'You are Adam', ref:'Genesis 1 to 3' },
   { id:'noah', ready:true, blurb:'Build the ark, lead the animals in two by two, ride out the flood, send out the dove, and see the first rainbow.', endVerse:'"I have put my rainbow in the clouds. It is the sign of my promise."', endRef:'Genesis 9:13', before:"Adam and Eve disobeyed God and had to leave the garden. Many, many years went by, and the world filled up with people. But most of them became mean and violent and forgot about God. One man still loved God and did what was right. His name was Noah.", title:'Noah\u2019s Ark', who:'You are Noah', ref:'Genesis 6 to 9' },
   { id:'abraham', ready:true, blurb:'Leave your home when God calls, follow His light to a new land, build an altar, and try to count the stars.', endVerse:'"Look up at the sky and count the stars, if you can. That is how many children you will have."', endRef:'Genesis 15:5', before:"After the flood, Noah's family grew into lots of families who spread out all over the world. Hundreds of years later, God spoke to a man named Abram. God told him to leave his home and go to a new land, and promised to make his family into a great nation. Later God changed his name to Abraham.", title:'Abraham and the Stars', who:'You are Abraham', ref:'Genesis 12 and 15' },
-  { id:'joseph', before:"God kept His promise. Abraham and his wife Sarah had a son named Isaac when they were very old. Isaac had a son named Jacob, and Jacob had twelve sons. Jacob loved one son, Joseph, more than the others, and his brothers got very jealous.", title:'Joseph and His Colorful Coat', who:'You are Joseph', ref:'Genesis 37 to 45' },
+  { id:'joseph', ready:true, blurb:'Get a colorful coat, get thrown in a well by your brothers, explain Pharaoh’s dreams, store up grain, and forgive your brothers.', endVerse:'"You planned to hurt me, but God planned it for good, to save many lives."', endRef:'Genesis 50:20', before:"God kept His promise. Abraham and his wife Sarah had a son named Isaac when they were very old. Isaac had a son named Jacob, and Jacob had twelve sons. Jacob loved one son, Joseph, more than the others, and his brothers got very jealous.", title:'Joseph and His Colorful Coat', who:'You are Joseph', ref:'Genesis 37 to 45' },
   { id:'babymoses', before:"Joseph's whole family moved to Egypt to live with him, and they were safe there. Their family grew and grew for 400 years, and they were called the Israelites. Then a new king of Egypt, called Pharaoh, was afraid of them. He made them slaves, and he ordered that every Israelite baby boy be thrown in the river.", title:'Baby Moses in the Basket', who:'You are Miriam, his big sister', ref:'Exodus 2' },
   { id:'bush', before:"The princess of Egypt found baby Moses and raised him in the palace. When Moses grew up, he saw an Egyptian beating an Israelite slave, and Moses killed the Egyptian. Then Moses ran away to the desert. He lived there for 40 years and became a shepherd.", title:'Moses and the Burning Bush', who:'You are Moses', ref:'Exodus 3' },
   { id:'redsea', before:"God sent Moses back to Egypt to tell Pharaoh, \u201cLet my people go!\u201d Pharaoh said no again and again, so God sent ten plagues on Egypt, like frogs, bugs, hail, and darkness. After the last plague, Pharaoh finally let the Israelites go. But then he changed his mind and chased after them with his whole army.", title:'Moses and the Red Sea', who:'You are Moses', ref:'Exodus 14' },
@@ -1542,9 +1542,216 @@ function jumpAbraham(q){ // ?step=journey | altar | count
   if(q==='count'){ abeNight(); abeGod(3,-38,3.2); goAbraham('count'); }
 }
 
+/* ================= Story 4: Joseph and His Colorful Coat ================= */
+let josephLand='canaan';
+const WELL={x:30,z:-30};
+function groundCanaan(x,z){ let h=0.5+0.5*Math.sin(x*0.08)*Math.cos(z*0.07)+0.3*Math.sin(x*0.17+z*0.11); const r=Math.hypot(x,z); if(r>60) h+=Math.pow(r-60,1.25)*0.3; return h; }
+function groundEgypt(x,z){ let h=0.15*Math.sin(x*0.11)*Math.cos(z*0.09); if(x<-44) h-=smooth(clamp((-44-x)/4,0,1))*1.6; const r=Math.hypot(x,z+20); if(r>75) h+=Math.pow(r-75,1.2)*0.12; return h; }
+function groundJoseph(x,z){
+  if(story && story.inPit) return groundCanaan(WELL.x,WELL.z)-2.4;
+  return josephLand==='canaan'?groundCanaan(x,z):groundEgypt(x,z); }
+function camel(){ const o=new THREE.Group(), c=0xc49a62;
+  blob(o,c,0.5,0.8,0.7,1.5,0,1.7,0); blob(o,0xb88c58,0.4,0.8,0.9,0.9,0,2.15,0.05);
+  const nk=tubeOf([[0,1.8,0.6],[0,2.0,1.05],[0,2.5,1.25],[0,2.6,1.35]],0.2,0.13,c); o.add(nk);
+  const hd=blob(o,c,0.18,0.9,0.8,1.6,0,2.62,1.5); eyes(o,0.11,2.7,1.5,0.03);
+  legs4(o,c,1.35,0.12,[[-.25,.6],[.25,.6],[-.25,-.6],[.25,-.6]],0x8a6a44);
+  const blanket=new THREE.Mesh(new THREE.BoxGeometry(1.05,0.08,1.0), mat(0xa8322a)); blanket.position.set(0,2.15,-0.45); o.add(blanket);
+  for(const sx of [-1,1]){ const bag=blob(o,0x7a5a3a,0.25,0.8,1,1,sx*0.55,1.85,-0.45); }
+  return o; }
+function sleeves(){ const g=new THREE.Group(); const c=document.createElement('canvas'); c.width=64; c.height=256; const x=c.getContext('2d');
+  const cols=['#c8342a','#f2a33a','#f5d34a','#3f9a52','#3a6fc0','#7a4ab0','#e8e0d0']; for(let i=0;i<16;i++){ x.fillStyle=cols[i%7]; x.fillRect(0,i*16,64,16); }
+  const t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; const m=new THREE.MeshLambertMaterial({map:t});
+  for(const sx of [-1,1]){ const arm=new THREE.Group(); const geo=new THREE.CylinderGeometry(0.05,0.085,0.55,12); geo.translate(0,0.275,0); geo.rotateX(-Math.PI/2);
+    const s=new THREE.Mesh(geo, m); arm.add(s); const hd=new THREE.Mesh(new THREE.SphereGeometry(0.042,10,8), handMat); hd.scale.set(0.9,0.7,1.3); hd.position.set(0,0,-0.58); arm.add(hd);
+    arm.position.set(sx*0.24,-0.36,-0.3); arm.rotation.set(0.12,sx*0.18,0); arm.scale.setScalar(0.62); g.add(arm); }
+  g.visible=false; view.add(g); return g; }
+const coatView=sleeves();
+const sheafHand=new THREE.Group(); { for(let i=0;i<9;i++){ const s=new THREE.Mesh(new THREE.CylinderGeometry(0.012,0.012,0.6,4), mat(0xd9b65a)); s.position.set((i%3-1)*0.03,0,(Math.floor(i/3)-1)*0.03); s.rotation.z=(i%3-1)*0.08; sheafHand.add(s); }
+  const tie=new THREE.Mesh(new THREE.TorusGeometry(0.06,0.012,6,12), mat(0x8a6a3a)); tie.rotation.x=Math.PI/2; sheafHand.add(tie); sheafHand.position.set(0.2,-0.3,-0.6); sheafHand.rotation.z=0.4; sheafHand.visible=false; view.add(sheafHand); }
+function sheaf(g,x,z){ const o=new THREE.Group(); for(let i=0;i<14;i++){ const s=new THREE.Mesh(new THREE.CylinderGeometry(0.02,0.02,1.1,4), mat(0xd9b65a)); const a=i/14*Math.PI*2; s.position.set(Math.cos(a)*0.08,0.55,Math.sin(a)*0.08); s.rotation.set(Math.sin(a)*0.15,0,Math.cos(a)*0.15); o.add(s); }
+  const tie=new THREE.Mesh(new THREE.TorusGeometry(0.11,0.02,6,12), mat(0x8a6a3a)); tie.rotation.x=Math.PI/2; tie.position.y=0.6; o.add(tie); o.position.set(x,ground(x,z),z); g.add(o); return o; }
+function pyramid(g,x,z,s){ const p=new THREE.Mesh(new THREE.ConeGeometry(s,s*0.95,4), mat(0xdcc38e)); p.rotation.y=Math.PI/4; p.position.set(x,s*0.47,z); p.userData.noCast=true; g.add(p); }
+function buildJoseph(){
+  josephLand='canaan'; ground=groundJoseph; resetLook();
+  const g=new THREE.Group(); scene.add(g); world={group:g, brothers:[], sheaves:[]}; const W=world, r=rnd(44);
+  const mkLand=(fn,colA,colB,grass)=>{ const grp=new THREE.Group(); g.add(grp); const N=150, geo=new THREE.PlaneGeometry(300,300,N,N); geo.rotateX(-Math.PI/2);
+    const pos=geo.attributes.position, cols=[], c=new THREE.Color(), a=new THREE.Color(colA), b=new THREE.Color(colB);
+    for(let i=0;i<pos.count;i++){ const x=pos.getX(i), z=pos.getZ(i), h=fn(x,z); pos.setY(i,h); const n=0.5+0.5*Math.sin(x*0.5+z*0.9)*Math.cos(x*0.27-z*0.4); c.copy(a).lerp(b,n*0.8); if(fn===groundEgypt&&x<-43) c.set(0x6a7a4a); c.multiplyScalar(1.1); cols.push(c.r,c.g,c.b); }
+    geo.setAttribute('color',new THREE.Float32BufferAttribute(cols,3)); geo.computeVertexNormals(); const uv=geo.attributes.uv; for(let i=0;i<uv.count;i++) uv.setXY(i,uv.getX(i)*90,uv.getY(i)*90);
+    const m=new THREE.Mesh(geo,new THREE.MeshLambertMaterial({vertexColors:true,map:GROUND_TEX})); m.userData.noCast=true; grp.add(m);
+    const save=ground; ground=fn; if(grass) grassField(grp, touch?6000:12000, ()=>{ const x=(Math.random()-0.5)*120, z=(Math.random()-0.5)*120; if(fn===groundCanaan&&Math.hypot(x-WELL.x,z-WELL.z)<2) return null; if(fn===groundEgypt&&(x<-43||Math.random()>0.25)) return null; return [x,z,grass]; }); ground=save; return grp; };
+  W.canaan=mkLand(groundCanaan,0x8aa856,0xa8a866,0x86a44e);
+  W.egypt=mkLand(groundEgypt,0xdcc896,0xceb27a,0x9aa05a); W.egypt.visible=false;
+  // ---- Canaan: Jacob's tents, olive trees, and the dry well at Dothan
+  josephLand='canaan'; ground=groundCanaan;
+  const C=new THREE.Group(); g.add(C); W.C=C;
+  tent(C,-8,4,0x8a5a3a,1.1); tent(C,6,2,0x6e4a32); tent(C,-2,-6,0x9a6a40,1.2); tent(C,12,-8,0x7a5236);
+  for(let i=0;i<45;i++){ const x=(r()-0.5)*120, z=(r()-0.5)*120; if(Math.hypot(x,z)<16||Math.hypot(x-WELL.x,z-WELL.z)<10||Math.abs(x-z*-1)<4&&x>0&&x<28) continue; tree(C,x,z,0.9+r()*0.5); }
+  for(let i=0;i<25;i++){ const x=(r()-0.5)*120, z=(r()-0.5)*120; if(Math.hypot(x,z)<14||Math.hypot(x-WELL.x,z-WELL.z)<8) continue; rock(C,x,z,0.3+r()*0.6); }
+  { const w=new THREE.Group(); const y=groundCanaan(WELL.x,WELL.z); for(let i=0;i<14;i++){ const a=i/14*Math.PI*2; const st=new THREE.Mesh(ROCK_GEO[i%4], mat(0x9a8f7a)); st.scale.set(0.32,0.3,0.32); st.position.set(Math.cos(a)*1.25,0.2,Math.sin(a)*1.25); w.add(st); }
+    const hole=new THREE.Mesh(new THREE.CircleGeometry(1.05,24), new THREE.MeshBasicMaterial({color:0x0e0a06})); hole.rotation.x=-Math.PI/2; hole.position.y=0.03; w.add(hole); W.wellHole=hole;
+    const shaft=new THREE.Mesh(new THREE.CylinderGeometry(1.1,1.0,3.2,20,4,true), new THREE.MeshLambertMaterial({color:0x6e5a40,side:THREE.BackSide,map:GROUND_TEX})); shaft.position.y=-1.55; w.add(shaft);
+    const bot=new THREE.Mesh(new THREE.CircleGeometry(1.0,20), mat(0x5a4632)); bot.rotation.x=-Math.PI/2; bot.position.y=-3.1+0.68; w.add(bot); W.wellBot=bot; bot.visible=false;
+    w.position.set(WELL.x,y,WELL.z); C.add(w); W.well=w; }
+  W.flock=[]; for(let i=0;i<12;i++){ W.flock.push(sheep(C,WELL.x+6+(r()-0.5)*10,WELL.z-8+(r()-0.5)*8,0.8+r()*0.25)); }
+  // Jacob and the brothers
+  W.jacob=person({tunic:0x6a4a8a,hair:0xd8d4cc,beard:0xe0dcd4,h:1.7}); place(W.jacob,-3,0,0); C.add(W.jacob);
+  const bro=[0x8a5a3a,0x5a6a3a,0x7a3a2a,0x4a5a7a,0x8a7a4a,0x6a4a3a,0x5a4a6a,0x7a6a3a,0x3a5a4a,0x9a6a3a];
+  bro.forEach((c,i)=>{ const p=person({tunic:c,hair:0x2a1a10,beard:i%3?0x2a1a10:null,h:1.72+((i*7)%5)*0.02}); p.userData.i=i; place(p,WELL.x-5+(i%5)*2.2,WELL.z+3+Math.floor(i/5)*2,Math.PI); C.add(p); W.brothers.push(p); });
+  W.caravan=new THREE.Group(); C.add(W.caravan); W.caravan.visible=false;
+  for(let i=0;i<3;i++){ const c=camel(); c.position.set(-i*3.4,0,0); W.caravan.add(c); const tr=person({tunic:[0xd8c8a0,0x3a5a8a,0xa0503a][i],hair:0x1a120a,beard:0x1a120a}); tr.position.set(1.2-i*3.4,0,0.9); W.caravan.add(tr); }
+  // ---- Egypt: the palace court, storehouse, grain fields, the Nile and the pyramids
+  josephLand='egypt'; ground=groundEgypt;
+  const E=new THREE.Group(); g.add(E); E.visible=false; W.E=E;
+  { const stone=mat(0xe6d6b0), stone2=mat(0xd8c49a), paint=mat(0x2f6aa8), gold=mat(0xe2b23a);
+    const fl=new THREE.Mesh(new THREE.BoxGeometry(22,0.3,18), stone2); fl.position.set(0,0.15,-6); E.add(fl);
+    for(const sx of [-1,1]) for(let i=0;i<5;i++){ const c=new THREE.Mesh(new THREE.CylinderGeometry(0.45,0.5,6,14), stone); c.position.set(sx*9,3.3,-13+i*3.6); E.add(c);
+      const cap=new THREE.Mesh(new THREE.CylinderGeometry(0.75,0.45,0.6,14), paint); cap.position.set(sx*9,6.4,-13+i*3.6); E.add(cap); }
+    const back=new THREE.Mesh(new THREE.BoxGeometry(22,7,0.8), stone); back.position.set(0,3.5,-15.2); E.add(back);
+    const band=new THREE.Mesh(new THREE.BoxGeometry(22.1,0.5,0.85), paint); band.position.set(0,6,-15.2); E.add(band);
+    const dais=new THREE.Mesh(new THREE.BoxGeometry(6,0.8,4), stone); dais.position.set(0,0.7,-12.4); E.add(dais);
+    const throne=new THREE.Group(); const seat=new THREE.Mesh(new THREE.BoxGeometry(1.4,0.6,1.1), gold); seat.position.y=0.3; throne.add(seat); const bk=new THREE.Mesh(new THREE.BoxGeometry(1.4,1.8,0.2), gold); bk.position.set(0,1.0,-0.5); throne.add(bk);
+    throne.position.set(0,1.1,-12.8); E.add(throne);
+    W.pharaoh=person({tunic:0xf2efe4,sash:0xe2b23a,hair:0x1a120a,crown:true,h:1.78,skin:0xb07a4e}); W.pharaoh.position.set(0,1.1,-12.3); E.add(W.pharaoh);
+    // a red-and-white crown look: recolor his gold crown band
+    for(let i=0;i<4;i++){ const g2=person({tunic:0xeee8d8,hair:0x1a120a,skin:0xb07a4e,spear:true,h:1.8}); g2.position.set(i<2?-7:7,0.3,-11+(i%2)*6); g2.rotation.y=i<2?Math.PI/2:-Math.PI/2; E.add(g2); }
+    // storehouse
+    const sh=new THREE.Mesh(new THREE.BoxGeometry(12,5,8), mat(0xc9a878)); sh.position.set(26,2.5,4); E.add(sh);
+    const dome=new THREE.Mesh(new THREE.SphereGeometry(2.4,16,10,0,Math.PI*2,0,Math.PI/2), mat(0xc9a878)); for(const dx of [-3.5,0,3.5]){ const d=dome.clone(); d.position.set(26+dx,5,4); E.add(d); }
+    const door=new THREE.Mesh(new THREE.BoxGeometry(2,3,0.1), mat(0x3a2a18)); door.position.set(26,1.5,8.05); E.add(door); W.storeDoor={position:new THREE.Vector3(26,0,9.4)};
+    W.grainPile=new THREE.Mesh(new THREE.ConeGeometry(1.4,1.2,14), mat(0xd9b65a)); W.grainPile.position.set(22,0.6,9.8); W.grainPile.scale.setScalar(0.01); E.add(W.grainPile);
+    // golden grain fields
+    W.fields=[]; for(const [fx,fz] of [[-20,14],[-30,26],[-14,30]]){ const f=new THREE.Mesh(new THREE.PlaneGeometry(10,8,1,1), mat(0xd8b24a)); f.rotation.x=-Math.PI/2; f.position.set(fx,groundEgypt(fx,fz)+0.05,fz); f.userData.noCast=true; E.add(f); W.fields.push(f);
+      for(let i=0;i<40;i++){ const s=new THREE.Mesh(new THREE.CylinderGeometry(0.02,0.02,0.9,3), mat(0xc9a03a)); s.position.set(fx+(r()-0.5)*9.5,0.45,fz+(r()-0.5)*7.5); s.userData.noCast=true; E.add(s); f.userData.stalks=(f.userData.stalks||[]); f.userData.stalks.push(s); } }
+    [[-18,16],[-28,24],[-12,28],[-22,30]].forEach(([x,z])=>W.sheaves.push(sheaf(E,x,z)));
+    pyramid(E,70,-110,26); pyramid(E,105,-130,34); pyramid(E,40,-140,18);
+    for(let i=0;i<22;i++){ const x=-40-r()*8, z=(r()-0.5)*120; palm(E,x,z,0.9+r()*0.4); }
+    for(let i=0;i<8;i++){ palm(E,(r()-0.5)*60+10,22+r()*20,0.8+r()*0.3); }
+    const nile=new THREE.Mesh(new THREE.PlaneGeometry(40,320), new THREE.MeshPhongMaterial({color:0x3f7f9a,specular:0x9fb8c8,shininess:50})); nile.rotation.x=-Math.PI/2; nile.position.set(-68,-0.6,0); E.add(nile);
+  }
+  josephLand='canaan'; ground=groundJoseph;
+  // God is not shown in Joseph's story: He works behind the scenes
+  W.beacon=makeBeacon(); W.beacon.visible=false; g.add(W.beacon);
+  P.x=-1; P.z=6; P.yaw=Math.atan2(-(-3+1),-(0-6)); P.pitch=0; P.eye=1.7; P.speed=4.6; P.roll=0;
+  story={id:'joseph', step:'', t:0, lock:true, target:null, near:null, inPit:false, carrying:false, stored:0, fadeSky:null};
+  hand.visible=false; basket.visible=false; sling.visible=false; fruitHand.visible=false; if(typeof logHand!=='undefined'){ logHand.visible=false; leafHand.visible=false; } coatView.visible=false; sheafHand.visible=false;
+  goJoseph('intro');
+}
+function josephToEgypt(){ const W=world; josephLand='egypt'; W.canaan.visible=false; W.C.visible=false; W.egypt.visible=true; W.E.visible=true; story.inPit=false;
+  scene.background.set(0xa8cbe6); hemi.intensity=0.55; sun.intensity=1.0; }
+function goJoseph(step){
+  const S=story, W=world; S.step=step; $('prompt').classList.add('hidden');
+  if(step==='intro'){
+    S.lock=true; setGoal('Listen');
+    say([[SAY_BIBLE,'Jacob lived in the land of Canaan with his twelve sons. He loved Joseph more than all his other sons, because Joseph was born when Jacob was old.','Genesis 37:1-3'],
+      ['You are Joseph','You are Joseph. You are 17 years old.',''],
+      ['Jacob','Joseph, my son, I made something special for you.','', ()=>{ lookAt(W.jacob.position.x,1.2,W.jacob.position.z,1); }],
+      [SAY_BIBLE,'Jacob gave Joseph a beautiful coat of many colors.','Genesis 37:3', ()=>{ coatView.visible=true; }],
+      [SAY_BIBLE,'When his brothers saw that their father loved Joseph more than them, they hated him and could not say a kind word to him.','Genesis 37:4'],
+      [SAY_BIBLE,'Then Joseph had a dream. Their bundles of grain stood around his bundle and bowed down to it. In another dream, the sun, the moon, and eleven stars bowed down to him.','Genesis 37:5-9'],
+      [SAY_BIBLE,'When Joseph told his family the dreams, his brothers hated him even more.','Genesis 37:8'],
+      ['Jacob','Your brothers are out taking care of the sheep. Go and see if they are all right, and come back and tell me.','Genesis 37:13-14']], ()=>goJoseph('go'));
+  }
+  if(step==='go'){ S.lock=false; setGoal('Go find your <b>brothers</b> and the sheep'); S.target={position:new THREE.Vector3(WELL.x-1,0,WELL.z+6)}; }
+  if(step==='pit'){
+    S.lock=true; S.target=null; setGoal('Listen'); W.brothers.forEach(b=>faceTo(b,P.x,P.z));
+    say([[SAY_BIBLE,'His brothers saw Joseph coming from far away, and they made a plan.','Genesis 37:18'],
+      ['Brothers','Here comes that dreamer! Let’s get rid of him. Then we’ll see what happens to his dreams!','Genesis 37:19-20'],
+      ['Reuben','Don’t hurt him. Just throw him into this empty well.','Genesis 37:21-22'],
+      [SAY_BIBLE,'So they pulled off Joseph’s colorful coat and threw him into the dry well.','Genesis 37:23-24', ()=>{ coatView.visible=false; $('fade').style.background='#0b0b14'; $('fade').style.opacity=1; setTimeout(()=>{ S.inPit=true; W.wellBot.visible=true; W.wellHole.visible=false; P.x=WELL.x; P.z=WELL.z; P.pitch=1.0; P.yaw=0; shake=0.4;
+          W.brothers.slice(0,5).forEach((b,i)=>{ const a=i/5*Math.PI*2+0.4; b.position.set(WELL.x+Math.cos(a)*1.7,groundCanaan(WELL.x,WELL.z),WELL.z+Math.sin(a)*1.7); faceTo(b,WELL.x,WELL.z); b.rotation.x=0; });
+          $('fade').style.opacity=0; },700); }],
+      ['You are Joseph','Please! Let me out! Brothers, please help me!','Genesis 42:21'],
+      [SAY_BIBLE,'Then the brothers sat down to eat. They looked up and saw a line of traders with camels, carrying spices to Egypt.','Genesis 37:25', ()=>{ W.caravan.visible=true; }],
+      ['Judah','Let’s sell him to these traders. After all, he is our brother.','Genesis 37:26-27'],
+      [SAY_BIBLE,'So they pulled Joseph out of the well and sold him for twenty pieces of silver. The traders took Joseph far away to Egypt.','Genesis 37:28', ()=>{ $('fade').style.opacity=1; setTimeout(()=>{ josephToEgypt(); P.x=0; P.z=4; P.yaw=0; P.pitch=0; resetLookKeep(); $('fade').style.opacity=0; },800); }],
+      [SAY_BIBLE,'In Egypt, Joseph was a slave in the house of Potiphar, one of Pharaoh’s officers. The Lord was with Joseph, and everything he did went well.','Genesis 39:1-3'],
+      [SAY_BIBLE,'But Potiphar’s wife told a lie about Joseph, and he was thrown in prison for something he did not do. Even there, the Lord was with him.','Genesis 39:19-21'],
+      [SAY_BIBLE,'Years later, Pharaoh, the king of Egypt, had two dreams, and nobody could tell him what they meant. Then someone remembered Joseph. They brought him out of prison to Pharaoh.','Genesis 41:1-14']], ()=>goJoseph('pharaoh'));
+  }
+  if(step==='pharaoh'){ S.lock=false; setGoal('Go to <b>Pharaoh</b>'); S.target={position:new THREE.Vector3(0,0,-9)}; }
+  if(step==='dream'){
+    S.lock=true; S.target=null; setGoal('Listen'); lookAt(0,2.6,-12.3,1);
+    say([['Pharaoh','I had a dream, and no one can tell me what it means. I hear that you can explain dreams.','Genesis 41:15'],
+      ['You are Joseph','I cannot do it, but God will give Pharaoh the answer.','Genesis 41:16'],
+      ['Pharaoh','I was standing by the Nile River. Seven fat, healthy cows came up out of the river. Then seven skinny, ugly cows came up and ate the fat cows, but they stayed just as skinny!','Genesis 41:17-21'],
+      ['Pharaoh','Then I dreamed of seven full, good heads of grain on one stalk. Then seven thin, dried-up heads of grain swallowed them up.','Genesis 41:22-24']], ()=>josephChoose());
+  }
+  if(step==='charge'){
+    S.lock=true; setGoal('Listen');
+    say([['You are Joseph','God has shown Pharaoh what He is about to do. Seven years of lots of food are coming to Egypt. Then seven years of famine will come, when nothing will grow.','Genesis 41:25-30'],
+      ['You are Joseph','Pharaoh should put a wise man in charge, to save up food during the good years, so the people will not starve.','Genesis 41:33-36'],
+      ['Pharaoh','There is no one as wise as you, because God has shown you all this. I put you in charge of all of Egypt!','Genesis 41:39-41'],
+      [SAY_BIBLE,'Pharaoh put his own ring on Joseph’s finger, dressed him in fine clothes, and put a gold chain around his neck. Joseph was 30 years old.','Genesis 41:42-46']], ()=>goJoseph('grain'));
+  }
+  if(step==='grain'){ S.lock=false; josephGrainGoal(); }
+  if(step==='famine'){
+    S.lock=true; S.target=null; setGoal('Listen');
+    say([[SAY_BIBLE,'For seven years the land made huge harvests, and Joseph stored up so much grain that he stopped counting it. It was like the sand of the sea!','Genesis 41:47-49'],
+      [SAY_BIBLE,'Then the seven years of famine began, just as Joseph said. Nothing would grow, in Egypt or anywhere else.','Genesis 41:53-54', ()=>{ skyTo(0xd8c8a0,2500); sun.intensity=1.2; W.fields.forEach(f=>{ f.material=mat(0x9a8058); f.userData.stalks.forEach(s=>s.visible=false); }); }],
+      [SAY_BIBLE,'People came to Egypt from every country to buy grain from Joseph. Back in Canaan, Jacob sent Joseph’s brothers to Egypt to buy food.','Genesis 41:57, 42:1-3', ()=>{ josephBrothersArrive(); }],
+      [SAY_BIBLE,'Joseph’s brothers came and bowed down in front of him with their faces to the ground, just like in Joseph’s dream! Joseph knew them, but they did not know him.','Genesis 42:6-8', ()=>{ W.brothers.forEach(b=>{ b.rotation.x=0.55; b.position.y=groundEgypt(b.position.x,b.position.z)-0.3; }); lookAt(W.brothers[2].position.x,0.6,W.brothers[2].position.z,1); }],
+      [SAY_BIBLE,'Joseph tested his brothers to see if they had changed. They had! Judah even offered to become a slave so that their youngest brother, Benjamin, could go home to their father.','Genesis 42 to 44', ()=>{ W.brothers.forEach(b=>{ b.rotation.x=0; b.position.y=groundEgypt(b.position.x,b.position.z)+0.3; }); }]], ()=>goJoseph('reveal'));
+  }
+  if(step==='reveal'){ S.lock=false; setGoal('Tell your brothers <b>who you are</b>'); S.target=W.brothers[2]; }
+  if(step==='hug'){
+    S.lock=true; S.target=null; setGoal('Listen');
+    say([['You are Joseph','I am Joseph! Is my father still alive?','Genesis 45:3'],
+      [SAY_BIBLE,'His brothers were so scared they could not answer him.','Genesis 45:3'],
+      ['You are Joseph','Come close to me. I am your brother Joseph, the one you sold into Egypt. Don’t be upset with yourselves. God sent me ahead of you to save lives.','Genesis 45:4-5', ()=>{ S.closer=true; }],
+      ['You are Joseph','Hurry back to my father and tell him: God has made me ruler of all Egypt. Come down to me, and I will take care of you.','Genesis 45:9-11'],
+      [SAY_BIBLE,'Joseph hugged his brother Benjamin and cried. Then he kissed all his brothers and cried with them, and they talked together.','Genesis 45:14-15'],
+      [SAY_BIBLE,'So Jacob and his whole family came to live in Egypt, and Joseph took care of them.','Genesis 46 to 47']], ()=>finishStory());
+  }
+}
+function resetLookKeep(){ /* keep the story sky, just clear any look-at */ P.lockLook=null; }
+function josephChoose(){ const S=story; $('cForm').style.display='none';
+  choose('What do Pharaoh’s dreams mean?', ['Seven years of lots of food, then seven years of hunger','Egypt is going to win a big war','The cows in Egypt need more grass'], v=>{ $('cForm').style.display='';
+    if(v.startsWith('Seven years')) goJoseph('charge');
+    else say([['You are Joseph','No, that is not it. The answer comes from God, not from me. Let me think again.','Genesis 41:16']], ()=>josephChoose()); }); }
+function josephGrainGoal(){ const S=story; if(S.carrying) { setGoal('Carry the grain to the <b>storehouse</b>'); S.target=world.storeDoor; }
+  else { setGoal(`Gather grain for the hungry years (${S.stored} of 4)`); let b=null,bd=1e9; world.sheaves.forEach(s=>{ if(!s.visible) return; const d=dist2(s); if(d<bd){bd=d;b=s;} }); S.target=b; } }
+function josephBrothersArrive(){ const W=world; W.brothers.forEach((b,i)=>{ W.E.add(b); b.visible=true; b.rotation.x=0; const x=-4+(i%5)*2, z=-4+Math.floor(i/5)*1.8; b.position.set(x,groundEgypt(x,z)+0.3,z); faceTo(b,P.x,P.z); });
+  P.x=0; P.z=-9.5; P.yaw=Math.PI; }
+function updateJoseph(dt, now){
+  const S=story, W=world, t=(S.t+=dt);
+  if(S.fadeSky){ const f=S.fadeSky; f.t+=dt; const k=smooth(f.t/f.dur); scene.background.copy(f.from).lerp(f.to,k); if(k>=1) S.fadeSky=null; }
+  W.flock.forEach((s,i)=>{ const u=s.userData; u.tt=(u.tt||0)-dt; if(u.tt<=0||!u.goal){ u.tt=3+(i%4); u.goal={x:WELL.x+6+Math.sin(t*0.3+i)*6, z:WELL.z-8+Math.cos(t*0.25+i*2)*5}; }
+    const dx=u.goal.x-s.position.x, dz=u.goal.z-s.position.z, d=Math.hypot(dx,dz); if(d>0.3){ const v=Math.min(0.6,d)*dt; s.position.x+=dx/d*v; s.position.z+=dz/d*v; s.rotation.y=Math.atan2(dx,dz); sheepWalk(s,dt,0.6); } s.position.y=groundCanaan(s.position.x,s.position.z); });
+  if(W.caravan.visible && josephLand==='canaan'){ const cz=WELL.z-6; if(W.caravan.position.x===0&&!W.caravan.userData.go){ W.caravan.userData.go=1; W.caravan.position.set(WELL.x-30,groundCanaan(WELL.x-20,cz),cz); W.caravan.rotation.y=Math.PI/2; }
+    if(W.caravan.position.x<WELL.x+2){ W.caravan.position.x+=dt*1.6; W.caravan.children.forEach(c=>{ if(c.userData.legs4) sheepWalk(c,dt,0.6); else if(c.userData.legs) animWalk(c,dt,0.7); }); } }
+  if(S.closer){ W.brothers.forEach((b,i)=>{ const tx=P.x+(i%5-2)*1.3, tz=P.z+2.2+Math.floor(i/5)*1.3; const dx=tx-b.position.x, dz=tz-b.position.z, d=Math.hypot(dx,dz); if(d>0.3){ const v=Math.min(1.4,d)*dt; b.position.x+=dx/d*v; b.position.z+=dz/d*v; animWalk(b,dt,0.8); } faceTo(b,P.x,P.z); b.position.y=groundEgypt(b.position.x,b.position.z)+0.3; }); }
+  if(W.grainPile.scale.x<S.stored/4) W.grainPile.scale.setScalar(Math.min(S.stored/4,W.grainPile.scale.x+dt));
+  let near=null;
+  if(S.step==='go' && Math.hypot(P.x-WELL.x,P.z-WELL.z)<9) goJoseph('pit');
+  if(S.step==='pharaoh' && Math.hypot(P.x,P.z+9)<3) near={label:'Bow to Pharaoh', fn:()=>goJoseph('dream')};
+  if(S.step==='grain'){
+    if(!S.carrying){ const s=S.target; if(s && s.visible && dist2(s)<2.6) near={label:'Pick up the grain', fn:()=>{ s.visible=false; S.carrying=true; sheafHand.visible=true; josephGrainGoal(); }}; }
+    else if(Math.hypot(P.x-26,P.z-9.4)<3.2) near={label:'Store the grain', fn:()=>{ S.carrying=false; sheafHand.visible=false; S.stored++; shake=0.15; if(S.stored>=4){ S.target=null; goJoseph('famine'); } else josephGrainGoal(); }};
+  }
+  if(S.step==='reveal' && dist2(W.brothers[2])<3.5) near={label:'Tell them who you are', fn:()=>goJoseph('hug')};
+  S.near=near;
+  const pr=$('prompt');
+  if(near && !saying()){ pr.textContent=(touch?'':'Space: ')+near.label; pr.classList.remove('hidden'); $('act').textContent=near.label.split(' ')[0]; }
+  else { pr.classList.add('hidden'); $('act').textContent= saying()?'Next':'Use'; }
+  showBeacon(t);
+}
+function boundsJoseph(){ const S=story;
+  if(S.inPit){ const dx=P.x-WELL.x, dz=P.z-WELL.z, d=Math.hypot(dx,dz); if(d>0.5){ P.x=WELL.x+dx/d*0.5; P.z=WELL.z+dz/d*0.5; } return; }
+  P.x=clamp(P.x,-60,60); P.z=clamp(P.z,-60,60);
+  if(josephLand==='canaan'){ const dx=P.x-WELL.x, dz=P.z-WELL.z, d=Math.hypot(dx,dz); if(d<1.6){ P.x=WELL.x+dx/(d||1)*1.6; P.z=WELL.z+dz/(d||1)*1.6; } }
+  else { P.x=Math.max(P.x,-42); if(P.z<-11.5&&Math.abs(P.x)<3.2) P.z=-11.5; if(Math.abs(P.x-26)<6.3&&Math.abs(P.z-4)<4.3){ P.z=P.z>4?8.3:-0.3; } }
+}
+function jumpJoseph(q){ // ?step=go | pharaoh | grain | famine
+  const S=story, W=world; sayQ.length=0; $('say').classList.add('hidden'); sayCb=null; coatView.visible=(q==='go');
+  if(q==='go'){ goJoseph('go'); }
+  if(q==='pharaoh'||q==='grain'||q==='famine'){ josephToEgypt(); P.x=0; P.z=4; P.yaw=0; goJoseph(q); }
+}
+
 /* David's story hooks */
 function boundsDavid(){ P.x=clamp(P.x,-34,34); P.z=clamp(P.z,-60,72); }
 const IMPL = {
+  joseph: { build:buildJoseph, go:goJoseph, update:updateJoseph, bounds:boundsJoseph, locked:S=>S.lock || choosing() },
   abraham: { build:buildAbraham, go:goAbraham, update:updateAbraham, bounds:boundsAbraham, locked:S=>S.lock },
   noah:  { build:buildNoah,  go:goNoah,  update:updateNoah,  bounds:boundsNoah,  locked:S=>S.lock },
   adam:  { build:buildAdam,  go:goAdam,  update:updateAdam,  bounds:boundsAdam,  locked:S=>S.lock || choosing() },
@@ -1556,7 +1763,7 @@ function stopStory(){
   running=false; story=null;
   if(world){ scene.remove(world.group); world.group.traverse(o=>{ if(o.geometry) o.geometry.dispose(); }); world=null; }
   sayQ.length=0; sayCb=null; $('say').classList.add('hidden'); $('armor').classList.add('hidden'); $('cross').classList.add('hidden'); $('meter').classList.add('hidden'); $('stones').classList.add('hidden');
-  basket.visible=hand.visible=sling.visible=fruitHand.visible=false; if(typeof logHand!=='undefined'){ logHand.visible=false; leafHand.visible=false; } P.roll=0; $('fade').style.opacity=0; $('choice').classList.add('hidden'); hand.material=handMat; resetLook();
+  basket.visible=hand.visible=sling.visible=fruitHand.visible=false; if(typeof logHand!=='undefined'){ logHand.visible=false; leafHand.visible=false; } if(typeof coatView!=='undefined'){ coatView.visible=false; sheafHand.visible=false; } $('cForm').style.display=''; P.roll=0; $('fade').style.opacity=0; $('choice').classList.add('hidden'); hand.material=handMat; resetLook();
 }
 function startStory(id){
   stopStory(); trackPlay();
@@ -1566,7 +1773,7 @@ function startStory(id){
   const q=new URLSearchParams(location.search).get('step'); if(q && story) jumpTo(q); // preview links for testing
 }
 function jumpTo(q){ // ?step=stones or ?step=sling
-  const S=story; if(story.id==='adam') return jumpAdam(q); if(story.id==='noah') return jumpNoah(q); if(story.id==='abraham') return jumpAbraham(q);
+  const S=story; if(story.id==='adam') return jumpAdam(q); if(story.id==='noah') return jumpNoah(q); if(story.id==='abraham') return jumpAbraham(q); if(story.id==='joseph') return jumpJoseph(q);
   if(q==='stones'||q==='sling'){ world.lamb.userData.following=true; world.lamb.userData.goal={x:world.flock.x+1,z:world.flock.z}; world.lamb.position.set(world.flock.x+1,0,world.flock.z); world.israel.forEach(p=>p.position.z+=12); }
   if(q==='stones'){ P.x=0; P.z=STREAM_Z+4; P.yaw=0; sayQ.length=0; $('say').classList.add('hidden'); go('stones'); }
   if(q==='sling'){ world.stones.forEach(s=>s.visible=false); S.stonesHeld=5; S.stonesLeft=5; P.x=0; P.z=-20; P.yaw=0; world.goliath.position.set(0,ground(0,-36),-36); sayQ.length=0; $('say').classList.add('hidden'); $('stones').classList.remove('hidden'); updateStonesHud(); go('sling'); }
@@ -1577,7 +1784,7 @@ function finishStory(){
   const nextReady=READY[READY.indexOf(s)+1], nextAny=STORIES[STORIES.indexOf(s)+1];
   $('fade').style.opacity=0.6;
   setTimeout(()=>{
-    $('endWho').textContent='You saw what '+({david:'David',adam:'Adam',noah:'Noah',abraham:'Abraham'}[s.id]||'they')+' did.';
+    $('endWho').textContent='You saw what '+({david:'David',adam:'Adam',noah:'Noah',abraham:'Abraham',joseph:'Joseph'}[s.id]||'they')+' did.';
     $('endVerse').textContent=s.endVerse; $('endRef').textContent=s.endRef;
     $('endUnlock').textContent= nextReady ? 'You unlocked '+nextReady.title+'!' : (nextAny ? 'Next up: '+nextAny.title+'. It is coming soon!' : 'You finished every story!');
     $('endNext').innerHTML = nextAny ? '<b>What happens next</b>'+nextAny.before : '';
