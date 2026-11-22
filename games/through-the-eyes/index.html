@@ -55,6 +55,17 @@
   #say .txt{font-size:19px;line-height:1.35;margin:2px 0 4px}
   #say .ref{font-size:13px;color:#8a6a3a}
   #say .tap{float:right;font-size:13px;color:#8a6a3a}
+  #say .extra{margin-top:8px;padding:8px 10px;border-radius:10px;font-size:15px;line-height:1.35;background:#f3e2b8;color:#3a2a14}
+  #say .extra.deep{background:#e4ecdf;border-left:4px solid #1f6b45}
+  #say .extra.help{background:#fbe6d2;border-left:4px solid #ee8133}
+  .levels{margin:4px auto 16px;max-width:560px;text-align:center}
+  .levels .lt{font-family:'Cinzel',Georgia,serif;font-weight:700;color:#7a4a1a;font-size:16px;margin-bottom:6px}
+  .levels .lb{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+  .levels .lb button{font-size:15px;padding:8px 14px;background:#fff8e6;color:#7a4a1a;border:2px solid #7a4a1a;box-shadow:none}
+  .levels .lb button.on{background:#7a4a1a;color:#fff8e6}
+  .levels .ln{font-size:14px;color:#6a5030;margin-top:6px;min-height:1.3em}
+  #end .deep{font-size:15px;text-align:left;background:#e4ecdf;border-left:4px solid #1f6b45;border-radius:12px;padding:10px 14px;line-height:1.4}
+  #end .deep b{display:block;color:#1f6b45}
   #prompt{position:absolute;left:50%;top:58%;transform:translateX(-50%);background:rgba(42,29,14,.75);color:#fff6e3;padding:6px 14px;border-radius:12px;font-size:17px;white-space:nowrap}
   #cross{position:absolute;left:50%;top:50%;width:18px;height:18px;margin:-9px 0 0 -9px;border:2px solid rgba(255,255,255,.85);border-radius:50%;box-shadow:0 0 0 1px rgba(0,0,0,.4)}
   #meter{position:absolute;left:50%;top:calc(50% + 26px);width:120px;height:10px;margin-left:-60px;background:rgba(0,0,0,.45);border-radius:6px;overflow:hidden;border:2px solid #fff}
@@ -127,7 +138,7 @@
   <div id="stick"><i></i></div>
   <button id="act">Use</button>
   <div id="keys">WASD or arrows to walk &middot; drag to look &middot; Space to use</div>
-  <div id="say" class="hidden"><span class="tap">tap or Space &#9656;</span><div class="who"></div><div class="txt"></div><div class="ref"></div></div>
+  <div id="say" class="hidden"><span class="tap">tap or Space &#9656;</span><div class="who"></div><div class="txt"></div><div class="ref"></div><div class="extra hidden"></div></div>
   <button id="menuBtn" class="ghost">&#9776; Stories</button>
   <div id="fade"></div>
 </div>
@@ -138,6 +149,7 @@
     <h1 class="logo"><small>Through the Eyes of</small>the Bible</h1>
     <div class="by">A game by George</div>
     <p class="intro">See each story through the eyes of the person who lived it. Finish a story to unlock the next one.</p>
+    <div class="levels"><div class="lt">Bible level</div><div class="lb" id="levelBtns"></div><div class="ln" id="levelNote"></div></div>
     <button id="versesBtn">&#128220; My Bible verses</button>
     <div class="stories" id="storyList"></div>
     <p class="how"><b>How to play:</b> WASD or arrow keys to walk, drag to look around, Space or E to use things. On a tablet, walk with the circle on the left, drag to look, and press the big button.</p>
@@ -173,6 +185,7 @@
     <div class="verse" id="endVerse"></div>
     <div class="ref" id="endRef"></div>
     <div class="unlock" id="endUnlock"></div>
+    <div class="deep hidden" id="endDeep"></div>
     <div class="next" id="endNext"></div>
     <div class="btns"><button class="ghost" id="endVerses">See my verses</button><button id="endBtn">Back to the stories</button></div>
   </div>
@@ -242,12 +255,269 @@ const STORIES = [
   { id:'easter', ready:true, blurb:'Walk to the tomb before sunrise, find the stone rolled away, see two angels, and meet Jesus, alive again!', endVerse:'"I have seen the Lord!"', endRef:'John 20:18', before:"Jesus rode into Jerusalem on a donkey, and crowds waved palm branches. But the leaders were jealous and wanted to get rid of Him. Jesus ate a last supper with His disciples. Then He was arrested and died on a cross on a Friday, taking the punishment for everyone's sins. His body was put in a tomb with a huge stone in front.", title:'The First Easter', who:'You are Mary Magdalene', ref:'John 20' },
   { id:'paul', ready:true, blurb:'March to Damascus to arrest Jesus’ followers, get knocked down by a light from heaven, go blind, see again, and start telling everyone about Jesus.', endVerse:'"Jesus is the Son of God."', endRef:'Acts 9:20', before:"Jesus rose from the dead and visited His friends for 40 days. Then He went up to heaven and sent the Holy Spirit to help them. The disciples told everyone about Jesus, and many people believed. But a man named Saul hated the followers of Jesus. He put them in jail, and he set off to the city of Damascus to arrest even more.", title:'Paul on the Road to Damascus', who:'You are Paul', ref:'Acts 9' },
 ];
+/* ================= Bible levels ================= */
+// Beginner: easier "before" pages and Word help. Kids (10 to 12): the game as written. Grown-up: Go deeper notes and a Big picture note.
+const LEVELS=[{id:'beginner',name:'Beginner',note:'For people who have never read the Bible. Bible words get explained as you go.'},{id:'kids',name:'Ages 10 to 12',note:'The stories just as the Bible tells them.'},{id:'grown',name:'Grown-up',note:'Extra “Go deeper” notes about history, Hebrew and Greek words, and how each story connects to the rest of the Bible.'}];
+const LEVEL_KEY='throughTheEyes.level';
+let LEVEL=(()=>{ try{ const v=localStorage.getItem(LEVEL_KEY); return LEVELS.some(l=>l.id===v)?v:'kids'; }catch(e){ return 'kids'; } })();
+function setLevel(v){ LEVEL=v; try{ localStorage.setItem(LEVEL_KEY,v); }catch(e){} }
+const EASY_BEFORE={
+  adam:"The Bible is the holy book that Christians believe is God’s Word. Its very first story is about how everything began. Before there was a world, there was only God. God has always been alive, and He is powerful and good. In this story you will watch God make the world, one day at a time. Then you will become Adam, the very first person.",
+  noah:"Adam and Eve, the first people, did not listen to God, so they had to leave their beautiful garden. Doing what God says not to do is called sin. Many years later, the world was full of people, and almost everyone was mean and hurt each other. But one man, Noah, still loved God and did what was right.",
+  abraham:"God sent a giant flood but kept Noah’s family safe in a big boat. Over hundreds of years, Noah’s family grew into all the people of the world. Then God spoke to a man named Abram. God asked him to move far away to a new land, and promised to give him a huge family. Later God changed his name to Abraham.",
+  joseph:"God kept His promise to Abraham. When Abraham and his wife Sarah were very old, they had a baby named Isaac. Isaac grew up and had a son named Jacob. Jacob had twelve sons, but he loved one of them, Joseph, the most. That made Joseph’s big brothers very jealous.",
+  babymoses:"Joseph became a leader in Egypt, a big country in Africa, and his whole family moved there. Over 400 years they grew into a huge group of people called the Israelites. Then a new king of Egypt, called Pharaoh, got scared of them. He made them his slaves and gave a terrible order: every Israelite baby boy had to be thrown into the river.",
+  bush:"A princess of Egypt found baby Moses floating in the river and raised him in the palace. When Moses grew up, he saw an Egyptian hurting an Israelite slave. Moses got so angry that he killed the Egyptian, and then he ran away to the desert. He lived there for 40 years and took care of sheep.",
+  redsea:"God told Moses to go back to Egypt and tell Pharaoh, “Let my people go!” Pharaoh kept saying no. So God sent ten disasters, called plagues, like frogs everywhere, bugs, hail and darkness. After the last one, Pharaoh finally let the Israelites leave. But then he changed his mind and chased them with his whole army.",
+  jericho:"God led the Israelites through the desert for 40 years. He fed them with special food from the sky called manna, and He gave Moses ten important rules, the Ten Commandments. When Moses died, God picked Joshua to lead the people into the land God had promised them. But the first city in the way, Jericho, had huge walls.",
+  gideon:"The Israelites moved into their new land. But again and again, they forgot about God and prayed to statues of pretend gods instead. Each time, enemies came and hurt them. When they asked God for help, He sent a leader, called a judge, to rescue them. This time the enemies were the Midianites, who kept stealing all their food.",
+  samson:"With God’s help, Gideon’s small army beat the Midianites, and Israel had peace for 40 years. But then the people forgot God again, and enemies called the Philistines took charge over them. An angel, a messenger from God, told a woman she would have a special son. He must never cut his hair, and God would make him super strong. That son was Samson.",
+  elijah:"Later, God gave Israel kings. A young shepherd named David became a great king, and his son Solomon built a beautiful temple, a house for worshiping God. After that, the kingdom split in two. A bad king named Ahab and his wife Jezebel told everyone to pray to a pretend god called Baal. So God stopped the rain for three years. Then God sent Elijah, a prophet who brought God’s messages, to face Ahab.",
+  jonah:"Elijah proved that the Lord is the one true God. After that, God kept sending prophets with messages for people. Nineveh was a giant city in a country that was Israel’s enemy, and the people there did very bad things. God told a prophet named Jonah to go there and warn them. But Jonah did not want to go.",
+  daniel:"God’s people kept turning away from Him. So God let a powerful army from Babylon conquer Jerusalem, their main city, and take many of the people far away. One of them was a young man named Daniel. Daniel prayed to God every day, and he became one of the king’s most important helpers. Later a new empire, Persia, took over, and King Darius was in charge.",
+  esther:"God kept Daniel safe from the lions. Years later, some of God’s people went home to Jerusalem, but many stayed in Persia. The king of Persia picked a young Jewish woman named Esther to be his queen. Jewish people are the family that came from Abraham. Nobody knew Esther was Jewish. Then the king’s evil helper, Haman, made a plan to kill all the Jewish people.",
+  christmas:"Esther saved her people. After that, God’s people waited about 400 years for the Savior God had promised, someone who would rescue the world. Then an angel visited a young woman named Mary. He said she would have a baby who was God’s own Son, and she should name Him Jesus. Mary and her husband Joseph traveled to the town of Bethlehem, but there was no room for them anywhere.",
+  wisemen:"Some shepherds found baby Jesus lying in a manger, a feeding box for animals, just like the angel said. Far away in the east, some wise men who studied the stars saw a brand new star. They believed it meant a new king had been born, so they started a long trip to find Him.",
+  storm:"A wicked king named Herod tried to hurt baby Jesus, but His family escaped. Jesus grew up in a town called Nazareth. When He was about 30, He began teaching people about God and healing sick people. He chose twelve friends, called disciples, to follow Him and learn from Him. Some of them, like Peter, were fishermen.",
+  loaves:"Jesus kept teaching and doing miracles, amazing things only God can do. More and more people came to see Him. One day a huge crowd followed Jesus to a hillside far from any town. They stayed all day listening to Him, and it got late. Everyone was hungry, and there was no food to buy.",
+  water:"Jesus fed more than 5,000 people with just one boy’s lunch, and there were twelve baskets of leftovers! Right after that, Jesus sent His disciples across the lake in a boat, and He went up a mountain by Himself to pray, which means to talk with God. In the middle of the night, a strong wind blew against their boat.",
+  zacchaeus:"Jesus and His disciples traveled from town to town, and Jesus taught that God loves everyone, even people others don’t like. Now Jesus was walking to Jerusalem, and He went through a city called Jericho. A man there named Zacchaeus was a tax collector. His job was taking money for the rulers, but he cheated and took extra, so nobody liked him.",
+  easter:"Jesus rode into Jerusalem on a donkey, and crowds cheered and waved palm branches. But some leaders were jealous and wanted to get rid of Him. Jesus ate a last supper with His disciples. Then He was arrested, and on a Friday He died on a cross. The Bible says He did this to take the punishment for everyone’s wrong things, called sins. His body was put in a tomb, a little room cut into rock, with a huge stone rolled in front.",
+  paul:"Jesus came back to life! He visited His friends for 40 days, then went up to heaven. He sent the Holy Spirit, God’s Spirit, to be with them and help them. Jesus’ friends told everyone about Him, and many people believed. But a man named Saul hated the followers of Jesus. He put them in jail, and he set off for the city of Damascus to arrest even more."
+};
+// Word help for Beginner: [pattern, word shown, meaning]. Longer phrases come first.
+const WORD_HELP=[
+  [/\bark of the covenant\b/i,'ark of the covenant','A gold-covered box that held the Ten Commandments. It showed that God was with His people.'],
+  [/\bholy spirit\b/i,'Holy Spirit','God’s Spirit. He lives with people who trust Jesus and helps them.'],
+  [/\btax collectors?\b/i,'tax collector','Tax collectors took money from people for the Roman rulers. Many took extra for themselves, so people hated them.'],
+  [/\bson of man\b/i,'Son of Man','A name Jesus used for Himself. It comes from the book of Daniel.'],
+  [/\bten commandments\b/i,'Ten Commandments','Ten important rules God gave to Moses, like “Do not steal.”'],
+  [/\bark\b/i,'ark','A very big boat. Noah’s ark was like a giant floating box.'],
+  [/\baltars?\b/i,'altar','A table made of stones or dirt where people gave gifts to God.'],
+  [/\b(offering|sacrifice)s?\b/i,'offering','A gift given to God. Sometimes it was food or an animal.'],
+  [/\bprophets?\b/i,'prophet','Someone God chose to give His messages to people.'],
+  [/\bpharaoh\b/i,'Pharaoh','The title of the king of Egypt.'],
+  [/\bisraelites?\b/i,'Israelites','The big family that came from Abraham, Isaac and Jacob. God chose them to be His people.'],
+  [/\bphilistines?\b/i,'Philistines','Enemies of Israel who lived near the sea.'],
+  [/\bmidianites?\b/i,'Midianites','Desert people who kept attacking Israel.'],
+  [/\bangels?\b/i,'angel','A messenger from God. Angels serve God in heaven.'],
+  [/\bthe lord\b/i,'the Lord','A name for God. It means the one in charge of everything.'],
+  [/\bbaal\b/i,'Baal','A made-up god. People made statues of him and prayed to him, but he was not real.'],
+  [/\bcovenant\b/i,'covenant','A very serious promise, like an agreement God makes with people.'],
+  [/\bpriests?\b/i,'priest','A person whose job was to lead worship and give gifts to God for the people.'],
+  [/\bdisciples?\b/i,'disciple','A student who follows a teacher everywhere. Jesus had twelve main disciples.'],
+  [/\bsynagogues?\b/i,'synagogue','A building where Jewish people meet to pray and read God’s Word.'],
+  [/\bbaptized\b/i,'baptized','Being dipped in water or having water poured on you. It shows that you belong to Jesus.'],
+  [/\btomb\b/i,'tomb','A place where a dead body is laid, often a little room cut into rock.'],
+  [/\b(messiah|christ)\b/i,'Messiah','The chosen King God promised to send. In Greek the word is Christ.'],
+  [/\bsavior\b/i,'Savior','Someone who rescues people. The Bible calls Jesus the Savior.'],
+  [/\bworship(ed|ing)?\b/i,'worship','Showing God that He is the most important, by praying, singing, bowing or obeying.'],
+  [/\bpray(ed|ing|s)?\b/i,'pray','Talking to God. You can pray anywhere, out loud or quietly.'],
+  [/\bfast(ing|ed)\b|\bfast for\b/i,'fasting','Not eating for a while so you can focus on praying to God.'],
+  [/\bmanger\b/i,'manger','A wooden box that holds food for animals.'],
+  [/\bshepherds?\b/i,'shepherd','A person who takes care of sheep.'],
+  [/\bfrankincense\b/i,'frankincense','Sap from a tree that smells sweet when it is burned. It was very expensive.'],
+  [/\bmyrrh\b/i,'myrrh','A sweet-smelling oil from a tree. It was used as medicine and for burying people.'],
+  [/\bnineveh\b/i,'Nineveh','A giant city in Assyria, a country that was Israel’s enemy.'],
+  [/\bjerusalem\b/i,'Jerusalem','The city where God’s temple was. It is still a city today, in Israel.'],
+  [/\bromans?\b/i,'Romans','The Romans ruled a huge empire, including Israel, in Jesus’ time.'],
+  [/\bsalvation\b/i,'salvation','Being rescued by God from sin and brought back to Him.'],
+  [/\bsinners?\b/i,'sinner','Someone who does wrong. The Bible says everyone has sinned.'],
+  [/\bsin(s)?\b/i,'sin','Doing wrong things that God says not to do.'],
+  [/\btemple\b/i,'temple','God’s special house in Jerusalem, where people came to worship Him.'],
+  [/\bheaven\b/i,'heaven','The place where God lives.'],
+  [/\bmiracles?\b/i,'miracle','Something amazing that only God can do, like healing someone right away.'],
+  [/\bfaith\b/i,'faith','Trusting God, even when you can’t see how things will work out.'],
+  [/\bscepter\b/i,'scepter','A fancy rod that a king holds. Holding it out meant “You may come close.”'],
+  [/\bcubits?\b/i,'cubit','A measurement as long as a grown-up’s arm from elbow to fingertips, about 18 inches.'],
+  [/\bmanna\b/i,'manna','Special food God sent from the sky every morning in the desert.'],
+  [/\bidols?\b/i,'idol','A statue people pray to as if it were a god.'],
+  [/\bjewish\b|\bjews\b/i,'Jewish','Jewish people are Abraham’s family, the Israelites. Jesus was Jewish too.'],
+  [/\bbabylon\b/i,'Babylon','A powerful empire that conquered Jerusalem.'],
+  [/\bpersia(n|ns)?\b/i,'Persia','An empire east of Israel, where Iran is today.'],
+  [/\bgentiles\b/i,'Gentiles','People who are not Jewish.'],
+  [/\bplagues?\b/i,'plague','A terrible disaster sent by God.'],
+  [/\bblessed?\b|\bblessing\b/i,'bless','To bless means to give good things and show kindness.']
+];
+// Grown-up: Go deeper notes, shown when a line with that exact Bible reference appears.
+const GO_DEEPER={
+  adam:{
+    'Genesis 1:1-2':'The Hebrew word for “created,” bara, is only ever used in the Bible with God as the one doing it. People make things; only God creates in this sense. The Spirit “hovering” over the waters uses the same word as an eagle hovering over its young in Deuteronomy 32:11.',
+    'Genesis 2:7':'Adam’s name comes from adamah, the Hebrew word for ground or soil. God forms the adam from the adamah and breathes into him the breath of life, so the first human is an earth-creature brought to life by God’s own breath.',
+    'Genesis 2:18':'The word for “helper,” ezer, is used most often in the Old Testament for God Himself helping His people, as in Psalm 121:1-2. It means a strong ally, not a lesser assistant.',
+    'Genesis 3:15':'Christians have long called this verse the “first gospel.” It is the first hint in the Bible that a child of the woman would one day crush the serpent. Paul echoes it in Romans 16:20.',
+    'Genesis 3:21':'Before sending them out, God Himself makes clothes of skin for Adam and Eve. Many readers see this as the first time something died to cover human shame, a pattern that points ahead to sacrifice.'
+  },
+  noah:{
+    'Genesis 6:14-16':'The ark was 300 by 50 by 30 cubits, roughly 450 by 75 by 45 feet. A six-to-one length-to-width ratio is close to what shipbuilders still use for stable cargo ships. The Hebrew word for ark, tevah, is used in only one other place: the basket baby Moses was put in (Exodus 2:3).',
+    'Genesis 8:1-3':'“God remembered Noah” is the turning point of the flood story. In Hebrew, remembering is not just recalling. It means acting on a commitment. Many scholars notice the story is built like a mirror, with this line at the center.',
+    'Genesis 9:13-16':'The word for rainbow is the ordinary Hebrew word for a war bow, qeshet. Many readers see God hanging up His bow in the sky, aimed away from the earth, as a sign of peace.'
+  },
+  abraham:{
+    'Genesis 12:2-3':'This promise has three parts: land, a great nation, and blessing for “all peoples on earth.” Paul quotes the last part in Galatians 3:8 and calls it the gospel announced ahead of time to Abraham.',
+    'Genesis 15:6':'This is one of the most quoted Old Testament verses in the New Testament (Romans 4:3, Galatians 3:6, James 2:23). Paul points out that Abraham was counted right with God by trusting Him, years before he was circumcised and centuries before the Law was given.',
+    'Genesis 17:5, 17:15':'Abram means “exalted father,” and Abraham sounds like “father of many.” Sarai and Sarah both mean princess. God renamed them before Isaac was born, so every time anyone said their names, they repeated God’s promise.',
+    'Hebrews 11:8':'Hebrews 11 is sometimes called the Hall of Faith. Abraham gets more verses there than anyone else.'
+  },
+  joseph:{
+    'Genesis 37:3':'The Hebrew phrase is ketonet passim. It may mean a coat of many colors, or a long robe with sleeves. The same rare phrase describes the robe of King David’s daughter Tamar in 2 Samuel 13:18. Either way, it marked Joseph as the favorite who did not have to do rough work.',
+    'Genesis 37:28':'Joseph was sold for twenty shekels of silver, the same value Leviticus 27:5 later gives for a boy his age. Many readers compare it to Judas handing Jesus over for thirty pieces of silver.',
+    'Genesis 41:42-46':'Joseph was 30 when he began serving Pharaoh. He had been a slave and a prisoner for about 13 years, ever since his brothers sold him at 17 (Genesis 37:2).',
+    'Genesis 45:4-5':'This is the key to the whole Joseph story. Later he says it even more plainly: “You intended to harm me, but God intended it for good” (Genesis 50:20). The Bible often shows God working through people’s wrong choices without calling those choices good.'
+  },
+  babymoses:{
+    'Exodus 1:22':'Right before this, two Hebrew midwives named Shiphrah and Puah refused Pharaoh’s order to kill the baby boys (Exodus 1:15-21). The Bible remembers their names, but never tells us the name of this Pharaoh.',
+    'Exodus 2:3':'The word for basket is tevah, the same word used for Noah’s ark. Both times, God saves someone by putting them in a little covered vessel on dangerous water.',
+    'Exodus 2:9':'Pharaoh’s own daughter paid Moses’ mother to nurse her own son. Her name, Jochebed, is given later in Exodus 6:20.',
+    'Exodus 2:10':'Moses sounds like the Hebrew word mashah, “to draw out.” It is also close to the Egyptian word for son, mose, found in royal names like Thutmose.'
+  },
+  bush:{
+    'Exodus 3:2':'The angel of the Lord in the bush is also called God Himself in verse 4. Since the early church, many Christian teachers have understood these appearances as the Son of God, before He was born as Jesus.',
+    'Exodus 3:5':'Taking off your sandals was a sign of respect, like a servant before a master. Joshua is told the very same thing near Jericho in Joshua 5:15.',
+    'Exodus 3:14':'“I AM WHO I AM” is where God’s personal name comes from. In Hebrew it is written YHWH, and many Bibles print it as LORD in small capital letters. Jesus later said, “Before Abraham was born, I am!” (John 8:58), and the crowd picked up stones because they understood what He was claiming.',
+    'Exodus 4:10-13':'Moses gives God five excuses in chapters 3 and 4. God answers every one. Only when Moses finally says “Please send someone else” does God become angry, and He sends Aaron to help.'
+  },
+  redsea:{
+    'Exodus 13:21':'The pillar of cloud and fire is the same presence of God that later fills the tabernacle (Exodus 40:34-38). God did not just give directions. He went with them.',
+    'Exodus 14:13-14':'Moses tells the people to stand still, and in the very next verse God tells them to move on. Faith in the Bible is both: trusting God, and then walking forward.',
+    'Exodus 14:21':'The Hebrew name is Yam Suph, which can mean “Sea of Reeds.” Scholars still debate which body of water it was, but the text is clear that the water stood up like a wall on both sides (Exodus 14:22).',
+    'Exodus 15:20':'Miriam is the first woman the Bible calls a prophet. Her short song in Exodus 15:21 is thought to be one of the oldest poems in the whole Bible.'
+  },
+  jericho:{
+    'Joshua 1:9':'The name Joshua, Yehoshua, means “the LORD saves.” In Greek it becomes Iesous, the same name as Jesus.',
+    'Joshua 5:14':'The commander of the Lord’s army will not say he is on Joshua’s side. The real question was not whether God was on Israel’s side, but whether Israel was on His. Joshua worships him, and he accepts it.',
+    'Joshua 6:4-5':'These horns were shofars, made from rams’ horns, not metal trumpets. The shofar is still blown today at Rosh Hashanah, the Jewish New Year.',
+    'Joshua 6:25, Matthew 1:5':'Rahab was a Canaanite, yet she became the great-great-grandmother of King David and is named in Jesus’ family tree. Hebrews 11:31 and James 2:25 both praise her faith.'
+  },
+  gideon:{
+    'Judges 6:12':'The angel calls Gideon a “mighty warrior” while he is hiding in a winepress. God often names people by what He will make them, not by what they are yet.',
+    'Judges 6:24':'Gideon names his altar “The LORD is Peace,” Yahweh Shalom. Shalom means much more than no war. It means everything being whole and right.',
+    'Judges 6:36-37':'People today talk about “putting out a fleece” to ask God for a sign. But God had already told Gideon He would save Israel through him (Judges 6:14-16). The fleece shows God being patient with weak faith more than it gives a method to copy.',
+    'Judges 7:2-3':'Gideon started with 32,000 men and ended with 300, less than one percent. God says why: so Israel could not boast that their own strength saved them. Compare 2 Corinthians 12:9, “My power is made perfect in weakness.”'
+  },
+  samson:{
+    'Judges 13:3-5':'Samson was a Nazirite from birth. Numbers 6 describes the Nazirite vow: no wine or grapes, no touching dead bodies, and no haircut. Samson’s story shows him breaking that vow piece by piece, which helps explain the sad shape of his life.',
+    'Judges 14:6':'The Bible says the Spirit of the LORD came powerfully on him. Samson’s strength was never really in his hair. It came from God. The uncut hair was the sign of his promise to God.',
+    'Judges 16:28':'This is only the second prayer of Samson’s that the Bible records (the first is Judges 15:18). His most important moment came when he was weakest and asked God for help.'
+  },
+  david:{
+    '1 Samuel 16:11':'David was the youngest of eight sons, the one his father did not even bring in. When Samuel came, God told him, “People look at the outward appearance, but the LORD looks at the heart” (1 Samuel 16:7).',
+    '1 Samuel 17:4-5':'The standard Hebrew text says Goliath was “six cubits and a span,” about 9 feet 9 inches. The oldest Greek copies and a Dead Sea Scroll say four cubits and a span, about 6 feet 9 inches. Either way, he towered over almost every man of his time.',
+    '1 Samuel 17:40':'A shepherd’s sling was a real weapon of war. Judges 20:16 describes 700 left-handed soldiers who could sling a stone at a hair and not miss.',
+    '1 Samuel 17:45':'David’s speech is all about God’s name, not his own. He says the battle will happen “so that the whole world will know that there is a God in Israel” (1 Samuel 17:46).'
+  },
+  elijah:{
+    '1 Kings 18:21':'“Waver between two opinions” can also be translated “limp on two crutches.” The people were not rejecting God. They were trying to keep both God and Baal.',
+    '1 Kings 18:27':'Elijah’s teasing had a point. Baal was worshiped as a storm god who sent rain and lightning. After three years without rain, he could not even make a spark.',
+    '1 Kings 18:30-31':'Elijah used twelve stones for the twelve tribes, even though the kingdom had split and he was in the northern half. He was reminding everyone that God’s people were still meant to be one family.',
+    '1 Kings 18:39':'Elijah’s name means “My God is the LORD.” When the people shout “The LORD, He is God!”, they are nearly saying his name.'
+  },
+  jonah:{
+    'Jonah 1:3':'Tarshish was probably in Spain, at the far western edge of the world Jonah knew. Nineveh was about 500 miles to the east. Jonah headed about as far the other way as he could.',
+    'Jonah 1:17':'The Hebrew says dag gadol, “a great fish,” not specifically a whale. The key word is “provided” or “appointed.” God appoints four things in this book: a fish, a plant, a worm and a wind.',
+    'Jonah 2:6, 2:9':'“Salvation comes from the LORD” is the center of the book. Jonah could say it about himself, but the rest of the story shows he struggled to accept it for his enemies.',
+    'Jonah 3:4':'Jonah’s whole sermon is only five words in Hebrew: “Forty more days, and Nineveh overthrown.” It may be the shortest and most effective sermon in the Bible.'
+  },
+  daniel:{
+    'Daniel 6:6-7':'Persian law was known for not being changeable once the king sealed it. Esther 8:8 mentions the same rule. That is why the king could not cancel his own law.',
+    'Daniel 6:10':'Daniel prayed toward Jerusalem, following Solomon’s prayer in 1 Kings 8:48, which asked God to hear His people when they prayed toward the city from exile. Daniel was probably in his 80s by this time.',
+    'Daniel 6:17':'The stone over the den, sealed with the king’s ring, is a lot like the stone sealed over Jesus’ tomb (Matthew 27:66). Both times, someone came out alive in the morning.',
+    'Daniel 6:22':'Daniel never says he was brave. He says God shut the lions’ mouths. Hebrews 11:33 includes people who “shut the mouths of lions” in its list of faith.'
+  },
+  esther:{
+    'Esther 4:11':'The king had not called for Esther in thirty days. She did not even know if he still favored her when she risked her life.',
+    'Esther 4:14':'The book of Esther never mentions God by name, not once. But it is full of “coincidences,” like the king being unable to sleep on exactly the right night (Esther 6:1). Many readers see that as the point: God is at work even when He seems hidden.',
+    'Esther 4:16':'Fasting in the Bible almost always goes together with prayer. Even though prayer is not mentioned, Esther and her people were almost certainly praying.',
+    'Esther 8:16, 9:22':'Jewish people still celebrate this rescue every year at Purim. The book of Esther is read aloud, and people make noise to drown out Haman’s name every time it is read.'
+  },
+  christmas:{
+    'Luke 2:8':'Shepherds were near the bottom of society, and their work kept them from many religious duties. God announced His Son’s birth to them first, not to kings or priests.',
+    'Luke 2:11':'This one verse gives Jesus three huge titles: Savior, Messiah (the anointed King), and Lord. At the time, people called the Roman emperor Augustus savior and lord.',
+    'Luke 2:12':'A manger is an animal feeding trough. Bethlehem means “house of bread,” and Jesus later calls Himself “the bread of life” (John 6:35).',
+    'Luke 2:14':'Older translations say “goodwill toward men,” but most scholars think the original means peace to the people God is pleased with. The peace here is shalom: everything made right between God and people.'
+  },
+  wisemen:{
+    'Matthew 2:1':'The Greek word is magoi. They were probably astrologers or royal advisers from Persia or Babylon. The Bible never says there were three, only that there were three gifts, and it never calls them kings.',
+    'Matthew 2:5-6':'The priests knew exactly where the Messiah would be born, from Micah 5:2, but none of them went the six miles to see. The foreigners who had traveled hundreds of miles were the ones who worshiped.',
+    'Matthew 2:9':'By the time the magi arrived, Jesus was a “child” in a “house,” not a newborn in a stable. Herod later killed boys two years old and under (Matthew 2:16), which suggests the visit came months or even a year or more after the birth.',
+    'Matthew 2:11':'Many people see the gifts as fitting who Jesus is: gold for a king, frankincense for God (it was burned in temple worship), and myrrh for someone who would die (it was used for burial, as in John 19:39).'
+  },
+  storm:{
+    'Mark 4:38':'This storm is the only time the Gospels show Jesus asleep. He was fully human and truly tired. A moment later He shows He is fully God.',
+    'Mark 4:39':'“Quiet!” is the same word Jesus used to silence a demon in Mark 1:25. In the Psalms, it is God who stills the raging sea (Psalm 89:9, Psalm 107:29), and the disciples would have known those Psalms.',
+    'Mark 4:41':'Mark says the disciples were terrified after the storm stopped. The Greek literally says “they feared a great fear.” The storm scared them, but Jesus’ power scared them even more.'
+  },
+  loaves:{
+    'John 6:5':'This is the only miracle, besides the resurrection, that appears in all four Gospels.',
+    'John 6:9':'Only John mentions the boy, and only John says the loaves were barley, the cheapest bread, eaten mostly by poor people.',
+    'John 6:14':'“The Prophet who is to come” points to Deuteronomy 18:15, where Moses promised God would raise up a prophet like him. Moses’ people ate manna in the wilderness, and now Jesus feeds a crowd in a lonely place.',
+    'John 6:35':'This is the first of seven “I am” sayings in John’s Gospel. They echo God’s name, I AM, from the burning bush.'
+  },
+  water:{
+    'Matthew 14:25':'The Bible says this was in the fourth watch of the night, between 3 and 6 in the morning. The disciples had been rowing most of the night.',
+    'Matthew 14:27':'“It is I” in Greek is ego eimi, literally “I am,” the words God used for His name at the burning bush. In Job 9:8, it is God alone who “treads on the waves of the sea.”',
+    'Matthew 14:30':'Peter’s prayer is only three words in Greek: Kyrie, soson me. It is one of the shortest prayers in the Bible.',
+    'Matthew 14:33':'This is the first time in Matthew that the disciples together call Jesus the Son of God.'
+  },
+  zacchaeus:{
+    'Luke 19:2':'“Chief tax collector” is a title found nowhere else in the Bible. Jericho was a rich trade city on the road to Jerusalem, so Zacchaeus probably oversaw other collectors there.',
+    'Luke 19:4':'A sycamore-fig has a short trunk and wide, low branches, so it is easy to climb. But running and climbing trees would have been embarrassing for a rich, important man in that culture.',
+    'Luke 19:8':'Paying back four times matches the Law of Moses for stealing and selling a sheep (Exodus 22:1). For someone who confessed, the law only asked for the amount plus a fifth (Numbers 5:6-7). Zacchaeus went far beyond what was required.',
+    'Luke 19:10':'This verse is often called a summary of Luke’s whole Gospel. It echoes Ezekiel 34:16, where God says about Himself as Israel’s true shepherd, “I will search for the lost.”'
+  },
+  easter:{
+    'John 20:1':'All four Gospels say women were the first witnesses of the empty tomb. In that culture a woman’s testimony was not trusted in court, so many historians think no one making up the story would have included this detail.',
+    'John 20:6-7':'Grave robbers would have taken the body, wrappings and all, or left a mess. The linen lying there and the head cloth folded by itself told John something else had happened. Verse 8 says he saw and believed.',
+    'John 20:15':'The Bible began in a garden, and here, on the first day of a new week, the risen Jesus is mistaken for a gardener. Many readers see this as the start of a new creation.',
+    'John 20:16':'Jesus says just one word, her name, and she knows Him. It fits John 10:3, where the good shepherd “calls his own sheep by name.” Rabboni is Aramaic for “my teacher.”',
+    'John 20:17':'This is the first time in John’s Gospel that Jesus calls the disciples His brothers, and He says “My Father and your Father.” Because of the resurrection, His followers now belong to God’s family.'
+  },
+  paul:{
+    'Acts 9:1':'Saul was from Tarsus and trained in Jerusalem under Gamaliel, a famous rabbi (Acts 22:3). He was a Pharisee, someone very serious about keeping God’s law (Philippians 3:5).',
+    'Acts 9:4':'Jesus does not ask why Saul is hurting His followers. He asks why Saul is persecuting Him. Jesus is so joined to His people that hurting them is hurting Him.',
+    'Acts 9:5-6':'Paul tells this story twice more, in Acts 22 and Acts 26. In Acts 26:14 he adds that Jesus said, “It is hard for you to kick against the goads,” a farming saying about an ox kicking against a pointed stick.',
+    'Acts 9:13-15':'God calls Saul His “chosen instrument” to carry His name to the Gentiles, people who are not Jewish. Most of the rest of Acts follows Paul doing exactly that.',
+    'Acts 13:9':'God did not rename Saul. Saul was his Hebrew name, after Israel’s first king from his own tribe of Benjamin, and Paul (Paulus) was his Roman name. Luke switches to Paul as he begins working mostly among non-Jewish people.'
+  }
+};
+const BIG_PICTURE={
+  adam:'Genesis 1 to 3 sets up the whole Bible: a good creation, a broken friendship with God, and a promise of rescue. The Bible ends in Revelation 22 with the tree of life again and God living with His people, so the story you just played gets undone at the very end.',
+  noah:'Jesus and Peter both point back to Noah (Matthew 24:37-39, 1 Peter 3:20-21). Peter compares the flood to baptism: just as the ark carried Noah’s family through the water to a new start, baptism pictures a new start with God.',
+  abraham:'Matthew’s Gospel opens with “Jesus the Messiah, the son of David, the son of Abraham” (Matthew 1:1). The promise that all nations would be blessed through Abraham’s family is the thread the rest of the Bible follows.',
+  joseph:'Joseph’s story explains how Abraham’s family ended up in Egypt, which sets up Moses and the Exodus. Many Christians see Joseph as a picture of Jesus: loved by his father, rejected by his brothers, sold for silver, and raised up to save the very people who rejected him.',
+  babymoses:'Matthew tells the story of baby Jesus in a way that echoes baby Moses: a wicked king kills baby boys, the child escapes, and God later calls Him out of Egypt (Matthew 2:13-16).',
+  bush:'At the burning bush God reveals His name and His plan to rescue His people from slavery. That rescue, the Exodus, becomes the Bible’s main picture of salvation, and Jesus later dies at Passover, the feast that remembers it.',
+  redsea:'Paul calls the crossing of the sea a kind of baptism (1 Corinthians 10:1-2). The Exodus is the event the rest of the Old Testament keeps looking back to, the way Christians look back to the cross and the empty tomb.',
+  jericho:'Jericho shows the land was God’s gift, not something Israel won by strength. The walls fell after the people obeyed, not after they fought. Hebrews 11:30 says the walls fell “by faith.”',
+  gideon:'The book of Judges repeats a cycle: the people forget God, trouble comes, they cry out, and God sends a rescuer. Each rescuer is flawed, and the book ends with “Israel had no king” (Judges 21:25). It shows they needed a better King.',
+  samson:'Samson shows how God can use deeply flawed people. Hebrews 11:32 still lists him among the faithful. Many readers see his death, winning his greatest victory by giving up his life, as a faint picture of Jesus.',
+  david:'David becomes Israel’s greatest king, and God promises him a kingdom that lasts forever (2 Samuel 7:16). That is why Jesus is called the Son of David. Like David, Jesus fights the enemy His people cannot beat, and His victory counts for them.',
+  elijah:'Elijah never died. He was taken to heaven in a whirlwind (2 Kings 2:11). The last book of the Old Testament promises Elijah will come again (Malachi 4:5), Jesus says John the Baptist came in that role (Matthew 11:14), and Elijah appears with Jesus on the mountain of the Transfiguration (Matthew 17:3).',
+  jonah:'Jesus pointed to Jonah as a sign: three days in the fish pictured His own three days in the grave (Matthew 12:40). The book ends with God asking Jonah a question that never gets answered, as if it is being asked of the reader: shouldn’t I care about that great city?',
+  daniel:'Daniel lived his whole adult life in a foreign empire and stayed faithful without fighting it, which is why Christians living under Rome loved this story. Daniel’s visions also gave Jesus His favorite title for Himself, “Son of Man” (Daniel 7:13-14).',
+  esther:'Esther is one of only two books in the Bible named after a woman (the other is Ruth). Her story shows God keeping His promise to protect Abraham’s family, which had to survive for the Savior to be born from it.',
+  christmas:'Micah 5:2, written about 700 years earlier, said Israel’s ruler would come from Bethlehem. The angels’ news starts the fulfillment of promises reaching all the way back to Genesis 3:15.',
+  wisemen:'Matthew wrote mostly for Jewish readers, but he made sure foreigners were among the first to worship Jesus. It points ahead to the end of his Gospel, where Jesus sends His followers to “all nations” (Matthew 28:19).',
+  storm:'The Sea of Galilee sits about 700 feet below sea level with hills around it, so cool winds can rush down and stir up sudden storms. These were experienced fishermen, and they still thought they would drown. The story asks the question the whole Gospel of Mark answers: who is this?',
+  loaves:'The next day Jesus explains the miracle: He is the true bread from heaven, better than the manna Moses’ people ate (John 6:32-35). The miracle was a sign pointing to who He is.',
+  water:'Only Matthew tells about Peter walking on the water. In the Gospels Peter is often the first to speak and the first to fail, but Jesus keeps catching him. After the resurrection Jesus restores Peter, and he becomes a leader of the church (John 21:15-19).',
+  zacchaeus:'Right before this, Luke tells about a rich ruler who could not give up his money (Luke 18:18-25), and Jesus said what is impossible for people is possible with God (Luke 18:27). Zacchaeus is that impossible thing happening. His name even comes from a Hebrew word meaning “pure.”',
+  easter:'Paul wrote that if Christ has not been raised, our faith is useless (1 Corinthians 15:17). He lists people who saw the risen Jesus, including more than 500 at once, most still alive when he wrote (1 Corinthians 15:3-8). Christians worship on Sunday because Jesus rose on the first day of the week.',
+  paul:'Paul wrote 13 letters in the New Testament, almost half its books. The man who tried to stop the church spread it across the Roman world. Near the end of his life he wrote, “I have fought the good fight, I have finished the race, I have kept the faith” (2 Timothy 4:7).'
+};
+function beforeText(s){ return (LEVEL==='beginner'&&EASY_BEFORE[s.id])||s.before; }
+function levelExtra(txt, ref){ // returns [kind, html] for the current line, or null
+  if(!story) return null; const seen=story._seen||(story._seen=new Set());
+  if(LEVEL==='beginner'){ for(const [re,word,mean] of WORD_HELP){ if(seen.has(word)) continue; if(re.test(txt)){ seen.add(word); if(word==='ark of the covenant') seen.add('ark'); if(word==='sinner') seen.add('sin'); return ['help','<b>Word help: '+word+'.</b> '+mean]; } } }
+  if(LEVEL==='grown' && ref){ const n=(GO_DEEPER[story.id]||{})[ref]; if(n && !seen.has(ref)){ seen.add(ref); return ['deep','<b>Go deeper.</b> '+n]; } }
+  return null;
+}
 const READY = STORIES.filter(s=>s.ready);
 // A ready story opens when the ready story before it is done (or you already finished it).
 function isUnlocked(s){ const i=READY.indexOf(s); return i===0 || SAVE.done.includes(s.id) || SAVE.done.includes(READY[i-1].id); }
 
 function showMenu(){
-  stopStory();
+  stopStory(); renderLevels();
   $('menu').classList.remove('hidden');
   $('hud').classList.add('hidden');
   $('end').classList.add('hidden'); $('before').classList.add('hidden'); $('verses').classList.add('hidden');
@@ -258,14 +528,14 @@ function showMenu(){
     const el = document.createElement('div');
     if(!s.ready){
       el.className='story locked';
-      el.innerHTML=`<div class="num">Story ${i+1}</div><h3>${s.title}</h3><p class="who">${s.ref}</p><p>&#128274; Coming soon</p><details><summary>What happened before</summary>${s.before}</details>`;
+      el.innerHTML=`<div class="num">Story ${i+1}</div><h3>${s.title}</h3><p class="who">${s.ref}</p><p>&#128274; Coming soon</p><details><summary>What happened before</summary>${beforeText(s)}</details>`;
     } else {
       const open=isUnlocked(s), done=SAVE.done.includes(s.id);
       el.className='story'+(open?'':' locked');
       el.innerHTML=`<div class="num">Story ${i+1}</div>${done?'<div class="done-stamp">DONE</div>':''}
         <h3>${s.title}</h3><p class="who">${s.who}</p>
         <p>${open?s.blurb:'&#128274; Finish '+READY[READY.indexOf(s)-1].title+' to unlock this one.'}</p>
-        ${open?`<button>${done?'Play again':'Start'}</button>`:''}<p class="who">${s.ref}</p><details><summary>What happened before</summary>${s.before}</details>`;
+        ${open?`<button>${done?'Play again':'Start'}</button>`:''}<p class="who">${s.ref}</p><details><summary>What happened before</summary>${beforeText(s)}</details>`;
       if(open) el.querySelector('button').onclick=()=>showBefore(s.id);
     }
     list.appendChild(el);
@@ -535,6 +805,7 @@ function nextSay(){
   el.querySelector('.who').textContent=who||'';
   el.querySelector('.txt').textContent=txt;
   el.querySelector('.ref').textContent=ref||'';
+  { const ex=el.querySelector('.extra'), x=levelExtra(txt,ref); ex.className='extra'+(x?' '+x[0]:' hidden'); ex.innerHTML=x?x[1]:''; }
   el.classList.remove('hidden');
   sayBusyUntil = performance.now()+350;
 }
@@ -4537,7 +4808,8 @@ function finishStory(){
     $('endWho').textContent='You saw what '+({david:'David',adam:'Adam',noah:'Noah',abraham:'Abraham',joseph:'Joseph',babymoses:'Miriam',bush:'Moses',redsea:'Moses',jericho:'Joshua',gideon:'Gideon',samson:'Samson',elijah:'Elijah',jonah:'Jonah',daniel:'Daniel',esther:'Esther',christmas:'the shepherds',wisemen:'the wise men',storm:'Peter',loaves:'the boy',water:'Peter',zacchaeus:'Zacchaeus',easter:'Mary Magdalene',paul:'Paul'}[s.id]||'they')+' did.';
     $('endVerse').textContent=s.endVerse; $('endRef').textContent=s.endRef;
     $('endUnlock').textContent= nextReady ? 'You unlocked '+nextReady.title+'!' : (nextAny ? 'Next up: '+nextAny.title+'. It is coming soon!' : 'You finished every story!');
-    $('endNext').innerHTML = nextAny ? '<b>What happens next</b>'+nextAny.before : '';
+    $('endNext').innerHTML = nextAny ? '<b>What happens next</b>'+beforeText(nextAny) : '';
+    { const d=$('endDeep'), bp=LEVEL==='grown'&&BIG_PICTURE[s.id]; d.classList.toggle('hidden',!bp); d.innerHTML=bp?'<b>The big picture</b>':''; if(bp) d.appendChild(document.createTextNode(bp)); }
     $('endNext').classList.toggle('hidden', !nextAny);
     $('end').classList.remove('hidden');
   },900);
@@ -4558,12 +4830,14 @@ function showBefore(id){
   const s=STORIES.find(x=>x.id===id), i=STORIES.indexOf(s);
   $('menu').classList.add('hidden'); $('before').classList.remove('hidden');
   $('bNum').textContent='Story '+(i+1)+' of '+STORIES.length; $('bTitle').textContent=s.title; $('bRef').textContent=s.ref;
-  $('bText').textContent=s.before; $('bWho').textContent=s.who+'. See what happened through your own eyes.';
+  $('bText').textContent=beforeText(s); $('bWho').textContent=s.who+'. See what happened through your own eyes.';
   $('bGo').onclick=()=>{ $('before').classList.add('hidden'); startStory(id); };
   $('bGo').focus();
 }
 $('bBack').onclick=()=>{ $('before').classList.add('hidden'); showMenu(); };
 $('menuBtn').onclick=showMenu;
+
+function renderLevels(){ const box=$('levelBtns'); box.innerHTML=''; LEVELS.forEach(l=>{ const b=document.createElement('button'); b.type='button'; b.textContent=l.name; b.className=l.id===LEVEL?'on':''; b.onclick=()=>{ setLevel(l.id); showMenu(); }; box.appendChild(b); }); $('levelNote').textContent=LEVELS.find(l=>l.id===LEVEL).note; }
 
 /* ================= Input ================= */
 const touch = matchMedia('(pointer:coarse)').matches || ('ontouchstart' in window);
