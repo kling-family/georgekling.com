@@ -1580,7 +1580,7 @@ function buildJoseph(){
     for(let i=0;i<pos.count;i++){ const x=pos.getX(i), z=pos.getZ(i), h=fn(x,z); pos.setY(i,h); const n=0.5+0.5*Math.sin(x*0.5+z*0.9)*Math.cos(x*0.27-z*0.4); c.copy(a).lerp(b,n*0.8); if(fn===groundEgypt&&x<-43) c.set(0x6a7a4a); c.multiplyScalar(1.1); cols.push(c.r,c.g,c.b); }
     geo.setAttribute('color',new THREE.Float32BufferAttribute(cols,3)); geo.computeVertexNormals(); const uv=geo.attributes.uv; for(let i=0;i<uv.count;i++) uv.setXY(i,uv.getX(i)*90,uv.getY(i)*90);
     const m=new THREE.Mesh(geo,new THREE.MeshLambertMaterial({vertexColors:true,map:GROUND_TEX})); m.userData.noCast=true; grp.add(m);
-    const save=ground; ground=fn; if(grass) grassField(grp, touch?6000:12000, ()=>{ const x=(Math.random()-0.5)*120, z=(Math.random()-0.5)*120; if(fn===groundCanaan&&Math.hypot(x-WELL.x,z-WELL.z)<2) return null; if(fn===groundEgypt&&(x<-43||Math.random()>0.25)) return null; return [x,z,grass]; }); ground=save; return grp; };
+    const save=ground; ground=fn; if(grass) grassField(grp, touch?6000:12000, ()=>{ const x=(Math.random()-0.5)*120, z=(Math.random()-0.5)*120; if(fn===groundCanaan&&Math.hypot(x-WELL.x,z-WELL.z)<2) return null; if(fn===groundEgypt&&(x<-43||Math.random()>0.25||(Math.abs(x)<12.5&&z>-17&&z<21))) return null; return [x,z,grass]; }); ground=save; return grp; };
   W.canaan=mkLand(groundCanaan,0x8aa856,0xa8a866,0x86a44e);
   W.egypt=mkLand(groundEgypt,0xdcc896,0xceb27a,0x9aa05a); W.egypt.visible=false;
   // ---- Canaan: Jacob's tents, olive trees, and the dry well at Dothan
@@ -1605,17 +1605,86 @@ function buildJoseph(){
   josephLand='egypt'; ground=groundEgypt;
   const E=new THREE.Group(); g.add(E); E.visible=false; W.E=E;
   { const stone=mat(0xe6d6b0), stone2=mat(0xd8c49a), paint=mat(0x2f6aa8), gold=mat(0xe2b23a);
-    const fl=new THREE.Mesh(new THREE.BoxGeometry(22,0.3,18), stone2); fl.position.set(0,0.15,-6); E.add(fl);
-    for(const sx of [-1,1]) for(let i=0;i<5;i++){ const c=new THREE.Mesh(new THREE.CylinderGeometry(0.45,0.5,6,14), stone); c.position.set(sx*9,3.3,-13+i*3.6); E.add(c);
-      const cap=new THREE.Mesh(new THREE.CylinderGeometry(0.75,0.45,0.6,14), paint); cap.position.set(sx*9,6.4,-13+i*3.6); E.add(cap); }
-    const back=new THREE.Mesh(new THREE.BoxGeometry(22,7,0.8), stone); back.position.set(0,3.5,-15.2); E.add(back);
-    const band=new THREE.Mesh(new THREE.BoxGeometry(22.1,0.5,0.85), paint); band.position.set(0,6,-15.2); E.add(band);
-    const dais=new THREE.Mesh(new THREE.BoxGeometry(6,0.8,4), stone); dais.position.set(0,0.7,-12.4); E.add(dais);
-    const throne=new THREE.Group(); const seat=new THREE.Mesh(new THREE.BoxGeometry(1.4,0.6,1.1), gold); seat.position.y=0.3; throne.add(seat); const bk=new THREE.Mesh(new THREE.BoxGeometry(1.4,1.8,0.2), gold); bk.position.set(0,1.0,-0.5); throne.add(bk);
+    const D2=(o,x,y,z)=>{ o.position.set(x,y,z); E.add(o); return o; };
+    const box=(w,h,d,m,x,y,z)=>D2(new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m),x,y,z);
+    const red=mat(0xb8402e), green=mat(0x3f8a5a), dark=mat(0x2a1e14);
+    /* painted wall: rows of colorful pictures, like Egyptian walls */
+    const wc=document.createElement('canvas'); wc.width=512; wc.height=256; const wx=wc.getContext('2d');
+    wx.fillStyle='#e9dab4'; wx.fillRect(0,0,512,256);
+    const bandC=['#2f6aa8','#e2b23a','#b8402e','#3f8a5a']; for(let i=0;i<32;i++){ wx.fillStyle=bandC[i%4]; wx.fillRect(i*16,0,16,18); wx.fillRect(i*16,238,16,18); }
+    for(let k=0;k<6;k++){ const cx=40+k*84; wx.fillStyle='#b07a4e'; wx.beginPath(); wx.arc(cx,72,11,0,7); wx.fill(); wx.fillStyle='#1a120a'; wx.fillRect(cx-12,58,24,10);
+      wx.fillStyle=k%2?'#f2efe4':'#2f6aa8'; wx.beginPath(); wx.moveTo(cx-14,84); wx.lineTo(cx+14,84); wx.lineTo(cx+18,170); wx.lineTo(cx-18,170); wx.fill(); wx.fillStyle='#e2b23a'; wx.fillRect(cx-16,108,32,6);
+      wx.fillStyle='#b07a4e'; wx.fillRect(cx+14,92,22,6); wx.fillRect(cx-12,170,8,24); wx.fillRect(cx+4,170,8,24);
+      wx.fillStyle='#3a2a18'; for(let j=0;j<4;j++){ const hx=cx-30+((j*37+k*11)%60), hy=196+(j%2)*16; if(j%2){ wx.beginPath(); wx.arc(hx,hy+6,5,0,7); wx.fill(); } else wx.fillRect(hx,hy,10,10); } }
+    const wallTex=new THREE.CanvasTexture(wc); wallTex.wrapS=THREE.RepeatWrapping;
+    const wallM=new THREE.MeshLambertMaterial({map:wallTex});
+    /* the great hall */
+    const tc=document.createElement('canvas'); tc.width=tc.height=128; { const tx=tc.getContext('2d'); tx.fillStyle='#b9a47c'; tx.fillRect(0,0,128,128); tx.fillStyle='#c9b48a'; for(let i=0;i<4;i++) for(let j=0;j<4;j++){ tx.fillStyle=(i+j)%2?'#c4ae84':'#bda77e'; tx.fillRect(i*32+1,j*32+1,30,30); } }
+    const tileT=new THREE.CanvasTexture(tc); tileT.wrapS=tileT.wrapT=THREE.RepeatWrapping; tileT.repeat.set(10,9);
+    const fl=box(21.2,0.3,19.4,new THREE.MeshLambertMaterial({map:tileT}),0,0.15,-6.1); fl.userData.noCast=true;
+    { const cc=document.createElement('canvas'); cc.width=cc.height=128; const cx2=cc.getContext('2d'); cx2.fillStyle='#1d3d7a'; cx2.fillRect(0,0,128,128); cx2.fillStyle='#e8c050';
+      for(let i=0;i<4;i++) for(let j=0;j<4;j++){ const x0=i*32+16, y0=j*32+16; cx2.beginPath(); for(let k=0;k<10;k++){ const a=k*Math.PI/5, rr=k%2?3:8; cx2.lineTo(x0+Math.sin(a)*rr,y0-Math.cos(a)*rr); } cx2.fill(); }
+      const ct=new THREE.CanvasTexture(cc); ct.wrapS=ct.wrapT=THREE.RepeatWrapping; ct.repeat.set(7,6);
+      const ceil=new THREE.Mesh(new THREE.PlaneGeometry(21.2,19.4), new THREE.MeshBasicMaterial({map:ct,color:0xb8b8c8})); ceil.rotation.x=Math.PI/2; D2(ceil,0,7.66,-6.1); ceil.userData.noCast=true; }
+    for(const sx of [-1,1]){ const w=box(0.8,8,19.6,stone,sx*10.6,4,-6.1);
+      const pic=new THREE.Mesh(new THREE.PlaneGeometry(19,5.2), wallM.clone()); pic.material.map=wallTex.clone(); pic.material.map.needsUpdate=true; pic.material.map.repeat.set(2.2,1); pic.rotation.y=-sx*Math.PI/2; D2(pic,sx*10.19,3.4,-6.1); }
+    const back=box(22,8,0.8,stone,0,4,-15.6);
+    { const pic=new THREE.Mesh(new THREE.PlaneGeometry(20.4,5.2), wallM); D2(pic,0,3.4,-15.19); }
+    const roof=box(22.4,0.5,20.2,stone2,0,8.2,-6.1); roof.userData.noCast=true;
+    box(22.6,0.35,20.4,paint,0,7.85,-6.1).userData.noCast=true;
+    /* papyrus columns down both sides */
+    W.cols=[]; for(const sx of [-1,1]) for(let i=0;i<5;i++){ const z=-12+i*3.4, x=sx*6.2; W.cols.push([x,z]);
+      const c=new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.6,7.2,16), stone); D2(c,x,3.9,z);
+      for(const [y,m] of [[1.2,paint],[1.5,gold],[6.2,red],[6.5,paint]]){ const r2=new THREE.Mesh(new THREE.CylinderGeometry(0.53,0.55,0.22,16), m); D2(r2,x,y,z); }
+      const cap=new THREE.Mesh(new THREE.CylinderGeometry(0.95,0.5,0.9,16), green); D2(cap,x,7.15,z); box(1.5,0.3,1.5,gold,x,7.75,z); }
+    /* red carpet from the door to the throne */
+    const rug=box(2.6,0.04,15,red,0,0.32,-4); rug.userData.noCast=true; for(const sx of [-1,1]) box(0.18,0.045,15,gold,sx*1.2,0.33,-4).userData.noCast=true;
+    /* throne platform with steps, canopy, and golden statues */
+    box(7,0.4,4.2,stone,0,0.5,-12.6); box(5.4,0.4,3.4,stone2,0,0.9,-13); box(7.2,0.08,0.3,gold,0,0.72,-10.5);
+    const dais=box(6,0.01,4,stone,0,1.1,-12.4); dais.visible=false;
+    const throne=new THREE.Group(); const seat=new THREE.Mesh(new THREE.BoxGeometry(1.4,0.6,1.1), gold); seat.position.y=0.3; throne.add(seat); const bk=new THREE.Mesh(new THREE.BoxGeometry(1.4,2.0,0.2), gold); bk.position.set(0,1.1,-0.5); throne.add(bk);
+    for(const sx of [-1,1]){ const arm=new THREE.Mesh(new THREE.BoxGeometry(0.18,0.5,1.0), gold); arm.position.set(sx*0.72,0.75,0); throne.add(arm); const lion=new THREE.Mesh(new THREE.SphereGeometry(0.16,10,8), gold); lion.position.set(sx*0.72,1.05,0.45); throne.add(lion); }
     throne.position.set(0,1.1,-12.8); E.add(throne);
+    for(const sx of [-1,1]) for(const sz of [-1,1]){ const c=new THREE.Mesh(new THREE.CylinderGeometry(0.12,0.12,4,10), gold); D2(c,sx*2.1,3.1,-13+sz*1.4); }
+    box(4.6,0.25,3.2,gold,0,5.15,-13); box(4.7,0.5,3.3,paint,0,5.5,-13);
+    /* sun disk with wings over the throne */
+    { const disk=new THREE.Mesh(new THREE.CylinderGeometry(0.75,0.75,0.12,24), gold); disk.rotation.x=Math.PI/2; D2(disk,0,6.6,-15.1);
+      for(const sx of [-1,1]) for(let f=0;f<4;f++){ const wg=box(2.6-f*0.35,0.22,0.08,f%2?paint:gold,sx*(2.0-f*0.17),6.75-f*0.25,-15.12); wg.rotation.z=sx*0.08; } }
+    for(const sx of [-1,1]){ /* golden statues beside the throne */
+      const st=person({tunic:0xe2b23a,skin:0xe2b23a,hair:0x2f6aa8,crown:false,h:2.6}); st.position.set(sx*4.2,1.1,-14.4); E.add(st);
+      box(1.2,0.8,1.2,stone,sx*4.2,0.7,-14.4); }
+    /* fire bowls down the hall */
+    W.flames=[]; for(const sx of [-1,1]) for(const z of [-8,-2]){ const x=sx*3.6; const st=new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.14,1.2,8), gold); D2(st,x,0.9,z);
+      const bowl=new THREE.Mesh(new THREE.CylinderGeometry(0.38,0.2,0.3,14), gold); D2(bowl,x,1.6,z); const fl2=glowSprite(0xff9a30,1.4); D2(fl2,x,1.95,z); const cn=new THREE.Mesh(new THREE.ConeGeometry(0.22,0.6,8), new THREE.MeshBasicMaterial({color:0xffa53a})); D2(cn,x,1.95,z); W.flames.push(fl2,cn); }
+    { const pl=new THREE.PointLight(0xffc27a,0.45,22); D2(pl,0,5,-8); }
     W.pharaoh=person({tunic:0xf2efe4,sash:0xe2b23a,hair:0x1a120a,crown:true,h:1.78,skin:0xb07a4e}); W.pharaoh.position.set(0,1.1,-12.3); E.add(W.pharaoh);
-    // a red-and-white crown look: recolor his gold crown band
-    for(let i=0;i<4;i++){ const g2=person({tunic:0xeee8d8,hair:0x1a120a,skin:0xb07a4e,spear:true,h:1.8}); g2.position.set(i<2?-7:7,0.3,-11+(i%2)*6); g2.rotation.y=i<2?Math.PI/2:-Math.PI/2; E.add(g2); }
+    /* fan bearers with big feather fans */
+    for(const sx of [-1,1]){ const fb=person({tunic:0xeee8d8,hair:0x1a120a,skin:0xb07a4e,h:1.72}); fb.position.set(sx*1.7,1.1,-13.6); fb.rotation.y=-sx*0.4; E.add(fb);
+      const pole=new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.03,2.6,6), mat(0x6b4a2a)); pole.position.set(-sx*0.25,1.7,0.2); pole.rotation.z=sx*0.25; fb.add(pole);
+      const fan=new THREE.Mesh(new THREE.CircleGeometry(0.55,16,0,Math.PI), mat(0xf4efe0,{side:THREE.DoubleSide})); fan.position.set(-sx*0.58,3.0,0.2); fan.rotation.z=sx*0.25; fb.add(fan); }
+    for(let i=0;i<4;i++){ const g2=person({tunic:0xeee8d8,hair:0x1a120a,skin:0xb07a4e,spear:true,h:1.8}); g2.position.set(i<2?-8.4:8.4,0.3,-9+(i%2)*7); g2.rotation.y=i<2?Math.PI/2:-Math.PI/2; E.add(g2); }
+    /* the front gate: two huge sloped towers */
+    for(const sx of [-1,1]){ const tw=new THREE.Mesh(new THREE.CylinderGeometry(3.9,5.4,12,4,1), stone); tw.geometry.rotateY(Math.PI/4); tw.scale.set(1,1,0.42); D2(tw,sx*6.3,6,4.4);
+      for(const [y,m] of [[10.6,paint],[11.1,gold],[11.6,red]]){ const bd=new THREE.Mesh(new THREE.CylinderGeometry(4.0-(y-10.6)*0.05,4.05,0.4,4,1), m); bd.geometry.rotateY(Math.PI/4); bd.scale.set(1.02,1,0.44); D2(bd,sx*6.3,y,4.4); }
+      /* tall banners */
+      for(const dx of [-1.6,1.6]){ const x=sx*6.3+dx; const pole=new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.12,15,8), mat(0x8a6a3a)); D2(pole,x,7.5,6.9);
+        const fl3=new THREE.Mesh(new THREE.PlaneGeometry(1.2,2.2), mat(dx<0?0xb8402e:0x2f6aa8,{side:THREE.DoubleSide})); D2(fl3,x+0.65,13.6,6.9); W.flames.push(fl3); fl3.userData.flag=1; }
+      /* giant pharaoh statue guarding the gate */
+      const big=person({tunic:0xe6d6b0,skin:0xd8c49a,hair:0x2f6aa8,crown:true,h:4.6}); big.position.set(sx*3.4,0,7.6); E.add(big); box(1.6,0.5,1.6,stone2,sx*3.4,0.25,7.6); }
+    box(6.6,1.6,3.4,stone,0,8.4,4.4); box(6.8,0.4,3.6,paint,0,9.4,4.4); for(const sx of [-1,1]) box(1.9,10.4,3.2,stone,sx*3.5,5.2,4.4);
+    { const disk=new THREE.Mesh(new THREE.CylinderGeometry(0.6,0.6,0.1,20), gold); disk.rotation.x=Math.PI/2; D2(disk,0,8.4,6.25); for(const sx of [-1,1]) box(1.6,0.25,0.06,paint,sx*1.3,8.5,6.25); }
+    for(const sx of [-1,1]){ box(0.5,7.6,3.6,stone2,sx*2.35,3.8,4.4); }
+    /* road of sphinxes and two obelisks */
+    for(const sx of [-1,1]){ for(let i=0;i<4;i++){ const z=11+i*4, x=sx*3.6; const sp=new THREE.Group(); sp.position.set(x,0,z); sp.rotation.y=-sx*Math.PI/2; E.add(sp);
+        const base=new THREE.Mesh(new THREE.BoxGeometry(1.2,0.5,2.6), stone2); base.position.y=0.25; sp.add(base);
+        const body=new THREE.Mesh(new THREE.BoxGeometry(0.9,0.7,1.9), stone); body.position.set(0,0.85,-0.2); sp.add(body);
+        const chest=new THREE.Mesh(new THREE.BoxGeometry(0.9,1.1,0.6), stone); chest.position.set(0,1.05,0.6); sp.add(chest);
+        for(const px of [-0.28,0.28]){ const paw=new THREE.Mesh(new THREE.BoxGeometry(0.25,0.22,0.8), stone); paw.position.set(px,0.61,1.15); sp.add(paw); }
+        const hd=new THREE.Mesh(new THREE.BoxGeometry(0.5,0.55,0.5), stone); hd.position.set(0,1.85,0.75); sp.add(hd);
+        const nem=new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.45,0.7,4), paint); nem.rotation.y=Math.PI/4; nem.position.set(0,1.75,0.6); sp.add(nem); hd.position.z=0.82; }
+      const ob=new THREE.Mesh(new THREE.CylinderGeometry(0.35,0.65,9,4), stone); ob.geometry.rotateY(Math.PI/4); D2(ob,sx*7.5,4.8,9);
+      const tip=new THREE.Mesh(new THREE.ConeGeometry(0.5,0.9,4), gold); tip.rotation.y=Math.PI/4; D2(tip,sx*7.5,9.75,9); box(1.6,0.6,1.6,stone2,sx*7.5,0.3,9); }
+    const path=box(5,0.06,14,stone2,0,0.05,13); path.userData.noCast=true;
     // storehouse
     const sh=new THREE.Mesh(new THREE.BoxGeometry(12,5,8), mat(0xc9a878)); sh.position.set(26,2.5,4); E.add(sh);
     const dome=new THREE.Mesh(new THREE.SphereGeometry(2.4,16,10,0,Math.PI*2,0,Math.PI/2), mat(0xc9a878)); for(const dx of [-3.5,0,3.5]){ const d=dome.clone(); d.position.set(26+dx,5,4); E.add(d); }
@@ -1719,7 +1788,7 @@ function goJoseph(step){
       ['You are Joseph','Please! Let me out! Brothers, please help me!','Genesis 42:21'],
       [SAY_BIBLE,'Then the brothers sat down to eat. They looked up and saw a line of traders with camels, carrying spices to Egypt.','Genesis 37:25', ()=>{ W.caravan.visible=true; }],
       ['Judah','Let’s sell him to these traders. After all, he is our brother.','Genesis 37:26-27'],
-      [SAY_BIBLE,'So they pulled Joseph out of the well and sold him for twenty pieces of silver. The traders took Joseph far away to Egypt.','Genesis 37:28', ()=>{ $('fade').style.opacity=1; setTimeout(()=>{ josephToEgypt(); P.x=0; P.z=4; P.yaw=0; P.pitch=0; resetLookKeep(); $('fade').style.opacity=0; },800); }],
+      [SAY_BIBLE,'So they pulled Joseph out of the well and sold him for twenty pieces of silver. The traders took Joseph far away to Egypt.','Genesis 37:28', ()=>{ $('fade').style.opacity=1; setTimeout(()=>{ josephToEgypt(); P.x=0; P.z=21; P.yaw=0; P.pitch=0; resetLookKeep(); $('fade').style.opacity=0; },800); }],
       [SAY_BIBLE,'In Egypt, Joseph was a slave in the house of Potiphar, one of Pharaoh’s officers. The Lord was with Joseph, and everything he did went well.','Genesis 39:1-3'],
       [SAY_BIBLE,'But Potiphar’s wife told a lie about Joseph, and he was thrown in prison for something he did not do. Even there, the Lord was with him.','Genesis 39:19-21'],
       [SAY_BIBLE,'Years later, Pharaoh, the king of Egypt, had two dreams, and nobody could tell him what they meant. Then someone remembered Joseph. They brought him out of prison to Pharaoh.','Genesis 41:1-14']], ()=>goJoseph('pharaoh'));
@@ -1770,6 +1839,7 @@ function josephBrothersArrive(){ const W=world; W.brothers.forEach((b,i)=>{ W.E.
   P.x=0; P.z=-9.5; P.yaw=Math.PI; }
 function updateJoseph(dt, now){
   const S=story, W=world, t=(S.t+=dt); updateJosephDream(dt);
+  if(W.flames&&josephLand==='egypt') W.flames.forEach((f,i)=>{ if(f.userData.flag){ f.rotation.y=Math.sin(t*2+i)*0.25; } else { const k=1+0.12*Math.sin(t*13+i*2)+0.08*Math.sin(t*21+i); f.scale.set(f.isSprite?1.4*k:k,f.isSprite?1.4*k:k*1.1,f.isSprite?1:k); } });
   if(S.fadeSky){ const f=S.fadeSky; f.t+=dt; const k=smooth(f.t/f.dur); scene.background.copy(f.from).lerp(f.to,k); if(k>=1) S.fadeSky=null; }
   W.flock.forEach((s,i)=>{ const u=s.userData; u.tt=(u.tt||0)-dt; if(u.tt<=0||!u.goal){ u.tt=3+(i%4); u.goal={x:WELL.x+6+Math.sin(t*0.3+i)*6, z:WELL.z-8+Math.cos(t*0.25+i*2)*5}; }
     const dx=u.goal.x-s.position.x, dz=u.goal.z-s.position.z, d=Math.hypot(dx,dz); if(d>0.3){ const v=Math.min(0.6,d)*dt; s.position.x+=dx/d*v; s.position.z+=dz/d*v; s.rotation.y=Math.atan2(dx,dz); sheepWalk(s,dt,0.6); } s.position.y=groundCanaan(s.position.x,s.position.z); });
@@ -1791,17 +1861,22 @@ function updateJoseph(dt, now){
   else { pr.classList.add('hidden'); $('act').textContent= saying()?'Next':'Use'; }
   showBeacon(t);
 }
+function josephPalaceBounds(){ const R=0.35;
+  /* side walls */ if(P.z>-16.2&&P.z<3.4){ for(const sx of [-1,1]){ const ax=P.x*sx; if(ax>10.2-R&&ax<11.0+R){ P.x=sx*(ax<10.6?10.2-R:11.0+R); } } }
+  /* back wall */ if(Math.abs(P.x)<11&&P.z<-15.2+R&&P.z>-16.4) P.z=-15.2+R;
+  /* front gate towers: only the doorway is open */ if(P.z>2.6-R&&P.z<6.2+R&&Math.abs(P.x)>2.1-R&&Math.abs(P.x)<11.8){ if(Math.abs(P.x)<2.6) P.x=Math.sign(P.x)*(2.1-R); else P.z=P.z<4.4?2.6-R:6.2+R; }
+  /* columns, statues and obelisks */ for(const [cx,cz,cr] of [...world.cols.map(c=>[c[0],c[1],0.6]),[-3.4,7.6,0.9],[3.4,7.6,0.9],[-7.5,9,0.9],[7.5,9,0.9],[-4.2,-14.4,0.8],[4.2,-14.4,0.8],[-3.6,-8,0.4],[3.6,-8,0.4],[-3.6,-2,0.4],[3.6,-2,0.4]]){ const dx=P.x-cx, dz=P.z-cz, d=Math.hypot(dx,dz); if(d<cr+R){ P.x=cx+dx/(d||1)*(cr+R); P.z=cz+dz/(d||1)*(cr+R); } } }
 function boundsJoseph(){ const S=story;
   if(S.dream) return;
   if(S.inPit){ const dx=P.x-WELL.x, dz=P.z-WELL.z, d=Math.hypot(dx,dz); if(d>0.5){ P.x=WELL.x+dx/d*0.5; P.z=WELL.z+dz/d*0.5; } return; }
   P.x=clamp(P.x,-60,60); P.z=clamp(P.z,-60,60);
   if(josephLand==='canaan'){ const dx=P.x-WELL.x, dz=P.z-WELL.z, d=Math.hypot(dx,dz); if(d<1.6){ P.x=WELL.x+dx/(d||1)*1.6; P.z=WELL.z+dz/(d||1)*1.6; } }
-  else { P.x=Math.max(P.x,-42); if(P.z<-11.5&&Math.abs(P.x)<3.2) P.z=-11.5; if(Math.abs(P.x-26)<6.3&&Math.abs(P.z-4)<4.3){ P.z=P.z>4?8.3:-0.3; } }
+  else { P.x=Math.max(P.x,-42); josephPalaceBounds(); if(P.z<-11.5&&Math.abs(P.x)<3.2) P.z=-11.5; if(Math.abs(P.x-26)<6.3&&Math.abs(P.z-4)<4.3){ P.z=P.z>4?8.3:-0.3; } }
 }
 function jumpJoseph(q){ // ?step=go | pharaoh | grain | famine
   const S=story, W=world; sayQ.length=0; $('say').classList.add('hidden'); sayCb=null; coatView.visible=(q==='go');
   if(q==='go'){ goJoseph('go'); }
-  if(q==='pharaoh'||q==='grain'||q==='famine'){ josephToEgypt(); P.x=0; P.z=4; P.yaw=0; goJoseph(q); }
+  if(q==='pharaoh'||q==='grain'||q==='famine'){ josephToEgypt(); P.x=0; P.z=21; P.yaw=0; goJoseph(q); }
 }
 
 /* ================= Story 5: Baby Moses in the Basket ================= */
