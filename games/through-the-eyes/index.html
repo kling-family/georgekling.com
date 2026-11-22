@@ -231,7 +231,7 @@ const STORIES = [
   { id:'elijah', ready:true, blurb:'Climb Mount Carmel, watch the prophets of Baal shout all day, build an altar with 12 stones, soak it with water, and see fire fall from heaven.', endVerse:'"The Lord, He is God! The Lord, He is God!"', endRef:'1 Kings 18:39', before:"David became a great king. His son Solomon was very wise and built a beautiful temple for God. After Solomon, the kingdom split into two parts. One of the worst kings was Ahab. He and his wife Jezebel made the people worship a fake god called Baal. So God sent no rain for three years, and God's prophet Elijah came to face Ahab.", title:'Elijah and the Fire on the Mountain', who:'You are Elijah', ref:'1 Kings 18' },
   { id:'jonah', ready:true, blurb:'Run away on a ship, get caught in a giant storm, get swallowed by a huge fish, and then go to Nineveh after all.', endVerse:'"Salvation comes from the Lord."', endRef:'Jonah 2:9', before:"Elijah showed everyone that the Lord is the real God. After Elijah, God kept sending prophets to warn His people and other nations. Nineveh was a huge city in the enemy country of Assyria, and its people were very wicked. God told a prophet named Jonah to go there and warn them. But Jonah did not want to go.", title:'Jonah and the Big Fish', who:'You are Jonah', ref:'Jonah 1 to 3' },
   { id:'daniel', ready:true, blurb:'Work for King Darius, keep praying to God by your window even when it’s against the law, and spend a night in a den full of lions.', endVerse:'"He rescues and He saves."', endRef:'Daniel 6:27', before:"Even after Jonah, God's people kept turning away from Him. So God let the army of Babylon take over Jerusalem and carry many of the people far away. One of them was a young man named Daniel. He kept praying to God every day, and he became one of the king's most important helpers. Later the Persians took over Babylon, and King Darius ruled.", title:'Daniel in the Lions\u2019 Den', who:'You are Daniel', ref:'Daniel 6' },
-  { id:'esther', before:"God protected Daniel. After many years, some of God's people went back home to rebuild Jerusalem, but many stayed in Persia. The king of Persia, Xerxes, picked a young Jewish woman named Esther to be his new queen. Nobody knew she was Jewish. Then the king's evil helper Haman made a plan to destroy all the Jewish people.", title:'Esther the Brave Queen', who:'You are Esther', ref:'Esther 4 to 7' },
+  { id:'esther', ready:true, blurb:'Send messages to Mordecai, put on your royal robes, go to the king without being called, and bravely speak up to save your people.', endVerse:'"Who knows? Maybe you became queen for a time just like this."', endRef:'Esther 4:14', before:"God protected Daniel. After many years, some of God's people went back home to rebuild Jerusalem, but many stayed in Persia. The king of Persia, Xerxes, picked a young Jewish woman named Esther to be his new queen. Nobody knew she was Jewish. Then the king's evil helper Haman made a plan to destroy all the Jewish people.", title:'Esther the Brave Queen', who:'You are Esther', ref:'Esther 4 to 7' },
   // New Testament
   { id:'christmas', before:"Esther saved her people. After that, God's people waited about 400 years for the Savior God had promised. Then an angel named Gabriel visited a young woman named Mary in Nazareth. He told her she would have a baby, the Son of God, and she would name Him Jesus. Mary and Joseph had to travel to Bethlehem, David's hometown, and there was no room for them anywhere.", title:'The First Christmas', who:'You are a shepherd', ref:'Luke 2' },
   { id:'wisemen', before:"The shepherds found baby Jesus lying in a manger, just like the angel said. Far away in the east, wise men who studied the stars saw a brand new star. They knew it meant a new king had been born, so they set out on a long trip to find Him.", title:'The Wise Men and the Star', who:'You are one of the wise men', ref:'Matthew 2' },
@@ -3405,9 +3405,166 @@ function jumpDaniel(q){ // ?step=home | pray | den | morning
   if(q==='morning'){ S.inDen=true; S.denY=-6; P.x=DPIT.x; P.z=DPIT.z-3; W.lions.forEach(L=>{ L.userData.calmT=5; }); scene.background.set(0xf2c898); W.king.position.set(DPIT.x,0.9,DPIT.z-7.3); faceTo(W.king,DPIT.x,DPIT.z); W.king.rotation.x=0.35; goDaniel('answer'); }
 }
 
+/* ================= Story 15: Esther ================= */
+const EQ={x:0,z:22}, EGATE={x:0,z:55}, ETHRONE={x:0,z:-34}, EBANQ={x:26,z:-6};
+function groundEsther(x,z){ return 0.04*Math.sin(x*0.3)*Math.cos(z*0.25); }
+function buildEsther(){
+  ground=groundEsther; resetLook(); scene.background.set(0xbcd8f0);
+  const g=new THREE.Group(); scene.add(g); world={group:g, maids:[], guards:[], crowd:[], lamps:[]}; const W=world, r=rnd(415);
+  { const N=100, geo=new THREE.PlaneGeometry(240,240,N,N); geo.rotateX(-Math.PI/2); const pos=geo.attributes.position, cols=[], c=new THREE.Color(), a=new THREE.Color(0xd8c8a0), b=new THREE.Color(0xc8b890);
+    for(let i=0;i<pos.count;i++){ const x=pos.getX(i), z=pos.getZ(i); pos.setY(i,groundEsther(x,z)); const n=0.5+0.5*Math.sin(x*0.5+z*0.9)*Math.cos(x*0.27-z*0.4); c.copy(a).lerp(b,n*0.8); cols.push(c.r,c.g,c.b); }
+    geo.setAttribute('color',new THREE.Float32BufferAttribute(cols,3)); geo.computeVertexNormals(); const uv=geo.attributes.uv; for(let i=0;i<uv.count;i++) uv.setXY(i,uv.getX(i)*80,uv.getY(i)*80);
+    const m=new THREE.Mesh(geo,new THREE.MeshLambertMaterial({vertexColors:true,map:GROUND_TEX})); m.userData.noCast=true; g.add(m); }
+  const white=mat(0xf2ead8), blue=mat(0x3a6ab0), gold=mat(0xe2b23a), purple=mat(0x6a2a8a), stone=mat(0xe6d6b0);
+  /* garden: tiled paths, a pool, palms */
+  { const path=new THREE.Mesh(new THREE.PlaneGeometry(5,80), mat(0xe8dcc0)); path.rotation.x=-Math.PI/2; path.position.set(0,0.05,8); path.userData.noCast=true; g.add(path);
+    const path2=new THREE.Mesh(new THREE.PlaneGeometry(26,4), mat(0xe8dcc0)); path2.rotation.x=-Math.PI/2; path2.position.set(13,0.05,-6); path2.userData.noCast=true; g.add(path2);
+    const rim=new THREE.Mesh(new THREE.CylinderGeometry(3.4,3.5,0.6,28), stone); rim.position.set(0,0.3,0); g.add(rim);
+    const water=new THREE.Mesh(new THREE.CircleGeometry(3,28), new THREE.MeshPhongMaterial({color:0x4a9ad0,specular:0xffffff,shininess:90})); water.rotation.x=-Math.PI/2; water.position.set(0,0.62,0); g.add(water);
+    for(let i=0;i<16;i++){ const sx=i%2?1:-1, z=-18+Math.floor(i/2)*8; palm(g,sx*(6+r()*2),z,0.9+r()*0.2); }
+    for(let i=0;i<30;i++){ const x=(r()-0.5)*80, z=(r()-0.5)*90; if(Math.abs(x)<8||Math.abs(x-EBANQ.x)<10&&Math.abs(z-EBANQ.z)<9||Math.abs(z-ETHRONE.z)<14&&Math.abs(x)<16||Math.hypot(x-EQ.x,z-EQ.z)<10) continue; const fl=blob(g,[0xd04a6a,0xf0c040,0xe86a3a,0x8a4ac8][i%4],0.25,1,0.8,1,x,0.25,z,8); blob(g,0x4a8a3a,0.35,1.2,0.6,1.2,x,0.12,z,8); } }
+  /* palace walls with the king's gate */
+  { const wm=mat(0xd8c49a), X=48, Z0=-52, Z1=EGATE.z;
+    const seg=(x0,z0,x1,z1)=>{ const L=Math.hypot(x1-x0,z1-z0); const w=new THREE.Mesh(new THREE.BoxGeometry(L,7,1.6), wm); w.position.set((x0+x1)/2,3.5,(z0+z1)/2); w.rotation.y=-Math.atan2(z1-z0,x1-x0); g.add(w); };
+    seg(-X,Z0,X,Z0); seg(-X,Z0,-X,Z1); seg(X,Z0,X,Z1); seg(-X,Z1,-3,Z1); seg(3,Z1,X,Z1);
+    for(const sx of [-1,1]){ const tw=new THREE.Mesh(new THREE.BoxGeometry(3,10,3), blue); tw.position.set(sx*4.5,5,Z1); g.add(tw); }
+    const lin=new THREE.Mesh(new THREE.BoxGeometry(6,2.4,2), blue); lin.position.set(0,8.8,Z1); g.add(lin);
+    for(let i=0;i<4;i++){ const h=house(g,-24+i*16,Z1+16); } }
+  W.mordecai=person({tunic:0x6a5a44,hair:0x8a8a8a,beard:0xb0b0b0,h:1.75}); place(W.mordecai,1.5,EGATE.z+3.5); W.mordecai.rotation.order='YXZ'; W.mordecai.rotation.x=0.4; faceTo(W.mordecai,0,0); W.mordecai.position.y=-0.3; g.add(W.mordecai);
+  /* the queen's rooms */
+  { const fl=new THREE.Mesh(new THREE.BoxGeometry(14,0.2,10), mat(0xf0e6d0)); fl.position.set(EQ.x,0.1,EQ.z); g.add(fl);
+    for(let i=0;i<8;i++){ const x=EQ.x+(i%4-1.5)*4.4, z=EQ.z+(i<4?-4.6:4.6); const c=new THREE.Mesh(new THREE.CylinderGeometry(0.28,0.32,4.2,12), white); c.position.set(x,2.1,z); g.add(c); }
+    const rf=new THREE.Mesh(new THREE.BoxGeometry(14.6,0.4,10.6), purple); rf.position.set(EQ.x,4.4,EQ.z); rf.userData.noCast=true; g.add(rf);
+    for(const sx of [-1,1]){ const cur=new THREE.Mesh(new THREE.PlaneGeometry(10,3.8), mat(0xe8dcf0,{side:THREE.DoubleSide,transparent:true,opacity:0.6})); cur.rotation.y=Math.PI/2; cur.position.set(EQ.x+sx*6.9,2.2,EQ.z); g.add(cur); }
+    const bed=new THREE.Mesh(new THREE.BoxGeometry(2.4,0.6,3), mat(0x8a3a8a)); bed.position.set(EQ.x-4.5,0.5,EQ.z+2); g.add(bed); blob(g,0xf2ead8,0.3,1.6,0.6,1,EQ.x-4.5,0.85,EQ.z+0.9,10);
+    W.chest=new THREE.Group(); const ch=new THREE.Mesh(new THREE.BoxGeometry(1.6,1.1,0.9), mat(0x7a4a2a)); ch.position.y=0.65; W.chest.add(ch); const lid=new THREE.Mesh(new THREE.BoxGeometry(1.7,0.12,1.0), gold); lid.position.y=1.25; W.chest.add(lid);
+    const robe=new THREE.Mesh(new THREE.BoxGeometry(1.2,0.25,0.6), purple); robe.position.y=1.4; W.chest.add(robe); W.robe=robe; const cr=new THREE.Mesh(new THREE.CylinderGeometry(0.16,0.15,0.1,12,1,true), mat(0xf5c542,{side:THREE.DoubleSide})); cr.position.set(0.35,1.6,0); W.chest.add(cr); W.crown=cr;
+    W.chest.position.set(EQ.x+4.6,0.1,EQ.z-2.6); g.add(W.chest);
+    const mir=new THREE.Mesh(new THREE.PlaneGeometry(0.9,1.4), new THREE.MeshPhongMaterial({color:0xd0e0f0,specular:0xffffff,shininess:120})); mir.position.set(EQ.x+5.8,1.6,EQ.z-3.4); mir.rotation.y=-0.6; g.add(mir);
+    for(let i=0;i<3;i++){ const m=person({tunic:[0xe8a0b8,0xa0c8e8,0xf0d080][i],hair:0x3a2614,longHair:true,h:1.62}); place(m,EQ.x-2+i*2,EQ.z+3.2); faceTo(m,EQ.x,EQ.z-2); g.add(m); W.maids.push(m); }
+    W.hathach=person({tunic:0x2f6aa8,sash:0xe2b23a,hair:0x1a120a,h:1.78}); place(W.hathach,EQ.x-2.5,EQ.z+6.5); faceTo(W.hathach,EQ.x,EQ.z); g.add(W.hathach); W.hathach.userData.home=new THREE.Vector3(EQ.x-2.5,0,EQ.z+6.5); }
+  /* the throne room */
+  { const T=ETHRONE; const fl=new THREE.Mesh(new THREE.BoxGeometry(22,0.2,22), mat(0xe8dcc0)); fl.position.set(T.x,0.1,T.z); g.add(fl);
+    const carpet=new THREE.Mesh(new THREE.PlaneGeometry(2.6,20), mat(0xb8402e)); carpet.rotation.x=-Math.PI/2; carpet.position.set(T.x,0.22,T.z+1); carpet.userData.noCast=true; g.add(carpet);
+    const bk=new THREE.Mesh(new THREE.BoxGeometry(22,10,0.8), blue); bk.position.set(T.x,5,T.z-11); g.add(bk);
+    for(const sx of [-1,1]){ const sw=new THREE.Mesh(new THREE.BoxGeometry(0.8,10,22), blue); sw.position.set(T.x+sx*11,5,T.z); g.add(sw); for(let k=0;k<4;k++){ const col=new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.6,9.6,14), white); col.position.set(T.x+sx*5.5,4.9,T.z-7+k*5); g.add(col); const cap=new THREE.Mesh(new THREE.BoxGeometry(1.4,0.6,1.4), gold); cap.position.set(col.position.x,9.8,col.position.z); g.add(cap); } }
+    const rf=new THREE.Mesh(new THREE.BoxGeometry(23,0.6,23), mat(0xc8b48a)); rf.position.set(T.x,10.3,T.z); rf.userData.noCast=true; g.add(rf);
+    for(let i=0;i<8;i++){ const ro=new THREE.Mesh(new THREE.CircleGeometry(0.6,14), gold); ro.position.set(T.x-8.75+i*2.5,7,T.z-10.55); g.add(ro); }
+    const dais=new THREE.Mesh(new THREE.BoxGeometry(6,0.8,4), gold); dais.position.set(T.x,0.5,T.z-8.4); g.add(dais);
+    const th=new THREE.Mesh(new THREE.BoxGeometry(1.8,3.2,1.2), gold); th.position.set(T.x,2.5,T.z-9.6); g.add(th);
+    const canopy=new THREE.Mesh(new THREE.BoxGeometry(4,0.2,3), purple); canopy.position.set(T.x,5.6,T.z-8.8); g.add(canopy); for(const sx of [-1,1]){ const p=new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.08,4.8,8), gold); p.position.set(T.x+sx*1.9,3.2,T.z-7.4); g.add(p); }
+    W.king=person({tunic:0x6a2a8a,sash:0xe2b23a,crown:true,hair:0x1a120a,beard:0x1a120a,h:1.9}); W.king.position.set(T.x,0.9,T.z-8.6); g.add(W.king);
+    const sc=new THREE.Group(); const rod=new THREE.Mesh(new THREE.CylinderGeometry(0.035,0.035,1.1,8), gold); rod.position.y=-0.55; sc.add(rod); const ball=new THREE.Mesh(new THREE.SphereGeometry(0.09,10,8), gold); ball.position.y=-1.1; sc.add(ball); const glo=glowSprite(0xffe080,0.45); glo.position.y=-1.1; glo.visible=false; sc.add(glo); sc.position.y=-0.6; W.king.userData.arms[1].add(sc); W.king.userData.armsBusy=true; W.scGlow=glo;
+    for(let i=0;i<6;i++){ const gd=person({tunic:0x2f4a7a,helmet:0xe2b23a,spear:true,shield:0x3a6ab0,hair:0x1a120a,beard:0x1a120a,h:1.82}); const sx=i%2?1:-1; place(gd,T.x+sx*3,T.z+6-Math.floor(i/2)*5); faceTo(gd,T.x,gd.position.z); gd.position.y=0.2; g.add(gd); W.guards.push(gd); } }
+  /* the banquet room */
+  { const B=EBANQ; const fl=new THREE.Mesh(new THREE.BoxGeometry(12,0.2,10), mat(0xf0e6d0)); fl.position.set(B.x,0.1,B.z); g.add(fl);
+    for(let i=0;i<6;i++){ const c=new THREE.Mesh(new THREE.CylinderGeometry(0.28,0.32,4.2,12), white); c.position.set(B.x+(i%3-1)*5.6,2.1,B.z+(i<3?-4.6:4.6)); g.add(c); }
+    const rf=new THREE.Mesh(new THREE.BoxGeometry(12.6,0.4,10.6), mat(0x2f6aa8)); rf.position.set(B.x,4.4,B.z); rf.userData.noCast=true; g.add(rf);
+    const rug=new THREE.Mesh(new THREE.PlaneGeometry(8,6), mat(0x8a2a3a)); rug.rotation.x=-Math.PI/2; rug.position.set(B.x,0.22,B.z); g.add(rug);
+    const tbl=new THREE.Mesh(new THREE.BoxGeometry(4.2,0.5,1.8), gold); tbl.position.set(B.x,0.45,B.z); g.add(tbl);
+    for(let i=0;i<9;i++) blob(g,[0xd04a3a,0x8a4ac8,0xe8c070,0x6aa040,0xf0a030][i%5],0.11,1,0.9,1,B.x-1.6+i*0.4,0.78,B.z+(i%2?0.35:-0.35),10);
+    for(let i=0;i<3;i++){ const cup=new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.06,0.25,10), gold); cup.position.set(B.x-1.6+i*1.6,0.82,B.z+(i===1?0.7:-0.7)); g.add(cup); }
+    for(const [x,z] of [[-3,0],[3,0],[0,-1.8]]){ const cu=new THREE.Mesh(new THREE.BoxGeometry(1.2,0.3,1.2), mat(0xc04a6a)); cu.position.set(B.x+x,0.35,B.z+z); g.add(cu); }
+    for(let i=0;i<4;i++){ const l=glowSprite(0xffb050,0.9); l.position.set(B.x+(i%2?5.3:-5.3),2.4,B.z+(i<2?-4.3:4.3)); g.add(l); W.lamps.push(l); }
+    W.haman=person({tunic:0x2a2a30,sash:0xb8402e,hair:0x1a120a,beard:0x1a120a,h:1.8}); place(W.haman,B.x,B.z-1.8); faceTo(W.haman,B.x,B.z+3); W.haman.position.y=0.2; W.haman.visible=false; g.add(W.haman); W.haman.rotation.order='YXZ'; }
+  /* celebration crowd, shown at the end */
+  for(let i=0;i<24;i++){ const p=person({tunic:[0x3a6ab0,0xf2ead8,0xe8a040,0x8a4ac8,0x5a8a4a,0xd04a6a][i%6],hair:[0x1a120a,0x3a2614][i%2],beard:i%3===0?0x1a120a:null,longHair:i%3===1,h:1.4+r()*0.45}); const a=r()*Math.PI*2, d=5+r()*6; place(p,Math.cos(a)*d,8+Math.sin(a)*d); faceTo(p,0,8); p.visible=false; g.add(p); W.crowd.push(p); p.userData.ph=r()*6; }
+  W.mordecai2=person({tunic:0x2f5aa8,sash:0xf2ead8,crown:true,hair:0x8a8a8a,beard:0xb0b0b0,h:1.8}); place(W.mordecai2,0,13.5); faceTo(W.mordecai2,0,0); W.mordecai2.visible=false; g.add(W.mordecai2);
+  W.beacon=makeBeacon(); W.beacon.visible=false; g.add(W.beacon);
+  P.x=EQ.x+1.5; P.z=EQ.z-1; P.yaw=Math.PI; P.pitch=0; P.eye=1.68; P.speed=4.6; P.roll=0;
+  story={id:'esther', step:'', t:0, lock:true, target:null, near:null, tripT:-1, round:0, kingArm:0, kingArmTo:0, fadeSky:null};
+  hand.visible=false; basket.visible=false; sling.visible=false; fruitHand.visible=false;
+  goEsther('intro');
+}
+function estCut(fn, lines, then, color){ $('fade').style.background=color||'#0b0b14'; $('fade').style.opacity=1; setTimeout(()=>{ fn(); P.lockLook=null; $('fade').style.opacity=0; setTimeout(()=>{ $('fade').style.background='#fff8e6'; },900); if(lines) say(lines, then); else if(then) then(); },1000); }
+function estherTrip(cb){ const S=story; S.tripT=0; S.tripCb=cb; setGoal('Wait for <b>Hathach</b> to come back'); }
+function estherAsk(){ const S=story; $('cForm').style.display='none';
+  choose('What will you ask the king for?', ['Save my life, and save my people','Give me more jewels and gold','Make me ruler of half the kingdom'], v=>{ $('cForm').style.display='';
+    if(v.startsWith('Save')) say([['You are Esther','If you are pleased with me, O king, please spare my life, and spare my people. That is what I ask. My people and I have been sold to be destroyed!','Esther 7:3-4'],
+        ['King Xerxes','Who is he? Where is the man who would dare to do such a thing?','Esther 7:5']], ()=>goEsther('point'));
+    else say([['You are Esther','No. Mordecai was right. Maybe I became queen for a time just like this. I have to speak up for my people.','Esther 4:14']], ()=>estherAsk()); }); }
+function goEsther(step){
+  const S=story, W=world; S.step=step; $('prompt').classList.add('hidden');
+  if(step==='intro'){ S.lock=true; setGoal('Listen');
+    say([[SAY_BIBLE,'When Mordecai found out about Haman’s plan, he tore his clothes, put on rough sackcloth, and went out into the city crying loudly. He came as far as the king’s gate.','Esther 4:1-2'],
+      [SAY_BIBLE,'Esther’s maids came and told her about Mordecai. Esther was very upset. Mordecai was her cousin, and he had raised her like a daughter.','Esther 4:4, 2:7']], ()=>goEsther('hathach')); }
+  if(step==='hathach'){ S.lock=false; S.target=W.hathach; setGoal(S.round===0?'Ask <b>Hathach</b> to find out what is wrong with Mordecai':'Send <b>Hathach</b> with a message for Mordecai'); }
+  if(step==='robes'){ S.lock=false; S.target={position:W.chest.position.clone()}; setGoal('Put on your <b>royal robes</b>'); }
+  if(step==='court'){ S.lock=false; S.target={position:new THREE.Vector3(ETHRONE.x,0,ETHRONE.z+3)}; setGoal('Go and stand in the <b>throne room</b>, where the king can see you'); }
+  if(step==='wait'){ S.lock=true; S.target=null; setGoal(''); lookAt(ETHRONE.x,2.4,ETHRONE.z-8.6,1.2);
+    say([[SAY_BIBLE,'Esther stood in the inner court. Anyone who came to the king without being called would die, unless the king held out his gold scepter.','Esther 4:11, 5:1']], ()=>{ setTimeout(()=>{ if(story!==S) return; S.kingArmTo=1; W.scGlow.visible=true;
+      say([[SAY_BIBLE,'When the king saw Queen Esther standing in the court, he was pleased with her! He held out the gold scepter in his hand.','Esther 5:2']], ()=>{ P.lockLook=null; goEsther('scepter'); }); },1800); }); }
+  if(step==='scepter'){ S.lock=false; S.target={position:new THREE.Vector3(ETHRONE.x,0,ETHRONE.z-5.6)}; setGoal('Go and touch the tip of the <b>scepter</b>'); }
+  if(step==='banquet'){ S.lock=true; S.target=null; setGoal('Listen');
+    estCut(()=>{ W.king.userData.arms[1].rotation.x=0; S.kingArm=0; S.kingArmTo=0; W.scGlow.visible=false; W.king.position.set(EBANQ.x+3,0.2,EBANQ.z); W.king.rotation.y=-Math.PI/2; W.haman.visible=true; P.x=EBANQ.x-4.2; P.z=EBANQ.z+0.4; P.yaw=-Math.PI/2; P.eye=1.35; },
+      [[SAY_BIBLE,'So the king and Haman came to the banquet that Esther had prepared.','Esther 5:5', ()=>lookAt(EBANQ.x+3,1.8,EBANQ.z,0.8)],
+       ['King Xerxes','Now, what do you want? I will give it to you, even up to half my kingdom!','Esther 5:6'],
+       ['You are Esther','If it pleases the king, please come with Haman to another banquet tomorrow. Then I will tell you.','Esther 5:7-8'],
+       [SAY_BIBLE,'That night the king couldn’t sleep. So he had the history book of his kingdom read to him. It said that Mordecai had once saved the king’s life by warning him about two men who wanted to kill him.','Esther 6:1-2', ()=>{ skyTo(0x141c3a,1500); hemi.intensity=0.35; sun.intensity=0.15; }],
+       [SAY_BIBLE,'The next day, the king made Haman lead Mordecai through the city on the king’s own horse, wearing the king’s robe, and shout: "This is what the king does for someone he wants to honor!"','Esther 6:10-11', ()=>{ skyTo(0xe8a070,1500); hemi.intensity=0.5; sun.intensity=0.7; }],
+       [SAY_BIBLE,'Then the king and Haman came to Esther’s second banquet.','Esther 7:1'],
+       ['King Xerxes','Queen Esther, what do you want? I will give it to you, even up to half my kingdom!','Esther 7:2', ()=>lookAt(EBANQ.x+3,1.8,EBANQ.z,0.8)]], ()=>{ P.lockLook=null; S.step='ask'; estherAsk(); }); }
+  if(step==='point'){ S.lock=true; setGoal('Tell the king who the enemy is'); }
+  if(step==='celebrate'){ S.lock=true; setGoal('Listen');
+    estCut(()=>{ W.haman.visible=false; W.crowd.forEach(c=>c.visible=true); W.mordecai2.visible=true; W.mordecai.visible=false; scene.background.set(0xe8a070); scene.fog.color.set(0xe8a070); P.x=0; P.z=4; P.yaw=Math.PI; P.eye=1.68; S.party=true; },
+      [[SAY_BIBLE,'Mordecai came out from the king wearing royal robes of blue and white and a big gold crown. The whole city of Susa shouted for joy!','Esther 8:15', ()=>lookAt(0,1.9,13.5,1)],
+       [SAY_BIBLE,'For God’s people it was a time of happiness and joy. Ever since then, they celebrate the holiday of Purim with feasts, and with gifts for each other and for the poor.','Esther 8:16, 9:22']], ()=>finishStory()); }
+}
+function updateEsther(dt, now){
+  const S=story, W=world, t=(S.t+=dt);
+  if(S.fadeSky){ const f=S.fadeSky; f.t+=dt; const k=smooth(f.t/f.dur); scene.background.copy(f.from).lerp(f.to,k); scene.fog.color.copy(scene.background); if(k>=1) S.fadeSky=null; }
+  /* Hathach carries messages to the king's gate */
+  if(S.tripT>=0){ S.tripT+=dt; const H=W.hathach, home=H.userData.home, gate=new THREE.Vector3(EGATE.x,0,EGATE.z-1.5), T=2.6, k=S.tripT<T?S.tripT/T:(S.tripT<T+1?1:Math.max(0,1-(S.tripT-T-1)/T));
+    H.position.x=lerp(home.x,gate.x,smooth(k)); H.position.z=lerp(home.z,gate.z,smooth(k)); H.position.y=ground(H.position.x,H.position.z); H.rotation.y=S.tripT<T+0.5?0:Math.PI; animWalk(H,dt,(S.tripT<T||S.tripT>T+1)?1.2:0);
+    if(S.tripT>T*2+1){ S.tripT=-1; faceTo(H,P.x,P.z); const cb=S.tripCb; S.tripCb=null; if(cb) cb(); } }
+  /* the king's arm and the scepter */
+  S.kingArm+=(S.kingArmTo-S.kingArm)*Math.min(1,dt*2); W.king.userData.arms[1].rotation.x=-S.kingArm*1.35; if(W.scGlow.visible) W.scGlow.scale.setScalar(0.45+Math.sin(t*4)*0.08);
+  W.lamps.forEach((l,i)=>l.scale.setScalar(0.9+Math.sin(t*9+i*2)*0.08));
+  if(S.hamanFear){ W.haman.rotation.z=Math.sin(t*30)*0.03; W.haman.rotation.x=0.25; }
+  if(S.party){ W.crowd.forEach(c=>{ const u=c.userData; c.position.y=Math.abs(Math.sin(t*5+u.ph))*0.35; u.arms[0].rotation.x=-2.6+Math.sin(t*6+u.ph)*0.3; u.arms[1].rotation.x=-2.6+Math.cos(t*6+u.ph)*0.3; u.armsBusy=true; }); }
+  let near=null;
+  if(S.step==='hathach' && S.tripT<0 && dist2(W.hathach)<2.6){ const n=S.round;
+    near={label:n===0?'Send Hathach to Mordecai':'Send your answer', fn:()=>{ S.lock=true; S.target=null;
+      if(n===0) estherTrip(()=>say([['Hathach','Mordecai told me everything. Haman has promised the king lots of money to destroy all the Jewish people. Here is a copy of the law.','Esther 4:7-8'],
+          ['Hathach','Mordecai says: "Go to the king. Beg him to have mercy, and plead with him for your people."','Esther 4:8']], ()=>{ S.round=1; goEsther('hathach'); }));
+      else if(n===1) say([['You are Esther','Tell Mordecai: Everyone knows that anyone who goes to the king without being called will die, unless the king holds out his gold scepter. And the king hasn’t called me for 30 days.','Esther 4:11']], ()=>estherTrip(()=>say([['Hathach','Mordecai says: "Don’t think that just because you live in the palace, you will escape. If you stay quiet, help will come from somewhere else."','Esther 4:13-14'],
+          ['Hathach','"And who knows? Maybe you became queen for a time just like this."','Esther 4:14']], ()=>{ S.round=2; goEsther('hathach'); })));
+      else say([['You are Esther','Tell Mordecai: Gather all the Jewish people in Susa and fast for me. Don’t eat or drink for three days. My maids and I will fast too.','Esther 4:16'],
+          ['You are Esther','Then I will go to the king, even though it is against the law. And if I die, I die.','Esther 4:16']], ()=>estherTrip(()=>estCut(()=>{ skyTo(0xbcd8f0,10); },
+          [[SAY_BIBLE,'So Mordecai did everything Esther told him. For three days, God’s people didn’t eat or drink anything.','Esther 4:17', ()=>{ skyTo(0x141c3a,1500); hemi.intensity=0.35; sun.intensity=0.15; }],
+           [SAY_BIBLE,'On the third day...','Esther 5:1', ()=>{ skyTo(0xbcd8f0,1500); hemi.intensity=0.5; sun.intensity=0.9; }]], ()=>goEsther('robes')))); }}; }
+  if(S.step==='robes' && Math.hypot(P.x-W.chest.position.x,P.z-W.chest.position.z)<2.4) near={label:'Put on your royal robes', fn:()=>{ W.robe.visible=false; W.crown.visible=false; S.lock=true; S.target=null;
+      say([[SAY_BIBLE,'Esther put on her royal robes and went to the inner court of the palace, in front of the king’s throne room.','Esther 5:1']], ()=>goEsther('court')); }};
+  if(S.step==='court' && Math.hypot(P.x-ETHRONE.x,P.z-(ETHRONE.z+3))<2.6) goEsther('wait');
+  if(S.step==='scepter' && Math.hypot(P.x-ETHRONE.x,P.z-(ETHRONE.z-5.6))<1.8) near={label:'Touch the scepter', fn:()=>{ S.lock=true; S.target=null; lookAt(ETHRONE.x,2.4,ETHRONE.z-8.6,0.6);
+      say([[SAY_BIBLE,'So Esther went up and touched the tip of the scepter.','Esther 5:2'],
+        ['King Xerxes','What is it, Queen Esther? What do you want? I will give it to you, even up to half my kingdom!','Esther 5:3'],
+        ['You are Esther','If it pleases the king, please come today with Haman to a banquet I have prepared for you.','Esther 5:4']], ()=>goEsther('banquet')); }};
+  if(S.step==='point' && !saying()) near={label:'Point at Haman', fn:()=>{ lookAt(W.haman.position.x,1.6,W.haman.position.z,0.5);
+      say([['You are Esther','Our enemy is this wicked Haman!','Esther 7:6'],
+        [SAY_BIBLE,'Haman was terrified in front of the king and queen.','Esther 7:6', ()=>{ S.hamanFear=true; }],
+        [SAY_BIBLE,'The king was furious! He had Haman taken away and punished, and he gave Haman’s job to Mordecai.','Esther 7:7-10, 8:2', ()=>{ W.haman.visible=false; }],
+        [SAY_BIBLE,'Then the king let Esther and Mordecai write a new law, so the Jewish people could defend themselves. God’s people were saved!','Esther 8:8-11']], ()=>goEsther('celebrate')); }};
+  S.near=near;
+  const pr=$('prompt');
+  if(near && !saying()){ pr.textContent=(touch?'':'Space: ')+near.label; pr.classList.remove('hidden'); $('act').textContent=near.label.split(' ')[0]; }
+  else { pr.classList.add('hidden'); $('act').textContent= saying()?'Next':'Use'; }
+  showBeacon(t);
+}
+function boundsEsther(){ P.x=clamp(P.x,-46.5,46.5); P.z=clamp(P.z,-50.5,53.5);
+  { const d=Math.hypot(P.x,P.z); if(d<3.9){ P.x=P.x/(d||1)*3.9; P.z=P.z/(d||1)*3.9; } }
+  const T=ETHRONE; if(P.z<T.z+11.4 && P.z>T.z-11.8 && Math.abs(P.x-T.x)<11.8){ if(Math.abs(P.x-T.x)>10.2){ P.x=T.x+Math.sign(P.x-T.x)*(Math.abs(P.x-T.x)>11?11.8:10.2); } if(P.z<T.z-6.2) P.z=T.z-6.2; } }
+function jumpEsther(q){ // ?step=court | banquet | ask
+  const S=story, W=world; sayQ.length=0; $('say').classList.add('hidden'); sayCb=null;
+  if(q==='court'){ W.robe.visible=false; W.crown.visible=false; goEsther('court'); }
+  if(q==='banquet'){ goEsther('banquet'); }
+  if(q==='ask'){ W.king.position.set(EBANQ.x+3,0.2,EBANQ.z); W.king.rotation.y=-Math.PI/2; W.haman.visible=true; P.x=EBANQ.x-4.2; P.z=EBANQ.z+0.4; P.yaw=-Math.PI/2; P.eye=1.35; scene.background.set(0xe8a070); S.step='ask'; estherAsk(); }
+}
+
 /* David's story hooks */
 function boundsDavid(){ P.x=clamp(P.x,-34,34); P.z=clamp(P.z,-60,72); }
 const IMPL = {
+  esther: { build:buildEsther, go:goEsther, update:updateEsther, bounds:boundsEsther, locked:S=>S.lock || choosing() },
   daniel: { build:buildDaniel, go:goDaniel, update:updateDaniel, bounds:boundsDaniel, locked:S=>S.lock },
   jonah: { build:buildJonah, go:goJonah, update:updateJonah, bounds:boundsJonah, locked:S=>S.lock },
   elijah: { build:buildElijah, go:goElijah, update:updateElijah, bounds:boundsElijah, locked:S=>S.lock },
@@ -3439,7 +3596,7 @@ function startStory(id){
   const q=new URLSearchParams(location.search).get('step'); if(q && story) jumpTo(q); // preview links for testing
 }
 function jumpTo(q){ // ?step=stones or ?step=sling
-  const S=story; if(story.id==='adam') return jumpAdam(q); if(story.id==='noah') return jumpNoah(q); if(story.id==='abraham') return jumpAbraham(q); if(story.id==='joseph') return jumpJoseph(q); if(story.id==='babymoses') return jumpMoses(q); if(story.id==='bush') return jumpBush(q); if(story.id==='redsea') return jumpRed(q); if(story.id==='jericho') return jumpJericho(q); if(story.id==='gideon') return jumpGideon(q); if(story.id==='samson') return jumpSamson(q); if(story.id==='elijah') return jumpElijah(q); if(story.id==='jonah') return jumpJonah(q); if(story.id==='daniel') return jumpDaniel(q);
+  const S=story; if(story.id==='adam') return jumpAdam(q); if(story.id==='noah') return jumpNoah(q); if(story.id==='abraham') return jumpAbraham(q); if(story.id==='joseph') return jumpJoseph(q); if(story.id==='babymoses') return jumpMoses(q); if(story.id==='bush') return jumpBush(q); if(story.id==='redsea') return jumpRed(q); if(story.id==='jericho') return jumpJericho(q); if(story.id==='gideon') return jumpGideon(q); if(story.id==='samson') return jumpSamson(q); if(story.id==='elijah') return jumpElijah(q); if(story.id==='jonah') return jumpJonah(q); if(story.id==='daniel') return jumpDaniel(q); if(story.id==='esther') return jumpEsther(q);
   if(q==='stones'||q==='sling'){ world.lamb.userData.following=true; world.lamb.userData.goal={x:world.flock.x+1,z:world.flock.z}; world.lamb.position.set(world.flock.x+1,0,world.flock.z); world.israel.forEach(p=>p.position.z+=12); }
   if(q==='stones'){ P.x=0; P.z=STREAM_Z+4; P.yaw=0; sayQ.length=0; $('say').classList.add('hidden'); go('stones'); }
   if(q==='sling'){ world.stones.forEach(s=>s.visible=false); S.stonesHeld=5; S.stonesLeft=5; P.x=0; P.z=-20; P.yaw=0; world.goliath.position.set(0,ground(0,-36),-36); sayQ.length=0; $('say').classList.add('hidden'); $('stones').classList.remove('hidden'); updateStonesHud(); go('sling'); }
@@ -3450,7 +3607,7 @@ function finishStory(){
   const nextReady=READY[READY.indexOf(s)+1], nextAny=STORIES[STORIES.indexOf(s)+1];
   $('fade').style.opacity=0.6;
   setTimeout(()=>{
-    $('endWho').textContent='You saw what '+({david:'David',adam:'Adam',noah:'Noah',abraham:'Abraham',joseph:'Joseph',babymoses:'Miriam',bush:'Moses',redsea:'Moses',jericho:'Joshua',gideon:'Gideon',samson:'Samson',elijah:'Elijah',jonah:'Jonah',daniel:'Daniel'}[s.id]||'they')+' did.';
+    $('endWho').textContent='You saw what '+({david:'David',adam:'Adam',noah:'Noah',abraham:'Abraham',joseph:'Joseph',babymoses:'Miriam',bush:'Moses',redsea:'Moses',jericho:'Joshua',gideon:'Gideon',samson:'Samson',elijah:'Elijah',jonah:'Jonah',daniel:'Daniel',esther:'Esther'}[s.id]||'they')+' did.';
     $('endVerse').textContent=s.endVerse; $('endRef').textContent=s.endRef;
     $('endUnlock').textContent= nextReady ? 'You unlocked '+nextReady.title+'!' : (nextAny ? 'Next up: '+nextAny.title+'. It is coming soon!' : 'You finished every story!');
     $('endNext').innerHTML = nextAny ? '<b>What happens next</b>'+nextAny.before : '';
