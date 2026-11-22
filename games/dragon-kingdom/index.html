@@ -666,6 +666,82 @@ mesh(new THREE.BoxGeometry(1.6,0.35,1),M(0xa0692f),0,0.17,0.5,lid);
 mesh(new THREE.BoxGeometry(0.25,0.35,0.1),M(0xf5c542),0,0.6,0.52,chest);
 addCol(-28,-8,1.1);
 
+// ================= REAL-LOOKING PEOPLE =================
+// Shared body parts so people have real proportions: an oval head with a jaw, nose, ears and lips,
+// hands with fingers and a thumb, elbows and knees, and a body that is wider at the shoulders and hips.
+// Everything is built facing +z.
+const HEAD_GEO = (() => {
+  const g = new THREE.SphereGeometry(1, 32, 24), p = g.attributes.position;
+  for(let i=0;i<p.count;i++){
+    let x = p.getX(i), y = p.getY(i), z = p.getZ(i);
+    if(y < 0){ const t = -y; x *= 1 - 0.34*t*t; z *= 1 - 0.1*t; }            // the jaw narrows down to the chin
+    if(y < -0.55 && z > 0) z += 0.1*(-y - 0.55);                              // chin
+    if(z < 0) z *= 1.1;                                                        // round back of the skull
+    if(z > 0.55) z = 0.55 + (z - 0.55)*0.55;                                   // flatter face
+    if(y > 0.15 && y < 0.45 && z > 0.5) z += 0.03;                             // brow
+    p.setXYZ(i, x*0.118, y*0.155, z*0.135);
+  }
+  g.computeVertexNormals(); return g;
+})();
+function blob(mat, sx, sy, sz, x, y, z, parent){ const m = mesh(new THREE.SphereGeometry(1, 16, 12), mat, x, y, z, parent); m.scale.set(sx, sy, sz); return m; }
+function humanHead(o, parent){
+  o = Object.assign({skin:0xe8b48a, hair:0x5a3a1c, iris:0x4a3020, lip:null, face:true, hairCap:true}, o);
+  const skinM = o.skinM || M(o.skin), g = new THREE.Group(); parent.add(g);
+  mesh(HEAD_GEO, skinM, 0, 0, 0, g);
+  [-1,1].forEach(s=> blob(skinM, 0.014, 0.034, 0.024, s*0.116, -0.005, -0.01, g));          // ears
+  if(o.face){
+    const nose = blob(skinM, 0.019, 0.04, 0.026, 0, -0.012, 0.128, g); nose.rotation.x = -0.25;
+    blob(skinM, 0.02, 0.016, 0.018, 0, -0.045, 0.138, g);                                     // nose tip
+    const white = M(0xf4efe8, {roughness:.3}), iris = M(o.iris, {roughness:.25}), lid = skinM;
+    [-1,1].forEach(s=>{
+      blob(white, 0.021, 0.013, 0.012, s*0.045, 0.022, 0.111, g);
+      blob(iris, 0.0095, 0.0095, 0.006, s*0.045, 0.022, 0.121, g);
+      const ul = blob(lid, 0.024, 0.006, 0.013, s*0.045, 0.039, 0.11, g); ul.rotation.z = s*-0.08;  // upper eyelid
+      const br = mesh(new THREE.BoxGeometry(0.046, 0.009, 0.014), M(o.brow!==undefined ? o.brow : o.hair), s*0.047, 0.056, 0.12, g); br.rotation.z = s*0.1;
+    });
+    const lipC = o.lip!==null ? o.lip : new THREE.Color(o.skin).lerp(new THREE.Color(0xb0505a), 0.45).getHex();
+    blob(M(lipC, {roughness:.45}), 0.032, 0.008, 0.012, 0, -0.077, 0.121, g);
+    blob(M(lipC, {roughness:.45}), 0.028, 0.009, 0.012, 0, -0.09, 0.119, g);
+    [-1,1].forEach(s=>{ const cn = blob(M(lipC, {roughness:.45}), 0.012, 0.005, 0.008, s*0.03, -0.079, 0.114, g); cn.rotation.z = s*0.6; });
+  }
+  if(o.hairCap){ const hc = mesh(new THREE.SphereGeometry(1, 28, 16, 0, Math.PI*2, 0, Math.PI*0.52), M(o.hair, {roughness:.9}), 0, 0.02, -0.012, g); hc.scale.set(0.126, 0.162, 0.15); hc.rotation.x = -0.32; }
+  return g;
+}
+function humanHand(mat, side, parent){
+  const h = new THREE.Group(); parent.add(h); h.rotation.y = side*Math.PI/2;            // palm faces in toward the body
+  mesh(new THREE.BoxGeometry(0.072, 0.085, 0.03), mat, 0, -0.045, 0, h);
+  for(let k=0;k<4;k++){ const f = new THREE.Group(); f.position.set(-0.027 + k*0.018, -0.086, 0); f.rotation.x = 0.35; h.add(f);
+    mesh(new THREE.CylinderGeometry(0.0085, 0.0095, k===0||k===3 ? 0.052 : 0.062, 8), mat, 0, -0.028, 0, f); }
+  const th = new THREE.Group(); th.position.set(-side*0.0 + 0.036, -0.03, 0.012); th.rotation.set(0.5, 0, 0.55); h.add(th);
+  mesh(new THREE.CylinderGeometry(0.0095, 0.011, 0.05, 8), mat, 0, -0.025, 0, th);
+  return h;
+}
+// an arm hanging from the shoulder: upper arm, elbow, forearm, hand. o.upper / o.fore / o.hand are materials
+function humanArm(o, side, parent){
+  const arm = new THREE.Group(); parent.add(arm);
+  mesh(new THREE.SphereGeometry(0.06, 14, 10), o.upper, 0, -0.01, 0, arm);                 // shoulder
+  mesh(new THREE.CylinderGeometry(0.064, 0.052, 0.3, 12), o.upper, 0, -0.15, 0, arm);
+  const elbow = new THREE.Group(); elbow.position.set(0, -0.3, 0); elbow.rotation.x = -0.18; arm.add(elbow);
+  mesh(new THREE.SphereGeometry(0.05, 12, 10), o.fore, 0, 0, 0, elbow);
+  mesh(new THREE.CylinderGeometry(0.05, 0.036, 0.27, 12), o.fore, 0, -0.135, 0, elbow);
+  const wrist = new THREE.Group(); wrist.position.set(0, -0.27, 0); elbow.add(wrist);
+  const hand = humanHand(o.hand, side, wrist);
+  return {arm, elbow, wrist, hand};
+}
+function humanLeg(o, parent){
+  const leg = new THREE.Group(); parent.add(leg);
+  mesh(new THREE.CylinderGeometry(0.094, 0.068, 0.43, 12), o.thigh, 0, -0.215, 0, leg);
+  const knee = new THREE.Group(); knee.position.set(0, -0.43, 0); leg.add(knee);
+  mesh(new THREE.SphereGeometry(0.068, 12, 10), o.knee || o.shin, 0, 0, 0.005, knee);
+  mesh(new THREE.CylinderGeometry(0.066, 0.046, 0.39, 12), o.shin, 0, -0.195, 0, knee);
+  mesh(new THREE.BoxGeometry(0.1, 0.075, 0.25), o.shoe, 0, -0.42, 0.045, knee);
+  return {leg, knee};
+}
+// a body from the hips to the base of the neck, oval (narrower front to back)
+const TORSO_PTS = [[0.001,-0.12],[0.165,-0.12],[0.182,-0.03],[0.16,0.1],[0.172,0.24],[0.19,0.35],[0.17,0.43],[0.1,0.49],[0.055,0.51],[0.001,0.51]].map(([r,y])=>new THREE.Vector2(r,y));
+function torsoGeo(from, to, grow){ const pts = TORSO_PTS.filter(p=>p.y>=from-1e-6 && p.y<=to+1e-6).map(p=>new THREE.Vector2(p.x===0.001?0.001:p.x*(grow||1), p.y)); return new THREE.LatheGeometry(pts, 28); }
+function humanTorso(mat, parent, y, from=-0.12, to=0.51, grow=1){ const t = mesh(torsoGeo(from, to, grow), mat, 0, y, 0, parent); t.scale.z = 0.62; return t; }
+
 // Bea the builder
 function person(shirt, hat){
   const g = new THREE.Group();
@@ -680,69 +756,58 @@ function person(shirt, hat){
 function beaModel(o={}){
   o = Object.assign({skin:0xe8b48a, over:0x2f6fb5, shirt:0xf28c28, hair:0x7a3b1c, hat:'hard', hatColor:0xf5c542, tool:'hammer', pony:true, beard:false}, o);
   const g = new THREE.Group();
-  const skin = M(o.skin), denim = M(o.over), shirt = M(o.shirt), hair = M(o.hair), dark = M(0x2a1d10);
-  // boots + legs (overalls)
-  [-1,1].forEach(s=>{
-    mesh(new THREE.BoxGeometry(0.28,0.2,0.42), M(0x5a3815), s*0.17,0.1,0.05, g);
-    mesh(new THREE.CylinderGeometry(0.13,0.14,0.62,8), denim, s*0.17,0.5,0, g);
-  });
-  // body: orange shirt under denim overalls
-  mesh(new THREE.CylinderGeometry(0.36,0.4,0.85,12), shirt, 0,1.15,0, g);
-  mesh(new THREE.CylinderGeometry(0.37,0.41,0.5,12), denim, 0,0.95,0, g);
-  mesh(new THREE.BoxGeometry(0.42,0.38,0.08), denim, 0,1.28,0.34, g);       // bib
-  [-1,1].forEach(s=> mesh(new THREE.BoxGeometry(0.07,0.42,0.06), denim, s*0.15,1.42,0.3, g).rotation.x = -0.15); // straps
-  [-1,1].forEach(s=> mesh(new THREE.SphereGeometry(0.035,6,6), M(0xf5c542), s*0.15,1.27,0.39, g)); // buttons
+  const skin = M(o.skin), denim = M(o.over), shirt = M(o.shirt), hair = M(o.hair), boot = M(0x5a3815);
+  // legs in overalls, with boots
+  [-1,1].forEach(s=>{ const L = humanLeg({thigh:denim, shin:denim, shoe:boot}, g); L.leg.position.set(s*0.1, 0.9, 0); L.leg.rotation.z = s*0.03; });
+  // body: shirt, with the overalls over the hips and a bib in front
+  humanTorso(shirt, g, 1.02);
+  humanTorso(denim, g, 1.02, -0.12, 0.16, 1.04);
+  const bib = mesh(new THREE.BoxGeometry(0.24, 0.24, 0.03), denim, 0, 1.25, 0.105, g); bib.rotation.x = -0.08;
+  [-1,1].forEach(s=>{ const st = mesh(new THREE.BoxGeometry(0.04, 0.3, 0.02), denim, s*0.09, 1.38, 0.08, g); st.rotation.x = -0.35;
+    const st2 = mesh(new THREE.BoxGeometry(0.04, 0.32, 0.02), denim, s*0.09, 1.36, -0.085, g); st2.rotation.x = 0.25;
+    mesh(new THREE.SphereGeometry(0.016, 8, 6), M(0xf5c542), s*0.09, 1.35, 0.125, g); });
   // tool belt with pouch and wrench
-  mesh(new THREE.TorusGeometry(0.41,0.05,6,18), M(0x8b5a2b), 0,0.78,0, g).rotation.x = Math.PI/2;
-  mesh(new THREE.BoxGeometry(0.2,0.22,0.12), M(0x8b5a2b), 0.3,0.7,0.3, g);
-  mesh(new THREE.BoxGeometry(0.05,0.3,0.05), M(0xb8c0c8), -0.33,0.72,0.28, g);
-  // arms
-  const armL = new THREE.Group(); armL.position.set(-0.45,1.5,0); g.add(armL);
-  mesh(new THREE.CylinderGeometry(0.1,0.09,0.6,8), shirt, 0,-0.28,0, armL);
-  mesh(new THREE.SphereGeometry(0.1,8,8), skin, 0,-0.62,0, armL);
-  armL.rotation.z = 0.15;
-  const armR = new THREE.Group(); armR.position.set(0.45,1.5,0); g.add(armR);
-  mesh(new THREE.CylinderGeometry(0.1,0.09,0.6,8), shirt, 0,-0.28,0, armR);
-  mesh(new THREE.SphereGeometry(0.1,8,8), skin, 0,-0.62,0, armR);
+  const belt = mesh(new THREE.TorusGeometry(0.17, 0.025, 8, 28), M(0x8b5a2b), 0, 0.92, 0, g); belt.rotation.x = Math.PI/2; belt.scale.set(1.08, 0.68, 1);
+  mesh(new THREE.BoxGeometry(0.11, 0.12, 0.06), M(0x8b5a2b), 0.13, 0.86, 0.09, g);
+  mesh(new THREE.BoxGeometry(0.025, 0.16, 0.025), M(0xb8c0c8, {metalness:.5}), -0.14, 0.86, 0.09, g);
+  // arms: short sleeves, bare forearms, real hands
+  const armL = new THREE.Group(); armL.position.set(-0.2, 1.43, 0); armL.rotation.z = 0.12; g.add(armL);
+  humanArm({upper:shirt, fore:skin, hand:skin}, -1, armL);
+  const armR = new THREE.Group(); armR.position.set(0.2, 1.43, 0); g.add(armR);
+  const ar = humanArm({upper:shirt, fore:skin, hand:skin}, 1, armR);
   // hammer in her right hand
-  const hammer = new THREE.Group(); hammer.position.set(0,-0.62,0.05); armR.add(hammer); hammer.visible = o.tool==='hammer';
-  mesh(new THREE.CylinderGeometry(0.035,0.035,0.55,6), M(0x6b4a24), 0,0,0.2, hammer).rotation.x = Math.PI/2;
-  mesh(new THREE.BoxGeometry(0.12,0.12,0.28), M(0x8d8f93), 0,0,0.47, hammer).rotation.y = Math.PI/2;
+  const hammer = new THREE.Group(); hammer.position.set(0, -0.1, 0.02); ar.wrist.add(hammer); hammer.visible = o.tool==='hammer';
+  mesh(new THREE.CylinderGeometry(0.016, 0.018, 0.34, 8), M(0x6b4a24), 0, 0, 0.12, hammer).rotation.x = Math.PI/2;
+  mesh(new THREE.BoxGeometry(0.06, 0.06, 0.16), M(0x8d8f93, {metalness:.5}), 0, 0, 0.29, hammer).rotation.y = Math.PI/2;
   armR.rotation.set(-0.5, 0, -0.15);
-  // head
-  mesh(new THREE.CylinderGeometry(0.12,0.13,0.15,8), skin, 0,1.65,0, g);
-  const head = new THREE.Group(); head.position.set(0,1.92,0); g.add(head);
-  mesh(new THREE.SphereGeometry(0.32,16,14), skin, 0,0,0, head);
-  [-1,1].forEach(s=>{
-    mesh(new THREE.SphereGeometry(0.055,8,8), M(0xffffff), s*0.11,0.04,0.28, head);
-    mesh(new THREE.SphereGeometry(0.032,8,8), dark, s*0.11,0.04,0.32, head);
-    mesh(new THREE.SphereGeometry(0.06,8,8), M(0xf29a8a), s*0.19,-0.07,0.24, head).scale.set(1,0.6,0.5); // rosy cheeks
-    mesh(new THREE.BoxGeometry(0.1,0.025,0.02), hair, s*0.11,0.13,0.3, head).rotation.z = s*-0.15; // eyebrows
-  });
-  mesh(new THREE.SphereGeometry(0.04,8,8), M(0xd9946c), 0,-0.03,0.32, head); // nose
-  const smile = mesh(new THREE.TorusGeometry(0.08,0.018,6,12,Math.PI), dark, 0,-0.1,0.29, head); smile.rotation.z = Math.PI;
-  // hair: back of head + ponytail
-  mesh(new THREE.SphereGeometry(0.335,16,12,0,Math.PI*2,0,Math.PI*0.55), hair, 0,0.02,-0.03, head).rotation.x = -0.35;
-  const pony = new THREE.Group(); pony.position.set(0,0.0,-0.32); head.add(pony);
+  // neck and head
+  mesh(new THREE.CylinderGeometry(0.048, 0.056, 0.13, 12), skin, 0, 1.56, 0, g);
+  const head = new THREE.Group(); head.position.set(0, 1.735, 0.01); g.add(head);
+  humanHead({skinM:skin, skin:o.skin, hair:o.hair, iris:o.iris || 0x4a3020}, head);
+  // hair: a ponytail with a red tie
+  const pony = new THREE.Group(); pony.position.set(0, 0.03, -0.15); head.add(pony);
   if(o.pony){
-    mesh(new THREE.SphereGeometry(0.07,8,8), M(0xd7382f), 0,0,0, pony); // red hair tie
-    mesh(new THREE.ConeGeometry(0.12,0.5,8), hair, 0,-0.25,-0.05, pony).rotation.x = Math.PI + 0.2;
+    mesh(new THREE.SphereGeometry(0.026, 10, 8), M(0xd7382f), 0, 0, 0, pony);
+    mesh(new THREE.CylinderGeometry(0.036, 0.012, 0.24, 12), hair, 0, -0.11, -0.035, pony).rotation.x = 0.3;
   }
-  if(o.beard){ mesh(new THREE.SphereGeometry(0.24,10,8,0,Math.PI*2,Math.PI*0.45,Math.PI*0.55), hair, 0,-0.08,0.1, head).scale.set(1.05,1.2,1); }
+  if(o.beard){ const bd = mesh(new THREE.SphereGeometry(1, 24, 14, 0, Math.PI*2, Math.PI*0.56, Math.PI*0.44), hair, 0, -0.012, 0.004, head); bd.scale.set(0.124, 0.165, 0.142);
+    const mu = blob(hair, 0.04, 0.012, 0.02, 0, -0.064, 0.126, head); mu.rotation.x = -0.2; }   // moustache
+  // hats are drawn at the old cartoon size and shrunk to fit the real head
+  const hatG = new THREE.Group(); hatG.scale.setScalar(0.46); hatG.position.set(0, 0.025, -0.005); head.add(hatG);
   const hc = M(o.hatColor);
   if(o.hat==='hard'){ // yellow hard hat
-    mesh(new THREE.SphereGeometry(0.35,16,10,0,Math.PI*2,0,Math.PI/2), hc, 0,0.1,0, head);
-    mesh(new THREE.CylinderGeometry(0.43,0.43,0.04,16), hc, 0.0,0.1,0.06, head);
-    mesh(new THREE.BoxGeometry(0.06,0.18,0.5), M(0xe0ad2a), 0,0.32,0, head);
+    mesh(new THREE.SphereGeometry(0.35,16,10,0,Math.PI*2,0,Math.PI/2), hc, 0,0.1,0, hatG);
+    mesh(new THREE.CylinderGeometry(0.43,0.43,0.04,16), hc, 0.0,0.1,0.06, hatG);
+    mesh(new THREE.BoxGeometry(0.06,0.18,0.5), M(0xe0ad2a), 0,0.32,0, hatG);
   } else if(o.hat==='straw'){
-    mesh(new THREE.CylinderGeometry(0.62,0.62,0.04,18), hc, 0,0.16,0, head);
-    mesh(new THREE.CylinderGeometry(0.26,0.32,0.26,14), hc, 0,0.3,0, head);
-    mesh(new THREE.CylinderGeometry(0.325,0.325,0.06,14), M(0xd7382f), 0,0.2,0, head);
+    mesh(new THREE.CylinderGeometry(0.62,0.62,0.04,18), hc, 0,0.16,0, hatG);
+    mesh(new THREE.CylinderGeometry(0.26,0.32,0.26,14), hc, 0,0.3,0, hatG);
+    mesh(new THREE.CylinderGeometry(0.325,0.325,0.06,14), M(0xd7382f), 0,0.2,0, hatG);
   } else if(o.hat==='bucket'){
-    mesh(new THREE.CylinderGeometry(0.3,0.36,0.3,14), hc, 0,0.22,0, head);
-    mesh(new THREE.CylinderGeometry(0.5,0.5,0.04,16), hc, 0,0.08,0, head);
+    mesh(new THREE.CylinderGeometry(0.3,0.36,0.3,14), hc, 0,0.22,0, hatG);
+    mesh(new THREE.CylinderGeometry(0.5,0.5,0.04,16), hc, 0,0.08,0, hatG);
   } else if(o.hat==='scarf'){
-    mesh(new THREE.SphereGeometry(0.35,16,10,0,Math.PI*2,0,Math.PI/2), hc, 0,0.04,-0.02, head);
+    mesh(new THREE.SphereGeometry(0.35,16,10,0,Math.PI*2,0,Math.PI/2), hc, 0,0.04,-0.02, hatG);
   }
   g.userData = {armR, head, pony};
   return g;
@@ -841,33 +906,35 @@ const knight = new THREE.Group(); scene.add(knight);
 // built facing +x; right side is -z. Armor in steel, tunic in George's orange, green and red.
 const steel = M(0xcfd6de, {metalness:.35, roughness:.3, flatShading:false}), steelDk = M(0x8d96a0, {metalness:.35, roughness:.35, flatShading:false});
 const tunic = M(0xf28c28, {flatShading:false, roughness:.8}), leather = M(0x6b4a24, {flatShading:false}), gold = M(0xf5c542, {metalness:.4, roughness:.3, flatShading:false});
-[-1,1].forEach(s=>{
-  mesh(new THREE.CylinderGeometry(0.13,0.12,0.55,10), steelDk, 0,0.62,s*0.17, knight);           // thigh
-  mesh(new THREE.SphereGeometry(0.11,10,8), steel, 0.04,0.42,s*0.17, knight);                       // knee
-  mesh(new THREE.CylinderGeometry(0.12,0.11,0.38,10), steel, 0,0.25,s*0.17, knight);              // greave
-  mesh(new THREE.BoxGeometry(0.34,0.12,0.2), leather, 0.06,0.06,s*0.17, knight);                   // boot
-});
-mesh(new THREE.CylinderGeometry(0.34,0.4,0.5,14), tunic, 0,0.95,0, knight);                         // skirt of the tunic
-mesh(new THREE.TorusGeometry(0.33,0.05,8,20), leather, 0,1.12,0, knight).rotation.x = Math.PI/2;   // belt
-mesh(new THREE.BoxGeometry(0.06,0.12,0.12), gold, 0.33,1.12,0, knight);                             // buckle
-mesh(new THREE.CylinderGeometry(0.36,0.32,0.62,14), tunic, 0,1.45,0, knight);                       // chest
-const plate = mesh(new THREE.SphereGeometry(0.34,16,12,-Math.PI/2,Math.PI,0,Math.PI*0.7), steel, 0.02,1.62,0, knight); plate.scale.set(0.75,1,1.05);
-mesh(new THREE.BoxGeometry(0.06,0.42,0.1), M(0x3f9a3a), 0.29,1.48,0, knight);                       // green cross
-mesh(new THREE.BoxGeometry(0.06,0.1,0.32), M(0x3f9a3a), 0.29,1.55,0, knight);
-[-1,1].forEach(s=>{ const pa = mesh(new THREE.SphereGeometry(0.2,14,10,0,Math.PI*2,0,Math.PI/2), steel, 0,1.74,s*0.38, knight); pa.scale.set(1,0.8,1.1); });
-// shield arm (left, +z)
-mesh(new THREE.CylinderGeometry(0.09,0.08,0.55,8), tunic, 0.05,1.38,0.45, knight).rotation.x = -0.15;
-// head + helmet
-mesh(new THREE.CylinderGeometry(0.12,0.14,0.14,10), steelDk, 0,1.84,0, knight);
-mesh(new THREE.SphereGeometry(0.3,20,16), steel, 0,2.08,0, knight);
-mesh(new THREE.CylinderGeometry(0.3,0.3,0.26,20,1,false,-Math.PI/2.4,Math.PI/1.2), steel, 0.02,1.98,0, knight);      // face plate
-mesh(new THREE.BoxGeometry(0.06,0.04,0.36), M(0x1d2228), 0.3,2.06,0, knight);                         // visor slit
-mesh(new THREE.BoxGeometry(0.04,0.18,0.04), M(0x1d2228), 0.31,1.94,0, knight);                        // breathing slit
-mesh(new THREE.TorusGeometry(0.3,0.025,6,24), gold, 0,2.1,0, knight).rotation.x = Math.PI/2;          // gold band
-const plume = new THREE.Group(); plume.position.set(-0.02,2.36,0); knight.add(plume);
+// The body is built facing +z (like everyone else) inside kb, then turned to face +x.
+const kb = new THREE.Group(); kb.rotation.y = Math.PI/2; knight.add(kb);
+const kLegs = [-1,1].map(s=>{ const L = humanLeg({thigh:steelDk, knee:steel, shin:steel, shoe:steelDk}, kb); L.leg.position.set(s*0.1, 0.9, 0);
+  mesh(new THREE.SphereGeometry(0.07, 14, 10), steel, 0, 0.0, 0.03, L.knee).scale.set(1, 0.9, 0.8);                // knee guard
+  return L; });
+humanTorso(leather, kb, 1.02, -0.12, 0.1);                                                                // padded jacket at the hips
+humanTorso(steel, kb, 1.02, -0.03, 0.51, 1.06);                                                           // breastplate
+const tabard = new THREE.Shape(); tabard.moveTo(-0.13,0.5); tabard.lineTo(0.13,0.5); tabard.lineTo(0.15,-0.05); tabard.lineTo(0.12,-0.42); tabard.lineTo(-0.12,-0.42); tabard.lineTo(-0.15,-0.05); tabard.lineTo(-0.13,0.5);
+[1,-1].forEach(s=>{ const tb = mesh(new THREE.ExtrudeGeometry(tabard, {depth:0.012, bevelEnabled:false}), tunic, 0, 0.98, s*0.124, kb); tb.rotation.x = s*0.06; if(s<0) tb.rotation.y = Math.PI; });   // orange tabard front and back
+mesh(new THREE.BoxGeometry(0.05, 0.3, 0.01), M(0x3f9a3a), 0, 1.24, 0.14, kb); mesh(new THREE.BoxGeometry(0.2, 0.05, 0.01), M(0x3f9a3a), 0, 1.3, 0.14, kb);   // green cross
+const kBelt = mesh(new THREE.TorusGeometry(0.17, 0.022, 8, 28), leather, 0, 1.0, 0, kb); kBelt.rotation.x = Math.PI/2; kBelt.scale.set(1.1, 0.78, 1);
+mesh(new THREE.BoxGeometry(0.05, 0.045, 0.02), gold, 0, 1.0, 0.145, kb);                                      // buckle
+[-1,1].forEach(s=>{ const pa = mesh(new THREE.SphereGeometry(0.105, 18, 12, 0, Math.PI*2, 0, Math.PI/2), steel, s*0.2, 1.45, 0, kb); pa.scale.set(1.15, 0.8, 1.05); pa.rotation.z = -s*0.35; });  // shoulder plates
+mesh(new THREE.CylinderGeometry(0.06, 0.08, 0.1, 16), steelDk, 0, 1.55, 0, kb);                              // neck guard
+// helmet: a real helmet shape on a real-sized head
+const kHelm = new THREE.Group(); kHelm.position.set(0, 1.73, 0.0); kb.add(kHelm);
+const helm = mesh(HEAD_GEO, steel, 0, 0.012, -0.005, kHelm); helm.scale.set(1.17, 1.12, 1.14);
+const kVisor = mesh(new THREE.SphereGeometry(1, 24, 12, Math.PI*0.08, Math.PI*0.84, Math.PI*0.42, Math.PI*0.36), steelDk, 0, -0.005, -0.012, kHelm); kVisor.scale.set(0.142, 0.17, 0.155);
+mesh(new THREE.BoxGeometry(0.11, 0.012, 0.02), M(0x1d2228), 0, 0.03, 0.138, kHelm);                       // eye slit
+for(let k=0;k<4;k++) mesh(new THREE.BoxGeometry(0.008, 0.04, 0.02), M(0x1d2228), -0.03 + k*0.02, -0.06, 0.13, kHelm);   // breathing holes
+const kBand = mesh(new THREE.TorusGeometry(0.14, 0.01, 6, 28), gold, 0, 0.07, -0.002, kHelm); kBand.rotation.x = Math.PI/2; kBand.scale.set(1, 1.12, 1);
+mesh(new THREE.BoxGeometry(0.02, 0.06, 0.28), steelDk, 0, 0.17, -0.01, kHelm).rotation.x = 0;              // ridge on top
+const plume = new THREE.Group(); plume.position.set(-0.01,1.93,0); plume.scale.setScalar(0.62); knight.add(plume);
 for(let k=0;k<5;k++){ const pm = mesh(new THREE.SphereGeometry(0.1-k*0.008,10,8), M(0xd7382f,{flatShading:false}), -k*0.11, 0.06-k*k*0.025, 0, plume); pm.scale.set(1.3,1,0.8); }
+// shield arm (left, +z when facing +x)
+{ const sa = new THREE.Group(); sa.position.set(0.04, 1.43, 0.23); sa.rotation.set(0.12, 0, -0.35); knight.add(sa);
+  const A = humanArm({upper:steel, fore:steelDk, hand:leather}, -1, sa); A.elbow.rotation.x = 0; A.elbow.rotation.z = 1.1; }
 // cape: three panels so it can sway
-const cape = new THREE.Group(); cape.position.set(-0.3,1.78,0); knight.add(cape);
+const cape = new THREE.Group(); cape.position.set(-0.17,1.47,0); cape.scale.set(1,0.95,0.78); knight.add(cape);
 { const cm = M(0xd7382f,{side:THREE.DoubleSide, flatShading:false});
   // one soft piece of cloth (same size as the old three panels): flares out behind, wraps a little round the back, with gentle folds
   { const C = 12, R = 14, H = 1.3, pos = [], idx = [];
@@ -877,11 +944,10 @@ const cape = new THREE.Group(); cape.position.set(-0.3,1.78,0); knight.add(cape)
     for(let j=0;j<R;j++) for(let i=0;i<C;i++){ const a = j*(C+1)+i, b = a+C+1; idx.push(a,b,a+1, a+1,b,b+1); }
     const cg = new THREE.BufferGeometry(); cg.setAttribute('position', new THREE.Float32BufferAttribute(pos,3)); cg.setIndex(idx); cg.computeVertexNormals();
     mesh(cg, cm, 0, 0, 0, cape); }
-  mesh(new THREE.SphereGeometry(0.06,8,8), gold, 0.08,0.0,0.3, cape); mesh(new THREE.SphereGeometry(0.06,8,8), gold, 0.08,0.0,-0.3, cape); }
+  mesh(new THREE.SphereGeometry(0.035,10,8), gold, 0.1,0.02,0.15, cape); mesh(new THREE.SphereGeometry(0.035,10,8), gold, 0.1,0.02,-0.15, cape); }
 // sword arm (right side = -z when facing +x)
-const tpArm = new THREE.Group(); tpArm.position.set(0.05,1.62,-0.42); knight.add(tpArm);
-mesh(new THREE.CylinderGeometry(0.09,0.08,0.5,8), tunic, 0,-0.22,0, tpArm);
-mesh(new THREE.SphereGeometry(0.1,10,8), steel, 0.02,-0.48,0, tpArm);                              // gauntlet
+const tpArm = new THREE.Group(); tpArm.position.set(0.0,1.43,-0.23); knight.add(tpArm);
+{ const tA = new THREE.Group(); tA.rotation.y = Math.PI/2; tpArm.add(tA); const A = humanArm({upper:steel, fore:steelDk, hand:leather}, 1, tA); A.elbow.rotation.x = -0.35; }
 function swordModel(){
   const s = new THREE.Group();
   const blade = mesh(new THREE.BoxGeometry(0.06,1.15,0.16), M(0xe6edf3,{metalness:.35,roughness:.2,emissive:0x333333,flatShading:false}), 0,0.88,0, s);
@@ -894,7 +960,7 @@ function swordModel(){
   s.children.unshift(s.children.splice(s.children.indexOf(blade),1)[0]);                               // blade stays children[0]
   return s;
 }
-const tpSword = swordModel(); tpSword.position.set(0.05,-0.5,0); tpSword.rotation.z = -0.6; tpArm.add(tpSword); tpSword.visible=false;
+const tpSword = swordModel(); tpSword.position.set(0.1,-0.6,0); tpSword.rotation.z = -0.6; tpArm.add(tpSword); tpSword.visible=false;
 function shieldModel(){
   const g = new THREE.Group();
   const sh = new THREE.Shape(); sh.moveTo(-0.45,0.45); sh.lineTo(0.45,0.45); sh.lineTo(0.45,0); sh.quadraticCurveTo(0.42,-0.4,0,-0.62); sh.quadraticCurveTo(-0.42,-0.4,-0.45,0); sh.lineTo(-0.45,0.45);
@@ -904,7 +970,7 @@ function shieldModel(){
   const em = mesh(new THREE.BoxGeometry(0.1,0.55,0.05), M(0xf28c28), 0,-0.02,0.1, g); mesh(new THREE.BoxGeometry(0.42,0.1,0.05), M(0xf28c28), 0,0.12,0.1, g);
   return g;
 }
-const tpShield = new THREE.Group(); tpShield.position.set(0.35,1.15,0.5); knight.add(tpShield); tpShield.visible=false;
+const tpShield = new THREE.Group(); tpShield.position.set(0.3,1.1,0.36); knight.add(tpShield); tpShield.visible=false;
 const aura = new THREE.Mesh(new THREE.RingGeometry(0.55, 0.85, 28), new THREE.MeshBasicMaterial({color:0xffd23a, transparent:true, opacity:.6, side:THREE.DoubleSide}));
 aura.rotation.x = -Math.PI/2; aura.position.y = 0.06; aura.visible = false; knight.add(aura);
 { const sm = shieldModel(); sm.rotation.y = Math.PI/2; sm.scale.setScalar(0.95); tpShield.add(sm); }
@@ -2397,11 +2463,13 @@ function sorcererModel(o={}){
   mesh(new THREE.CylinderGeometry(0.32, 0.42, 0.6, 12), robe2, 0, 1.75, 0, g);
   [-1,1].forEach(s=>{ const sl = mesh(new THREE.ConeGeometry(0.22, 0.8, 10), robe, 0.1, 1.55, s*0.42, g); sl.rotation.x = s*0.5; });
   const head = new THREE.Group(); head.position.set(0, 2.25, 0); g.add(head);
-  mesh(new THREE.SphereGeometry(0.28, 16, 12), M(0xd9b08c, {flatShading:false}), 0, 0, 0, head);
+  { const hh = new THREE.Group(); hh.rotation.y = Math.PI/2; hh.scale.setScalar(1.75); head.add(hh); humanHead({skin:0xd9b08c, hair:0xe8e8ee, face:false, hairCap:!good}, hh); }
   const beard = mesh(new THREE.ConeGeometry(0.22, 0.75, 10), M(0xe8e8ee), 0.18, -0.38, 0, head); beard.rotation.z = Math.PI + 0.2;
   [-1,1].forEach(s=>{ mesh(new THREE.SphereGeometry(0.05, 8, 6), good ? M(0x3a7aff, {emissive:0x1a3aaa}) : M(0xb026ff, {emissive:0x8a10cc}), 0.24, 0.06, s*0.1, head);
     const brow = mesh(new THREE.BoxGeometry(0.04, 0.04, 0.14), M(0xe8e8ee), 0.25, 0.14, s*0.1, head); brow.rotation.x = s*0.5; });
-  mesh(new THREE.ConeGeometry(0.06, 0.18, 6), M(0xd9b08c), 0.3, -0.02, 0, head).rotation.z = -Math.PI/2;
+  { const nose = blob(M(0xd9b08c), 0.04, 0.07, 0.032, 0.235, -0.02, 0, head); nose.rotation.z = 0.25; nose.rotation.y = Math.PI/2; }
+  { const hw = new THREE.Group(); hw.position.set(0.36, 1.38, -0.44); hw.rotation.set(0, 0, 0.3); g.add(hw); humanHand(M(0xd9b08c), 1, hw).scale.setScalar(1.3);      // hand on the staff
+    const hw2 = new THREE.Group(); hw2.position.set(0.38, 1.2, 0.12); hw2.rotation.set(0, 0, 0.9); g.add(hw2); humanHand(M(0xd9b08c), -1, hw2).scale.setScalar(1.3); }
   if(good){
     const hat = mesh(new THREE.ConeGeometry(0.36, 1.0, 16), robe, 0, 0.62, 0, head); hat.rotation.z = -0.15;
     mesh(new THREE.CylinderGeometry(0.46, 0.46, 0.05, 18), robe, 0, 0.16, 0, head);
@@ -3876,7 +3944,8 @@ function animate(dt){
     if(tpSword.children[0].material.emissive.getHex() !== glowNow) [tpSword, fpSword].forEach(sw=>sw.children[0].material.emissive.setHex(glowNow));
     tpArm.rotation.x = S.swing>0 ? -2.2*(1-S.swing/0.35) + 1 : 0;
     tpArm.rotation.z = S.swing>0 ? -0.8 : 0;
-    tpShield.position.set(S.blocking?0.7:0.35, S.blocking?1.4:1.15, S.blocking?0.15:0.5);
+    tpShield.position.set(S.blocking?0.6:0.3, S.blocking?1.35:1.1, S.blocking?0.12:0.36);
+    kLegs.forEach((L,i)=>{ const ph = Math.sin(time*10 + i*Math.PI); L.leg.rotation.x = moving && !S.riding ? ph*0.45 : 0; L.knee.rotation.x = moving && !S.riding ? Math.max(0, -ph)*0.7 : 0; });   // walking legs
     // first person hands
     const fp = cam==='fp';
     knight.visible = !fp;
@@ -6353,7 +6422,7 @@ showWalk();
 $('mapBtn').onclick = ()=>{ if(!paused) openMap(); };
 $('mapClose').onclick = closeMap;
 // test hook
-window.__dk = { get P6(){return P6;}, buildAct, get P5(){return P5;}, wild:()=>sqWildList(), openMap, travelTo, sqFireHit, get sq(){return sq();}, sqGargLeft, sqGargCheck,  sailToPart4, boltAct, get P4(){return P4;}, canStand4:(x,z)=>canStand4(x,z), kit:{THREE, scene, camera, renderer, buildDragon, shieldModel, swordModel, M, mesh, L1root, L2root, L3root, knight, marker, sun, hemi, sea}, carrotAct, pieAct, p3WallBetween:(a,b,c,d)=>p3WallBetween(a,b,c,d), speedAct, strengthAct, potionAct, step:(n)=>{ for(let i=0;i<n;i++){ if(!paused) update(0.05); time+=0.05; animate(0.05); } }, sailToPart3, get P3(){return P3;}, canStand3:(x,z)=>canStand3(x,z), sailToPart2, get P2(){return P2;}, canStand2: (x,z)=>canStand2(x,z), heightAt2, VILLAGE, PLOTS, CAMPS, canStand, heightAt, saveNow, readSave, dragon, trees, get paused(){return paused;}, get S(){return S;}, get D(){return D;}, useAct, buildAct, chopAct, swordAct, potionAct, setCam, next };
+window.__dk = { get P6(){return P6;}, buildAct, get P5(){return P5;}, wild:()=>sqWildList(), openMap, travelTo, sqFireHit, get sq(){return sq();}, sqGargLeft, sqGargCheck,  sailToPart4, boltAct, get P4(){return P4;}, canStand4:(x,z)=>canStand4(x,z), kit:{THREE, scene, camera, renderer, buildDragon, beaModel, sorcererModel, VILLAGERS, shieldModel, swordModel, M, mesh, L1root, L2root, L3root, knight, marker, sun, hemi, sea}, carrotAct, pieAct, p3WallBetween:(a,b,c,d)=>p3WallBetween(a,b,c,d), speedAct, strengthAct, potionAct, step:(n)=>{ for(let i=0;i<n;i++){ if(!paused) update(0.05); time+=0.05; animate(0.05); } }, sailToPart3, get P3(){return P3;}, canStand3:(x,z)=>canStand3(x,z), sailToPart2, get P2(){return P2;}, canStand2: (x,z)=>canStand2(x,z), heightAt2, VILLAGE, PLOTS, CAMPS, canStand, heightAt, saveNow, readSave, dragon, trees, get paused(){return paused;}, get S(){return S;}, get D(){return D;}, useAct, buildAct, chopAct, swordAct, potionAct, setCam, next };
 })();
 </script>
 </body>
