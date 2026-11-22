@@ -88,6 +88,20 @@
   #before .ref{font-size:14px;color:#8a6a3a}
   #before .youare{font-weight:600;color:var(--green);margin-top:6px}
   #before .row{display:flex;gap:12px;justify-content:flex-end;margin-top:10px}
+  #versesBtn{font-size:17px;padding:10px 18px}
+  #verses{position:fixed;inset:0;display:flex;background:radial-gradient(120% 90% at 50% 0%,#ffe7b0 0%,#e9c27a 40%,#8a5a2b 100%);padding:16px;overflow-y:auto;touch-action:pan-y}
+  #verses .card{margin:auto;background:#fff8e6;border:4px solid #7a4a1a;border-radius:20px;max-width:640px;width:100%;padding:22px 20px;display:flex;flex-direction:column;gap:12px}
+  #verses h2{font-family:'Cinzel',Georgia,serif;margin:0;font-size:30px;line-height:1.1;text-align:center}
+  #verses .sub{margin:0;text-align:center;font-size:16px;color:#6b4a22}
+  .vcard{border:2px solid #c9a35a;border-radius:14px;padding:12px 14px;background:#fffdf4;display:flex;flex-direction:column;gap:4px}
+  .vcard .vt{font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;color:#9a6a2a}
+  .vcard .vv{font-size:19px;font-style:italic;line-height:1.4}
+  .vcard .vr{font-size:14px;color:#8a6a3a;font-weight:600}
+  .vcard.locked{background:#efe4c8;border-style:dashed;color:#6b5a40}
+  .vcard.locked .vv{font-style:normal;font-size:15px}
+  #verses .row{display:flex;justify-content:center;margin-top:4px}
+  #end .earned{font-size:13px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:#b8860b;margin-top:4px}
+  #end .btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
   .story details{font-size:14px;margin-top:2px}
   .story summary{cursor:pointer;color:#7a4a1a;font-weight:600}
   #choice{position:fixed;inset:0;display:flex;padding:16px;background:rgba(42,29,14,.35)}
@@ -124,6 +138,7 @@
     <h1 class="logo"><small>Through the Eyes of</small>the Bible</h1>
     <div class="by">A game by George</div>
     <p class="intro">See each story through the eyes of the person who lived it. Finish a story to unlock the next one.</p>
+    <button id="versesBtn">&#128220; My Bible verses</button>
     <div class="stories" id="storyList"></div>
     <p class="how"><b>How to play:</b> WASD or arrow keys to walk, drag to look around, Space or E to use things. On a tablet, walk with the circle on the left, drag to look, and press the big button.</p>
   </div>
@@ -141,15 +156,25 @@
   </div>
 </div>
 
+<div id="verses" class="hidden">
+  <div class="card">
+    <h2>My Bible Verses</h2>
+    <p class="sub" id="vCount"></p>
+    <div id="vList" style="display:flex;flex-direction:column;gap:10px"></div>
+    <div class="row"><button id="vBack">Back to the stories</button></div>
+  </div>
+</div>
+
 <div id="end" class="hidden">
   <div class="card">
     <h2>Story complete</h2>
     <div id="endWho"></div>
+    <div class="earned">&#128220; You earned a Bible verse!</div>
     <div class="verse" id="endVerse"></div>
     <div class="ref" id="endRef"></div>
     <div class="unlock" id="endUnlock"></div>
     <div class="next" id="endNext"></div>
-    <button id="endBtn">Back to the stories</button>
+    <div class="btns"><button class="ghost" id="endVerses">See my verses</button><button id="endBtn">Back to the stories</button></div>
   </div>
 </div>
 
@@ -190,11 +215,11 @@ function trackPlay(){ if(trackPlay.done) return; trackPlay.done=1; try{ const go
 /* ================= Story list ================= */
 // Every story, in the order it happened. Stories with ready:true can be played.
 const STORIES = [
-  { id:'adam', ready:true, blurb:'Watch God make the world, name the animals, meet Eve, and see what happened in the Garden of Eden.', endVerse:'"God made clothes out of animal skins for Adam and his wife and dressed them."', endRef:'Genesis 3:21', before:"This is where the whole Bible begins. Before there was a world, before there were people or animals or even light, there was only God. In this story you will watch God make everything, day by day. Then you will become Adam, the very first person.", title:'Adam and Eve', who:'You are Adam', ref:'Genesis 1 to 3' },
+  { id:'adam', ready:true, blurb:'Watch God make the world, name the animals, meet Eve, and see what happened in the Garden of Eden.', endVerse:'"God looked at everything He had made, and it was very good."', endRef:'Genesis 1:31', before:"This is where the whole Bible begins. Before there was a world, before there were people or animals or even light, there was only God. In this story you will watch God make everything, day by day. Then you will become Adam, the very first person.", title:'Adam and Eve', who:'You are Adam', ref:'Genesis 1 to 3' },
   { id:'noah', ready:true, blurb:'Build the ark, lead the animals in two by two, ride out the flood, send out the dove, and see the first rainbow.', endVerse:'"I have put my rainbow in the clouds. It is the sign of my promise."', endRef:'Genesis 9:13', before:"Adam and Eve disobeyed God and had to leave the garden. Many, many years went by, and the world filled up with people. But most of them became mean and violent and forgot about God. One man still loved God and did what was right. His name was Noah.", title:'Noah\u2019s Ark', who:'You are Noah', ref:'Genesis 6 to 9' },
   { id:'abraham', ready:true, blurb:'Leave your home when God calls, follow His light to a new land, build an altar, and try to count the stars.', endVerse:'"Look up at the sky and count the stars, if you can. That is how many children you will have."', endRef:'Genesis 15:5', before:"After the flood, Noah's family grew into lots of families who spread out all over the world. Hundreds of years later, God spoke to a man named Abram. God told him to leave his home and go to a new land, and promised to make his family into a great nation. Later God changed his name to Abraham.", title:'Abraham and the Stars', who:'You are Abraham', ref:'Genesis 12 and 15' },
   { id:'joseph', ready:true, blurb:'Get a colorful coat, get thrown in a well by your brothers, explain Pharaoh’s dreams, store up grain, and forgive your brothers.', endVerse:'"You planned to hurt me, but God planned it for good, to save many lives."', endRef:'Genesis 50:20', before:"God kept His promise. Abraham and his wife Sarah had a son named Isaac when they were very old. Isaac had a son named Jacob, and Jacob had twelve sons. Jacob loved one son, Joseph, more than the others, and his brothers got very jealous.", title:'Joseph and His Colorful Coat', who:'You are Joseph', ref:'Genesis 37 to 45' },
-  { id:'babymoses', ready:true, blurb:'Gather reeds for a basket, hide by the Nile to watch your baby brother, and be brave enough to talk to the princess.', endVerse:'"She named him Moses, because she said, I pulled him out of the water."', endRef:'Exodus 2:10', before:"Joseph's whole family moved to Egypt to live with him, and they were safe there. Their family grew and grew for 400 years, and they were called the Israelites. Then a new king of Egypt, called Pharaoh, was afraid of them. He made them slaves, and he ordered that every Israelite baby boy be thrown in the river.", title:'Baby Moses in the Basket', who:'You are Miriam, his big sister', ref:'Exodus 2' },
+  { id:'babymoses', ready:true, blurb:'Gather reeds for a basket, hide by the Nile to watch your baby brother, and be brave enough to talk to the princess.', endVerse:'"God heard His people crying, and He remembered His promise."', endRef:'Exodus 2:24', before:"Joseph's whole family moved to Egypt to live with him, and they were safe there. Their family grew and grew for 400 years, and they were called the Israelites. Then a new king of Egypt, called Pharaoh, was afraid of them. He made them slaves, and he ordered that every Israelite baby boy be thrown in the river.", title:'Baby Moses in the Basket', who:'You are Miriam, his big sister', ref:'Exodus 2' },
   { id:'bush', ready:true, blurb:'Lead your sheep to the mountain of God, see a bush that burns but never burns up, and hear God call your name.', endVerse:'"I will be with you."', endRef:'Exodus 3:12', before:"The princess of Egypt found baby Moses and raised him in the palace. When Moses grew up, he saw an Egyptian beating an Israelite slave, and Moses killed the Egyptian. Then Moses ran away to the desert. He lived there for 40 years and became a shepherd.", title:'Moses and the Burning Bush', who:'You are Moses', ref:'Exodus 3' },
   { id:'redsea', before:"God sent Moses back to Egypt to tell Pharaoh, \u201cLet my people go!\u201d Pharaoh said no again and again, so God sent ten plagues on Egypt, like frogs, bugs, hail, and darkness. After the last plague, Pharaoh finally let the Israelites go. But then he changed his mind and chased after them with his whole army.", title:'Moses and the Red Sea', who:'You are Moses', ref:'Exodus 14' },
   { id:'jericho', before:"God led the Israelites through the desert for 40 years. He gave them food called manna and gave Moses the Ten Commandments. When Moses died, God chose Joshua to lead the people into the land He had promised to Abraham. But the first city in their way, Jericho, had huge walls.", title:'Joshua and the Walls of Jericho', who:'You are Joshua', ref:'Joshua 6' },
@@ -225,7 +250,9 @@ function showMenu(){
   stopStory();
   $('menu').classList.remove('hidden');
   $('hud').classList.add('hidden');
-  $('end').classList.add('hidden'); $('before').classList.add('hidden');
+  $('end').classList.add('hidden'); $('before').classList.add('hidden'); $('verses').classList.add('hidden');
+  const got=READY.filter(s=>SAVE.done.includes(s.id)).length;
+  $('versesBtn').innerHTML='&#128220; My Bible verses ('+got+' of '+READY.length+')';
   const list = $('storyList'); list.innerHTML='';
   STORIES.forEach((s,i)=>{
     const el = document.createElement('div');
@@ -2199,6 +2226,17 @@ function finishStory(){
   },900);
 }
 $('endBtn').onclick=showMenu;
+function showVerses(){
+  stopStory(); $('menu').classList.add('hidden'); $('end').classList.add('hidden'); $('hud').classList.add('hidden'); $('verses').classList.remove('hidden'); $('verses').scrollTop=0;
+  const got=READY.filter(s=>SAVE.done.includes(s.id));
+  $('vCount').textContent = got.length ? 'You have earned '+got.length+' of '+READY.length+' verses. Finish a story to earn its verse.' : 'Finish a story to earn its Bible verse. Your verses will be kept here.';
+  const L=$('vList'); L.innerHTML='';
+  READY.forEach(s=>{ const done=SAVE.done.includes(s.id), el=document.createElement('div'); el.className='vcard'+(done?'':' locked');
+    el.innerHTML = done ? `<div class="vt">${s.title}</div><div class="vv"></div><div class="vr"></div>` : `<div class="vt">${s.title}</div><div class="vv">&#128274; Finish this story to earn its verse.</div>`;
+    if(done){ el.querySelector('.vv').textContent=s.endVerse; el.querySelector('.vr').textContent=s.endRef; }
+    L.appendChild(el); });
+}
+$('versesBtn').onclick=showVerses; $('vBack').onclick=showMenu; $('endVerses').onclick=showVerses;
 function showBefore(id){
   const s=STORIES.find(x=>x.id===id), i=STORIES.indexOf(s);
   $('menu').classList.add('hidden'); $('before').classList.remove('hidden');
