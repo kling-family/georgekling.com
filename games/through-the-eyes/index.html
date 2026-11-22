@@ -223,8 +223,8 @@ const STORIES = [
   { id:'bush', ready:true, blurb:'Lead your sheep to the mountain of God, see a bush that burns but never burns up, and hear God call your name.', endVerse:'"I will be with you."', endRef:'Exodus 3:12', before:"The princess of Egypt found baby Moses and raised him in the palace. When Moses grew up, he saw an Egyptian beating an Israelite slave, and Moses killed the Egyptian. Then Moses ran away to the desert. He lived there for 40 years and became a shepherd.", title:'Moses and the Burning Bush', who:'You are Moses', ref:'Exodus 3' },
   { id:'redsea', ready:true, blurb:'Lead God’s people to the sea, raise your staff as the water splits in two, and walk through on dry ground between walls of water.', endVerse:'"The Lord will fight for you. You only need to be still."', endRef:'Exodus 14:14', before:"God sent Moses back to Egypt to tell Pharaoh, \u201cLet my people go!\u201d Pharaoh said no again and again, so God sent ten plagues on Egypt, like frogs, bugs, hail, and darkness. After the last plague, Pharaoh finally let the Israelites go. But then he changed his mind and chased after them with his whole army.", title:'Moses and the Red Sea', who:'You are Moses', ref:'Exodus 14' },
   { id:'jericho', ready:true, blurb:'Meet the commander of the Lord’s army, march around Jericho with the ark and the rams’ horns, shout, and watch the walls fall down.', endVerse:'"Be strong and brave. Don’t be afraid, because the Lord your God will be with you everywhere you go."', endRef:'Joshua 1:9', before:"God led the Israelites through the desert for 40 years. He gave them food called manna and gave Moses the Ten Commandments. When Moses died, God chose Joshua to lead the people into the land He had promised to Abraham. But the first city in their way, Jericho, had huge walls.", title:'Joshua and the Walls of Jericho', who:'You are Joshua', ref:'Joshua 6' },
-  { id:'gideon', before:"The Israelites moved into the promised land. But over and over, they forgot God and worshiped fake gods. Each time, enemies attacked them. When they cried out to God for help, He sent a leader called a judge to save them. This time the enemy was the Midianites, and they were stealing all of Israel's food.", title:'Gideon\u2019s 300', who:'You are Gideon', ref:'Judges 6 and 7' },
-  { id:'samson', before:"Gideon's 300 men beat the huge Midianite army, and Israel had peace for 40 years. But then the people forgot God again, and the Philistines ruled over them. An angel told a woman her son would be very special. He would never cut his hair, and God would make him super strong. That son was Samson.", title:'Samson', who:'You are Samson', ref:'Judges 13 to 16' },
+  { id:'gideon', ready:true, blurb:'Hide your wheat from the Midianites, meet an angel, test God with a wool fleece, choose 300 men, and win with trumpets, jars, and torches.', endVerse:'"The Lord is with you, mighty warrior!"', endRef:'Judges 6:12', before:"The Israelites moved into the promised land. But over and over, they forgot God and worshiped fake gods. Each time, enemies attacked them. When they cried out to God for help, He sent a leader called a judge to save them. This time the enemy was the Midianites, and they were stealing all of Israel's food.", title:'Gideon\u2019s 300', who:'You are Gideon', ref:'Judges 6 and 7' },
+  { id:'samson', ready:true, blurb:'Fight a lion with your bare hands, carry a city’s gates up a hill, grind grain in prison, and pray for strength one last time.', endVerse:'"Lord God, remember me. Please give me strength just one more time."', endRef:'Judges 16:28', before:"Gideon's 300 men beat the huge Midianite army, and Israel had peace for 40 years. But then the people forgot God again, and the Philistines ruled over them. An angel told a woman her son would be very special. He would never cut his hair, and God would make him super strong. That son was Samson.", title:'Samson', who:'You are Samson', ref:'Judges 13 to 16' },
   { id:'david', before:"After Samson, the people of Israel wanted a king like the other nations had. God chose a tall man named Saul to be the first king. But Saul stopped obeying God. So God sent the prophet Samuel to Bethlehem to pick a new king, and Samuel chose the youngest son of Jesse, a shepherd boy named David. But David would not be king for a long time. And the Philistines were still at war with Israel.", ready:true, title:'David and Goliath', who:'You are David, a shepherd boy', ref:'1 Samuel 17',
     blurb:'Find a lost lamb, bring food to your brothers, and face the giant with five smooth stones.',
     endVerse:'"The battle is the Lord\u2019s."', endRef:'1 Samuel 17:47' },
@@ -2442,7 +2442,7 @@ function buildJericho(){
   W.beacon=makeBeacon(); W.beacon.visible=false; g.add(W.beacon);
   P.x=0; P.z=44; P.yaw=0; P.pitch=0; P.eye=1.75; P.speed=4.6; P.roll=0;
   story={id:'jericho', step:'', t:0, lock:true, target:null, near:null, follow:false, day:1, lap:0, lapAng:0, lastA:null, fadeSky:null};
-  hand.visible=false; basket.visible=false; sling.visible=false; fruitHand.visible=false; if(typeof logHand!=='undefined'){ logHand.visible=false; leafHand.visible=false; } if(typeof coatView!=='undefined'){ coatView.visible=false; sheafHand.visible=false; } if(typeof reedHand!=='undefined') reedHand.visible=false; if(typeof staffHand!=='undefined') staffHand.visible=false;
+  hand.visible=false; basket.visible=false; sling.visible=false; fruitHand.visible=false; if(typeof logHand!=='undefined'){ logHand.visible=false; leafHand.visible=false; } if(typeof coatView!=='undefined'){ coatView.visible=false; sheafHand.visible=false; } if(typeof reedHand!=='undefined') reedHand.visible=false; if(typeof staffHand!=='undefined') staffHand.visible=false; if(typeof jarHand!=='undefined'){ jarHand.visible=false; hornView.visible=false; } if(typeof gateView!=='undefined'){ gateView.visible=false; pushView.visible=false; } if($('blind')) $('blind').style.opacity=0;
   goJericho('intro');
 }
 function jerLineUp(){ const W=world, S=story; P.x=JC.x; P.z=JC.z+JRM; P.yaw=-Math.PI/2; P.pitch=0; S.lastA=null; S.lapAng=0;
@@ -2544,9 +2544,342 @@ function jumpJericho(q){ // ?step=march | day7 | shout | rahab
   if(q==='rahab'){ S.falling=true; S.fallT=30; W.spies.forEach(s=>s.visible=true); goJericho('rahab'); }
 }
 
+/* ================= Story 9: Gideon's 300 ================= */
+const GPRESS={x:0,z:40}, GOAK={x:6.5,z:35}, GFLOOR={x:-11,z:47}, GSPRING={x:0,z:2}, GCAMP={x:0,z:-68};
+function groundGideon(x,z){ let h=0.3*Math.sin(x*0.09)*Math.cos(z*0.08)+0.15*Math.sin(x*0.21+z*0.17);
+  h-=6*smooth(clamp((-18-z)/30,0,1)); /* the valley where Midian camped */
+  if(Math.abs(x-GPRESS.x)<1.6&&Math.abs(z-GPRESS.z)<1.6) h-=0.9; /* the winepress pit */
+  const pd=Math.hypot(x-GSPRING.x,z-GSPRING.z); if(pd<5) h-=0.5*(1-pd/5);
+  const e=Math.hypot(x*0.8,z+15); if(e>84) h+=Math.min(10,Math.pow(e-84,1.1)*0.2)*(0.7+0.3*Math.sin(x*0.1+z*0.07)); return h; }
+const jarHand=new THREE.Group(); { const j=new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.06,0.2,10), mat(0xb0683a)); jarHand.add(j); const rim=new THREE.Mesh(new THREE.TorusGeometry(0.07,0.012,6,12), mat(0x9a5a30)); rim.rotation.x=Math.PI/2; rim.position.y=0.1; jarHand.add(rim);
+  const fl=glowSprite(0xffa030,0.5); fl.position.y=0.22; fl.visible=false; jarHand.add(fl); jarHand.userData.flame=fl; jarHand.userData.jar=[j,rim];
+  jarHand.position.set(-0.3,-0.3,-0.55); jarHand.visible=false; view.add(jarHand); }
+const hornView=new THREE.Group(); { const h=hornMesh(); h.rotation.set(-0.6,0,0.4); hornView.add(h); hornView.position.set(0.3,-0.32,-0.55); hornView.visible=false; view.add(hornView); }
+function fleeceMesh(){ const o=new THREE.Group(); const m=new THREE.Group(); const wm=new THREE.MeshLambertMaterial({color:0xf2eee2}); for(let i=0;i<22;i++){ const a=i*2.4, rr=Math.sqrt(i/22); const b=new THREE.Mesh(new THREE.SphereGeometry(0.16,10,8), wm); b.scale.set(1,0.55,1); b.position.set(Math.cos(a)*rr*0.75,0.07,Math.sin(a)*rr*0.5); m.add(b); } o.add(m); o.userData.m=m; o.userData.wm=wm; return o; }
+function buildGideon(){
+  ground=groundGideon; resetLook();
+  const g=new THREE.Group(); scene.add(g); world={group:g, army:[], drinkers:[], midian:[], camels:[], three:[], chaff:[]}; const W=world, r=rnd(99);
+  { const N=170, geo=new THREE.PlaneGeometry(300,300,N,N); geo.rotateX(-Math.PI/2); geo.translate(0,0,-10); const pos=geo.attributes.position, cols=[], c=new THREE.Color(), a=new THREE.Color(0x8aa856), b=new THREE.Color(0xa8a866), dry=new THREE.Color(0xb8a878);
+    for(let i=0;i<pos.count;i++){ const x=pos.getX(i), z=pos.getZ(i), h=groundGideon(x,z); pos.setY(i,h); const n=0.5+0.5*Math.sin(x*0.5+z*0.9)*Math.cos(x*0.27-z*0.4); c.copy(a).lerp(b,n*0.8); if(z<-25) c.lerp(dry,0.5); c.multiplyScalar(1.05); cols.push(c.r,c.g,c.b); }
+    geo.setAttribute('color',new THREE.Float32BufferAttribute(cols,3)); geo.computeVertexNormals(); const uv=geo.attributes.uv; for(let i=0;i<uv.count;i++) uv.setXY(i,uv.getX(i)*90,uv.getY(i)*90);
+    const m=new THREE.Mesh(geo,new THREE.MeshLambertMaterial({vertexColors:true,map:GROUND_TEX})); m.userData.noCast=true; g.add(m); }
+  grassField(g, touch?5000:10000, ()=>{ const x=(Math.random()-0.5)*130, z=(Math.random()-0.5)*170-10; if(Math.abs(x-GPRESS.x)<2.2&&Math.abs(z-GPRESS.z)<2.2) return null; if(Math.hypot(x-GFLOOR.x,z-GFLOOR.z)<3.6||Math.hypot(x-GSPRING.x,z-GSPRING.z)<5) return null; if(Math.hypot(x-GCAMP.x,z-GCAMP.z)<22&&Math.random()<0.7) return null; return [x,z,0x86a44e]; });
+  /* Gideon's farm at Ophrah: the winepress, the big oak, the house and fields */
+  { const y=0; for(let i=0;i<28;i++){ const a=i/28*Math.PI*2; const st=new THREE.Mesh(ROCK_GEO[i%4], mat(i%2?0x8f8676:0x9a9080)); st.scale.set(0.28,0.22,0.24); const x=GPRESS.x+Math.cos(a)*1.85, z=GPRESS.z+Math.sin(a)*1.85; st.position.set(x,groundGideon(x,z)+0.1,z); g.add(st); }
+    const fl=new THREE.Mesh(new THREE.PlaneGeometry(3.2,3.2), mat(0x8a7656)); fl.rotation.x=-Math.PI/2; fl.position.set(GPRESS.x,groundGideon(GPRESS.x,GPRESS.z)+0.02,GPRESS.z); fl.userData.noCast=true; g.add(fl);
+    W.wheat=[]; for(let i=0;i<6;i++){ const s=sheaf(g,GPRESS.x-0.9+(i%3)*0.8,GPRESS.z-0.9+Math.floor(i/3)*0.9); s.rotation.z=1.4; s.position.y=groundGideon(GPRESS.x,GPRESS.z)+0.15; s.rotation.y=i; W.wheat.push(s); }
+    W.grainPile=new THREE.Mesh(new THREE.ConeGeometry(0.5,0.35,12), mat(0xd9b65a)); W.grainPile.position.set(GPRESS.x+0.8,groundGideon(GPRESS.x,GPRESS.z)+0.17,GPRESS.z+0.8); W.grainPile.scale.setScalar(0.05); g.add(W.grainPile); }
+  { const oak=new THREE.Group(); const tr=new THREE.Mesh(TRUNK_GEO, mat(0x5a4230)); tr.scale.set(0.6,3.4,0.6); tr.position.y=1.7; oak.add(tr);
+    for(let i=0;i<9;i++){ const l=new THREE.Mesh(LEAF_GEO[i%6], mat(i%2?0x4f7a3a:0x5f8a44)); const a=i/9*Math.PI*2; l.scale.setScalar(1.8+(i%3)*0.4); l.position.set(Math.cos(a)*2.1,4.3+(i%3)*0.7,Math.sin(a)*2.1); oak.add(l); }
+    const top=new THREE.Mesh(LEAF_GEO[1], mat(0x56803e)); top.scale.setScalar(2.6); top.position.y=5.6; oak.add(top); oak.position.set(GOAK.x,groundGideon(GOAK.x,GOAK.z),GOAK.z); g.add(oak); }
+  W.rock=new THREE.Mesh(ROCK_GEO[1], mat(0x9a8f7a)); W.rock.scale.set(0.7,0.45,0.6); W.rock.position.set(GOAK.x-1.6,groundGideon(GOAK.x-1.6,GOAK.z+1.8)+0.3,GOAK.z+1.8); g.add(W.rock);
+  W.food=new THREE.Group(); { const bread=blob(W.food,0xc8945a,0.18,1,0.4,1,0,0.06,0); const pot=new THREE.Mesh(new THREE.CylinderGeometry(0.12,0.1,0.16,10), mat(0x8a5a30)); pot.position.set(0.25,0.08,0); W.food.add(pot); } W.food.visible=false; g.add(W.food);
+  W.angel=person({tunic:0xf6f2e6,sash:0xe2b23a,hair:0xd8b060,h:1.9,skin:0xd6a070}); const st=new THREE.Mesh(new THREE.CylinderGeometry(0.025,0.03,1.7,6), mat(0x8a6a3a)); st.position.set(0,-0.75,0.05); W.angel.userData.arms[1].add(st); { const gl=glowSprite(0xfff2c0,3.5); gl.position.y=1.1; W.angel.add(gl); }
+  place(W.angel,GOAK.x-0.4,GOAK.z+0.9,Math.PI*0.85); W.angel.visible=false; g.add(W.angel);
+  house(g,-16,60).rotation.y=0.4; house(g,14,62).rotation.y=-0.3;
+  for(let i=0;i<14;i++){ const x=(r()-0.5)*80, z=20+r()*50; if(Math.hypot(x-GPRESS.x,z-GPRESS.z)<8||Math.hypot(x-GFLOOR.x,z-GFLOOR.z)<6||Math.hypot(x-GOAK.x,z-GOAK.z)<6) continue; tree(g,x,z,0.9+r()*0.4); }
+  for(let i=0;i<20;i++){ const x=(r()-0.5)*110, z=(r()-0.5)*160-10; if(Math.abs(x)<14&&z<55&&z>-90) continue; rock(g,x,z,0.4+r()*0.8); }
+  /* the threshing floor and the wool fleece */
+  { const drape=(m,lift)=>{ m.rotation.x=-Math.PI/2; const q=m.geometry.attributes.position; for(let i=0;i<q.count;i++){ const x=q.getX(i)+GFLOOR.x, z=-q.getY(i)+GFLOOR.z; q.setZ(i,groundGideon(x,z)+lift); } q.needsUpdate=true; m.geometry.computeVertexNormals(); m.position.set(GFLOOR.x,0,GFLOOR.z); };
+    const f=new THREE.Mesh(new THREE.RingGeometry(0.01,3.2,28,8), mat(0xbcae8c)); drape(f,0.05); f.userData.noCast=true; g.add(f);
+    const dew=new THREE.Mesh(new THREE.RingGeometry(0.01,3.1,28,8), new THREE.MeshPhongMaterial({color:0x9fbcd0,specular:0xffffff,shininess:120,transparent:true,opacity:0.45})); drape(dew,0.08); dew.visible=false; g.add(dew); W.dew=dew; }
+  W.fleece=fleeceMesh(); W.fleece.position.set(GFLOOR.x,groundGideon(GFLOOR.x,GFLOOR.z)+0.05,GFLOOR.z); W.fleece.visible=false; g.add(W.fleece);
+  W.bowl=new THREE.Group(); { const b=new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.2,0.18,14,1,true), mat(0x9a6a3a,{side:THREE.DoubleSide})); b.position.y=0.09; W.bowl.add(b); const wt=new THREE.Mesh(new THREE.CircleGeometry(0.27,14), new THREE.MeshPhongMaterial({color:0x5a9ac8,shininess:90})); wt.rotation.x=-Math.PI/2; wt.position.y=0.15; W.bowl.add(wt); } W.bowl.position.set(GFLOOR.x+1.3,groundGideon(GFLOOR.x,GFLOOR.z)+0.02,GFLOOR.z+0.4); W.bowl.visible=false; g.add(W.bowl);
+  /* the spring of Harod */
+  { const pond=new THREE.Mesh(new THREE.CircleGeometry(4.2,28), new THREE.MeshPhongMaterial({color:0x4f8fb0,specular:0xbfd8e8,shininess:90})); pond.rotation.x=-Math.PI/2; pond.position.set(GSPRING.x,-0.12,GSPRING.z); g.add(pond); }
+  for(let i=0;i<40;i++){ const p=person({tunic:[0x8a5a3a,0x5a6a3a,0x7a3a2a,0x4a5a7a,0x8a7a4a,0x6a4a3a][i%6],hair:0x2a1a10,beard:i%2?0x2a1a10:null,h:1.7+(i%4)*0.03,spear:i%3===0}); p.visible=false; g.add(p); W.army.push(p); }
+  for(let i=0;i<15;i++){ const lap=[1,4,7,10,13].includes(i); const p=person({tunic:[0x8a5a3a,0x5a6a3a,0x7a3a2a,0x4a5a7a,0x8a7a4a][i%5],hair:0x2a1a10,beard:i%2?0x2a1a10:null,h:1.72}); const a=-Math.PI*0.9+i/14*Math.PI*1.8, d=4.9; const x=GSPRING.x+Math.sin(a)*d, z=GSPRING.z+Math.cos(a)*d;
+    place(p,x,z); faceTo(p,GSPRING.x,GSPRING.z); p.userData.lap=lap; p.userData.armsBusy=true;
+    if(lap){ p.userData.body.parent.rotation.x=0; p.position.y-=0.05; p.userData.arms[0].rotation.x=-2.3; p.userData.arms[1].rotation.x=-0.3; }
+    else { p.rotation.order='YXZ'; p.rotation.x=1.05; p.position.y=ground(x,z)-0.55; const fx=Math.sin(p.rotation.y), fz=Math.cos(p.rotation.y); p.position.x-=fx*0.3; p.position.z-=fz*0.3; }
+    p.visible=false; g.add(p); W.drinkers.push(p); }
+  /* the Midianite camp, thick as locusts, with camels */
+  for(let i=0;i<22;i++){ const a=i/22*Math.PI*2+r()*0.2, d=5+r()*13; tent(g,GCAMP.x+Math.sin(a)*d,GCAMP.z+Math.cos(a)*d,[0x3a2a3a,0x4a3a2a,0x5a3a3a,0x2a3a3a][i%4],0.9+r()*0.4); }
+  for(let i=0;i<8;i++){ const c=camel(); const a=r()*Math.PI*2, d=8+r()*12; place(c,GCAMP.x+Math.sin(a)*d,GCAMP.z+Math.cos(a)*d,r()*6); g.add(c); W.camels.push(c); }
+  for(let i=0;i<16;i++){ const p=person({tunic:[0x6a3a4a,0x3a4a6a,0x5a5a3a,0x7a5a2a][i%4],hair:0x1a120a,beard:0x1a120a,h:1.74}); const a=r()*Math.PI*2, d=3+r()*15; place(p,GCAMP.x+Math.sin(a)*d,GCAMP.z+Math.cos(a)*d,r()*6); p.rotation.order='YXZ'; p.rotation.x=-Math.PI/2+0.05; p.position.y+=0.2; p.userData.sleep=true; g.add(p); W.midian.push(p); }
+  for(const [x,z] of [[4,-62],[-6,-74],[9,-77]]){ const f=glowSprite(0xff8a30,1.6); f.position.set(x,groundGideon(x,z)+0.5,z); g.add(f); }
+  /* the tent where Gideon hears the dream */
+  W.dreamTent=tent(g,GCAMP.x+2,GCAMP.z+21,0x5a3a2a,1.1);
+  W.talkers=[0,1].map(i=>{ const p=person({tunic:i?0x3a4a6a:0x6a3a4a,hair:0x1a120a,beard:0x1a120a,h:1.74}); place(p,GCAMP.x+1+i*1.6,GCAMP.z+19.5,i?-2.2:2.2); p.visible=false; g.add(p); return p; });
+  W.purah=person({tunic:0x6a5a3a,hair:0x2a1a10,h:1.68}); W.purah.visible=false; g.add(W.purah);
+  for(let i=0;i<18;i++){ const p=person({tunic:[0x8a5a3a,0x5a6a3a,0x7a3a2a,0x4a5a7a][i%4],hair:0x2a1a10,beard:i%2?0x2a1a10:null,h:1.72}); const hn=hornMesh(); hn.position.set(0,-0.62,0.05); p.userData.arms[1].add(hn);
+    const jar=new THREE.Mesh(new THREE.CylinderGeometry(0.09,0.07,0.22,8), mat(0xb0683a)); jar.position.set(0,-0.66,0.05); p.userData.arms[0].add(jar); const tf=glowSprite(0xffa030,0.9); tf.position.set(0,-0.45,0.05); tf.visible=false; p.userData.arms[0].add(tf); p.userData.jar=jar; p.userData.torch=tf; p.userData.armsBusy=true;
+    p.visible=false; g.add(p); W.three.push(p); }
+  W.beacon=makeBeacon(); W.beacon.visible=false; g.add(W.beacon);
+  P.x=GPRESS.x+0.2; P.z=GPRESS.z+0.6; P.yaw=0; P.pitch=-0.35; P.eye=1.72; P.speed=4.6; P.roll=0;
+  story={id:'gideon', step:'', t:0, lock:true, target:null, near:null, hits:0, chosen:0, fadeSky:null};
+  hand.visible=false; basket.visible=false; sling.visible=false; fruitHand.visible=false; if(typeof logHand!=='undefined'){ logHand.visible=false; leafHand.visible=false; } if(typeof coatView!=='undefined'){ coatView.visible=false; sheafHand.visible=false; } if(typeof reedHand!=='undefined') reedHand.visible=false;
+  staffHand.visible=true; staffHand.position.set(0.42,-0.95,-0.8); staffHand.rotation.set(-0.45,0,-0.2);
+  jarHand.userData.jar.forEach(m=>m.visible=true); jarHand.userData.flame.visible=false; jarHand.position.y=-0.3;
+  goGideon('intro');
+}
+function gidCut(fn, lines, then){ $('fade').style.background='#0b0b14'; $('fade').style.opacity=1; setTimeout(()=>{ fn(); P.lockLook=null; $('fade').style.opacity=0; setTimeout(()=>{ $('fade').style.background='#fff8e6'; },900); if(lines) say(lines, then); else if(then) then(); },900); }
+function gidNight(on){ const S=story; if(on){ scene.background.set(0x10183a); hemi.intensity=0.22; sun.intensity=0.08; S.night=true; } else { scene.background.set(0xa9d3f0); hemi.intensity=0.5; sun.intensity=0.9; S.night=false; } }
+function goGideon(step){
+  const S=story, W=world; S.step=step; $('prompt').classList.add('hidden');
+  if(step==='intro'){
+    S.lock=true; setGoal('Listen');
+    say([[SAY_BIBLE,'The Israelites did evil in the Lord’s sight again, so for seven years the Midianites ruled over them.','Judges 6:1'],
+      [SAY_BIBLE,'Every time the Israelites planted crops, the Midianites came with their camels, thick as locusts, and ate everything. The Israelites hid in caves.','Judges 6:3-6'],
+      ['You are Gideon','You are Gideon. You are hiding in a winepress, beating out your wheat where the Midianites won’t see you.','Judges 6:11']], ()=>goGideon('thresh'));
+  }
+  if(step==='thresh'){ S.lock=true; setGoal(`Beat the wheat with your stick (${S.hits} of 6)`); }
+  if(step==='angel'){ S.lock=true; setGoal('Listen'); W.angel.visible=true; lookAt(W.angel.position.x,1.5,W.angel.position.z,1.2);
+    say([[SAY_BIBLE,'The angel of the Lord came and sat under the oak tree.','Judges 6:11'],
+      ['Angel','The Lord is with you, mighty warrior!','Judges 6:12'],
+      ['You are Gideon','But if the Lord is with us, why has all this happened to us? Where are all His miracles our fathers told us about?','Judges 6:13'],
+      ['The Lord','Go in the strength you have and save Israel from the Midianites. I am sending you!','Judges 6:14'],
+      ['You are Gideon','But Lord, how can I save Israel? My family is the weakest, and I am the least in my family.','Judges 6:15'],
+      ['The Lord','I will be with you, and you will beat the Midianites as if they were only one man.','Judges 6:16'],
+      ['You are Gideon','Please show me a sign that it is really you. Don’t go away until I bring you an offering.','Judges 6:17-18']], ()=>gidCut(()=>{ P.x=GPRESS.x+2.5; P.z=GPRESS.z-1.5; P.yaw=Math.atan2(-(W.rock.position.x-P.x),-(W.rock.position.z-P.z)); P.pitch=0; }, null, ()=>goGideon('offer')));
+  }
+  if(step==='offer'){ S.lock=false; setGoal('Put the bread and meat on the <b>rock</b>'); S.target=W.rock; }
+  if(step==='fire'){ S.lock=true; S.target=null; setGoal('Listen'); lookAt(W.rock.position.x,W.rock.position.y+0.5,W.rock.position.z,0.8);
+    say([[SAY_BIBLE,'The angel touched the food with the tip of his staff. Fire flared up from the rock and burned up the meat and the bread! Then the angel disappeared.','Judges 6:21', ()=>{ S.fireT=2.5; shake=0.25; setTimeout(()=>{ W.angel.visible=false; W.food.visible=false; },900); }],
+      ['You are Gideon','Oh no, Lord! I have seen the angel of the Lord face to face!','Judges 6:22'],
+      ['The Lord','Peace! Don’t be afraid. You will not die.','Judges 6:23'],
+      [SAY_BIBLE,'So Gideon built an altar to the Lord there and called it "The Lord Is Peace."','Judges 6:24'],
+      [SAY_BIBLE,'Then the Midianites and their friends gathered a huge army in the valley. Gideon blew a trumpet, and men came from all over Israel to follow him.','Judges 6:33-35'],
+      ['You are Gideon','God, if you will really save Israel through me, I will put a wool fleece on the threshing floor. If there is dew only on the fleece and the ground is dry, then I will know.','Judges 6:36-37']], ()=>gidCut(()=>{ P.x=GFLOOR.x+3.6; P.z=GFLOOR.z+3.2; P.yaw=Math.atan2(-(GFLOOR.x-P.x),-(GFLOOR.z-P.z)); staffHand.visible=false; }, null, ()=>goGideon('fleece1')));
+  }
+  if(step==='fleece1'){ S.lock=false; setGoal('Lay the <b>fleece</b> on the threshing floor'); S.target={position:new THREE.Vector3(GFLOOR.x,0,GFLOOR.z)}; }
+  if(step==='wring'){ S.lock=false; setGoal('Squeeze the water out of the <b>fleece</b>'); S.target=W.fleece; }
+  if(step==='fleece2'){ S.lock=false; setGoal('Check the <b>fleece</b> again'); S.target=W.fleece; }
+  if(step==='army'){ S.lock=true; S.target=null; setGoal('Listen');
+    say([[SAY_BIBLE,'Early in the morning, Gideon and all his men camped at the spring of Harod. The camp of Midian was in the valley below them.','Judges 7:1', ()=>lookAt(GCAMP.x,-4,GCAMP.z,1.5)],
+      ['The Lord','You have too many men. If you win, Israel will brag that they saved themselves. Tell anyone who is afraid to go home.','Judges 7:2-3', ()=>lookAt(GSPRING.x,1,GSPRING.z+14,1.2)],
+      [SAY_BIBLE,'So 22,000 men went home, and 10,000 stayed.','Judges 7:3', ()=>{ S.goHome=true; }],
+      ['The Lord','There are still too many. Take them down to the water, and I will sort them out for you.','Judges 7:4'],
+      ['The Lord','Some men will scoop up water in their hands and lap it like a dog. Others will get down on their knees to drink. Choose the ones who lap from their hands.','Judges 7:5-6']], ()=>gidCut(()=>{ W.army.forEach(p=>p.visible=false); W.drinkers.forEach(p=>p.visible=true); P.x=GSPRING.x; P.z=GSPRING.z+9; P.yaw=0; }, null, ()=>goGideon('choose')));
+  }
+  if(step==='choose'){ S.lock=false; setGoal(`Choose the men who lap water from their <b>hands</b> (${S.chosen} of 5)`); }
+  if(step==='spy'){ S.lock=true; S.target=null; setGoal('Listen');
+    say([[SAY_BIBLE,'Only 300 men lapped from their hands. Everyone else knelt down to drink.','Judges 7:6'],
+      ['The Lord','With these 300 men I will save you and give the Midianites to you. Send everyone else home.','Judges 7:7'],
+      [SAY_BIBLE,'That night the Lord spoke to Gideon.','Judges 7:9', ()=>gidNight(true)],
+      ['The Lord','Get up and attack the camp, because I have given it to you. If you are afraid, go down to the camp with your servant Purah, and listen to what they are saying.','Judges 7:9-11']], ()=>gidCut(()=>{ W.drinkers.forEach(p=>p.visible=false); P.x=GCAMP.x+2; P.z=GCAMP.z+44; P.yaw=0; W.purah.visible=true; place(W.purah,P.x+1.4,P.z+1); W.talkers.forEach(t=>t.visible=true); }, null, ()=>goGideon('sneak')));
+  }
+  if(step==='sneak'){ S.lock=false; setGoal('Sneak down to the edge of the <b>Midianite camp</b>'); S.target={position:new THREE.Vector3(GCAMP.x+2.6,0,GCAMP.z+25.5)}; }
+  if(step==='dream'){ S.lock=true; S.target=null; setGoal('Listen quietly'); lookAt(W.talkers[0].position.x,ground(W.talkers[0].position.x,W.talkers[0].position.z)+1.6,W.talkers[0].position.z,1);
+    say([['Midianite','I had a dream! A round loaf of barley bread came tumbling into our camp. It hit our tent so hard that the tent fell over flat!','Judges 7:13'],
+      ['His friend','That can only mean the sword of Gideon, the Israelite! God has given the whole Midianite camp to him!','Judges 7:14'],
+      [SAY_BIBLE,'When Gideon heard the dream, he worshiped God. Then he went back to the camp of Israel.','Judges 7:15'],
+      ['You are Gideon','Get up! The Lord has given the camp of Midian to you!','Judges 7:15'],
+      [SAY_BIBLE,'Gideon split the 300 men into three groups. He gave every man a trumpet and an empty jar with a torch inside.','Judges 7:16'],
+      ['You are Gideon','Watch me, and do what I do. When I blow my trumpet, blow yours all around the camp and shout, "For the Lord and for Gideon!"','Judges 7:17-18']], ()=>gidCut(()=>{ W.purah.visible=false; W.talkers.forEach(t=>t.visible=false); jarHand.visible=true; hornView.visible=true;
+        P.x=GCAMP.x; P.z=GCAMP.z+27; P.yaw=0; P.pitch=-0.1; W.three.forEach((p,i)=>{ const a=(i+0.5)/W.three.length*Math.PI*2, d=26+(i%2)*1.5; place(p,GCAMP.x+Math.sin(a)*d,GCAMP.z+Math.cos(a)*d); faceTo(p,GCAMP.x,GCAMP.z); p.visible=true; }); }, [[SAY_BIBLE,'In the middle of the night, Gideon and his men came to the edge of the camp, just after the guards had changed.','Judges 7:19']], ()=>goGideon('blow')));
+  }
+  if(step==='blow'){ S.lock=true; setGoal('Blow your <b>trumpet</b>!'); }
+  if(step==='smash'){ S.lock=true; setGoal('Smash your <b>jar</b>!'); }
+  if(step==='win'){ S.lock=true; setGoal('Listen');
+    say([['Everyone','A sword for the Lord and for Gideon!','Judges 7:20'],
+      [SAY_BIBLE,'Every man stood in his place around the camp. The Midianites woke up, cried out, and ran away! The Lord made them so confused that they fought each other.','Judges 7:21-22'],
+      [SAY_BIBLE,'So God used Gideon and just 300 men with trumpets, jars, and torches to save Israel from the Midianites.','Judges 8:28']], ()=>finishStory()); }
+}
+function updateGideon(dt, now){
+  const S=story, W=world, t=(S.t+=dt);
+  if(S.swing>0){ S.swing-=dt; const k=Math.sin((1-S.swing/0.35)*Math.PI); staffHand.rotation.x=-0.45-k*1.1; staffHand.position.y=-0.95+k*0.25; }
+  W.chaff=W.chaff.filter(c=>{ c.userData.v.y-=dt*1.2; c.position.addScaledVector(c.userData.v,dt); c.userData.life-=dt; c.material.opacity=Math.max(0,c.userData.life); if(c.userData.life<=0){ W.group.remove(c); return false; } return true; });
+  if(S.fireT>0){ S.fireT-=dt; if(!W.fireFx){ W.fireFx=glowSprite(0xff8a20,3); W.group.add(W.fireFx); } W.fireFx.visible=true; W.fireFx.position.set(W.rock.position.x,W.rock.position.y+0.8+Math.sin(t*20)*0.1,W.rock.position.z); W.fireFx.scale.setScalar(2.5+Math.sin(t*13)*0.6); if(S.fireT<=0) W.fireFx.visible=false; }
+  if(W.angel.visible) W.angel.children.forEach(c=>{ if(c.isSprite) c.material.opacity=0.45+0.2*Math.sin(t*3); });
+  if(S.goHome){ W.army.forEach((p,i)=>{ if(!p.visible) return; if(i%4===0) return; p.position.z+=dt*2.2; p.position.x+=Math.sin(i)*dt*0.6; p.rotation.y=0; animWalk(p,dt,0.8); p.position.y=ground(p.position.x,p.position.z); if(p.position.z>GSPRING.z+40) p.visible=false; }); }
+  if(S.step==='choose') W.drinkers.forEach((p,i)=>{ if(p.userData.lap&&!p.userData.picked) p.userData.arms[0].rotation.x=-2.3+Math.sin(t*4+i)*0.15; });
+  if(S.step==='sneak'||S.step==='dream'){ const pu=W.purah, tx=P.x+1.2, tz=P.z+1.2, dx=tx-pu.position.x, dz=tz-pu.position.z, d=Math.hypot(dx,dz); if(d>0.4){ const v=Math.min(4.6,d*2)*dt; pu.position.x+=dx/d*v; pu.position.z+=dz/d*v; pu.rotation.y=Math.atan2(dx,dz); animWalk(pu,dt,1); } pu.position.y=ground(pu.position.x,pu.position.z); }
+  if(S.fleeing){ W.midian.forEach((p,i)=>{ if(p.userData.sleep){ if(t>S.fleeT+i*0.08){ p.userData.sleep=false; p.rotation.x=0; p.position.y=ground(p.position.x,p.position.z); } return; } const a=i*2.4; p.position.x+=Math.sin(a)*dt*3.2; p.position.z+=-dt*4.2; p.rotation.y=Math.atan2(Math.sin(a),-1.3); animWalk(p,dt,1.2); p.position.y=ground(p.position.x,p.position.z); if(p.position.z<GCAMP.z-60) p.visible=false; });
+    W.camels.forEach((c,i)=>{ c.position.z-=dt*5; c.rotation.y=Math.PI; sheepWalk(c,dt,1); c.position.y=ground(c.position.x,c.position.z); if(c.position.z<GCAMP.z-60) c.visible=false; }); }
+  if(S.blowT>0){ S.blowT-=dt; hornView.position.y=-0.18; hornView.rotation.x=0.4; W.three.forEach(p=>{ p.userData.arms[1].rotation.x=-2.0; }); } else { hornView.position.y=-0.32; hornView.rotation.x=0; }
+  let near=null;
+  if(S.step==='thresh') near={label:'Beat the wheat', fn:()=>{ S.swing=0.35; S.hits++; shake=0.05; W.grainPile.scale.setScalar(0.05+S.hits/6);
+      for(let k=0;k<8;k++){ const c=glowSprite(0xe8d090,0.12+Math.random()*0.1); c.position.set(P.x-Math.sin(P.yaw)*0.9,ground(P.x,P.z)+0.4,P.z-Math.cos(P.yaw)*0.9); c.userData={v:new THREE.Vector3((Math.random()-0.5)*1.6,1+Math.random()*1.2,(Math.random()-0.5)*1.6),life:1.2}; W.group.add(c); W.chaff.push(c); }
+      if(S.hits>=6) setTimeout(()=>{ if(story===S) goGideon('angel'); },500); else setGoal(`Beat the wheat with your stick (${S.hits} of 6)`); }};
+  if(S.step==='offer' && dist2(W.rock)<2.6) near={label:'Put the food on the rock', fn:()=>{ W.food.visible=true; W.food.position.set(W.rock.position.x,W.rock.position.y+0.25,W.rock.position.z); goGideon('fire'); }};
+  if(S.step==='fleece1' && Math.hypot(P.x-GFLOOR.x,P.z-GFLOOR.z)<3.4) near={label:'Lay down the fleece', fn:()=>{ W.fleece.visible=true; S.lock=true; S.target=null;
+      gidCut(()=>{ gidNight(false); W.fleece.userData.wm.color.set(0xa8a49c); P.x=GFLOOR.x+2.4; P.z=GFLOOR.z+2.2; }, [[SAY_BIBLE,'Gideon left the fleece out all night. Early the next morning, he went to look.','Judges 6:38'],['You are Gideon','The ground is completely dry, but the fleece is soaking wet!','Judges 6:38']], ()=>goGideon('wring')); }};
+  if(S.step==='wring' && dist2(W.fleece)<2.4) near={label:'Squeeze the fleece', fn:()=>{ W.bowl.visible=true; shake=0.1; W.fleece.userData.m.scale.y=0.6; S.lock=true; S.target=null;
+      say([[SAY_BIBLE,'Gideon squeezed the fleece, and wrung out a whole bowl full of water!','Judges 6:38'],
+        ['You are Gideon','God, please don’t be angry with me. Let me test one more time. This time, make the fleece dry and the ground wet with dew.','Judges 6:39']], ()=>gidCut(()=>{ W.bowl.visible=false; W.fleece.userData.wm.color.set(0xf2eee2); W.fleece.userData.m.scale.y=1; W.dew.visible=true; P.x=GFLOOR.x+2.6; P.z=GFLOOR.z+2.6; }, [[SAY_BIBLE,'That night God did it. The next morning, the ground all around was wet with dew.','Judges 6:40']], ()=>goGideon('fleece2'))); }};
+  if(S.step==='fleece2' && dist2(W.fleece)<2.4) near={label:'Feel the fleece', fn:()=>{ S.lock=true; S.target=null; say([['You are Gideon','The fleece is dry, but the ground is wet all around it! God really is with me.','Judges 6:40']], ()=>gidCut(()=>{ W.dew.visible=false; W.fleece.visible=false;
+      W.army.forEach((p,i)=>{ p.visible=true; place(p,GSPRING.x+(i%8-3.5)*2.2+(Math.random()-0.5),GSPRING.z+10+Math.floor(i/8)*2.4); faceTo(p,GSPRING.x,GSPRING.z+24); }); P.x=GSPRING.x; P.z=GSPRING.z+24; P.yaw=Math.PI; }, null, ()=>goGideon('army'))); }};
+  if(S.step==='choose'){ let best=null,bd=2.6; W.drinkers.forEach(p=>{ const d=dist2(p); if(d<bd){ bd=d; best=p; } });
+    if(best && best.userData.lap && !best.userData.picked) near={label:'Choose this man', fn:()=>{ best.userData.picked=true; S.chosen++; best.userData.arms[0].rotation.x=-0.2; best.userData.arms[1].rotation.x=-2.9; const st=glowSprite(0xfff2a0,0.9); st.position.y=2.3; best.add(st); shake=0.05; if(S.chosen>=5) goGideon('spy'); else setGoal(`Choose the men who lap water from their <b>hands</b> (${S.chosen} of 5)`); }};
+    else if(best && !best.userData.lap && !S.saidKneel){ near={label:'Look at this man', fn:()=>{ S.saidKneel=true; say([['You are Gideon','This one got down on his knees to drink. He is not one of the men God chose.','Judges 7:5']]); }}; } }
+  if(S.step==='sneak' && Math.hypot(P.x-(GCAMP.x+2.6),P.z-(GCAMP.z+25.5))<2.6) goGideon('dream');
+  if(S.step==='blow') near={label:'Blow your trumpet', fn:()=>{ hornBlast(2.6); S.blowT=2.6; shake=0.15; setTimeout(()=>{ if(story===S) goGideon('smash'); },1200); }};
+  if(S.step==='smash') near={label:'Smash your jar', fn:()=>{ shake=0.3; jarHand.userData.jar.forEach(m=>m.visible=false); jarHand.userData.flame.visible=true; jarHand.position.y=-0.15;
+      W.three.forEach(p=>{ p.userData.jar.visible=false; p.userData.torch.visible=true; p.userData.arms[0].rotation.x=-2.6; }); hornBlast(2.2); S.fleeing=true; S.fleeT=t; scene.background.set(0x1a2048); goGideon('win'); }};
+  S.near=near;
+  const pr=$('prompt');
+  if(near && !saying()){ pr.textContent=(touch?'':'Space: ')+near.label; pr.classList.remove('hidden'); $('act').textContent=near.label.split(' ')[0]; }
+  else { pr.classList.add('hidden'); $('act').textContent= saying()?'Next':'Use'; }
+  showBeacon(t);
+}
+function boundsGideon(){ const S=story; P.x=clamp(P.x,-60,60); P.z=clamp(P.z,-120,70);
+  if(S.step==='thresh'){ P.x=clamp(P.x,GPRESS.x-1.2,GPRESS.x+1.2); P.z=clamp(P.z,GPRESS.z-1.2,GPRESS.z+1.2); }
+  const d=Math.hypot(P.x-GSPRING.x,P.z-GSPRING.z); if(d<4.3){ P.x=GSPRING.x+(P.x-GSPRING.x)/(d||1)*4.3; P.z=GSPRING.z+(P.z-GSPRING.z)/(d||1)*4.3; }
+  if(S.step==='sneak' && P.z<GCAMP.z+24) P.z=GCAMP.z+24;
+}
+function jumpGideon(q){ // ?step=fleece | choose | sneak | blow
+  const S=story, W=world; sayQ.length=0; $('say').classList.add('hidden'); sayCb=null; staffHand.visible=false;
+  if(q==='fleece'){ P.x=GFLOOR.x+3.6; P.z=GFLOOR.z+3.2; goGideon('fleece1'); }
+  if(q==='choose'){ W.drinkers.forEach(p=>p.visible=true); P.x=GSPRING.x; P.z=GSPRING.z+9; P.yaw=0; goGideon('choose'); }
+  if(q==='sneak'){ gidNight(true); P.x=GCAMP.x+2; P.z=GCAMP.z+44; P.yaw=0; W.purah.visible=true; place(W.purah,P.x+1.4,P.z+1); W.talkers.forEach(t=>t.visible=true); goGideon('sneak'); }
+  if(q==='blow'){ gidNight(true); jarHand.visible=true; hornView.visible=true; P.x=GCAMP.x; P.z=GCAMP.z+27; P.yaw=0; W.three.forEach((p,i)=>{ const a=(i+0.5)/W.three.length*Math.PI*2, d=26+(i%2)*1.5; place(p,GCAMP.x+Math.sin(a)*d,GCAMP.z+Math.cos(a)*d); faceTo(p,GCAMP.x,GCAMP.z); p.visible=true; }); goGideon('blow'); }
+}
+
+/* ================= Story 10: Samson ================= */
+const SV={x:0,z:40}, SGATE={x:0,z:-12}, SHILL={x:44,z:2}, SMILL={x:-30,z:-40}, STEMPLE={x:-30,z:-90};
+function groundSamson(x,z){ let h=0.3*Math.sin(x*0.09)*Math.cos(z*0.08)+0.15*Math.sin(x*0.21+z*0.17);
+  const hd=Math.hypot(x-SHILL.x,z-SHILL.z); h+=13*(1-smooth(clamp(hd/26,0,1))); /* the hill facing Hebron */
+  if(z<-8&&z>-110&&x<14) h=h*0.3; /* Gaza is flat */
+  const e=Math.hypot(x*0.8,z+30); if(e>100) h+=Math.min(10,Math.pow(e-100,1.1)*0.2); return h; }
+const gateView=new THREE.Group(); { const wd=mat(0x6a4a2a), dk=mat(0x4a3220); for(const sx of [-1,1]){ const d=new THREE.Mesh(new THREE.BoxGeometry(1.5,0.12,2.6), wd); d.position.set(sx*0.78,0.32,-0.6); d.rotation.z=sx*0.08; gateView.add(d); for(let k=0;k<3;k++){ const b=new THREE.Mesh(new THREE.BoxGeometry(1.5,0.16,0.14), dk); b.position.set(sx*0.78,0.4,-1.6+k*0.9); b.rotation.z=sx*0.08; gateView.add(b); } }
+  const post=new THREE.Mesh(new THREE.CylinderGeometry(0.12,0.12,3.4,8), dk); post.rotation.z=Math.PI/2; post.position.set(0,0.5,-0.2); gateView.add(post);
+  gateView.position.set(0,0.45,0.4); gateView.visible=false; view.add(gateView); }
+const pushView=new THREE.Group(); { for(const sx of [-1,1]){ const a=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.065,0.7,8), handMat); a.rotation.z=sx*1.25; a.rotation.y=sx*0.3; a.position.set(sx*0.42,-0.22,-0.45); pushView.add(a); const h=new THREE.Mesh(new THREE.SphereGeometry(0.06,8,6), handMat); h.position.set(sx*0.74,-0.12,-0.55); pushView.add(h); } pushView.visible=false; view.add(pushView); }
+function blindOn(k){ let b=$('blind'); if(!b){ b=document.createElement('div'); b.id='blind'; b.style.cssText='position:absolute;inset:0;pointer-events:none;transition:opacity 1.5s;background:radial-gradient(ellipse at center, rgba(10,8,6,.25) 0%, rgba(10,8,6,.75) 55%, rgba(10,8,6,.96) 100%);opacity:0'; $('say').parentNode.insertBefore(b,$('say')); } b.style.opacity=k; }
+function buildSamson(){
+  ground=groundSamson; resetLook();
+  const g=new THREE.Group(); scene.add(g); world={group:g, bees:[], crowd:[], vines:[], roof:[]}; const W=world, r=rnd(111);
+  { const N=170, geo=new THREE.PlaneGeometry(300,300,N,N); geo.rotateX(-Math.PI/2); geo.translate(0,0,-30); const pos=geo.attributes.position, cols=[], c=new THREE.Color(), a=new THREE.Color(0x9aa860), b=new THREE.Color(0xb8a878), city=new THREE.Color(0xc8b48a);
+    for(let i=0;i<pos.count;i++){ const x=pos.getX(i), z=pos.getZ(i), h=groundSamson(x,z); pos.setY(i,h); const n=0.5+0.5*Math.sin(x*0.5+z*0.9)*Math.cos(x*0.27-z*0.4); c.copy(a).lerp(b,n*0.8); if(z<-8&&x<14) c.lerp(city,0.7); c.multiplyScalar(1.05); cols.push(c.r,c.g,c.b); }
+    geo.setAttribute('color',new THREE.Float32BufferAttribute(cols,3)); geo.computeVertexNormals(); const uv=geo.attributes.uv; for(let i=0;i<uv.count;i++) uv.setXY(i,uv.getX(i)*90,uv.getY(i)*90);
+    const m=new THREE.Mesh(geo,new THREE.MeshLambertMaterial({vertexColors:true,map:GROUND_TEX})); m.userData.noCast=true; g.add(m); }
+  grassField(g, touch?4000:8000, ()=>{ const x=(Math.random()-0.5)*130, z=(Math.random()-0.5)*160-20; if(z<-8&&x<14) return null; if(Math.random()>0.6) return null; return [x,z,0x8a9a4a]; });
+  /* the vineyards of Timnah */
+  for(let row=0;row<6;row++) for(let k=0;k<9;k++){ const x=-22+row*3.2+(row>2?20:0), z=28+k*2.6; const v=new THREE.Group(); const st=new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.05,1.3,5), mat(0x6a4a2a)); st.position.y=0.65; v.add(st);
+    for(let j=0;j<3;j++){ const l=new THREE.Mesh(LEAF_GEO[(row+k+j)%6], mat(j%2?0x4f7a3a:0x5f8a44)); l.scale.setScalar(0.42); l.position.set((j-1)*0.3,1.0+(j%2)*0.25,0); v.add(l); }
+    const gr=blob(v,0x5a2a5a,0.09,1,1.3,1,0.15,0.75,0.2,8); v.position.set(x,groundSamson(x,z),z); g.add(v); W.vines.push(v); }
+  for(let i=0;i<16;i++){ const x=(r()-0.5)*110, z=10+r()*60; if(Math.abs(x)<26&&z>20&&z<55) continue; tree(g,x,z,0.9+r()*0.4); }
+  W.lion=animal('lion'); place(W.lion,9,18,-0.6); g.add(W.lion);
+  W.comb=new THREE.Group(); for(let i=0;i<7;i++){ const h=new THREE.Mesh(new THREE.CylinderGeometry(0.12,0.12,0.12,6), mat(0xe8b030)); h.rotation.x=Math.PI/2; h.position.set((i%3-1)*0.21+(Math.floor(i/3)%2)*0.1,0.12+Math.floor(i/3)*0.18,0); W.comb.add(h); } W.comb.visible=false; g.add(W.comb);
+  /* Gaza: city wall with a great gate */
+  { const wallM=mat(0xcfb98a), dk=mat(0xbfa676);
+    for(const [x0,x1] of [[-60,-3],[3,13]]){ const w=new THREE.Mesh(new THREE.BoxGeometry(x1-x0,6,2), wallM); w.position.set((x0+x1)/2,3,SGATE.z); g.add(w); for(let x=x0+1;x<x1;x+=2.5){ const c=new THREE.Mesh(new THREE.BoxGeometry(1.2,0.8,2.1), dk); c.position.set(x,6.4,SGATE.z); g.add(c); } }
+    for(const sx of [-1,1]){ const tw=new THREE.Mesh(new THREE.BoxGeometry(3,8.5,3.2), dk); tw.position.set(SGATE.x+sx*4.4,4.25,SGATE.z); g.add(tw); }
+    const lin=new THREE.Mesh(new THREE.BoxGeometry(6,1.6,2.2), wallM); lin.position.set(SGATE.x,6.6,SGATE.z); g.add(lin);
+    const gate=new THREE.Group(); for(const sx of [-1,1]){ const d=new THREE.Mesh(new THREE.BoxGeometry(2.8,5.6,0.25), mat(0x6a4a2a)); d.position.set(sx*1.45,2.8,0); gate.add(d); for(let k=0;k<3;k++){ const b=new THREE.Mesh(new THREE.BoxGeometry(2.8,0.22,0.32), mat(0x4a3220)); b.position.set(sx*1.45,1+k*1.8,0); gate.add(b); } }
+    for(const sx of [-1,1]){ const p=new THREE.Mesh(new THREE.CylinderGeometry(0.18,0.18,6,8), mat(0x4a3220)); p.position.set(sx*2.95,3,0); gate.add(p); } const bar=new THREE.Mesh(new THREE.BoxGeometry(6,0.25,0.25), mat(0x3a2a18)); bar.position.set(0,2.6,0.25); gate.add(bar);
+    gate.position.set(SGATE.x,0,SGATE.z); g.add(gate); W.gate=gate; }
+  for(let i=0;i<26;i++){ const x=-56+(i%9)*6.5+(r()-0.5)*2, z=-24-Math.floor(i/9)*9-(r())*3; if(Math.hypot(x-SMILL.x,z-SMILL.z)<8) continue; const hs=house(g,x,z); hs.scale.set(0.8,0.9+r()*0.5,0.8); }
+  for(let i=0;i<8;i++) palm(g,-50+r()*60,-14-r()*60,0.8+r()*0.3);
+  W.hillGate=W.gate.clone(); W.hillGate.visible=false; W.hillGate.rotation.x=-1.35; g.add(W.hillGate);
+  /* the prison mill */
+  { const M=new THREE.Group(); const base=new THREE.Mesh(new THREE.CylinderGeometry(1.2,1.3,0.7,20), mat(0x8a8276)); base.position.y=0.35; M.add(base); const top=new THREE.Mesh(new THREE.CylinderGeometry(1.0,1.0,0.5,20), mat(0x9a9286)); top.position.y=0.95; M.add(top);
+    const pole=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,3.2,6), mat(0x6a4a2a)); pole.rotation.z=Math.PI/2; pole.position.set(1.6,1.05,0); const arm=new THREE.Group(); arm.add(pole); arm.position.y=0; M.add(arm); W.millArm=arm;
+    M.position.set(SMILL.x,groundSamson(SMILL.x,SMILL.z),SMILL.z); g.add(M);
+    for(let i=0;i<18;i++){ const a=i/18*Math.PI*2; const w=new THREE.Mesh(new THREE.BoxGeometry(2.6,4,0.6), mat(0x8a7a62)); w.position.set(SMILL.x+Math.sin(a)*7,2,SMILL.z+Math.cos(a)*7); w.rotation.y=a; g.add(w); } }
+  /* the temple of Dagon */
+  { const T=new THREE.Group(), st=mat(0xd8c49a), st2=mat(0xc4ae80); const fl=new THREE.Mesh(new THREE.BoxGeometry(18,0.3,16), st2); fl.position.y=0.15; T.add(fl);
+    for(const sx of [-1,1]){ const w=new THREE.Mesh(new THREE.BoxGeometry(0.8,8,16), st); w.position.set(sx*9,4,0); T.add(w); } const bk=new THREE.Mesh(new THREE.BoxGeometry(18,8,0.8), st); bk.position.set(0,4,-8); T.add(bk);
+    W.pillars=[]; for(const sx of [-1,1]){ const p=new THREE.Group(); const c=new THREE.Mesh(new THREE.CylinderGeometry(0.45,0.5,8,14), st); c.position.y=4; p.add(c); const cap=new THREE.Mesh(new THREE.BoxGeometry(1.3,0.5,1.3), st2); cap.position.y=8.1; p.add(cap); p.position.set(sx*1.05,0,1.5); T.add(p); W.pillars.push(p); }
+    for(let i=0;i<4;i++){ const rf=new THREE.Mesh(new THREE.BoxGeometry(9.2,0.6,8.2), st2); rf.position.set((i%2?1:-1)*4.6,8.6,(i<2?-1:1)*4.1); rf.userData.noCast=true; T.add(rf); W.roof.push(rf); }
+    const idol=new THREE.Group(); const ib=new THREE.Mesh(new THREE.CylinderGeometry(0.9,1.3,4,10), mat(0x8a8a86)); ib.position.y=2; idol.add(ib); blob(idol,0x8a8a86,0.7,1,1.1,1,0,4.5,0); const tl=new THREE.Mesh(new THREE.ConeGeometry(0.9,1.2,4), mat(0x7a7a76)); tl.position.y=0.3; tl.rotation.x=Math.PI; idol.add(tl); idol.position.set(0,0.3,-6.5); T.add(idol);
+    T.position.set(STEMPLE.x,groundSamson(STEMPLE.x,STEMPLE.z),STEMPLE.z); g.add(T); W.temple=T;
+    for(let i=0;i<14;i++){ const p=person({tunic:[0x6a3a4a,0x3a4a6a,0x5a5a3a,0x7a5a2a,0x9a3a2a][i%5],hair:0x1a120a,beard:i%2?0x1a120a:null,helmet:i%4===0?0x8a7a5a:null,h:1.74}); const a=i/14*Math.PI*1.6-Math.PI*0.8, d=5+(i%3)*1.4; place(p,STEMPLE.x+Math.sin(a)*d,STEMPLE.z+1.5+Math.cos(a)*d*0.8); faceTo(p,STEMPLE.x,STEMPLE.z+1.5); g.add(p); W.crowd.push(p); }
+    for(let i=0;i<8;i++){ const p=person({tunic:[0x6a3a4a,0x3a4a6a,0x5a5a3a][i%3],hair:0x1a120a,h:1.7}); p.position.set(STEMPLE.x-7+i*2,groundSamson(STEMPLE.x,STEMPLE.z)+8.9,STEMPLE.z+7.6); p.rotation.y=Math.PI; g.add(p); W.crowd.push(p); p.userData.roof=true; } }
+  W.boy=person({tunic:0x8a7a5a,hair:0x3a2a1a,h:1.3}); W.boy.visible=false; g.add(W.boy);
+  W.beacon=makeBeacon(); W.beacon.visible=false; g.add(W.beacon);
+  P.x=-2; P.z=56; P.yaw=0; P.pitch=0; P.eye=1.85; P.speed=4.8; P.roll=0;
+  story={id:'samson', step:'', t:0, lock:true, target:null, near:null, lap:0, lapAng:0, lastA:null, pushes:0, fadeSky:null};
+  hand.visible=false; basket.visible=false; sling.visible=false; fruitHand.visible=false; if(typeof logHand!=='undefined'){ logHand.visible=false; leafHand.visible=false; } if(typeof coatView!=='undefined'){ coatView.visible=false; sheafHand.visible=false; } if(typeof reedHand!=='undefined') reedHand.visible=false; if(typeof staffHand!=='undefined') staffHand.visible=false;
+  goSamson('intro');
+}
+function samCut(fn, lines, then){ $('fade').style.background='#0b0b14'; $('fade').style.opacity=1; setTimeout(()=>{ fn(); P.lockLook=null; $('fade').style.opacity=0; setTimeout(()=>{ $('fade').style.background='#fff8e6'; },900); if(lines) say(lines, then); else if(then) then(); },900); }
+function goSamson(step){
+  const S=story, W=world; S.step=step; $('prompt').classList.add('hidden');
+  if(step==='intro'){
+    S.lock=true; setGoal('Listen');
+    say([[SAY_BIBLE,'The angel of the Lord told Manoah and his wife: "You will have a son. Never cut his hair, because he will belong to God from the day he is born. He will begin to save Israel from the Philistines."','Judges 13:3-5'],
+      [SAY_BIBLE,'The boy grew up, and they named him Samson. The Lord blessed him, and the Spirit of the Lord began to work in him.','Judges 13:24-25'],
+      ['You are Samson','You are Samson. You have never had a haircut in your whole life, and God has made you super strong.',''],
+      [SAY_BIBLE,'One day Samson went down to the town of Timnah with his father and mother.','Judges 14:5']], ()=>goSamson('walk'));
+  }
+  if(step==='walk'){ S.lock=false; setGoal('Walk through the <b>vineyards</b> to Timnah'); S.target={position:new THREE.Vector3(0,0,24)}; }
+  if(step==='roar'){ S.lock=true; S.target=null; setGoal('Listen'); lookAt(W.lion.position.x,1.2,W.lion.position.z,0.6); shake=0.25;
+    say([[SAY_BIBLE,'As they came to the vineyards of Timnah, suddenly a young lion came roaring toward Samson!','Judges 14:5'],
+      [SAY_BIBLE,'The Spirit of the Lord came powerfully on Samson.','Judges 14:6']], ()=>{ S.charge=true; goSamson('lion'); }); }
+  if(step==='lion'){ S.lock=true; setGoal('Grab the <b>lion</b> with your bare hands!'); }
+  if(step==='honey'){ S.lock=false; setGoal('Look inside the <b>lion</b>'); S.target=W.lion; }
+  if(step==='gaza'){ S.lock=true; S.target=null; setGoal('Listen');
+    say([[SAY_BIBLE,'Samson was a judge over Israel for 20 years. One night he went to Gaza, a big city of the Philistines.','Judges 15:20, 16:1'],
+      [SAY_BIBLE,'The people of Gaza found out and waited for him all night at the city gate. "At dawn we will kill him," they said.','Judges 16:2'],
+      [SAY_BIBLE,'But Samson got up in the middle of the night.','Judges 16:3']], ()=>goSamson('lift')); }
+  if(step==='lift'){ S.lock=false; setGoal('Pull up the <b>city gates</b>, posts and all!'); S.target={position:new THREE.Vector3(SGATE.x,0,SGATE.z+2)}; }
+  if(step==='carry'){ S.lock=false; setGoal('Carry the gates to the top of the <b>hill</b>'); S.target={position:new THREE.Vector3(SHILL.x,0,SHILL.z)}; }
+  if(step==='delilah'){ S.lock=true; S.target=null; setGoal('Listen');
+    say([[SAY_BIBLE,'Later, Samson fell in love with a woman named Delilah. The Philistine rulers said to her, "Find out the secret of his great strength, and we will each give you 1,100 pieces of silver."','Judges 16:4-5'],
+      [SAY_BIBLE,'Three times Samson tricked her. But she kept nagging him every day, until he was sick of it. So he told her everything.','Judges 16:6-17'],
+      ['You are Samson','My hair has never been cut, because I have belonged to God since I was born. If my head were shaved, my strength would leave me.','Judges 16:17'],
+      [SAY_BIBLE,'While Samson was asleep, Delilah had a man shave off his hair. His strength left him, because the Lord had left him.','Judges 16:19-20'],
+      [SAY_BIBLE,'The Philistines grabbed Samson and made him blind. They chained him up and made him grind grain in the prison.','Judges 16:21', ()=>blindOn(0.85)]], ()=>samCut(()=>{ gateView.visible=false; P.x=SMILL.x; P.z=SMILL.z+2.4; P.yaw=Math.PI/2; P.speed=2.6; S.lastA=null; S.lapAng=0; }, [[SAY_BIBLE,'Samson couldn’t see anything now. He pushed the heavy millstone around and around.','Judges 16:21']], ()=>goSamson('grind'))); }
+  if(step==='grind'){ S.lock=false; setGoal(`Push the millstone around (${S.lap} of 3)`); }
+  if(step==='temple'){ S.lock=true; setGoal('Listen');
+    say([[SAY_BIBLE,'The Philistine rulers threw a big party for their fake god Dagon. "Our god has given us Samson!" they said. "Bring him out to entertain us!"','Judges 16:23-25'],
+      [SAY_BIBLE,'The temple was packed with people. About 3,000 more were up on the roof, watching.','Judges 16:27'],
+      ['You are Samson','Please put me where I can feel the pillars that hold up the temple, so I can lean on them.','Judges 16:26']], ()=>samCut(()=>{ P.x=STEMPLE.x; P.z=STEMPLE.z+1.5; P.yaw=Math.PI; P.pitch=0.1; P.speed=0; pushView.visible=true; W.boy.visible=true; place(W.boy,STEMPLE.x+1.8,STEMPLE.z+2.6,Math.PI); }, null, ()=>goSamson('pray'))); }
+  if(step==='pray'){ S.lock=true; setGoal('<b>Pray</b> to God'); }
+  if(step==='push'){ S.lock=true; setGoal(`Push the pillars with all your strength! (${S.pushes} of 5)`); }
+  if(step==='end'){ S.lock=true; setGoal('Listen');
+    say([[SAY_BIBLE,'Then Samson pushed with all his might, and the temple came crashing down on the rulers and all the people in it.','Judges 16:30'],
+      [SAY_BIBLE,'Samson died there too. But God had heard his prayer and given him strength one last time, and He used Samson to begin to save Israel from the Philistines, just as the angel had promised.','Judges 16:30-31, 13:5']], ()=>finishStory()); }
+}
+function updateSamson(dt, now){
+  const S=story, W=world, t=(S.t+=dt);
+  if(S.fadeSky){ const f=S.fadeSky; f.t+=dt; const k=smooth(f.t/f.dur); scene.background.copy(f.from).lerp(f.to,k); if(k>=1) S.fadeSky=null; }
+  /* the lion */
+  const L=W.lion; if(S.charge && !S.lionDown){ const dx=P.x-L.position.x, dz=P.z-L.position.z, d=Math.hypot(dx,dz); if(d>2.2){ const v=Math.min(6,d*2)*dt; L.position.x+=dx/d*v; L.position.z+=dz/d*v; sheepWalk(L,dt,1.4); } L.rotation.y=Math.atan2(dx,dz); L.position.y=ground(L.position.x,L.position.z); P.lockLook={x:L.position.x,y:ground(L.position.x,L.position.z)+1.1,z:L.position.z,t:0,dur:0.5}; }
+  if(S.lionFall>0){ S.lionFall=Math.max(0,S.lionFall-dt); L.rotation.z=(1-S.lionFall)*Math.PI/2; L.position.y=ground(L.position.x,L.position.z)+0.15; }
+  W.bees.forEach((b,i)=>{ b.position.set(L.position.x+Math.sin(t*3+i)*0.8,ground(L.position.x,L.position.z)+0.9+Math.sin(t*5+i*2)*0.35,L.position.z+Math.cos(t*2.6+i*1.3)*0.8); });
+  /* grinding */
+  if(S.step==='grind'){ const a=Math.atan2(P.x-SMILL.x,P.z-SMILL.z); W.millArm.rotation.y=a-Math.PI/2;
+    if(S.lastA!==null){ let da=a-S.lastA; if(da>Math.PI) da-=Math.PI*2; if(da<-Math.PI) da+=Math.PI*2; S.lapAng+=Math.abs(da); } S.lastA=a;
+    if(S.lapAng>=Math.PI*2){ S.lapAng=0; S.lap++; setGoal(`Push the millstone around (${S.lap} of 3)`); shake=0.08;
+      if(S.lap===1) say([[SAY_BIBLE,'Days went by, and Samson kept grinding grain.','Judges 16:21']]);
+      if(S.lap===2) say([[SAY_BIBLE,'But the hair on his head began to grow back.','Judges 16:22']]);
+      if(S.lap>=3){ S.lock=true; goSamson('temple'); } } }
+  if(W.boy.visible) W.boy.position.y=ground(W.boy.position.x,W.boy.position.z);
+  /* the temple falls */
+  if(S.step==='push'||S.step==='end'){ const k=S.pushes/5; W.pillars.forEach((p,i)=>{ p.rotation.z=(i?-1:1)*k*0.16*(S.fall?1+S.fallT*0.8:1); });
+    W.crowd.forEach((c,i)=>{ if(!c.userData.roof){ c.rotation.z=Math.sin(t*8+i)*0.04*k; } }); }
+  if(S.fall){ S.fallT+=dt; W.roof.forEach((rf,i)=>{ rf.position.y=Math.max(0.6,8.6-Math.pow(Math.max(0,S.fallT-i*0.12),2)*6); rf.rotation.z=(i%2?1:-1)*Math.min(0.5,S.fallT*0.3); });
+    W.crowd.forEach(c=>{ if(c.userData.roof){ c.position.y=Math.max(groundSamson(c.position.x,c.position.z),c.position.y-dt*9); } }); if(S.fallT>1.2) shake=Math.max(shake,0.5); }
+  let near=null;
+  if(S.step==='walk' && P.z<30) goSamson('roar');
+  if(S.step==='lion' && dist2(L)<3.5) near={label:'Grab the lion', fn:()=>{ S.charge=false; S.lionDown=true; S.lionFall=1; shake=0.6; P.lockLook=null;
+      say([[SAY_BIBLE,'With his bare hands, Samson fought the lion and beat it, as easily as if it were a little goat! But he didn’t tell his parents what he had done.','Judges 14:6']], ()=>samCut(()=>{ L.rotation.z=Math.PI/2; for(let i=0;i<12;i++){ const b=glowSprite(0x2a2210,0.18); b.material.blending=THREE.NormalBlending; W.group.add(b); W.bees.push(b); } W.comb.visible=true; W.comb.position.set(L.position.x,ground(L.position.x,L.position.z)+0.75,L.position.z); P.x=L.position.x-3; P.z=L.position.z+3; P.yaw=Math.atan2(-(L.position.x-P.x),-(L.position.z-P.z)); }, [[SAY_BIBLE,'Some time later, Samson came back that way. He turned to look at the lion’s body, and found a swarm of bees inside it, and honey!','Judges 14:8']], ()=>goSamson('honey'))); }};
+  if(S.step==='honey' && dist2(L)<3.2) near={label:'Scoop out the honey', fn:()=>{ W.comb.visible=false; S.lock=true; S.target=null; say([[SAY_BIBLE,'Samson scooped out some honey with his hands and ate it as he walked along. He gave some to his father and mother too.','Judges 14:9'],['You are Samson','Mmm, sweet!','']], ()=>samCut(()=>{ W.bees.forEach(b=>b.visible=false); scene.background.set(0x10183a); hemi.intensity=0.6; sun.intensity=0.3; P.x=SGATE.x; P.z=SGATE.z-10; P.yaw=Math.PI; }, null, ()=>goSamson('gaza'))); }};
+  if(S.step==='lift' && Math.hypot(P.x-SGATE.x,P.z-SGATE.z)<3.6) near={label:'Lift the gates', fn:()=>{ W.gate.visible=false; gateView.visible=true; shake=0.5; P.speed=3.4;
+      say([[SAY_BIBLE,'Samson took hold of the doors of the city gate, with the two posts, and pulled them up, bar and all! He put them on his shoulders.','Judges 16:3']], ()=>goSamson('carry')); }};
+  if(S.step==='carry' && Math.hypot(P.x-SHILL.x,P.z-SHILL.z)<5) near={label:'Put down the gates', fn:()=>{ gateView.visible=false; W.hillGate.visible=true; W.hillGate.position.set(P.x-Math.sin(P.yaw)*3,groundSamson(SHILL.x,SHILL.z)+0.3,P.z-Math.cos(P.yaw)*3); W.hillGate.rotation.y=P.yaw; shake=0.4; P.speed=4.8; S.lock=true; S.target=null;
+      say([[SAY_BIBLE,'Samson carried the gates all the way to the top of the hill that faces Hebron, and left them there!','Judges 16:3', ()=>{ skyTo(0xf0c890,2500); hemi.intensity=0.45; sun.intensity=0.7; }]], ()=>goSamson('delilah')); }};
+  if(S.step==='pray') near={label:'Pray to God', fn:()=>{ P.pitch=0.5; say([['You are Samson','Lord God, remember me. Please give me strength just one more time.','Judges 16:28'],[SAY_BIBLE,'Samson reached out and put his hands on the two middle pillars that held up the temple, one on his right and one on his left.','Judges 16:29', ()=>{ P.pitch=0.1; }]], ()=>goSamson('push')); }};
+  if(S.step==='push') near={label:'Push!', fn:()=>{ S.pushes++; shake=0.15+S.pushes*0.08; rumble(0.8); setGoal(`Push the pillars with all your strength! (${S.pushes} of 5)`); if(S.pushes>=5){ S.fall=true; S.fallT=0; rumble(4); setTimeout(()=>{ if(story!==S) return; $('fade').style.background='#fff8e6'; $('fade').style.opacity=1; setTimeout(()=>{ blindOn(0); pushView.visible=false; P.x=STEMPLE.x; P.z=STEMPLE.z+26; P.yaw=0; P.pitch=0.15; scene.background.set(0xd8c8a8); $('fade').style.opacity=0; goSamson('end'); },1600); },2400); } }};
+  S.near=near;
+  const pr=$('prompt');
+  if(near && !saying()){ pr.textContent=(touch?'':'Space: ')+near.label; pr.classList.remove('hidden'); $('act').textContent=near.label.split(' ')[0].replace('!',''); }
+  else { pr.classList.add('hidden'); $('act').textContent= saying()?'Next':'Use'; }
+  showBeacon(t);
+}
+function boundsSamson(){ const S=story; P.x=clamp(P.x,-62,62); P.z=clamp(P.z,-118,70);
+  if(S.step==='grind'||S.step==='temple'&&P.speed>0){ const dx=P.x-SMILL.x, dz=P.z-SMILL.z, d=Math.hypot(dx,dz)||1, c=clamp(d,1.9,3.1); P.x=SMILL.x+dx/d*c; P.z=SMILL.z+dz/d*c; return; }
+  if(S.step==='pray'||S.step==='push'||S.step==='end') return;
+  /* the city wall: only the gate is open, and only after Samson pulls it up */
+  if(Math.abs(P.z-SGATE.z)<1.6 && P.x<13.5){ const open=!W_gateUp() ? 0 : 2.6; if(Math.abs(P.x-SGATE.x)>open-0.4){ P.z=P.z<SGATE.z?SGATE.z-1.6:SGATE.z+1.6; } }
+}
+function W_gateUp(){ return world && world.gate && !world.gate.visible; }
+function jumpSamson(q){ // ?step=lion | gaza | grind | temple
+  const S=story, W=world; sayQ.length=0; $('say').classList.add('hidden'); sayCb=null;
+  if(q==='lion'){ P.x=0; P.z=28; goSamson('roar'); }
+  if(q==='gaza'){ scene.background.set(0x10183a); hemi.intensity=0.6; sun.intensity=0.3; P.x=SGATE.x; P.z=SGATE.z-10; P.yaw=Math.PI; goSamson('lift'); }
+  if(q==='grind'){ blindOn(0.85); P.x=SMILL.x; P.z=SMILL.z+2.4; P.yaw=Math.PI/2; P.speed=2.6; goSamson('grind'); }
+  if(q==='temple'){ blindOn(0.85); P.x=STEMPLE.x; P.z=STEMPLE.z+1.5; P.yaw=Math.PI; P.speed=0; pushView.visible=true; goSamson('pray'); }
+}
+
 /* David's story hooks */
 function boundsDavid(){ P.x=clamp(P.x,-34,34); P.z=clamp(P.z,-60,72); }
 const IMPL = {
+  samson: { build:buildSamson, go:goSamson, update:updateSamson, bounds:boundsSamson, locked:S=>S.lock },
+  gideon: { build:buildGideon, go:goGideon, update:updateGideon, bounds:boundsGideon, locked:S=>S.lock },
   jericho: { build:buildJericho, go:goJericho, update:updateJericho, bounds:boundsJericho, locked:S=>S.lock },
   redsea: { build:buildRed, go:goRed, update:updateRed, bounds:boundsRed, locked:S=>S.lock },
   bush: { build:buildBush, go:goBush, update:updateBush, bounds:boundsBush, locked:S=>S.lock },
@@ -2573,7 +2906,7 @@ function startStory(id){
   const q=new URLSearchParams(location.search).get('step'); if(q && story) jumpTo(q); // preview links for testing
 }
 function jumpTo(q){ // ?step=stones or ?step=sling
-  const S=story; if(story.id==='adam') return jumpAdam(q); if(story.id==='noah') return jumpNoah(q); if(story.id==='abraham') return jumpAbraham(q); if(story.id==='joseph') return jumpJoseph(q); if(story.id==='babymoses') return jumpMoses(q); if(story.id==='bush') return jumpBush(q); if(story.id==='redsea') return jumpRed(q); if(story.id==='jericho') return jumpJericho(q);
+  const S=story; if(story.id==='adam') return jumpAdam(q); if(story.id==='noah') return jumpNoah(q); if(story.id==='abraham') return jumpAbraham(q); if(story.id==='joseph') return jumpJoseph(q); if(story.id==='babymoses') return jumpMoses(q); if(story.id==='bush') return jumpBush(q); if(story.id==='redsea') return jumpRed(q); if(story.id==='jericho') return jumpJericho(q); if(story.id==='gideon') return jumpGideon(q); if(story.id==='samson') return jumpSamson(q);
   if(q==='stones'||q==='sling'){ world.lamb.userData.following=true; world.lamb.userData.goal={x:world.flock.x+1,z:world.flock.z}; world.lamb.position.set(world.flock.x+1,0,world.flock.z); world.israel.forEach(p=>p.position.z+=12); }
   if(q==='stones'){ P.x=0; P.z=STREAM_Z+4; P.yaw=0; sayQ.length=0; $('say').classList.add('hidden'); go('stones'); }
   if(q==='sling'){ world.stones.forEach(s=>s.visible=false); S.stonesHeld=5; S.stonesLeft=5; P.x=0; P.z=-20; P.yaw=0; world.goliath.position.set(0,ground(0,-36),-36); sayQ.length=0; $('say').classList.add('hidden'); $('stones').classList.remove('hidden'); updateStonesHud(); go('sling'); }
@@ -2584,7 +2917,7 @@ function finishStory(){
   const nextReady=READY[READY.indexOf(s)+1], nextAny=STORIES[STORIES.indexOf(s)+1];
   $('fade').style.opacity=0.6;
   setTimeout(()=>{
-    $('endWho').textContent='You saw what '+({david:'David',adam:'Adam',noah:'Noah',abraham:'Abraham',joseph:'Joseph',babymoses:'Miriam',bush:'Moses',redsea:'Moses',jericho:'Joshua'}[s.id]||'they')+' did.';
+    $('endWho').textContent='You saw what '+({david:'David',adam:'Adam',noah:'Noah',abraham:'Abraham',joseph:'Joseph',babymoses:'Miriam',bush:'Moses',redsea:'Moses',jericho:'Joshua',gideon:'Gideon',samson:'Samson'}[s.id]||'they')+' did.';
     $('endVerse').textContent=s.endVerse; $('endRef').textContent=s.endRef;
     $('endUnlock').textContent= nextReady ? 'You unlocked '+nextReady.title+'!' : (nextAny ? 'Next up: '+nextAny.title+'. It is coming soon!' : 'You finished every story!');
     $('endNext').innerHTML = nextAny ? '<b>What happens next</b>'+nextAny.before : '';
