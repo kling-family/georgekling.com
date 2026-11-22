@@ -235,7 +235,7 @@ const STORIES = [
   // New Testament
   { id:'christmas', ready:true, blurb:'Watch your sheep at night, see the angels light up the sky, hurry to Bethlehem to find the baby in the manger, and tell everyone the good news.', endVerse:'"Today a Savior has been born to you. He is the Messiah, the Lord."', endRef:'Luke 2:11', before:"Esther saved her people. After that, God's people waited about 400 years for the Savior God had promised. Then an angel named Gabriel visited a young woman named Mary in Nazareth. He told her she would have a baby, the Son of God, and she would name Him Jesus. Mary and Joseph had to travel to Bethlehem, David's hometown, and there was no room for them anywhere.", title:'The First Christmas', who:'You are a shepherd', ref:'Luke 2' },
   { id:'wisemen', ready:true, blurb:'Follow the new star across the desert, ask King Herod where the baby King is, find Jesus, give your gifts, and go home another way.', endVerse:'"When they saw the star, they were filled with joy!"', endRef:'Matthew 2:10', before:"The shepherds found baby Jesus lying in a manger, just like the angel said. Far away in the east, wise men who studied the stars saw a brand new star. They knew it meant a new king had been born, so they set out on a long trip to find Him.", title:'The Wise Men and the Star', who:'You are one of the wise men', ref:'Matthew 2' },
-  { id:'storm', before:"King Herod tried to hurt baby Jesus, but His family escaped to Egypt and later moved back to Nazareth. Jesus grew up and, when He was about 30, He began teaching about God and healing sick people. He picked twelve friends, called disciples, to follow Him. Some of them, like Peter, were fishermen.", title:'Jesus Calms the Storm', who:'You are Peter', ref:'Mark 4' },
+  { id:'storm', ready:true, blurb:'Sail across the lake with Jesus, bail water as a wild storm crashes over the boat, and wake Jesus up.', endVerse:'"Who is this? Even the wind and the waves obey Him!"', endRef:'Mark 4:41', before:"King Herod tried to hurt baby Jesus, but His family escaped to Egypt and later moved back to Nazareth. Jesus grew up and, when He was about 30, He began teaching about God and healing sick people. He picked twelve friends, called disciples, to follow Him. Some of them, like Peter, were fishermen.", title:'Jesus Calms the Storm', who:'You are Peter', ref:'Mark 4' },
   { id:'loaves', before:"Jesus kept teaching and doing miracles, and more and more people came to see Him. One day a huge crowd followed Him out to a hillside far from any town. They stayed all day listening, and it got late. Everyone was hungry, and there was no food to buy.", title:'Five Loaves and Two Fish', who:'You are the boy with the lunch', ref:'John 6' },
   { id:'water', before:"Jesus fed more than 5,000 people with one boy's lunch, and there were twelve baskets of leftovers! Right after that, Jesus sent His disciples ahead in a boat across the lake while He went up the mountain alone to pray. In the middle of the night, a strong wind blew against their boat.", title:'Peter Walks on Water', who:'You are Peter', ref:'Matthew 14' },
   { id:'zacchaeus', before:"Jesus and His disciples traveled all around, and Jesus taught that God loves everyone, even people others hate. Now Jesus was on His way to Jerusalem, and He walked through the city of Jericho. A man there named Zacchaeus was a tax collector. He cheated people and got rich, so nobody liked him.", title:'Zacchaeus Climbs a Tree', who:'You are Zacchaeus', ref:'Luke 19' },
@@ -3832,9 +3832,120 @@ function jumpWise(q){ // ?step=herod | star | gifts | home
   if(q==='home'){ W.stars.visible=false; W.star.visible=false; scene.background.set(0xf0c8a0); P.x=WCAMP.x+2; P.z=WCAMP.z; S.px=P.x; S.pz=P.z; goWise('home'); }
 }
 
+/* ================= Story 18: Jesus Calms the Storm ================= */
+const GLAKE={x:-70,z:0}, GSTM={mode:'land'};
+function stormLand(x,z){ const c=x-20; let h=c<0?0.3+c*0.5:0.3+Math.min(6,c*0.1)+0.25*Math.sin(x*0.13)*Math.cos(z*0.11)*Math.min(1,c/10); const e=Math.hypot(x-GLAKE.x,z-GLAKE.z); if(e>120) h=Math.max(h,Math.min(18,(e-120)*0.5)); return h; }
+function groundStorm(x,z){ if(GSTM.mode==='boat') return world&&world.boat? world.boat.position.y+0.95 : 0.95; let h=stormLand(x,z); if(Math.abs(z)<1.1 && x>7.5 && x<21) h=Math.max(h,1.1); return h; }
+function jesusPerson(){ return person({tunic:0xf2ead8,sash:0xb8402e,hair:0x4a3220,beard:0x4a3220,h:1.8,skin:0xc68a5e}); }
+function fishingBoat(){ const o=new THREE.Group(), wood=mat(0x8a6038), dk=mat(0x5a3a20);
+  const hull=new THREE.Mesh(new THREE.BoxGeometry(3,1.2,7.6), dk); hull.position.y=0.25; o.add(hull);
+  for(const sz of [-1,1]){ const b=new THREE.Mesh(new THREE.BoxGeometry(2.1,1.2,2.1), dk); b.rotation.y=Math.PI/4; b.position.set(0,0.25,sz*3.8); o.add(b); }
+  const deck=new THREE.Mesh(new THREE.BoxGeometry(2.7,0.08,8.4), wood); deck.position.y=0.9; o.add(deck);
+  for(const sx of [-1,1]){ const r=new THREE.Mesh(new THREE.BoxGeometry(0.12,0.45,8.6), wood); r.position.set(sx*1.45,1.1,0); o.add(r); }
+  for(const z of [-2,0.6]){ const seat=new THREE.Mesh(new THREE.BoxGeometry(2.8,0.1,0.4), wood); seat.position.set(0,1.25,z); o.add(seat); }
+  const mast=new THREE.Mesh(new THREE.CylinderGeometry(0.09,0.12,6,8), dk); mast.position.set(0,3.9,-1); o.add(mast);
+  const yard=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,4,6), dk); yard.rotation.z=Math.PI/2; yard.position.set(0,6.3,-0.95); o.add(yard);
+  const sail=new THREE.Mesh(new THREE.PlaneGeometry(3.8,3.8), mat(0xf0e6cc,{side:THREE.DoubleSide})); sail.position.set(0,4.3,-0.9); o.add(sail); o.userData.sail=sail;
+  for(const sx of [-1,1]){ const oar=new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.04,3.4,6), wood); oar.rotation.z=sx*1.1; oar.position.set(sx*2.1,0.6,1.6); o.add(oar); }
+  const cush=new THREE.Mesh(new THREE.BoxGeometry(0.7,0.2,0.5), mat(0xb8402e)); cush.position.set(0,1.0,3.4); o.add(cush);
+  const bilge=new THREE.Mesh(new THREE.PlaneGeometry(2.6,7.4), new THREE.MeshPhongMaterial({color:0x3a7aa8,specular:0xffffff,shininess:80,transparent:true,opacity:0.85})); bilge.rotation.x=-Math.PI/2; bilge.position.y=0.92; bilge.visible=false; o.add(bilge); o.userData.bilge=bilge;
+  return o; }
+function buildStorm(){
+  GSTM.mode='land'; ground=groundStorm; resetLook(); scene.background.set(0xf0b888); scene.fog.color.set(0xf0b888); hemi.intensity=0.5; sun.intensity=0.7;
+  const g=new THREE.Group(); scene.add(g); world={group:g, disciples:[]}; const W=world, r=rnd(441);
+  { const N=170, geo=new THREE.PlaneGeometry(380,380,N,N); geo.rotateX(-Math.PI/2); geo.translate(-60,0,0); const pos=geo.attributes.position, cols=[], c=new THREE.Color(), sand=new THREE.Color(0xd8c89a), a=new THREE.Color(0x8aa05a), b=new THREE.Color(0xa8a868);
+    for(let i=0;i<pos.count;i++){ const x=pos.getX(i), z=pos.getZ(i), h=stormLand(x,z); pos.setY(i,h); const n=0.5+0.5*Math.sin(x*0.5+z*0.9)*Math.cos(x*0.27-z*0.4); c.copy(a).lerp(b,n*0.8); if(h<1.2) c.copy(sand); cols.push(c.r,c.g,c.b); }
+    geo.setAttribute('color',new THREE.Float32BufferAttribute(cols,3)); geo.computeVertexNormals(); const uv=geo.attributes.uv; for(let i=0;i<uv.count;i++) uv.setXY(i,uv.getX(i)*100,uv.getY(i)*100);
+    const m=new THREE.Mesh(geo,new THREE.MeshLambertMaterial({vertexColors:true,map:GROUND_TEX})); m.userData.noCast=true; g.add(m); }
+  { const N=60, geo=new THREE.PlaneGeometry(220,220,N,N); geo.rotateX(-Math.PI/2); const sea=new THREE.Mesh(geo, new THREE.MeshPhongMaterial({color:0x3a7aa0,specular:0xbfd8e8,shininess:70,side:THREE.DoubleSide,flatShading:true})); sea.userData.noCast=true; g.add(sea); W.sea=sea; W.seaBase=Float32Array.from(geo.attributes.position.array); }
+  grassField(g, touch?2000:4000, ()=>{ const x=22+Math.random()*60, z=(Math.random()-0.5)*120; if(Math.random()>0.6) return null; return [x,z,0x7a9a4a]; });
+  /* Capernaum by the lake */
+  for(let i=0;i<4;i++){ const p=new THREE.Mesh(new THREE.CylinderGeometry(0.13,0.13,2.6,6), mat(0x5a3a20)); p.position.set(9+i*4,0,1.1); g.add(p); const p2=p.clone(); p2.position.z=-1.1; g.add(p2); }
+  { const pier=new THREE.Mesh(new THREE.BoxGeometry(13.6,0.2,2.2), mat(0x8a6038)); pier.position.set(14.2,1.0,0); g.add(pier); }
+  W.post=new THREE.Mesh(new THREE.CylinderGeometry(0.15,0.15,1.0,8), mat(0x4a3020)); W.post.position.set(8.2,1.5,-0.8); g.add(W.post);
+  W.rope=new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.03,3.2,6), mat(0xc8b080)); W.rope.rotation.z=Math.PI/2.2; W.rope.position.set(6.6,1.4,-0.9); g.add(W.rope);
+  for(let i=0;i<16;i++){ const x=26+(i%4)*7+(r()-0.5)*2, z=(i<8?-1:1)*(7+Math.floor((i%8)/4)*8+r()*2); const hs=house(g,x,z); hs.scale.set(0.8,0.8+r()*0.4,0.8); hs.children[0].material=mat(0x4a4a50); }
+  for(let i=0;i<8;i++) palm(g,20+r()*16,(r()-0.5)*50,0.8+r()*0.3);
+  for(let i=0;i<5;i++){ const nb=new THREE.Mesh(new THREE.TorusGeometry(0.5,0.05,6,16), mat(0x8a7a5a)); nb.rotation.x=Math.PI/2; nb.position.set(18+i*0.4,1.15,0.6); g.add(nb); }
+  /* the boat */
+  W.boat=fishingBoat(); W.boat.position.set(4.9,0,-0.5); g.add(W.boat);
+  W.jesus=jesusPerson(); W.jesus.position.set(15,1.1,0.2); W.jesus.rotation.y=-Math.PI/2; g.add(W.jesus);
+  for(let i=0;i<6;i++){ const d=person({tunic:[0x3a5a7a,0x7a4a3a,0x5a6a4a,0x8a7a5a,0x4a4a6a,0x6a3a3a][i],hair:[0x1a120a,0x3a2614][i%2],beard:i%3?0x2a1a10:null,h:1.72+(i%2)*0.06}); d.userData.local=new THREE.Vector3([-0.8,0.8,-0.8,0.8,-0.8,0.8][i],0.95,[-3,-3,-1.6,-1.6,1.8,1.8][i]); d.visible=false; W.boat.add(d); d.position.copy(d.userData.local); d.rotation.y=i%2?-Math.PI/2:Math.PI/2; W.disciples.push(d); }
+  for(let i=0;i<5;i++){ const p=person({tunic:[0x9a6a3a,0x5a6a8a,0x8a4a5a,0x6a7a4a,0xb08a5a][i],hair:0x1a120a,beard:i%2?0x2a1a10:null,longHair:i%2===0,h:1.6+r()*0.3}); place(p,22+r()*4,-3+r()*6); faceTo(p,10,0); g.add(p); }
+  { const n=touch?1500:3000, geo=new THREE.BufferGeometry(), v=new Float32Array(n*6); for(let i=0;i<n;i++){ const x=(Math.random()-0.5)*50, z=(Math.random()-0.5)*50, y=Math.random()*30; v.set([x,y,z,x+0.3,y-0.8,z],i*6); }
+    geo.setAttribute('position',new THREE.BufferAttribute(v,3)); W.rain=new THREE.LineSegments(geo,new THREE.LineBasicMaterial({color:0xc8d8e8,transparent:true,opacity:.55})); W.rain.visible=false; W.rain.frustumCulled=false; g.add(W.rain); }
+  W.beacon=makeBeacon(); W.beacon.visible=false; g.add(W.beacon);
+  P.x=17; P.z=0.3; P.yaw=Math.PI/2; P.pitch=0; P.eye=1.8; P.speed=4.6; P.roll=0;
+  story={id:'storm', step:'', t:0, lock:true, target:null, near:null, amp:0.08, storm:false, bailed:0, water:0, flash:0, fadeSky:null};
+  hand.visible=false; basket.visible=false; sling.visible=false; fruitHand.visible=false;
+  goStorm('intro');
+}
+function stCut(fn, lines, then){ $('fade').style.background='#0b0b14'; $('fade').style.opacity=1; setTimeout(()=>{ fn(); P.lockLook=null; $('fade').style.opacity=0; setTimeout(()=>{ $('fade').style.background='#fff8e6'; },900); if(lines) say(lines, then); else if(then) then(); },1000); }
+function stormToLake(){ const W=world; GSTM.mode='boat'; W.boat.position.set(GLAKE.x,0,GLAKE.z); W.disciples.forEach(d=>d.visible=true); W.boat.add(W.jesus); W.jesus.rotation.order='YXZ'; W.jesus.position.set(0,1.12,1.8); W.jesus.rotation.set(-Math.PI/2,Math.PI,0); P.x=GLAKE.x+0.4; P.z=GLAKE.z-0.3; P.yaw=Math.PI; }
+function goStorm(step){
+  const S=story, W=world; S.step=step; $('prompt').classList.add('hidden');
+  if(step==='intro'){ S.lock=true; setGoal('Listen'); lookAt(W.jesus.position.x,2.6,W.jesus.position.z,0.8);
+    say([[SAY_BIBLE,'All day long, Jesus had been teaching a big crowd from a boat by the lake.','Mark 4:1'],
+      ['Jesus','Let’s go over to the other side of the lake.','Mark 4:35'],
+      [SAY_BIBLE,'So the disciples left the crowd and took Jesus along in the boat.','Mark 4:36']], ()=>{ P.lockLook=null; goStorm('untie'); }); }
+  if(step==='untie'){ S.lock=false; S.target={position:new THREE.Vector3(W.post.position.x,0,W.post.position.z)}; setGoal('Untie the <b>boat</b> and get ready to sail'); }
+  if(step==='sail'){ S.lock=true; S.target=null; setGoal('');
+    stCut(()=>{ stormToLake(); }, [[SAY_BIBLE,'They sailed out onto the lake. Jesus was tired, so He went to the back of the boat and fell asleep on a cushion.','Mark 4:38', ()=>lookAt(GLAKE.x,1.3,GLAKE.z+2.6,1)]], ()=>{
+      setTimeout(()=>{ if(story!==S) return; S.storm=true; W.rain.visible=true; skyTo(0x3a4450,3000); scene.fog.near=20; scene.fog.far=110; hemi.intensity=0.42; sun.intensity=0.2;
+        say([[SAY_BIBLE,'Suddenly a furious storm came up! The wind howled, and the waves crashed over the boat, so that it was nearly filling with water.','Mark 4:37', ()=>{ W.boat.userData.bilge.visible=true; S.water=0.2; }]], ()=>{ P.lockLook=null; goStorm('bail'); }); },1800); }); }
+  if(step==='bail'){ S.lock=false; setGoal(`Bail the <b>water</b> out of the boat! (${S.bailed} of 4)`); }
+  if(step==='wake'){ S.lock=false; S.target={position:new THREE.Vector3(W.boat.position.x,0,W.boat.position.z+0.9)}; setGoal('Wake up <b>Jesus</b>!'); }
+  if(step==='calm'){ S.lock=true; S.target=null; setGoal('Listen'); }
+  if(step==='end'){ S.lock=true; setGoal('Listen');
+    say([[SAY_BIBLE,'The disciples were amazed and full of fear. They asked each other:','Mark 4:41'],
+      ['The disciples','Who is this? Even the wind and the waves obey Him!','Mark 4:41']], ()=>finishStory()); }
+}
+function updateStorm(dt, now){
+  const S=story, W=world, t=(S.t+=dt);
+  if(S.fadeSky){ const f=S.fadeSky; f.t+=dt; const k=smooth(f.t/f.dur); scene.background.copy(f.from).lerp(f.to,k); scene.fog.color.copy(scene.background); if(k>=1) S.fadeSky=null; }
+  const ampTo=S.storm?1.3:(S.step==='intro'||S.step==='untie'?0.08:0.05); S.amp+=(ampTo-S.amp)*Math.min(1,dt*(S.storm?0.6:1.5));
+  { const sea=W.sea, cell=220/60; sea.position.x=Math.round(P.x/cell)*cell; sea.position.z=Math.round(P.z/cell)*cell; const a=sea.geometry.attributes.position.array, b=W.seaBase;
+    for(let i=0;i<a.length;i+=3){ const x=b[i]+sea.position.x, z=b[i+2]+sea.position.z; a[i+1]=jonahWave(x,z,t,S.amp)*(GSTM.mode==='boat'?1:Math.max(0,Math.min(1,(8-x)/20))); } sea.geometry.attributes.position.needsUpdate=true; sea.geometry.computeVertexNormals(); }
+  const B=W.boat; if(GSTM.mode==='boat'){ B.position.y=jonahWave(B.position.x,B.position.z,t,S.amp)*0.6; B.rotation.z=Math.sin(t*1.1)*0.1*S.amp; B.rotation.x=Math.sin(t*0.8)*0.06*S.amp; P.roll=Math.sin(t*1.1)*0.07*S.amp; }
+  if(S.storm){ B.userData.sail.rotation.x=Math.sin(t*3)*0.2; if(Math.random()<dt*0.15) S.flash=1; W.disciples.forEach((d,i)=>{ d.userData.arms[0].rotation.x=-2.4+Math.sin(t*4+i)*0.5; d.userData.arms[1].rotation.x=-2.4+Math.cos(t*4+i)*0.5; d.userData.armsBusy=true; });
+    if(S.step==='bail'||S.step==='wake'){ S.water=Math.min(0.9,S.water+dt*0.03); } }
+  if(S.flash>0){ S.flash=Math.max(0,S.flash-dt*3); hemi.intensity=0.42+S.flash*1.2; }
+  B.userData.bilge.position.y=0.92+S.water*0.4;
+  if(W.rain.visible){ W.rain.position.set(P.x,ground(P.x,P.z)-6,P.z); const p=W.rain.geometry.attributes.position, a=p.array; for(let i=0;i<a.length;i+=6){ a[i+1]-=dt*26; a[i+4]-=dt*26; if(a[i+1]<0){ a[i+1]+=30; a[i+4]+=30; } } p.needsUpdate=true; }
+  if(S.bailT>0){ S.bailT-=dt; const sp=W.splash; if(sp){ sp.visible=S.bailT>0; sp.position.set(P.x-Math.cos(P.yaw)*1.6,ground(P.x,P.z)+0.2+S.bailT,P.z+Math.sin(P.yaw)*1.6); } }
+  let near=null;
+  if(S.step==='untie' && Math.hypot(P.x-W.post.position.x,P.z-W.post.position.z)<2.2) near={label:'Untie the boat', fn:()=>{ W.rope.visible=false; goStorm('sail'); }};
+  if(S.step==='bail' && !S.busy) near={label:'Bail out water', fn:()=>{ S.busy=true; S.water=Math.max(0.15,S.water-0.25); S.bailed++; shake=0.12;
+      if(!W.splash){ W.splash=glowSprite(0x9fd0ff,1.4); W.group.add(W.splash); } S.bailT=0.6;
+      setGoal(`Bail the <b>water</b> out of the boat! (${S.bailed} of 4)`);
+      if(S.bailed>=4){ S.lock=true; say([[SAY_BIBLE,'But the waves kept crashing in, faster than they could bail. And Jesus was still asleep!','Mark 4:37-38']], ()=>{ S.busy=false; goStorm('wake'); }); }
+      else setTimeout(()=>{ S.busy=false; },500); }};
+  if(S.step==='wake' && Math.hypot(P.x-B.position.x,P.z-(B.position.z+0.9))<1.6) near={label:'Wake Jesus up', fn:()=>{ S.lock=true; S.target=null; lookAt(B.position.x,B.position.y+1.3,B.position.z+2.8,0.5);
+      say([['You are Peter','Teacher, don’t You care if we drown?','Mark 4:38', ()=>{ const J=W.jesus; J.rotation.set(0,Math.PI,0); J.position.set(0,0.95,3.4); }],
+        [SAY_BIBLE,'Jesus got up. He ordered the wind to stop, and He said to the waves:','Mark 4:39', ()=>{ const J=W.jesus; J.userData.arms[0].rotation.x=-2.2; J.userData.arms[1].rotation.x=-2.2; J.userData.armsBusy=true; lookAt(B.position.x,B.position.y+2.6,B.position.z+3.4,0.5); }],
+        ['Jesus','Quiet! Be still!','Mark 4:39', ()=>{ S.storm=false; W.rain.visible=false; skyTo(0x24305a,1500); scene.fog.near=60; scene.fog.far=190; hemi.intensity=0.55; sun.intensity=0.3; S.water=0; B.userData.bilge.visible=false; S.flash=0; shake=0.3; W.disciples.forEach(d=>{ d.userData.arms[0].rotation.x=0; d.userData.arms[1].rotation.x=0; }); }],
+        [SAY_BIBLE,'Right away, the wind stopped, and everything was completely calm.','Mark 4:39', ()=>{ const J=W.jesus; J.userData.arms[0].rotation.x=0; J.userData.arms[1].rotation.x=0; }],
+        ['Jesus','Why are you so afraid? Do you still not trust Me?','Mark 4:40']], ()=>goStorm('end')); }};
+  S.near=near;
+  const pr=$('prompt');
+  if(near && !saying()){ pr.textContent=(touch?'':'Space: ')+near.label; pr.classList.remove('hidden'); $('act').textContent=near.label.split(' ')[0]; }
+  else { pr.classList.add('hidden'); $('act').textContent= saying()?'Next':'Use'; }
+  showBeacon(t);
+}
+function boundsStorm(){ const W=world;
+  if(GSTM.mode==='boat'){ P.x=clamp(P.x,W.boat.position.x-1.1,W.boat.position.x+1.1); P.z=clamp(P.z,W.boat.position.z-3.6,W.boat.position.z+(world.jesus.rotation.x<-1?1.2:2.4)); return; }
+  P.x=clamp(P.x,7.8,70); P.z=clamp(P.z,-60,60); if(P.x<20.5 && Math.abs(P.z)>0.95) P.x=20.5; }
+function jumpStorm(q){ // ?step=storm | wake
+  const S=story, W=world; sayQ.length=0; $('say').classList.add('hidden'); sayCb=null;
+  stormToLake(); S.storm=true; S.amp=1.3; W.rain.visible=true; scene.background.set(0x3a4450); scene.fog.color.set(0x3a4450); scene.fog.near=20; scene.fog.far=110; hemi.intensity=0.42; sun.intensity=0.2; W.boat.userData.bilge.visible=true; S.water=0.3; W.rope.visible=false;
+  if(q==='storm') goStorm('bail');
+  if(q==='wake'){ S.bailed=4; goStorm('wake'); }
+}
+
 /* David's story hooks */
 function boundsDavid(){ P.x=clamp(P.x,-34,34); P.z=clamp(P.z,-60,72); }
 const IMPL = {
+  storm: { build:buildStorm, go:goStorm, update:updateStorm, bounds:boundsStorm, locked:S=>S.lock },
   wisemen: { build:buildWise, go:goWise, update:updateWise, bounds:boundsWise, locked:S=>S.lock },
   christmas: { build:buildXmas, go:goXmas, update:updateXmas, bounds:boundsXmas, locked:S=>S.lock },
   esther: { build:buildEsther, go:goEsther, update:updateEsther, bounds:boundsEsther, locked:S=>S.lock || choosing() },
@@ -3869,7 +3980,7 @@ function startStory(id){
   const q=new URLSearchParams(location.search).get('step'); if(q && story) jumpTo(q); // preview links for testing
 }
 function jumpTo(q){ // ?step=stones or ?step=sling
-  const S=story; if(story.id==='adam') return jumpAdam(q); if(story.id==='noah') return jumpNoah(q); if(story.id==='abraham') return jumpAbraham(q); if(story.id==='joseph') return jumpJoseph(q); if(story.id==='babymoses') return jumpMoses(q); if(story.id==='bush') return jumpBush(q); if(story.id==='redsea') return jumpRed(q); if(story.id==='jericho') return jumpJericho(q); if(story.id==='gideon') return jumpGideon(q); if(story.id==='samson') return jumpSamson(q); if(story.id==='elijah') return jumpElijah(q); if(story.id==='jonah') return jumpJonah(q); if(story.id==='daniel') return jumpDaniel(q); if(story.id==='esther') return jumpEsther(q); if(story.id==='christmas') return jumpXmas(q); if(story.id==='wisemen') return jumpWise(q);
+  const S=story; if(story.id==='adam') return jumpAdam(q); if(story.id==='noah') return jumpNoah(q); if(story.id==='abraham') return jumpAbraham(q); if(story.id==='joseph') return jumpJoseph(q); if(story.id==='babymoses') return jumpMoses(q); if(story.id==='bush') return jumpBush(q); if(story.id==='redsea') return jumpRed(q); if(story.id==='jericho') return jumpJericho(q); if(story.id==='gideon') return jumpGideon(q); if(story.id==='samson') return jumpSamson(q); if(story.id==='elijah') return jumpElijah(q); if(story.id==='jonah') return jumpJonah(q); if(story.id==='daniel') return jumpDaniel(q); if(story.id==='esther') return jumpEsther(q); if(story.id==='christmas') return jumpXmas(q); if(story.id==='wisemen') return jumpWise(q); if(story.id==='storm') return jumpStorm(q);
   if(q==='stones'||q==='sling'){ world.lamb.userData.following=true; world.lamb.userData.goal={x:world.flock.x+1,z:world.flock.z}; world.lamb.position.set(world.flock.x+1,0,world.flock.z); world.israel.forEach(p=>p.position.z+=12); }
   if(q==='stones'){ P.x=0; P.z=STREAM_Z+4; P.yaw=0; sayQ.length=0; $('say').classList.add('hidden'); go('stones'); }
   if(q==='sling'){ world.stones.forEach(s=>s.visible=false); S.stonesHeld=5; S.stonesLeft=5; P.x=0; P.z=-20; P.yaw=0; world.goliath.position.set(0,ground(0,-36),-36); sayQ.length=0; $('say').classList.add('hidden'); $('stones').classList.remove('hidden'); updateStonesHud(); go('sling'); }
@@ -3880,7 +3991,7 @@ function finishStory(){
   const nextReady=READY[READY.indexOf(s)+1], nextAny=STORIES[STORIES.indexOf(s)+1];
   $('fade').style.opacity=0.6;
   setTimeout(()=>{
-    $('endWho').textContent='You saw what '+({david:'David',adam:'Adam',noah:'Noah',abraham:'Abraham',joseph:'Joseph',babymoses:'Miriam',bush:'Moses',redsea:'Moses',jericho:'Joshua',gideon:'Gideon',samson:'Samson',elijah:'Elijah',jonah:'Jonah',daniel:'Daniel',esther:'Esther',christmas:'the shepherds',wisemen:'the wise men'}[s.id]||'they')+' did.';
+    $('endWho').textContent='You saw what '+({david:'David',adam:'Adam',noah:'Noah',abraham:'Abraham',joseph:'Joseph',babymoses:'Miriam',bush:'Moses',redsea:'Moses',jericho:'Joshua',gideon:'Gideon',samson:'Samson',elijah:'Elijah',jonah:'Jonah',daniel:'Daniel',esther:'Esther',christmas:'the shepherds',wisemen:'the wise men',storm:'Peter'}[s.id]||'they')+' did.';
     $('endVerse').textContent=s.endVerse; $('endRef').textContent=s.endRef;
     $('endUnlock').textContent= nextReady ? 'You unlocked '+nextReady.title+'!' : (nextAny ? 'Next up: '+nextAny.title+'. It is coming soon!' : 'You finished every story!');
     $('endNext').innerHTML = nextAny ? '<b>What happens next</b>'+nextAny.before : '';
