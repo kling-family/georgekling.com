@@ -237,7 +237,7 @@ const STORIES = [
   { id:'wisemen', ready:true, blurb:'Follow the new star across the desert, ask King Herod where the baby King is, find Jesus, give your gifts, and go home another way.', endVerse:'"When they saw the star, they were filled with joy!"', endRef:'Matthew 2:10', before:"The shepherds found baby Jesus lying in a manger, just like the angel said. Far away in the east, wise men who studied the stars saw a brand new star. They knew it meant a new king had been born, so they set out on a long trip to find Him.", title:'The Wise Men and the Star', who:'You are one of the wise men', ref:'Matthew 2' },
   { id:'storm', ready:true, blurb:'Sail across the lake with Jesus, bail water as a wild storm crashes over the boat, and wake Jesus up.', endVerse:'"Who is this? Even the wind and the waves obey Him!"', endRef:'Mark 4:41', before:"King Herod tried to hurt baby Jesus, but His family escaped to Egypt and later moved back to Nazareth. Jesus grew up and, when He was about 30, He began teaching about God and healing sick people. He picked twelve friends, called disciples, to follow Him. Some of them, like Peter, were fishermen.", title:'Jesus Calms the Storm', who:'You are Peter', ref:'Mark 4' },
   { id:'loaves', ready:true, blurb:'Bring your little lunch to a giant crowd, give it to Jesus, help hand out food to thousands of people, and gather up the leftovers.', endVerse:'"I am the bread of life."', endRef:'John 6:35', before:"Jesus kept teaching and doing miracles, and more and more people came to see Him. One day a huge crowd followed Him out to a hillside far from any town. They stayed all day listening, and it got late. Everyone was hungry, and there was no food to buy.", title:'Five Loaves and Two Fish', who:'You are the boy with the lunch', ref:'John 6' },
-  { id:'water', before:"Jesus fed more than 5,000 people with one boy's lunch, and there were twelve baskets of leftovers! Right after that, Jesus sent His disciples ahead in a boat across the lake while He went up the mountain alone to pray. In the middle of the night, a strong wind blew against their boat.", title:'Peter Walks on Water', who:'You are Peter', ref:'Matthew 14' },
+  { id:'water', ready:true, blurb:'Row against the wind in the dark, see Jesus walking on the lake, step out of the boat, and walk on the water to Him.', endVerse:'"Truly You are the Son of God!"', endRef:'Matthew 14:33', before:"Jesus fed more than 5,000 people with one boy's lunch, and there were twelve baskets of leftovers! Right after that, Jesus sent His disciples ahead in a boat across the lake while He went up the mountain alone to pray. In the middle of the night, a strong wind blew against their boat.", title:'Peter Walks on Water', who:'You are Peter', ref:'Matthew 14' },
   { id:'zacchaeus', before:"Jesus and His disciples traveled all around, and Jesus taught that God loves everyone, even people others hate. Now Jesus was on His way to Jerusalem, and He walked through the city of Jericho. A man there named Zacchaeus was a tax collector. He cheated people and got rich, so nobody liked him.", title:'Zacchaeus Climbs a Tree', who:'You are Zacchaeus', ref:'Luke 19' },
   { id:'easter', before:"Jesus rode into Jerusalem on a donkey, and crowds waved palm branches. But the leaders were jealous and wanted to get rid of Him. Jesus ate a last supper with His disciples. Then He was arrested and died on a cross on a Friday, taking the punishment for everyone's sins. His body was put in a tomb with a huge stone in front.", title:'The First Easter', who:'You are Mary Magdalene', ref:'John 20' },
   { id:'paul', before:"Jesus rose from the dead and visited His friends for 40 days. Then He went up to heaven and sent the Holy Spirit to help them. The disciples told everyone about Jesus, and many people believed. But a man named Saul hated the followers of Jesus. He put them in jail, and he set off to the city of Damascus to arrest even more.", title:'Paul on the Road to Damascus', who:'You are Paul', ref:'Acts 9' },
@@ -4035,9 +4035,117 @@ function jumpLoaves(q){ // ?step=give | feed | gather
   if(q==='gather'){ S.sitting=true; S.fed=5; lunchView.visible=false; W.crumbs.forEach(c=>c.visible=true); P.x=LJ.x; P.z=LJ.z+5; goLoaves('gather'); }
 }
 
+/* ================= Story 20: Peter Walks on Water ================= */
+const WTR={mode:'boat'}, WJ_END={x:9,z:-7};
+function groundWater(x,z){ const S=story, W=world; if(WTR.mode==='boat') return W&&W.boat? W.boat.position.y+0.95 : 0.95; return jonahWave(x,z,S.t||0,(S.amp||0.3)*0.7)-(S.sink||0); }
+function buildWater(){
+  WTR.mode='boat'; ground=groundWater; resetLook(); scene.background.set(0x1c2540); scene.fog.color.set(0x1c2540); scene.fog.near=30; scene.fog.far=170; hemi.intensity=0.55; sun.intensity=0.3;
+  const g=new THREE.Group(); scene.add(g); world={group:g, disciples:[]}; const W=world, r=rnd(2014);
+  { const N=60, geo=new THREE.PlaneGeometry(220,220,N,N); geo.rotateX(-Math.PI/2); const sea=new THREE.Mesh(geo, new THREE.MeshPhongMaterial({color:0x2a5a80,specular:0xbfd8e8,shininess:70,side:THREE.DoubleSide,flatShading:true})); sea.userData.noCast=true; g.add(sea); W.sea=sea; W.seaBase=Float32Array.from(geo.attributes.position.array); }
+  /* dark hills all around the lake */
+  for(let i=0;i<26;i++){ const a=i/26*Math.PI*2+r()*0.1, R=140+r()*30, h=18+r()*26; const m=new THREE.Mesh(new THREE.ConeGeometry(30+r()*20,h,7), mat(0x1e2c26)); m.position.set(Math.cos(a)*R,h/2-2,Math.sin(a)*R); m.userData.noCast=true; g.add(m); }
+  /* moon and stars */
+  W.moon=new THREE.Group(); { const m=new THREE.Mesh(new THREE.SphereGeometry(5,20,14), new THREE.MeshBasicMaterial({color:0xf4f0dc,fog:false})); W.moon.add(m); const gl=glowSprite(0xe8f0ff,26); gl.material.fog=false; W.moon.add(gl); } W.moon.position.set(-90,70,-130); g.add(W.moon);
+  { const n=1600, v=new Float32Array(n*3), rr=rnd(91); for(let i=0;i<n;i++){ const a=rr()*Math.PI*2, el=Math.asin(0.1+rr()*0.9), R=280; v.set([Math.cos(a)*Math.cos(el)*R, Math.sin(el)*R, Math.sin(a)*Math.cos(el)*R],i*3); }
+    const geo=new THREE.BufferGeometry(); geo.setAttribute('position',new THREE.BufferAttribute(v,3));
+    W.stars=new THREE.Points(geo,new THREE.PointsMaterial({color:0xffffff,size:touch?2.2:1.8,sizeAttenuation:false,fog:false,transparent:true,opacity:0.9,depthWrite:false})); W.stars.frustumCulled=false; W.stars.renderOrder=-9; g.add(W.stars); }
+  /* the boat and the other disciples */
+  W.boat=fishingBoat(); W.boat.position.set(0,0,0); g.add(W.boat);
+  for(let i=0;i<6;i++){ const d=person({tunic:[0x7a4a3a,0x3a5a7a,0x5a6a4a,0x8a7a5a,0x4a4a6a,0x6a3a3a][i],hair:[0x1a120a,0x3a2614][i%2],beard:i%3?0x2a1a10:null,h:1.72+(i%2)*0.06}); d.position.set([-0.8,0.8,-0.8,0.8,-0.8,0.8][i],0.95,[-3,-3,0.6,0.6,2.2,2.2][i]); d.rotation.y=Math.PI; W.boat.add(d); W.disciples.push(d); }
+  /* Jesus, walking on the water */
+  W.jesus=jesusPerson(); W.jesus.position.set(30,0,-24); faceTo(W.jesus,0,0); W.jesus.visible=false; g.add(W.jesus);
+  W.halo=glowSprite(0xeef4ff,4.5); W.halo.material.opacity=0.6; W.halo.position.y=1.1; W.jesus.add(W.halo);
+  { const n=touch?1500:3000, geo=new THREE.BufferGeometry(), v=new Float32Array(n*6); for(let i=0;i<n;i++){ const x=(Math.random()-0.5)*50, z=(Math.random()-0.5)*50, y=Math.random()*30; v.set([x,y,z,x+0.5,y-0.8,z],i*6); }
+    geo.setAttribute('position',new THREE.BufferAttribute(v,3)); W.rain=new THREE.LineSegments(geo,new THREE.LineBasicMaterial({color:0xc8d8e8,transparent:true,opacity:.5})); W.rain.visible=false; W.rain.frustumCulled=false; g.add(W.rain); }
+  W.spray=[]; for(let i=0;i<24;i++){ const s=glowSprite(0xcfe6ff,0.6); s.visible=false; g.add(s); W.spray.push({s,v:new THREE.Vector3(),life:0}); }
+  W.beacon=makeBeacon(); W.beacon.visible=false; g.add(W.beacon);
+  P.x=0.4; P.z=-1.6; P.yaw=0; P.pitch=0; P.eye=1.8; P.speed=3.6; P.roll=0;
+  story={id:'water', step:'', t:0, lock:true, target:null, near:null, amp:0.6, ampTo:0.6, rowed:0, sink:0, sinkTo:0, flash:0, fadeSky:null, jWalk:false, row:0};
+  hand.visible=false; basket.visible=false; sling.visible=false; fruitHand.visible=false;
+  goWater('intro');
+}
+function waterSplash(x,y,z,n){ const W=world; let k=0; for(const p of W.spray){ if(p.life>0) continue; p.life=0.8; p.s.visible=true; p.s.position.set(x,y,z); p.v.set((Math.random()-0.5)*3,2+Math.random()*2.5,(Math.random()-0.5)*3); if(++k>=n) break; } }
+function goWater(step){
+  const S=story, W=world; S.step=step; $('prompt').classList.add('hidden');
+  if(step==='intro'){ S.lock=true; setGoal('Listen');
+    say([[SAY_BIBLE,'Jesus made His disciples get into the boat and go on ahead of Him to the other side of the lake. Then He went up on a mountain by Himself to pray.','Matthew 14:22-23'],
+      [SAY_BIBLE,'Night came. The boat was already far out on the lake, and the waves were beating against it, because the wind was blowing against them.','Matthew 14:24'],
+      ['A disciple','Come on, everybody, row! Pull hard!','']], ()=>goWater('row')); }
+  if(step==='row'){ S.lock=false; setGoal(`<b>Row</b> against the wind! (${S.rowed} of 3)`); }
+  if(step==='ghost'){ S.lock=true; setGoal('Listen'); W.jesus.visible=true; S.jWalk=true; S.jTo={x:WJ_END.x+4,z:WJ_END.z-3};
+    say([[SAY_BIBLE,'Very early in the morning, while it was still dark, Jesus went out to them, walking on the lake!','Matthew 14:25', ()=>lookAt(W.jesus.position.x,1.6,W.jesus.position.z,1.2)],
+      ['The disciples','It’s a ghost!','Matthew 14:26', ()=>{ W.disciples.forEach(d=>{ d.userData.armsBusy=true; d.userData.arms[0].rotation.x=-2.6; d.userData.arms[1].rotation.x=-2.6; }); shake=0.1; }],
+      [SAY_BIBLE,'They were so scared that they cried out in fear. But Jesus called to them right away:','Matthew 14:26-27', ()=>lookAt(W.jesus.position.x,1.6,W.jesus.position.z,0.6)],
+      ['Jesus','Take courage! It is I. Don’t be afraid.','Matthew 14:27', ()=>{ W.halo.material.opacity=0.35; W.disciples.forEach(d=>{ d.userData.arms[0].rotation.x=0; d.userData.arms[1].rotation.x=0; d.userData.armsBusy=false; }); }],
+      ['You are Peter','Lord, if it’s really You, tell me to come to You on the water.','Matthew 14:28'],
+      ['Jesus','Come.','Matthew 14:29']], ()=>{ P.lockLook=null; goWater('out'); }); }
+  if(step==='out'){ S.lock=false; S.target={position:new THREE.Vector3(1.2,0,-1.6)}; setGoal('Climb over the side of the <b>boat</b>'); }
+  if(step==='walk'){ S.lock=false; S.target=W.jesus; S.ampTo=0.35; setGoal('Keep your eyes on <b>Jesus</b> and walk to Him!'); }
+  if(step==='sink'){ S.lock=true; S.target=null; setGoal('You’re sinking! <b>Call out</b> to Jesus!'); }
+  if(step==='boat'){ S.lock=true; setGoal('Listen'); }
+  if(step==='end'){ S.lock=true; setGoal('Listen');
+    say([[SAY_BIBLE,'Then the disciples in the boat worshiped Jesus. They said:','Matthew 14:33', ()=>{ S.bow=true; }],
+      ['The disciples','Truly You are the Son of God!','Matthew 14:33']], ()=>finishStory()); }
+}
+function waterWind(){ const S=story, W=world; S.lock=true; S.target=null; S.ampTo=1.6; W.rain.visible=true; skyTo(0x10141e,1500); hemi.intensity=0.42; shake=0.2; S.flash=1;
+  say([[SAY_BIBLE,'But then Peter saw how strong the wind was. He got scared, and he began to sink!','Matthew 14:30', ()=>{ S.sinkTo=1.25; lookAt(P.x-Math.sin(P.yaw)*4,0,P.z-Math.cos(P.yaw)*4,0.8); }]], ()=>{ goWater('sink'); }); }
+function waterBack(){ const S=story, W=world;
+  stCut(()=>{ WTR.mode='boat'; S.sink=0; S.sinkTo=0; S.ampTo=0.15; S.amp=0.4; W.rain.visible=false; P.x=0.4; P.z=0.8; P.yaw=Math.PI; P.eye=1.8; P.pitch=0; setGoal('Listen'); scene.background.set(0x3a4a78); scene.fog.color.set(0x3a4a78); skyTo(0xd89a88,9000); hemi.intensity=0.6; sun.intensity=0.4; S.flash=0;
+      const J=W.jesus; W.boat.add(J); J.position.set(0,0.95,3.4); J.rotation.set(0,Math.PI,0); J.userData.arms[0].rotation.x=0; J.userData.arms[1].rotation.x=0; J.userData.armsBusy=false; W.halo.visible=false; S.dawn=true; S.jWalk=false; },
+    [[SAY_BIBLE,'When Jesus and Peter climbed into the boat, the wind stopped.','Matthew 14:32']], ()=>{ goWater('end'); }); }
+function updateWater(dt, now){
+  const S=story, W=world, t=(S.t+=dt);
+  if(S.fadeSky){ const f=S.fadeSky; f.t+=dt; const k=smooth(f.t/f.dur); scene.background.copy(f.from).lerp(f.to,k); scene.fog.color.copy(scene.background); if(k>=1) S.fadeSky=null; }
+  S.amp+=(S.ampTo-S.amp)*Math.min(1,dt*0.8);
+  { const sea=W.sea, cell=220/60; sea.position.x=Math.round(P.x/cell)*cell; sea.position.z=Math.round(P.z/cell)*cell; const a=sea.geometry.attributes.position.array, b=W.seaBase;
+    for(let i=0;i<a.length;i+=3){ const x=b[i]+sea.position.x, z=b[i+2]+sea.position.z; a[i+1]=jonahWave(x,z,t,S.amp); } sea.geometry.attributes.position.needsUpdate=true; sea.geometry.computeVertexNormals(); }
+  const B=W.boat; B.position.y=jonahWave(B.position.x,B.position.z,t,S.amp)*0.6; B.rotation.z=Math.sin(t*1.1)*0.08*S.amp; B.rotation.x=Math.sin(t*0.8)*0.05*S.amp+(S.row>0?S.row*0.03:0);
+  P.roll=WTR.mode==='boat'? Math.sin(t*1.1)*0.05*S.amp : Math.sin(t*1.7)*0.04*S.amp;
+  W.stars.position.copy(camera.position); if(S.dawn) W.stars.material.opacity=Math.max(0.12,W.stars.material.opacity-dt*0.12);
+  if(S.row>0){ S.row=Math.max(0,S.row-dt*1.4); const k=Math.sin((1-S.row)*Math.PI); W.disciples.forEach(d=>{ d.userData.armsBusy=true; d.userData.arms[0].rotation.x=-1.2+k*1.1; d.userData.arms[1].rotation.x=-1.2+k*1.1; }); if(S.row===0) W.disciples.forEach(d=>{ d.userData.arms[0].rotation.x=0; d.userData.arms[1].rotation.x=0; d.userData.armsBusy=false; }); }
+  if(S.bow){ S.bowK=Math.min(1,(S.bowK||0)+dt*1.2); W.disciples.forEach(d=>{ d.position.y=0.95-S.bowK*0.45; d.rotation.x=S.bowK*0.35; }); }
+  /* Jesus on the water */
+  const J=W.jesus;
+  if(J.parent===W.group && J.visible){ if(S.jWalk && S.jTo){ const dx=S.jTo.x-J.position.x, dz=S.jTo.z-J.position.z, d=Math.hypot(dx,dz); if(d>0.2){ const sp=Math.min(d,dt*(S.jFast?2.6:1.8)); J.position.x+=dx/d*sp; J.position.z+=dz/d*sp; animWalk(J,dt,0.8); } else animWalk(J,dt,0); }
+    J.position.y=jonahWave(J.position.x,J.position.z,t,S.amp*0.7); faceTo(J,P.x,P.z); }
+  if(S.step==='walk' && S.jTo && Math.hypot(S.jTo.x-WJ_END.x,S.jTo.z-WJ_END.z)>0.1){ S.jTo={x:WJ_END.x,z:WJ_END.z}; }
+  S.sink+=(S.sinkTo-S.sink)*Math.min(1,dt*(S.sinkTo>S.sink?0.7:2.5));
+  if(S.flash>0){ S.flash=Math.max(0,S.flash-dt*3); hemi.intensity=0.42+S.flash*1.2; } else if(W.rain.visible && Math.random()<dt*0.2) S.flash=1;
+  if(W.rain.visible){ W.rain.position.set(P.x,ground(P.x,P.z)-6,P.z); const p=W.rain.geometry.attributes.position, a=p.array; for(let i=0;i<a.length;i+=6){ a[i+1]-=dt*26; a[i+4]-=dt*26; if(a[i+1]<0){ a[i+1]+=30; a[i+4]+=30; } } p.needsUpdate=true; }
+  for(const p of W.spray){ if(p.life<=0) continue; p.life-=dt; p.v.y-=9*dt; p.s.position.addScaledVector(p.v,dt); if(p.life<=0) p.s.visible=false; }
+  if(WTR.mode==='water' && S.step==='walk' && Math.random()<dt*3) waterSplash(P.x,ground(P.x,P.z)+S.sink+0.1,P.z,2);
+  let near=null;
+  if(S.step==='row' && !S.busy) near={label:'Row the boat', fn:()=>{ S.busy=true; S.rowed++; S.row=1; shake=0.08; waterSplash(B.position.x+2.2,B.position.y+0.4,B.position.z+0.6,5); waterSplash(B.position.x-2.2,B.position.y+0.4,B.position.z+0.6,5);
+      setGoal(`<b>Row</b> against the wind! (${S.rowed} of 3)`);
+      if(S.rowed>=3){ S.lock=true; S.ampTo=0.9; say([['A disciple','We’ve been rowing all night, and we hardly moved!','']], ()=>{ S.busy=false; goWater('ghost'); }); }
+      else setTimeout(()=>{ S.busy=false; },800); }};
+  if(S.step==='out' && P.x>0.7) near={label:'Step out onto the water', fn:()=>{ S.lock=true; WTR.mode='water'; P.x=2.4; P.z=-1.6; P.yaw=Math.atan2(-(J.position.x-P.x),-(J.position.z-P.z)); shake=0.1; waterSplash(P.x,0.2,P.z,6);
+      say([[SAY_BIBLE,'So Peter got out of the boat. He walked on the water toward Jesus!','Matthew 14:29']], ()=>goWater('walk')); }};
+  if(S.step==='walk' && Math.hypot(P.x-J.position.x,P.z-J.position.z)<3.2) waterWind();
+  if(S.step==='sink' && S.sink>0.6) near={label:'Cry out: Lord, save me!', fn:()=>{ S.lock=true; S.step='saved';
+      say([['You are Peter','Lord, save me!','Matthew 14:30', ()=>{ S.jFast=true; S.jTo={x:P.x-Math.sin(P.yaw)*1.1,z:P.z-Math.cos(P.yaw)*1.1}; }],
+        [SAY_BIBLE,'Right away, Jesus reached out His hand and caught him.','Matthew 14:31', ()=>{ S.sinkTo=0; J.userData.armsBusy=true; J.userData.arms[0].rotation.x=-1.5; J.userData.arms[1].rotation.x=-1.5; lookAt(J.position.x,1.6+J.position.y,J.position.z,0.6); shake=0.1; }],
+        ['Jesus','You have so little faith! Why did you doubt?','Matthew 14:31']], ()=>waterBack()); }};
+  S.near=near;
+  const pr=$('prompt');
+  if(near && !saying()){ pr.textContent=(touch?'':'Space: ')+near.label; pr.classList.remove('hidden'); $('act').textContent=near.label.split(' ')[0]; }
+  else { pr.classList.add('hidden'); $('act').textContent= saying()?'Next':'Use'; }
+  showBeacon(t);
+}
+function boundsWater(){ const W=world;
+  if(WTR.mode==='boat'){ P.x=clamp(P.x,W.boat.position.x-1.1,W.boat.position.x+1.1); P.z=clamp(P.z,W.boat.position.z-2.6,W.boat.position.z+3.2); return; }
+  const d=Math.hypot(P.x,P.z); if(d>28){ P.x*=28/d; P.z*=28/d; } if(Math.abs(P.x)<2 && Math.abs(P.z)<4.6) P.x=P.x<0?-2:2; }
+function jumpWater(q){ // ?step=ghost | walk | sink
+  const S=story, W=world; sayQ.length=0; $('say').classList.add('hidden'); sayCb=null;
+  if(q==='ghost'){ S.rowed=3; S.ampTo=0.9; goWater('ghost'); }
+  if(q==='walk'||q==='sink'){ S.rowed=3; W.jesus.visible=true; S.jWalk=true; S.jTo={x:WJ_END.x,z:WJ_END.z}; W.jesus.position.set(WJ_END.x+1,0,WJ_END.z-1); W.halo.material.opacity=0.35; WTR.mode='water'; P.x=2.4; P.z=-1.6; P.yaw=Math.atan2(-(WJ_END.x-P.x),-(WJ_END.z-P.z)); goWater('walk');
+    if(q==='sink'){ P.x=WJ_END.x-2.6; P.z=WJ_END.z+1.8; P.yaw=Math.atan2(-(WJ_END.x-P.x),-(WJ_END.z-P.z)); } }
+}
+
 /* David's story hooks */
 function boundsDavid(){ P.x=clamp(P.x,-34,34); P.z=clamp(P.z,-60,72); }
 const IMPL = {
+  water: { build:buildWater, go:goWater, update:updateWater, bounds:boundsWater, locked:S=>S.lock },
   loaves: { build:buildLoaves, go:goLoaves, update:updateLoaves, bounds:boundsLoaves, locked:S=>S.lock },
   storm: { build:buildStorm, go:goStorm, update:updateStorm, bounds:boundsStorm, locked:S=>S.lock },
   wisemen: { build:buildWise, go:goWise, update:updateWise, bounds:boundsWise, locked:S=>S.lock },
@@ -4074,7 +4182,7 @@ function startStory(id){
   const q=new URLSearchParams(location.search).get('step'); if(q && story) jumpTo(q); // preview links for testing
 }
 function jumpTo(q){ // ?step=stones or ?step=sling
-  const S=story; if(story.id==='adam') return jumpAdam(q); if(story.id==='noah') return jumpNoah(q); if(story.id==='abraham') return jumpAbraham(q); if(story.id==='joseph') return jumpJoseph(q); if(story.id==='babymoses') return jumpMoses(q); if(story.id==='bush') return jumpBush(q); if(story.id==='redsea') return jumpRed(q); if(story.id==='jericho') return jumpJericho(q); if(story.id==='gideon') return jumpGideon(q); if(story.id==='samson') return jumpSamson(q); if(story.id==='elijah') return jumpElijah(q); if(story.id==='jonah') return jumpJonah(q); if(story.id==='daniel') return jumpDaniel(q); if(story.id==='esther') return jumpEsther(q); if(story.id==='christmas') return jumpXmas(q); if(story.id==='wisemen') return jumpWise(q); if(story.id==='storm') return jumpStorm(q); if(story.id==='loaves') return jumpLoaves(q);
+  const S=story; if(story.id==='adam') return jumpAdam(q); if(story.id==='noah') return jumpNoah(q); if(story.id==='abraham') return jumpAbraham(q); if(story.id==='joseph') return jumpJoseph(q); if(story.id==='babymoses') return jumpMoses(q); if(story.id==='bush') return jumpBush(q); if(story.id==='redsea') return jumpRed(q); if(story.id==='jericho') return jumpJericho(q); if(story.id==='gideon') return jumpGideon(q); if(story.id==='samson') return jumpSamson(q); if(story.id==='elijah') return jumpElijah(q); if(story.id==='jonah') return jumpJonah(q); if(story.id==='daniel') return jumpDaniel(q); if(story.id==='esther') return jumpEsther(q); if(story.id==='christmas') return jumpXmas(q); if(story.id==='wisemen') return jumpWise(q); if(story.id==='storm') return jumpStorm(q); if(story.id==='loaves') return jumpLoaves(q); if(story.id==='water') return jumpWater(q);
   if(q==='stones'||q==='sling'){ world.lamb.userData.following=true; world.lamb.userData.goal={x:world.flock.x+1,z:world.flock.z}; world.lamb.position.set(world.flock.x+1,0,world.flock.z); world.israel.forEach(p=>p.position.z+=12); }
   if(q==='stones'){ P.x=0; P.z=STREAM_Z+4; P.yaw=0; sayQ.length=0; $('say').classList.add('hidden'); go('stones'); }
   if(q==='sling'){ world.stones.forEach(s=>s.visible=false); S.stonesHeld=5; S.stonesLeft=5; P.x=0; P.z=-20; P.yaw=0; world.goliath.position.set(0,ground(0,-36),-36); sayQ.length=0; $('say').classList.add('hidden'); $('stones').classList.remove('hidden'); updateStonesHud(); go('sling'); }
@@ -4085,7 +4193,7 @@ function finishStory(){
   const nextReady=READY[READY.indexOf(s)+1], nextAny=STORIES[STORIES.indexOf(s)+1];
   $('fade').style.opacity=0.6;
   setTimeout(()=>{
-    $('endWho').textContent='You saw what '+({david:'David',adam:'Adam',noah:'Noah',abraham:'Abraham',joseph:'Joseph',babymoses:'Miriam',bush:'Moses',redsea:'Moses',jericho:'Joshua',gideon:'Gideon',samson:'Samson',elijah:'Elijah',jonah:'Jonah',daniel:'Daniel',esther:'Esther',christmas:'the shepherds',wisemen:'the wise men',storm:'Peter',loaves:'the boy'}[s.id]||'they')+' did.';
+    $('endWho').textContent='You saw what '+({david:'David',adam:'Adam',noah:'Noah',abraham:'Abraham',joseph:'Joseph',babymoses:'Miriam',bush:'Moses',redsea:'Moses',jericho:'Joshua',gideon:'Gideon',samson:'Samson',elijah:'Elijah',jonah:'Jonah',daniel:'Daniel',esther:'Esther',christmas:'the shepherds',wisemen:'the wise men',storm:'Peter',loaves:'the boy',water:'Peter'}[s.id]||'they')+' did.';
     $('endVerse').textContent=s.endVerse; $('endRef').textContent=s.endRef;
     $('endUnlock').textContent= nextReady ? 'You unlocked '+nextReady.title+'!' : (nextAny ? 'Next up: '+nextAny.title+'. It is coming soon!' : 'You finished every story!');
     $('endNext').innerHTML = nextAny ? '<b>What happens next</b>'+nextAny.before : '';
