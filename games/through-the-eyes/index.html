@@ -221,7 +221,7 @@ const STORIES = [
   { id:'joseph', ready:true, blurb:'Get a colorful coat, get thrown in a well by your brothers, explain Pharaoh’s dreams, store up grain, and forgive your brothers.', endVerse:'"You planned to hurt me, but God planned it for good, to save many lives."', endRef:'Genesis 50:20', before:"God kept His promise. Abraham and his wife Sarah had a son named Isaac when they were very old. Isaac had a son named Jacob, and Jacob had twelve sons. Jacob loved one son, Joseph, more than the others, and his brothers got very jealous.", title:'Joseph and His Colorful Coat', who:'You are Joseph', ref:'Genesis 37 to 45' },
   { id:'babymoses', ready:true, blurb:'Gather reeds for a basket, hide by the Nile to watch your baby brother, and be brave enough to talk to the princess.', endVerse:'"God heard His people crying, and He remembered His promise."', endRef:'Exodus 2:24', before:"Joseph's whole family moved to Egypt to live with him, and they were safe there. Their family grew and grew for 400 years, and they were called the Israelites. Then a new king of Egypt, called Pharaoh, was afraid of them. He made them slaves, and he ordered that every Israelite baby boy be thrown in the river.", title:'Baby Moses in the Basket', who:'You are Miriam, his big sister', ref:'Exodus 2' },
   { id:'bush', ready:true, blurb:'Lead your sheep to the mountain of God, see a bush that burns but never burns up, and hear God call your name.', endVerse:'"I will be with you."', endRef:'Exodus 3:12', before:"The princess of Egypt found baby Moses and raised him in the palace. When Moses grew up, he saw an Egyptian beating an Israelite slave, and Moses killed the Egyptian. Then Moses ran away to the desert. He lived there for 40 years and became a shepherd.", title:'Moses and the Burning Bush', who:'You are Moses', ref:'Exodus 3' },
-  { id:'redsea', before:"God sent Moses back to Egypt to tell Pharaoh, \u201cLet my people go!\u201d Pharaoh said no again and again, so God sent ten plagues on Egypt, like frogs, bugs, hail, and darkness. After the last plague, Pharaoh finally let the Israelites go. But then he changed his mind and chased after them with his whole army.", title:'Moses and the Red Sea', who:'You are Moses', ref:'Exodus 14' },
+  { id:'redsea', ready:true, blurb:'Lead God’s people to the sea, raise your staff as the water splits in two, and walk through on dry ground between walls of water.', endVerse:'"The Lord will fight for you. You only need to be still."', endRef:'Exodus 14:14', before:"God sent Moses back to Egypt to tell Pharaoh, \u201cLet my people go!\u201d Pharaoh said no again and again, so God sent ten plagues on Egypt, like frogs, bugs, hail, and darkness. After the last plague, Pharaoh finally let the Israelites go. But then he changed his mind and chased after them with his whole army.", title:'Moses and the Red Sea', who:'You are Moses', ref:'Exodus 14' },
   { id:'jericho', before:"God led the Israelites through the desert for 40 years. He gave them food called manna and gave Moses the Ten Commandments. When Moses died, God chose Joshua to lead the people into the land He had promised to Abraham. But the first city in their way, Jericho, had huge walls.", title:'Joshua and the Walls of Jericho', who:'You are Joshua', ref:'Joshua 6' },
   { id:'gideon', before:"The Israelites moved into the promised land. But over and over, they forgot God and worshiped fake gods. Each time, enemies attacked them. When they cried out to God for help, He sent a leader called a judge to save them. This time the enemy was the Midianites, and they were stealing all of Israel's food.", title:'Gideon\u2019s 300', who:'You are Gideon', ref:'Judges 6 and 7' },
   { id:'samson', before:"Gideon's 300 men beat the huge Midianite army, and Israel had peace for 40 years. But then the people forgot God again, and the Philistines ruled over them. An angel told a woman her son would be very special. He would never cut his hair, and God would make him super strong. That son was Samson.", title:'Samson', who:'You are Samson', ref:'Judges 13 to 16' },
@@ -2179,9 +2179,206 @@ function jumpBush(q){ // ?step=approach | throw
   if(q==='throw'){ P.x=0; P.z=BUSH_AT.z+6.5; P.yaw=0; S.barefoot=true; goBush('throw'); }
 }
 
+/* ================= Story 7: Moses and the Red Sea ================= */
+const RS={near:-2.2, far:-88, G:5.5};
+function groundRed(x,z){ let h=0.18*Math.sin(x*0.13)*Math.cos(z*0.11)+0.1*Math.sin(z*0.31+x*0.07);
+  const sea=smooth(clamp((-1-z)/6,0,1))*smooth(clamp((z+89)/6,0,1)); h=h*(1-sea)+(-3.0+0.12*Math.sin(x*0.3+z*0.2))*sea;
+  if(z>-3){ const hx=Math.abs(x)-44+4*Math.sin(z*0.09+x*0.05); if(hx>0) h+=Math.min(13,Math.pow(hx,1.15)*0.3)*(0.75+0.35*Math.sin(z*0.21+x*0.13))*smooth(clamp((z+3)/8,0,1)); } /* mountains on both sides: no way out */
+  if(z<-90){ const r=Math.hypot(x*0.8,z+100); if(r>40) h+=Math.min(9,Math.pow(r-40,1.1)*0.2)*(0.7+0.3*Math.sin(x*0.15+z*0.1))*smooth(clamp((-90-z)/6,0,1)); }
+  if(z>48) h+=Math.pow(z-48,1.15)*0.05*Math.max(0,1-Math.abs(x)/60);
+  return h; }
+function redWaterH(x,z,p){ if(p<0.005) return 0; const G=RS.G*p, ax=Math.abs(x);
+  const endK=smooth(clamp((-2.5-z)/9,0,1))*smooth(clamp((z+87.5)/9,0,1)); const wall=3.4*p*endK;
+  if(ax<G) return -3.7; const d=ax-G; if(d<0.3) return lerp(-3.7,wall,d/0.3);
+  return wall*Math.exp(-(d-0.3)/7)+0.06*Math.sin(x*0.8+z*0.5); }
+function redWaterUpdate(p){ const W=world, g=W.waterGeo, pos=g.attributes.position;
+  for(let i=0;i<pos.count;i++){ pos.setY(i, redWaterH(pos.getX(i),pos.getZ(i),p)); } pos.needsUpdate=true; g.computeVertexNormals(); }
+function horseMesh(c){ const o=new THREE.Group(); blob(o,c,0.45,0.72,0.78,1.55,0,1.35,0);
+  o.add(tubeOf([[0,1.5,0.5],[0,1.85,0.78],[0,2.05,0.95]],0.17,0.12,c)); blob(o,c,0.16,0.8,0.8,1.75,0,2.02,1.12); eyes(o,0.1,2.1,1.18,0.025);
+  blob(o,0x2a1a10,0.1,0.5,1.2,2.4,0,1.95,0.75); legs4(o,c,1.0,0.13,[[-.2,.5],[.2,.5],[-.2,-.5],[.2,-.5]],0x2a1a10);
+  o.add(tubeOf([[0,1.45,-0.65],[0,1.1,-0.85],[0,0.8,-0.9]],0.06,0.03,0x2a1a10)); return o; }
+function chariot(){ const o=new THREE.Group(); const hs=[]; for(const sx of [-0.5,0.5]){ const h=horseMesh(sx<0?0x6a4a2a:0x3a2a1e); h.position.set(sx,0,1.7); h.scale.setScalar(0.9); o.add(h); hs.push(h); }
+  const cart=new THREE.Mesh(new THREE.BoxGeometry(1.4,0.8,1.0), mat(0xb8402e)); cart.position.set(0,1.0,-0.5); o.add(cart);
+  const rim=new THREE.Mesh(new THREE.BoxGeometry(1.46,0.12,1.06), mat(0xe2b23a)); rim.position.set(0,1.42,-0.5); o.add(rim);
+  const pole=new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.04,2.2,6), mat(0x6b4a2a)); pole.rotation.x=Math.PI/2; pole.position.set(0,0.95,0.9); o.add(pole);
+  const wheels=[]; for(const sx of [-1,1]){ const w=new THREE.Mesh(new THREE.CylinderGeometry(0.58,0.58,0.08,16), mat(0x5a3a1e)); w.rotation.z=Math.PI/2; w.position.set(sx*0.8,0.58,-0.6); o.add(w); wheels.push(w);
+    const hub=new THREE.Mesh(new THREE.CylinderGeometry(0.12,0.12,0.12,8), mat(0xe2b23a)); hub.rotation.z=Math.PI/2; hub.position.copy(w.position); o.add(hub); w.userData.hub=hub; }
+  const d=person({tunic:0xeee8d8,skin:0xb07a4e,hair:0x1a120a,helmet:0x2f6aa8,spear:true,h:1.75}); d.position.set(0,0.6,-0.6); o.add(d);
+  o.userData.horses=hs; o.userData.wheels=wheels; return o; }
+function tambourine(){ const t=new THREE.Group(); const r=new THREE.Mesh(new THREE.CylinderGeometry(0.15,0.15,0.05,16,1,true), mat(0xc9a35a,{side:THREE.DoubleSide})); t.add(r);
+  const sk=new THREE.Mesh(new THREE.CircleGeometry(0.15,16), mat(0xf2e6c8,{side:THREE.DoubleSide})); sk.rotation.x=-Math.PI/2; t.add(sk); return t; }
+function buildRed(){
+  ground=groundRed; resetLook();
+  const g=new THREE.Group(); scene.add(g); world={group:g, people:[], flock:[], trail:[], chariots:[], fish:[], women:[]}; const W=world, r=rnd(77);
+  { const N=170, geo=new THREE.PlaneGeometry(320,320,N,N); geo.rotateX(-Math.PI/2); geo.translate(0,0,-30); const pos=geo.attributes.position, cols=[], c=new THREE.Color(), a=new THREE.Color(0xdcc496), b=new THREE.Color(0xcdb07c), wet=new THREE.Color(0x9a8a6a), rk=new THREE.Color(0x9a7a5e);
+    for(let i=0;i<pos.count;i++){ const x=pos.getX(i), z=pos.getZ(i), h=groundRed(x,z); pos.setY(i,h); const n=0.5+0.5*Math.sin(x*0.5+z*0.9)*Math.cos(x*0.27-z*0.4); c.copy(a).lerp(b,n*0.8); if(h<-0.4) c.lerp(wet,clamp(-h/2,0,1)); if(h>2) c.lerp(rk,clamp((h-2)/12,0,0.8)); c.multiplyScalar(1.05); cols.push(c.r,c.g,c.b); }
+    geo.setAttribute('color',new THREE.Float32BufferAttribute(cols,3)); geo.computeVertexNormals(); const uv=geo.attributes.uv; for(let i=0;i<uv.count;i++) uv.setXY(i,uv.getX(i)*90,uv.getY(i)*90);
+    const m=new THREE.Mesh(geo,new THREE.MeshLambertMaterial({vertexColors:true,map:GROUND_TEX})); m.userData.noCast=true; g.add(m); }
+  grassField(g, touch?2500:5000, ()=>{ const x=(Math.random()-0.5)*110, z=(Math.random()-0.5)*200-30; const h=groundRed(x,z); if(Math.random()>0.4||h<-0.2||h>3) return null; if(Math.abs(x)<5&&z>-6&&z<45) return null; return [x,z,0x9a945a]; });
+  /* the sea: one big sheet of water that can split in two */
+  { const xs=[]; for(let x=-140;x<-24;x+=4) xs.push(x); for(let x=-24;x<=24.001;x+=0.25) xs.push(+x.toFixed(2)); for(let x=28;x<=140;x+=4) xs.push(x);
+    const zs=[]; for(let z=-2.5;z>=-87.51;z-=1.5) zs.push(z);
+    const verts=[], idx=[]; zs.forEach(z=>xs.forEach(x=>verts.push(x,0,z)));
+    for(let j=0;j<zs.length-1;j++) for(let i=0;i<xs.length-1;i++){ const a=j*xs.length+i, b=a+1, c=a+xs.length, d=c+1; idx.push(a,c,b, b,c,d); }
+    const geo=new THREE.BufferGeometry(); geo.setAttribute('position',new THREE.Float32BufferAttribute(verts,3)); geo.setIndex(idx); geo.computeVertexNormals(); W.waterGeo=geo;
+    const wm=new THREE.Mesh(geo,new THREE.MeshPhongMaterial({color:0x2a78ab,specular:0xbfd8e8,shininess:70,emissive:0x0c3550,transparent:true,opacity:0.84,side:THREE.DoubleSide})); wm.userData.noCast=true; wm.renderOrder=2; g.add(wm); W.water=wm; }
+  /* fish swimming inside the walls of water */
+  for(let i=0;i<46;i++){ const f=new THREE.Group(); const col=[0xe8a040,0x9ac0d8,0xd8d8e0,0x5a8ab0,0xf0d050][i%5]; blob(f,col,0.16,0.6,1,1.8,0,0,0,10); const tl=new THREE.Mesh(new THREE.ConeGeometry(0.12,0.25,4), mat(col)); tl.rotation.x=Math.PI/2; tl.position.z=-0.36; f.add(tl);
+    const sx=i%2?1:-1; f.userData={sx, off:0.7+r()*3.2, y:-2.6+r()*3.6, z0:-12-r()*68, sp:0.6+r()*0.8, ph:r()*6}; f.visible=false; g.add(f); W.fish.push(f); }
+  /* seaweed and shells on the sea floor */
+  for(let i=0;i<70;i++){ const x=(r()-0.5)*9, z=-8-r()*76; const sw=new THREE.Mesh(new THREE.ConeGeometry(0.08,0.5+r()*0.5,4), mat(i%3?0x4a7a3a:0x7a5a8a)); sw.position.set(x,groundRed(x,z)+0.25,z); sw.userData.noCast=true; g.add(sw); }
+  for(let i=0;i<30;i++){ rock(g,(r()-0.5)*10,-10-r()*72,0.2+r()*0.3); }
+  /* the camp of the Israelites */
+  [[-14,10],[-22,18],[-10,24],[-26,32],[-14,38],[14,10],[22,18],[10,24],[26,30],[16,38],[-30,8],[30,8],[-6,44],[8,46]].forEach(([x,z],i)=>tent(g,x,z,[0x8a5a3a,0x6e4a32,0x9a6a40,0x7a5236][i%4],0.9+(i%3)*0.15));
+  for(const [x,z] of [[-8,16],[9,30],[-18,28]]){ const f=glowSprite(0xff9a30,1.4); f.position.set(x,ground(x,z)+0.5,z); g.add(f); for(let k=0;k<6;k++){ const st=new THREE.Mesh(ROCK_GEO[k%4], mat(0x7a7064)); st.scale.setScalar(0.18); st.position.set(x+Math.cos(k)*0.5,ground(x,z)+0.1,z+Math.sin(k)*0.5); g.add(st); } }
+  for(let i=0;i<22;i++){ const x=(r()-0.5)*90, z=(r()-0.5)*40-120; rock(g,x,z,0.5+r()*1.2); }
+  for(let i=0;i<14;i++){ const x=(r()-0.5)*80, z=-95-r()*25; if(Math.abs(x)<8) continue; palm(g,x,z,0.8+r()*0.4); }
+  for(let i=0;i<16;i++){ const x=(r()<0.5?-1:1)*(28+r()*14), z=r()*50; rock(g,x,z,0.6+r()*1.2); }
+  /* God's people: men, women, children, and their flocks */
+  const tun=[0x8a5a3a,0x5a6a3a,0x7a3a2a,0x4a5a7a,0x8a7a4a,0x6a4a3a,0x5a4a6a,0x7a6a3a,0x3a5a4a,0x9a6a3a,0xb08a5a,0x6a5a8a];
+  for(let i=0;i<26;i++){ const woman=i%3===1, kid=i%5===4; const p=person({tunic:tun[i%tun.length],hair:i%4?0x2a1a10:0x8a8a84,beard:(!woman&&!kid&&i%2)?0x2a1a10:null,longHair:woman,h:kid?1.25:(woman?1.62:1.72)});
+    const x=(r()-0.5)*40, z=8+r()*34; place(p,x,z,r()*6); p.userData.off={x:(i%7-3)*1.3+(r()-0.5)*0.8,lag:6+i*1.25}; g.add(p); W.people.push(p); }
+  W.miriam=person({tunic:0x7a4ab0,hair:0x6a6a66,longHair:true,h:1.6}); place(W.miriam,3,6,Math.PI); W.miriam.userData.off={x:2.2,lag:5}; g.add(W.miriam); W.people.push(W.miriam); W.women.push(W.miriam);
+  W.aaron=person({tunic:0x2f6aa8,hair:0x8a8a84,beard:0xd8d4cc,h:1.74}); place(W.aaron,-2.5,6,Math.PI); W.aaron.userData.off={x:-2.2,lag:4}; g.add(W.aaron); W.people.push(W.aaron);
+  W.people.forEach(p=>{ if(p.userData.off && p!==W.miriam && p.userData.legs && p.userData.h<1.65 && W.women.length<6 && p!==W.aaron && p.userData.h>1.3) W.women.push(p); });
+  W.women.forEach(w=>{ const t=tambourine(); t.position.y=-0.64; t.rotation.z=Math.PI/2; w.userData.arms[1].add(t); });
+  for(let i=0;i<10;i++){ const s=sheep(g,(r()-0.5)*20,30+r()*12,0.75+r()*0.2); s.userData.off={x:(i%5-2)*1.4,lag:40+i*1.6}; W.flock.push(s); }
+  /* the pillar of cloud, which turns to fire at night */
+  { const P0=new THREE.Group(); const cm=new THREE.MeshLambertMaterial({color:0xf6f6f2,emissive:0x8a8a8a,transparent:true,opacity:0.93});
+    for(let i=0;i<24;i++){ const b=new THREE.Mesh(LEAF_GEO[i%6], cm); const s=2.6+Math.sin(i*1.3)*0.5+(i<3?0.9:0); b.scale.set(s,s*0.8,s); b.position.set(Math.sin(i*2.1)*0.9,1+i*1.4,Math.cos(i*1.7)*0.9); b.userData.noCast=true; P0.add(b); }
+    const fire=new THREE.Group(); fire.visible=false; P0.add(fire); W.pFire=fire;
+    for(let i=0;i<14;i++){ const sp=glowSprite(i%2?0xff8a20:0xffc040,6+(i%3)*2); sp.position.set(Math.sin(i*2.1)*0.6,1.5+i*2.2,Math.cos(i*1.7)*0.6); sp.userData.base=sp.position.y; fire.add(sp); }
+    const pl=new THREE.PointLight(0xffa040,0,90); pl.position.y=10; P0.add(pl); W.pLight=pl;
+    P0.position.set(0,0,-12); g.add(P0); W.pillar=P0; W.cloudMat=cm; W.pillarTo={x:0,z:-12}; }
+  /* Pharaoh's army */
+  for(let i=0;i<7;i++){ const c=chariot(); c.position.set((i%4-1.5)*5,0,130+Math.floor(i/4)*7); c.rotation.y=Math.PI; c.visible=false; g.add(c); W.chariots.push(c); }
+  { const dust=new THREE.Group(); for(let i=0;i<10;i++){ const d=glowSprite(0xd8c49a,9); d.material.blending=THREE.NormalBlending; d.material.opacity=0.5; d.position.set((i-5)*3,2,4+i%3*2); dust.add(d); } dust.visible=false; g.add(dust); W.dust=dust; }
+  /* the strong east wind */
+  { const n=350, v=new Float32Array(n*3); for(let i=0;i<n;i++){ v[i*3]=(Math.random()-0.5)*60; v[i*3+1]=Math.random()*7; v[i*3+2]=(Math.random()-0.5)*60; }
+    const gb=new THREE.BufferGeometry(); gb.setAttribute('position',new THREE.BufferAttribute(v,3)); const wind=new THREE.Points(gb,new THREE.PointsMaterial({color:0xffffff,size:0.12,transparent:true,opacity:0.55,depthWrite:false})); wind.visible=false; wind.frustumCulled=false; g.add(wind); W.wind=wind; }
+  W.beacon=makeBeacon(); W.beacon.visible=false; g.add(W.beacon);
+  P.x=0; P.z=44; P.yaw=0; P.pitch=0; P.eye=1.75; P.speed=4.6; P.roll=0;
+  story={id:'redsea', step:'', t:0, lock:true, target:null, near:null, follow:false, p:0, pTo:0, raise:0, fadeSky:null};
+  hand.visible=false; basket.visible=false; sling.visible=false; fruitHand.visible=false; if(typeof logHand!=='undefined'){ logHand.visible=false; leafHand.visible=false; } if(typeof coatView!=='undefined'){ coatView.visible=false; sheafHand.visible=false; } if(typeof reedHand!=='undefined') reedHand.visible=false;
+  staffHand.visible=true; staffHand.position.set(0.42,-0.95,-0.8); staffHand.rotation.set(-0.45,0,-0.2);
+  goRed('intro');
+}
+function redNight(){ const S=story; skyTo(0x1a2550,2500); S.night=true; S.lightTo={hemi:0.32,sun:0.12}; world.pFire.visible=true; }
+function redDay(){ const S=story; skyTo(0xf0c890,2500); setTimeout(()=>{ if(story===S) skyTo(0xa9d3f0,4000); },2600); S.night=false; S.lightTo={hemi:0.55,sun:0.9}; }
+function redSea(){ lookAt(0,-1,-30,1.2); }
+function goRed(step){
+  const S=story, W=world; S.step=step; $('prompt').classList.add('hidden');
+  if(step==='intro'){
+    S.lock=true; setGoal('Listen');
+    say([[SAY_BIBLE,'Pharaoh finally let God’s people go. More than 600,000 men, plus women and children, left Egypt with their sheep, goats, and cattle.','Exodus 12:37-38'],
+      ['You are Moses','You are Moses. You are leading God’s people out of Egypt.',''],
+      [SAY_BIBLE,'The Lord went ahead of them in a pillar of cloud by day to show them the way, and in a pillar of fire by night to give them light.','Exodus 13:21', ()=>{ lookAt(W.pillar.position.x,14,W.pillar.position.z,1.5); }],
+      [SAY_BIBLE,'God told Moses to have the people camp by the sea.','Exodus 14:1-2']], ()=>goRed('shore'));
+  }
+  if(step==='shore'){ S.lock=false; S.follow=true; setGoal('Lead the people to the <b>edge of the sea</b>'); S.target={position:new THREE.Vector3(0,0,-2)}; }
+  if(step==='army'){
+    S.lock=true; S.target=null; setGoal('Listen');
+    say([[SAY_BIBLE,'Back in Egypt, Pharaoh changed his mind. "Why did we let our slaves go?" He took 600 of his best chariots and his whole army and chased after them.','Exodus 14:5-9', ()=>{ W.chariots.forEach(c=>c.visible=true); W.dust.visible=true; S.armyCome=true; P.yaw=Math.PI; lookAt(0,3,90,1.5); }],
+      ['The people','Look! The Egyptians are coming! Did you bring us out here to die in the desert? It would have been better to stay slaves in Egypt!','Exodus 14:10-12'],
+      ['You are Moses','Don’t be afraid. Stand still, and you will see how the Lord saves you today. The Lord will fight for you. You only need to be still.','Exodus 14:13-14'],
+      ['God','Why are you crying out to me? Tell the people to move on. Raise your staff and stretch out your hand over the sea to split the water, so the Israelites can go through the sea on dry ground.','Exodus 14:15-16', ()=>redSea()],
+      [SAY_BIBLE,'Then the pillar of cloud moved from in front of them and stood behind them, between the Israelites and the Egyptians.','Exodus 14:19-20', ()=>{ W.pillarTo={x:0,z:34}; lookAt(0,10,34,1.5); }],
+      [SAY_BIBLE,'Night came. The cloud was dark for the Egyptians, but it gave light to the Israelites, so the Egyptians could not come near them all night.','Exodus 14:20', ()=>redNight()]], ()=>{ redSea(); goRed('stretch'); });
+  }
+  if(step==='stretch'){ S.lock=true; S.follow=false; setGoal('Raise your <b>staff</b> over the sea'); }
+  if(step==='parting'){ S.lock=true; setGoal('Watch');
+    say([[SAY_BIBLE,'Moses stretched out his hand over the sea. All that night the Lord pushed the sea back with a strong east wind.','Exodus 14:21']], ()=>{ S.waitOpen=true; }); }
+  if(step==='cross'){ S.lock=false; S.follow=true; setGoal('Lead the people through the sea on <b>dry ground</b>'); S.target={position:new THREE.Vector3(0,0,-94)}; }
+  if(step==='chase'){
+    S.lock=true; S.target=null; setGoal('Listen'); S.follow=false;
+    W.people.concat(W.flock).forEach((p,i)=>{ if(p.position.z>-90){ const x=(i%9-4)*2.2+(Math.random()-0.5), z=-93-Math.floor(i/9)*2.2-Math.random(); place(p,x,z); faceTo(p,0,-60); } });
+    P.yaw=0; lookAt(0,-1,-40,1.2);
+    say([[SAY_BIBLE,'The Egyptians chased them, and all of Pharaoh’s horses and chariots followed them right into the middle of the sea.','Exodus 14:23', ()=>{ W.chariots.forEach((c,i)=>{ c.visible=true; place(c,(i%2?1.6:-1.6),-4-i*4.5); c.rotation.y=Math.PI; c.userData.go=true; }); W.dust.visible=false; P.yaw=0; lookAt(0,-1,-30,1.2); }],
+      [SAY_BIBLE,'Just before morning, the Lord looked down from the pillar of fire and cloud and threw the Egyptian army into a panic. He made the wheels of their chariots come off, so they could hardly drive.','Exodus 14:24-25', ()=>{ S.wheelsOff=true; }],
+      ['Egyptians','Let’s get away from the Israelites! The Lord is fighting for them against Egypt!','Exodus 14:25'],
+      ['God','Stretch out your hand over the sea, so the water will flow back over the Egyptians and their chariots.','Exodus 14:26', ()=>{ lookAt(0,-1,-60,1); }]], ()=>goRed('close'));
+  }
+  if(step==='close'){ S.lock=true; setGoal('Stretch out your hand over the <b>sea</b>'); }
+  if(step==='closing'){ S.lock=true; setGoal('Watch');
+    say([[SAY_BIBLE,'Moses stretched out his hand over the sea, and at sunrise the sea went back to its place. The water flowed back and covered the chariots and horsemen of Pharaoh’s whole army.','Exodus 14:27-28'],
+      [SAY_BIBLE,'But the Israelites had walked through the sea on dry ground, with a wall of water on their right and on their left. That day the Lord saved Israel.','Exodus 14:29-30'],
+      [SAY_BIBLE,'When the people saw the great power of the Lord, they feared the Lord, and they trusted in Him and in His servant Moses.','Exodus 14:31']], ()=>goRed('song')); }
+  if(step==='song'){ S.lock=false; setGoal('Go and sing with <b>Miriam</b>'); W.women.forEach((w,i)=>{ const a=i/W.women.length*Math.PI*2; place(w,-6+Math.cos(a)*2.4,-100+Math.sin(a)*2.4); w.userData.dance=true; w.userData.armsBusy=true; }); S.target=W.miriam; }
+  if(step==='sing'){ S.lock=true; S.target=null; setGoal('Listen'); lookAt(W.miriam.position.x,1.5,W.miriam.position.z,1);
+    say([[SAY_BIBLE,'Then Miriam, the sister of Moses and Aaron, took a tambourine, and all the women followed her, playing tambourines and dancing.','Exodus 15:20'],
+      ['Miriam','Sing to the Lord, for He has won a great victory! He has thrown the horse and its rider into the sea.','Exodus 15:21'],
+      ['You are Moses','The Lord is my strength and my song. He has saved me. He is my God, and I will praise Him!','Exodus 15:2'],
+      ['Everyone','The Lord will be king forever and ever!','Exodus 15:18']], ()=>finishStory()); }
+}
+function updateRed(dt, now){
+  const S=story, W=world, t=(S.t+=dt);
+  if(S.fadeSky){ const f=S.fadeSky; f.t+=dt; const k=smooth(f.t/f.dur); scene.background.copy(f.from).lerp(f.to,k); if(k>=1) S.fadeSky=null; }
+  if(S.lightTo){ hemi.intensity+=(S.lightTo.hemi-hemi.intensity)*Math.min(1,dt*0.8); sun.intensity+=(S.lightTo.sun-sun.intensity)*Math.min(1,dt*0.8); }
+  /* the pillar drifts to where God puts it */
+  const Pl=W.pillar; Pl.position.x+=(W.pillarTo.x-Pl.position.x)*Math.min(1,dt*0.35); Pl.position.z+=(W.pillarTo.z-Pl.position.z)*Math.min(1,dt*0.35); Pl.position.y=ground(Pl.position.x,Pl.position.z);
+  Pl.children.forEach((c,i)=>{ if(c.isMesh) c.rotation.y=t*0.1+i; });
+  if(W.pFire.visible){ W.cloudMat.color.lerp(new THREE.Color(S.night?0xffc070:0xf6f6f2),Math.min(1,dt)); W.cloudMat.emissive.lerp(new THREE.Color(S.night?0xff7a18:0x8a8a8a),Math.min(1,dt)); W.pFire.children.forEach((s,i)=>{ s.position.y=s.userData.base+Math.sin(t*3+i)*0.4; s.material.opacity=S.night?0.85:Math.max(0,s.material.opacity-dt*0.4); }); W.pLight.intensity+=((S.night?2.2:0)-W.pLight.intensity)*Math.min(1,dt); }
+  /* the sea splits and comes back */
+  if(Math.abs(S.p-S.pTo)>0.001){ const rate=S.pTo>S.p?0.11:0.22; S.p+= Math.sign(S.pTo-S.p)*Math.min(Math.abs(S.pTo-S.p),rate*dt); redWaterUpdate(S.p); }
+  else if(S.p>0.5 && Math.floor(t*10)%3===0){ redWaterUpdate(S.p+0.004*Math.sin(t*1.7)); }
+  const show=S.p>0.75; W.fish.forEach((f,i)=>{ f.visible=show; if(!show) return; const u=f.userData; const z=u.z0+Math.sin(t*0.15*u.sp+u.ph)*8; f.position.set(u.sx*(RS.G*S.p+u.off), u.y+Math.sin(t+u.ph)*0.15, z); f.rotation.y=Math.cos(t*0.15*u.sp+u.ph)>0?0:Math.PI; });
+  /* wind */
+  if(W.wind.visible){ const a=W.wind.geometry.attributes.position; for(let i=0;i<a.count;i++){ let x=a.getX(i)-dt*28; if(x<-30) x+=60; a.setX(i,x); } a.needsUpdate=true; W.wind.position.set(P.x,ground(P.x,P.z)-0.5,P.z); }
+  if(S.raise>0){ S.raise-=dt; const k=smooth(Math.min(1,(3.5-Math.max(0,S.raise))/0.6))*smooth(Math.min(1,S.raise/0.6)); staffHand.position.set(0.42-k*0.12,-0.95+k*0.75,-0.8-k*0.2); staffHand.rotation.set(-0.45+k*0.75,0,-0.2+k*0.1); }
+  if(S.waitOpen && S.p>0.985){ S.waitOpen=false; W.wind.visible=false; shake=0;
+    say([[SAY_BIBLE,'The water split in two and stood up like walls! The bottom of the sea became dry ground.','Exodus 14:21-22', ()=>{ lookAt(0,0,-40,1.2); }],
+      ['You are Moses','Come on, everyone! Follow me! God made a way!','']], ()=>goRed('cross')); }
+  if(W.wind.visible) shake=Math.max(shake,0.05);
+  /* the army */
+  if(S.armyCome){ W.chariots.forEach((c,i)=>{ const stop=46+Math.floor(i/4)*7; if(c.position.z>stop){ c.position.z-=dt*9; c.userData.horses.forEach(h=>sheepWalk(h,dt,1.3)); c.userData.wheels.forEach(w=>w.rotation.x-=dt*12); } c.position.y=ground(c.position.x,c.position.z); });
+    W.dust.position.set(0,ground(0,W.chariots[0].position.z),W.chariots[0].position.z+3); if(W.chariots[0].position.z<=46.1) W.dust.visible=false; }
+  if(S.step==='chase'||S.step==='close'||S.step==='closing'){ S.armyCome=false;
+    W.chariots.forEach((c,i)=>{ if(!c.visible) return; const sp=S.wheelsOff?0.5:3.2; if(c.userData.go && c.position.z>-55){ c.position.z-=dt*sp; c.userData.horses.forEach(h=>sheepWalk(h,dt,S.wheelsOff?0.4:1)); }
+      if(S.wheelsOff){ c.rotation.z=Math.sin(t*5+i)*0.08; c.userData.wheels.forEach((w,k)=>{ if(k===i%2){ w.position.y=0.35; w.rotation.x=1.2; w.userData.hub.visible=false; } }); }
+      const sink=S.step==='closing'?clamp((0.75-S.p)/0.5,0,1):0; c.position.y=ground(c.position.x,c.position.z)-sink*2.5; if(sink>=1) c.visible=false; }); }
+  /* God's people follow Moses */
+  const tr=W.trail, lp=tr[tr.length-1]; if(!lp || Math.hypot(P.x-lp.x,P.z-lp.z)>0.5){ tr.push({x:P.x,z:P.z}); if(tr.length>260) tr.shift(); }
+  const followers=W.people.concat(W.flock);
+  followers.forEach((p,i)=>{ const u=p.userData; let tx=null,tz=null;
+    if(u.dance){ const k=W.women.indexOf(p), a=k/W.women.length*Math.PI*2+t*0.6; tx=-6+Math.cos(a)*2.4; tz=-100+Math.sin(a)*2.4; p.position.x=tx; p.position.z=tz; p.position.y=ground(tx,tz)+Math.abs(Math.sin(t*5+k))*0.18; p.rotation.y=a+Math.PI; u.arms[1].rotation.x=-2.6+Math.sin(t*10+k)*0.35; u.arms[0].rotation.x=-0.6+Math.sin(t*5+k)*0.4; return; }
+    if(S.follow){ const k=tr.length-1-Math.floor(u.off.lag); if(k>=0){ tx=tr[k].x+u.off.x*(S.step==='cross'&&tr[k].z<-4&&tr[k].z>-86?0.55:1); tz=tr[k].z; } }
+    if(tx!==null){ if(tz<-4&&tz>-87) tx=clamp(tx,-RS.G*S.p+0.7,RS.G*S.p-0.7); const dx=tx-p.position.x, dz=tz-p.position.z, d=Math.hypot(dx,dz); if(d>0.5){ if(d>25&&!(p.position.z<-3&&p.position.z>-88)){ p.position.x=tx; p.position.z=tz; } const v=Math.min(5.2,d*1.4)*dt; p.position.x+=dx/d*v; p.position.z+=dz/d*v; p.rotation.y=Math.atan2(dx,dz); if(u.legs4) sheepWalk(p,dt,1); else animWalk(p,dt,1); } else if(u.legs) animWalk(p,dt,0); }
+    p.position.y=ground(p.position.x,p.position.z); });
+  if(S.step==='army'||S.step==='stretch') followers.forEach(p=>{ if(!p.userData.dance && S.step==='army' && S.armyCome) faceTo(p,0,80); });
+  let near=null;
+  if(S.step==='shore' && P.z<1.5) goRed('army');
+  if(S.step==='stretch') near={label:'Raise your staff', fn:()=>{ S.raise=3.5; S.pTo=1; W.wind.visible=true; shake=0.25; goRed('parting'); }};
+  if(S.step==='cross' && P.z<-91) goRed('chase');
+  if(S.step==='close') near={label:'Stretch out your hand', fn:()=>{ S.raise=3.5; S.pTo=0; shake=0.3; redDay(); W.pillarTo={x:18,z:-108}; goRed('closing'); }};
+  if(S.step==='song' && dist2(W.miriam)<3.2) near={label:'Sing with Miriam', fn:()=>goRed('sing')};
+  S.near=near;
+  const pr=$('prompt');
+  if(near && !saying()){ pr.textContent=(touch?'':'Space: ')+near.label; pr.classList.remove('hidden'); $('act').textContent=near.label.split(' ')[0]; }
+  else { pr.classList.add('hidden'); $('act').textContent= saying()?'Next':'Use'; }
+  showBeacon(t);
+}
+function boundsRed(){ const S=story; P.x=clamp(P.x,-50,50); P.z=clamp(P.z,-118,56);
+  const crossing=S.step==='cross'&&S.p>0.95;
+  if(!crossing && P.z>-89 && P.z<RS.near && !(S.step==='chase'||S.step==='close'||S.step==='closing'||S.step==='song'||S.step==='sing')) P.z=RS.near;
+  if(crossing && P.z<RS.near && P.z>-88.5){ const G=RS.G-0.7; P.x=clamp(P.x,-G,G); }
+  if((S.step==='song'||S.step==='sing'||S.step==='closing'||S.step==='close'||S.step==='chase') && P.z>-90) P.z=-90;
+}
+function jumpRed(q){ // ?step=stretch | cross | chase | song
+  const S=story, W=world; sayQ.length=0; $('say').classList.add('hidden'); sayCb=null;
+  if(q==='stretch'||q==='cross'||q==='chase'||q==='song'){ P.x=0; P.z=-2; P.yaw=0; W.pillarTo={x:0,z:34}; W.pillar.position.set(0,0,34); W.chariots.forEach((c,i)=>{ c.visible=true; place(c,(i%4-1.5)*5,46+Math.floor(i/4)*7); c.rotation.y=Math.PI; }); scene.background.set(0x1a2550); S.night=true; hemi.intensity=0.32; sun.intensity=0.12; S.lightTo={hemi:0.32,sun:0.12}; W.pFire.visible=true;
+    W.people.concat(W.flock).forEach((p,i)=>{ place(p,(i%9-4)*1.6,3+Math.floor(i/9)*2); }); }
+  if(q==='stretch') goRed('stretch');
+  if(q==='cross'||q==='chase'||q==='song'){ S.p=1; S.pTo=1; redWaterUpdate(1); }
+  if(q==='cross') goRed('cross');
+  if(q==='chase'){ P.z=-92; goRed('chase'); }
+  if(q==='song'){ P.z=-95; W.chariots.forEach(c=>c.visible=false); S.p=0; S.pTo=0; redWaterUpdate(0); scene.background.set(0xa9d3f0); S.night=false; S.lightTo={hemi:0.55,sun:0.9}; W.pillarTo={x:18,z:-108};
+    W.people.concat(W.flock).forEach((p,i)=>{ place(p,(i%9-4)*2.2,-93-Math.floor(i/9)*2.2); }); goRed('song'); }
+}
+
 /* David's story hooks */
 function boundsDavid(){ P.x=clamp(P.x,-34,34); P.z=clamp(P.z,-60,72); }
 const IMPL = {
+  redsea: { build:buildRed, go:goRed, update:updateRed, bounds:boundsRed, locked:S=>S.lock },
   bush: { build:buildBush, go:goBush, update:updateBush, bounds:boundsBush, locked:S=>S.lock },
   babymoses: { build:buildMoses, go:goMoses, update:updateMoses, bounds:boundsMoses, locked:S=>S.lock },
   joseph: { build:buildJoseph, go:goJoseph, update:updateJoseph, bounds:boundsJoseph, locked:S=>S.lock || choosing() },
@@ -2206,7 +2403,7 @@ function startStory(id){
   const q=new URLSearchParams(location.search).get('step'); if(q && story) jumpTo(q); // preview links for testing
 }
 function jumpTo(q){ // ?step=stones or ?step=sling
-  const S=story; if(story.id==='adam') return jumpAdam(q); if(story.id==='noah') return jumpNoah(q); if(story.id==='abraham') return jumpAbraham(q); if(story.id==='joseph') return jumpJoseph(q); if(story.id==='babymoses') return jumpMoses(q); if(story.id==='bush') return jumpBush(q);
+  const S=story; if(story.id==='adam') return jumpAdam(q); if(story.id==='noah') return jumpNoah(q); if(story.id==='abraham') return jumpAbraham(q); if(story.id==='joseph') return jumpJoseph(q); if(story.id==='babymoses') return jumpMoses(q); if(story.id==='bush') return jumpBush(q); if(story.id==='redsea') return jumpRed(q);
   if(q==='stones'||q==='sling'){ world.lamb.userData.following=true; world.lamb.userData.goal={x:world.flock.x+1,z:world.flock.z}; world.lamb.position.set(world.flock.x+1,0,world.flock.z); world.israel.forEach(p=>p.position.z+=12); }
   if(q==='stones'){ P.x=0; P.z=STREAM_Z+4; P.yaw=0; sayQ.length=0; $('say').classList.add('hidden'); go('stones'); }
   if(q==='sling'){ world.stones.forEach(s=>s.visible=false); S.stonesHeld=5; S.stonesLeft=5; P.x=0; P.z=-20; P.yaw=0; world.goliath.position.set(0,ground(0,-36),-36); sayQ.length=0; $('say').classList.add('hidden'); $('stones').classList.remove('hidden'); updateStonesHud(); go('sling'); }
@@ -2217,7 +2414,7 @@ function finishStory(){
   const nextReady=READY[READY.indexOf(s)+1], nextAny=STORIES[STORIES.indexOf(s)+1];
   $('fade').style.opacity=0.6;
   setTimeout(()=>{
-    $('endWho').textContent='You saw what '+({david:'David',adam:'Adam',noah:'Noah',abraham:'Abraham',joseph:'Joseph',babymoses:'Miriam',bush:'Moses'}[s.id]||'they')+' did.';
+    $('endWho').textContent='You saw what '+({david:'David',adam:'Adam',noah:'Noah',abraham:'Abraham',joseph:'Joseph',babymoses:'Miriam',bush:'Moses',redsea:'Moses'}[s.id]||'they')+' did.';
     $('endVerse').textContent=s.endVerse; $('endRef').textContent=s.endRef;
     $('endUnlock').textContent= nextReady ? 'You unlocked '+nextReady.title+'!' : (nextAny ? 'Next up: '+nextAny.title+'. It is coming soon!' : 'You finished every story!');
     $('endNext').innerHTML = nextAny ? '<b>What happens next</b>'+nextAny.before : '';
