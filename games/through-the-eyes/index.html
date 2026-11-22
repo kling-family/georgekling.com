@@ -1548,6 +1548,7 @@ const WELL={x:30,z:-30};
 function groundCanaan(x,z){ let h=0.5+0.5*Math.sin(x*0.08)*Math.cos(z*0.07)+0.3*Math.sin(x*0.17+z*0.11); const r=Math.hypot(x,z); if(r>60) h+=Math.pow(r-60,1.25)*0.3; return h; }
 function groundEgypt(x,z){ let h=0.15*Math.sin(x*0.11)*Math.cos(z*0.09); if(x<-44) h-=smooth(clamp((-44-x)/4,0,1))*1.6; const r=Math.hypot(x,z+20); if(r>75) h+=Math.pow(r-75,1.2)*0.12; return h; }
 function groundJoseph(x,z){
+  if(story && story.dream) return 0;
   if(story && story.inPit) return groundCanaan(WELL.x,WELL.z)-2.4;
   return josephLand==='canaan'?groundCanaan(x,z):groundEgypt(x,z); }
 function camel(){ const o=new THREE.Group(), c=0xc49a62;
@@ -1629,6 +1630,7 @@ function buildJoseph(){
     for(let i=0;i<8;i++){ palm(E,(r()-0.5)*60+10,22+r()*20,0.8+r()*0.3); }
     const nile=new THREE.Mesh(new THREE.PlaneGeometry(40,320), new THREE.MeshPhongMaterial({color:0x3f7f9a,specular:0x9fb8c8,shininess:50})); nile.rotation.x=-Math.PI/2; nile.position.set(-68,-0.6,0); E.add(nile);
   }
+  buildJosephDream(W,g);
   josephLand='canaan'; ground=groundJoseph;
   // God is not shown in Joseph's story: He works behind the scenes
   W.beacon=makeBeacon(); W.beacon.visible=false; g.add(W.beacon);
@@ -1636,6 +1638,54 @@ function buildJoseph(){
   story={id:'joseph', step:'', t:0, lock:true, target:null, near:null, inPit:false, carrying:false, stored:0, fadeSky:null};
   hand.visible=false; basket.visible=false; sling.visible=false; fruitHand.visible=false; if(typeof logHand!=='undefined'){ logHand.visible=false; leafHand.visible=false; } coatView.visible=false; sheafHand.visible=false;
   goJoseph('intro');
+}
+/* Joseph's dreams: you see yourself, in your colorful coat */
+const DREAM={x:0,z:-220};
+function buildJosephDream(W,g){
+  const D=new THREE.Group(); D.position.set(DREAM.x,0,DREAM.z); D.visible=false; g.add(D); W.dream=D;
+  const c=document.createElement('canvas'); c.width=16; c.height=128; const x=c.getContext('2d');
+  const cols=['#c8342a','#f2a33a','#f5d34a','#3f9a52','#3a6fc0','#7a4ab0','#e8e0d0']; for(let i=0;i<14;i++){ x.fillStyle=cols[i%7]; x.fillRect(0,i*128/14,16,128/14+1); }
+  const coatM=new THREE.MeshLambertMaterial({map:new THREE.CanvasTexture(c)});
+  const me=person({tunic:0xc8342a,hair:0x3a2614,h:1.68}); me.userData.body.material=coatM; me.userData.arms.forEach(a=>a.material=coatM); me.rotation.y=0; D.add(me); W.dreamMe=me;
+  /* dream 1: a field at harvest */
+  const F=new THREE.Group(); D.add(F); W.dreamField=F;
+  const field=new THREE.Mesh(new THREE.CircleGeometry(16,40), new THREE.MeshLambertMaterial({color:0xd8b860,map:GROUND_TEX})); field.rotation.x=-Math.PI/2; field.userData.noCast=true; F.add(field);
+  const r=rnd(9); for(let i=0;i<160;i++){ const a=r()*Math.PI*2, d=7+r()*8; const st=new THREE.Mesh(new THREE.CylinderGeometry(0.015,0.015,0.9,3), mat(0xe2c46a)); st.position.set(Math.cos(a)*d,0.45,Math.sin(a)*d); st.rotation.z=(r()-0.5)*0.3; F.add(st); }
+  const save=ground; ground=()=>0;
+  W.mySheaf=sheaf(F,0.55,0.2); W.mySheaf.scale.setScalar(1.15); W.mySheaf.rotation.z=1.2; W.mySheaf.position.y=0.1;
+  W.broSheaves=[]; for(let i=0;i<11;i++){ const a=Math.PI*0.3+Math.PI*1.4*i/10, rr=2.4; const sx=0.55+Math.sin(a)*rr, sz=0.2+Math.cos(a)*rr; const sh=sheaf(F,sx,sz); sh.userData.face=Math.atan2(0.55-sx,0.2-sz); sh.rotation.y=sh.userData.face; W.broSheaves.push(sh); }
+  ground=save;
+  /* dream 2: the sun, the moon, and eleven stars */
+  const N=new THREE.Group(); D.add(N); N.visible=false; W.dreamSky=N;
+  const hill=new THREE.Mesh(new THREE.SphereGeometry(30,40,12,0,Math.PI*2,0,Math.PI*0.5), new THREE.MeshLambertMaterial({color:0x34406a})); hill.scale.y=0.015; hill.userData.noCast=true; N.add(hill);
+  const sunB=new THREE.Mesh(new THREE.SphereGeometry(0.9,20,14), new THREE.MeshBasicMaterial({color:0xffd24a})); sunB.add(glowSprite(0xffc040,5)); N.add(sunB);
+  const moonB=new THREE.Mesh(new THREE.SphereGeometry(0.6,20,14), new THREE.MeshBasicMaterial({color:0xeef0f8})); moonB.add(glowSprite(0xcfd8ff,2.6)); N.add(moonB);
+  W.sky3=[sunB,moonB]; for(let i=0;i<11;i++){ const st=glowSprite(0xfff4c0,1.1); const core=new THREE.Mesh(new THREE.OctahedronGeometry(0.16), new THREE.MeshBasicMaterial({color:0xffffff})); st.add(core); N.add(st); W.sky3.push(st); }
+  W.sky3.forEach((o,i)=>{ let hv; if(i===0) hv=[-4.8,6.2,-2]; else if(i===1) hv=[4.8,6.2,-2]; else { const a=-Math.PI*0.4+Math.PI*0.8*(i-2)/10; hv=[Math.sin(a)*4.6, 4.6+Math.cos(a*1.6)*1.4, -2.8-Math.cos(a)*0.8]; } o.userData.home=new THREE.Vector3(...hv); o.position.copy(o.userData.home); });
+}
+function josephDream(n){ const S=story, W=world;
+  if(!S.dream){ S.dream={back:{x:P.x,z:P.z,yaw:P.yaw,pitch:P.pitch,bg:scene.background.clone(),hemi:hemi.intensity,sun:sun.intensity}}; }
+  S.dream.n=n; S.dream.t=0; S.dream.bow=false;
+  $('fade').style.background='#f4ecff'; $('fade').style.opacity=1;
+  setTimeout(()=>{ W.canaan.visible=W.C.visible=false; W.dream.visible=true; coatView.visible=false;
+    W.dreamField.visible=(n===1); W.dreamSky.visible=(n===2);
+    W.dreamMe.position.set(n===1?-0.7:0,n===2?0.4:0,n===1?-0.7:0); W.dreamMe.rotation.set(0,0,0);
+    if(n===1){ W.mySheaf.rotation.z=1.2; W.mySheaf.position.y=0.1; W.broSheaves.forEach(b=>{ b.rotation.x=0; }); scene.background.set(0xd9c8f0); hemi.intensity=0.7; sun.intensity=0.9; }
+    else { W.sky3.forEach(o=>o.position.copy(o.userData.home)); scene.background.set(0x1c2456); hemi.intensity=0.45; sun.intensity=0.5; }
+    P.x=DREAM.x+0.55; P.z=DREAM.z+(n===1?6.5:7); P.yaw=0; P.pitch=n===1?-0.15:0.2; lookAt(DREAM.x+0.55,n===1?0.9:3.0,DREAM.z,0.8);
+    $('fade').style.opacity=0; },650); }
+function josephWake(){ const S=story, W=world, b=S.dream.back;
+  $('fade').style.background='#f4ecff'; $('fade').style.opacity=1;
+  setTimeout(()=>{ W.dream.visible=false; W.canaan.visible=W.C.visible=true; coatView.visible=true; S.dream=null;
+    P.x=b.x; P.z=b.z; P.yaw=b.yaw; P.pitch=b.pitch; scene.background.copy(b.bg); hemi.intensity=b.hemi; sun.intensity=b.sun; P.lockLook=null;
+    $('fade').style.opacity=0; setTimeout(()=>{ $('fade').style.background='#0b0b14'; },700); },650); }
+function updateJosephDream(dt){ const S=story, W=world, d=S.dream; if(!d||!W.dream.visible) return; d.t+=dt;
+  const me=W.dreamMe; me.userData.arms.forEach((a,i)=>{ a.rotation.x=Math.sin(d.t*1.2+i)*0.05; });
+  if(d.n===1){ if(d.bow){ d.k=Math.min(1,(d.k||0)+dt*0.45); const k=smooth(d.k);
+      W.mySheaf.rotation.z=1.2*(1-k); W.mySheaf.position.y=0.1*(1-k);
+      W.broSheaves.forEach((b,i)=>{ const kk=smooth(clamp(d.k*1.6-0.6-i*0.02,0,1)); b.rotation.set(kk*0.75,b.userData.face,0,'YXZ'); }); } }
+  else { const k=d.bow?smooth(Math.min(1,(d.k=(d.k||0)+dt*0.4))):0;
+    W.sky3.forEach((o,i)=>{ const h=o.userData.home; o.position.set(h.x*(1-k*0.12), h.y-k*(h.y-(i<2?2.8:2.2))+Math.sin(d.t*2+i)*0.08-k*0.25*Math.max(0,Math.sin(d.t*1.6)), h.z+k*(i<2?1.2:2.0)); if(i>1) o.scale.setScalar(1+0.15*Math.sin(d.t*4+i)); }); }
 }
 function josephToEgypt(){ const W=world; josephLand='egypt'; W.canaan.visible=false; W.C.visible=false; W.egypt.visible=true; W.E.visible=true; story.inPit=false;
   scene.background.set(0xa8cbe6); hemi.intensity=0.55; sun.intensity=1.0; }
@@ -1648,7 +1698,12 @@ function goJoseph(step){
       ['Jacob','Joseph, my son, I made something special for you.','', ()=>{ lookAt(W.jacob.position.x,1.2,W.jacob.position.z,1); }],
       [SAY_BIBLE,'Jacob gave Joseph a beautiful coat of many colors.','Genesis 37:3', ()=>{ coatView.visible=true; }],
       [SAY_BIBLE,'When his brothers saw that their father loved Joseph more than them, they hated him and could not say a kind word to him.','Genesis 37:4'],
-      [SAY_BIBLE,'Then Joseph had a dream. Their bundles of grain stood around his bundle and bowed down to it. In another dream, the sun, the moon, and eleven stars bowed down to him.','Genesis 37:5-9'],
+      [SAY_BIBLE,'Then Joseph had a dream.','Genesis 37:5', ()=>josephDream(1)],
+      ['You are Joseph','Look, that’s you, in your colorful coat! You and your brothers are out in the field, tying up bundles of grain.','Genesis 37:7'],
+      [SAY_BIBLE,'Suddenly Joseph’s bundle stood up straight. His brothers’ bundles gathered around it and bowed down to it!','Genesis 37:7', ()=>{ story.dream.bow=true; story.dream.k=0; }],
+      [SAY_BIBLE,'Then Joseph had another dream.','Genesis 37:9', ()=>josephDream(2)],
+      [SAY_BIBLE,'The sun, the moon, and eleven stars were bowing down to him!','Genesis 37:9', ()=>{ story.dream.bow=true; story.dream.k=0; }],
+      [SAY_BIBLE,'Then Joseph woke up.','', ()=>josephWake()],
       [SAY_BIBLE,'When Joseph told his family the dreams, his brothers hated him even more.','Genesis 37:8'],
       ['Jacob','Your brothers are out taking care of the sheep. Go and see if they are all right, and come back and tell me.','Genesis 37:13-14']], ()=>goJoseph('go'));
   }
@@ -1714,7 +1769,7 @@ function josephGrainGoal(){ const S=story; if(S.carrying) { setGoal('Carry the g
 function josephBrothersArrive(){ const W=world; W.brothers.forEach((b,i)=>{ W.E.add(b); b.visible=true; b.rotation.x=0; const x=-4+(i%5)*2, z=-4+Math.floor(i/5)*1.8; b.position.set(x,groundEgypt(x,z)+0.3,z); faceTo(b,P.x,P.z); });
   P.x=0; P.z=-9.5; P.yaw=Math.PI; }
 function updateJoseph(dt, now){
-  const S=story, W=world, t=(S.t+=dt);
+  const S=story, W=world, t=(S.t+=dt); updateJosephDream(dt);
   if(S.fadeSky){ const f=S.fadeSky; f.t+=dt; const k=smooth(f.t/f.dur); scene.background.copy(f.from).lerp(f.to,k); if(k>=1) S.fadeSky=null; }
   W.flock.forEach((s,i)=>{ const u=s.userData; u.tt=(u.tt||0)-dt; if(u.tt<=0||!u.goal){ u.tt=3+(i%4); u.goal={x:WELL.x+6+Math.sin(t*0.3+i)*6, z:WELL.z-8+Math.cos(t*0.25+i*2)*5}; }
     const dx=u.goal.x-s.position.x, dz=u.goal.z-s.position.z, d=Math.hypot(dx,dz); if(d>0.3){ const v=Math.min(0.6,d)*dt; s.position.x+=dx/d*v; s.position.z+=dz/d*v; s.rotation.y=Math.atan2(dx,dz); sheepWalk(s,dt,0.6); } s.position.y=groundCanaan(s.position.x,s.position.z); });
@@ -1737,6 +1792,7 @@ function updateJoseph(dt, now){
   showBeacon(t);
 }
 function boundsJoseph(){ const S=story;
+  if(S.dream) return;
   if(S.inPit){ const dx=P.x-WELL.x, dz=P.z-WELL.z, d=Math.hypot(dx,dz); if(d>0.5){ P.x=WELL.x+dx/d*0.5; P.z=WELL.z+dz/d*0.5; } return; }
   P.x=clamp(P.x,-60,60); P.z=clamp(P.z,-60,60);
   if(josephLand==='canaan'){ const dx=P.x-WELL.x, dz=P.z-WELL.z, d=Math.hypot(dx,dz); if(d<1.6){ P.x=WELL.x+dx/(d||1)*1.6; P.z=WELL.z+dz/(d||1)*1.6; } }
