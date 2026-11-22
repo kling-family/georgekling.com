@@ -230,7 +230,7 @@ const STORIES = [
     endVerse:'"The battle is the Lord\u2019s."', endRef:'1 Samuel 17:47' },
   { id:'elijah', ready:true, blurb:'Climb Mount Carmel, watch the prophets of Baal shout all day, build an altar with 12 stones, soak it with water, and see fire fall from heaven.', endVerse:'"The Lord, He is God! The Lord, He is God!"', endRef:'1 Kings 18:39', before:"David became a great king. His son Solomon was very wise and built a beautiful temple for God. After Solomon, the kingdom split into two parts. One of the worst kings was Ahab. He and his wife Jezebel made the people worship a fake god called Baal. So God sent no rain for three years, and God's prophet Elijah came to face Ahab.", title:'Elijah and the Fire on the Mountain', who:'You are Elijah', ref:'1 Kings 18' },
   { id:'jonah', ready:true, blurb:'Run away on a ship, get caught in a giant storm, get swallowed by a huge fish, and then go to Nineveh after all.', endVerse:'"Salvation comes from the Lord."', endRef:'Jonah 2:9', before:"Elijah showed everyone that the Lord is the real God. After Elijah, God kept sending prophets to warn His people and other nations. Nineveh was a huge city in the enemy country of Assyria, and its people were very wicked. God told a prophet named Jonah to go there and warn them. But Jonah did not want to go.", title:'Jonah and the Big Fish', who:'You are Jonah', ref:'Jonah 1 to 3' },
-  { id:'daniel', before:"Even after Jonah, God's people kept turning away from Him. So God let the army of Babylon take over Jerusalem and carry many of the people far away. One of them was a young man named Daniel. He kept praying to God every day, and he became one of the king's most important helpers. Later the Persians took over Babylon, and King Darius ruled.", title:'Daniel in the Lions\u2019 Den', who:'You are Daniel', ref:'Daniel 6' },
+  { id:'daniel', ready:true, blurb:'Work for King Darius, keep praying to God by your window even when it’s against the law, and spend a night in a den full of lions.', endVerse:'"He rescues and He saves."', endRef:'Daniel 6:27', before:"Even after Jonah, God's people kept turning away from Him. So God let the army of Babylon take over Jerusalem and carry many of the people far away. One of them was a young man named Daniel. He kept praying to God every day, and he became one of the king's most important helpers. Later the Persians took over Babylon, and King Darius ruled.", title:'Daniel in the Lions\u2019 Den', who:'You are Daniel', ref:'Daniel 6' },
   { id:'esther', before:"God protected Daniel. After many years, some of God's people went back home to rebuild Jerusalem, but many stayed in Persia. The king of Persia, Xerxes, picked a young Jewish woman named Esther to be his new queen. Nobody knew she was Jewish. Then the king's evil helper Haman made a plan to destroy all the Jewish people.", title:'Esther the Brave Queen', who:'You are Esther', ref:'Esther 4 to 7' },
   // New Testament
   { id:'christmas', before:"Esther saved her people. After that, God's people waited about 400 years for the Savior God had promised. Then an angel named Gabriel visited a young woman named Mary in Nazareth. He told her she would have a baby, the Son of God, and she would name Him Jesus. Mary and Joseph had to travel to Bethlehem, David's hometown, and there was no room for them anywhere.", title:'The First Christmas', who:'You are a shepherd', ref:'Luke 2' },
@@ -3247,9 +3247,168 @@ function jumpJonah(q){ // ?step=storm | lots | sea | fish | nineveh
   if(q==='nineveh'){ P.x=JNIN.x-44; P.z=0; P.yaw=-Math.PI/2; goJonah('city'); }
 }
 
+/* ================= Story 14: Daniel in the Lions' Den ================= */
+const DPAL={x:0,z:-30}, DHOUSE={x:30,z:20}, DPIT={x:-30,z:25}, DROOF=3.2, DWIN={x:27.4,z:20};
+const DTABLES=[{x:-7,z:-27},{x:0,z:-24},{x:7,z:-27}];
+function groundDaniel(x,z){ const S=story;
+  if(S&&S.id==='daniel'&&S.inDen) return S.denY!==undefined?S.denY:-6;
+  if(x>26&&x<34&&z>16&&z<24) return DROOF;
+  if(x>=34&&x<44&&z>17&&z<19) return DROOF*(1-(x-34)/10);
+  if(Math.abs(x-DPAL.x)<12&&Math.abs(z-DPAL.z)<9) return 0.4;
+  return 0.06*Math.sin(x*0.3)*Math.cos(z*0.25); }
+function buildDaniel(){
+  ground=groundDaniel; resetLook(); scene.background.set(0xcfe0ee);
+  const g=new THREE.Group(); scene.add(g); world={group:g, governors:[], plotters:[], lions:[], scrolls:[]}; const W=world, r=rnd(606);
+  { const N=120, geo=new THREE.PlaneGeometry(300,300,N,N); geo.rotateX(-Math.PI/2); const pos=geo.attributes.position, cols=[], c=new THREE.Color(), a=new THREE.Color(0xd8c498), b=new THREE.Color(0xc8b080);
+    for(let i=0;i<pos.count;i++){ const x=pos.getX(i), z=pos.getZ(i); pos.setY(i,0.06*Math.sin(x*0.3)*Math.cos(z*0.25)-(Math.hypot(x-DPIT.x,z-DPIT.z)<7.4?0.3:0)); const n=0.5+0.5*Math.sin(x*0.5+z*0.9)*Math.cos(x*0.27-z*0.4); c.copy(a).lerp(b,n*0.8); cols.push(c.r,c.g,c.b); }
+    geo.setAttribute('color',new THREE.Float32BufferAttribute(cols,3)); geo.computeVertexNormals(); const uv=geo.attributes.uv; for(let i=0;i<uv.count;i++) uv.setXY(i,uv.getX(i)*90,uv.getY(i)*90);
+    const m=new THREE.Mesh(geo,new THREE.MeshLambertMaterial({vertexColors:true,map:GROUND_TEX})); m.userData.noCast=true; g.add(m); }
+  /* the palace of King Darius: an open hall with blue tiled walls */
+  { const blue=mat(0x2f5fa8), gold=mat(0xe2b23a), stone=mat(0xe6d6b0);
+    const fl=new THREE.Mesh(new THREE.BoxGeometry(24,0.4,18), mat(0xd8c8a0)); fl.position.set(DPAL.x,0.2,DPAL.z); g.add(fl);
+    const bk=new THREE.Mesh(new THREE.BoxGeometry(24,9,0.8), blue); bk.position.set(DPAL.x,4.5,DPAL.z-9); g.add(bk);
+    for(let i=0;i<5;i++){ const lion=new THREE.Mesh(new THREE.BoxGeometry(2.2,1,0.1), gold); lion.position.set(DPAL.x-9+i*4.5,2.2,DPAL.z-8.55); g.add(lion); const lg=new THREE.Mesh(new THREE.BoxGeometry(0.5,0.6,0.1), gold); lg.position.set(DPAL.x-9.6+i*4.5,1.5,DPAL.z-8.55); g.add(lg); const lg2=lg.clone(); lg2.position.x+=1.2; g.add(lg2); }
+    for(const y of [0.6,3.4,6.0]){ const band=new THREE.Mesh(new THREE.BoxGeometry(24,0.25,0.12), mat(0xf0e6cc)); band.position.set(DPAL.x,y,DPAL.z-8.55); g.add(band); }
+    for(const sx of [-1,1]){ const sw=new THREE.Mesh(new THREE.BoxGeometry(0.8,9,18), blue); sw.position.set(DPAL.x+sx*12,4.5,DPAL.z); g.add(sw);
+      for(let k=0;k<3;k++){ const col=new THREE.Mesh(new THREE.CylinderGeometry(0.45,0.55,8.6,14), stone); col.position.set(DPAL.x+sx*7.5,4.7,DPAL.z-5+k*5); g.add(col); const cap=new THREE.Mesh(new THREE.BoxGeometry(1.3,0.5,1.3), gold); cap.position.set(col.position.x,9.0,col.position.z); g.add(cap); } }
+    const roof=new THREE.Mesh(new THREE.BoxGeometry(25,0.6,19), mat(0xc8b48a)); roof.position.set(DPAL.x,9.3,DPAL.z); roof.userData.noCast=true; g.add(roof);
+    const dais=new THREE.Mesh(new THREE.BoxGeometry(5,0.5,3), gold); dais.position.set(DPAL.x,0.65,DPAL.z-6.8); g.add(dais);
+    const th=new THREE.Mesh(new THREE.BoxGeometry(1.6,2.6,1.2), gold); th.position.set(DPAL.x,2.0,DPAL.z-7.6); g.add(th);
+    W.king=person({tunic:0x6a2a8a,sash:0xe2b23a,crown:true,hair:0x1a120a,beard:0x1a120a,h:1.85}); W.king.position.set(DPAL.x,0.9,DPAL.z-6.9); g.add(W.king);
+    for(const sx of [-1,1]){ const fb=new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.2,0.4,12), gold); fb.position.set(DPAL.x+sx*3.6,1.4,DPAL.z-6.6); g.add(fb); const st=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.1,1,6), gold); st.position.set(fb.position.x,0.9,fb.position.z); g.add(st); const f=glowSprite(0xff9a30,1.2); f.position.set(fb.position.x,1.8,fb.position.z); g.add(f); }
+    DTABLES.forEach((tb,i)=>{ const tbl=new THREE.Mesh(new THREE.BoxGeometry(2.2,0.9,1.1), mat(0x7a5232)); tbl.position.set(tb.x,0.85,tb.z); g.add(tbl);
+      const sc=new THREE.Group(); for(let k=0;k<3;k++){ const s=new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.08,0.7,8), mat(0xf0e2c0)); s.rotation.z=Math.PI/2; s.position.set(-0.5+k*0.5,1.38,0); sc.add(s); } sc.position.set(tb.x,0,tb.z); g.add(sc); W.scrolls.push(sc);
+      const gv=person({tunic:[0x2f6aa8,0xb8402e,0x3a8a6a][i],sash:0xe2b23a,hair:0x1a120a,beard:0x1a120a,h:1.78}); place(gv,tb.x,tb.z-1.2); gv.position.y=0.4; faceTo(gv,tb.x,tb.z+5); g.add(gv); W.governors.push(gv); }); }
+  /* the jealous leaders */
+  for(let i=0;i<5;i++){ const p=person({tunic:[0x8a5a2a,0x5a3a6a,0x6a6a3a,0x8a3a3a,0x3a5a5a][i],sash:0xc0902a,hair:0x1a120a,beard:0x1a120a,h:1.75}); place(p,DPAL.x-10+i*0.9,DPAL.z+5.5+(i%2)*0.8); p.position.y=0.4; faceTo(p,DPAL.x,DPAL.z-6); g.add(p); W.plotters.push(p); }
+  /* Babylon: houses, palms, city wall */
+  for(let i=0;i<34;i++){ const x=(r()-0.5)*130, z=(r()-0.5)*130; if(Math.abs(x-DPAL.x)<20&&Math.abs(z-DPAL.z)<16) continue; if(Math.hypot(x-DHOUSE.x,z-DHOUSE.z)<20) continue; if(Math.hypot(x-DPIT.x,z-DPIT.z)<16) continue; if(Math.abs(x)<6&&z>-20&&z<10) continue; const hs=house(g,x,z); hs.scale.set(1,0.9+r()*0.7,1); hs.rotation.y=Math.floor(r()*4)*Math.PI/2; }
+  for(let i=0;i<14;i++){ const x=(r()-0.5)*120, z=(r()-0.5)*120; if(Math.abs(x-DPAL.x)<16&&Math.abs(z-DPAL.z)<13) continue; if(Math.hypot(x-DHOUSE.x,z-DHOUSE.z)<14||Math.hypot(x-DPIT.x,z-DPIT.z)<11) continue; palm(g,x,z,0.9+r()*0.3); }
+  for(let i=0;i<4;i++){ const a=i*Math.PI/2; const w=new THREE.Mesh(new THREE.BoxGeometry(150,10,3), mat(0xc8b080)); w.position.set(Math.sin(a)*75,5,Math.cos(a)*75); w.rotation.y=a; g.add(w); }
+  /* Daniel's house, with an upstairs room whose windows open toward Jerusalem */
+  { const wall=mat(0xe6d3a8), dk=mat(0xb59a6a), H=DHOUSE;
+    const low=new THREE.Mesh(new THREE.BoxGeometry(8,DROOF,8), wall); low.position.set(H.x,DROOF/2,H.z); g.add(low);
+    const rf=new THREE.Mesh(new THREE.BoxGeometry(8.2,0.12,8.2), dk); rf.position.set(H.x,DROOF+0.02,H.z); g.add(rf);
+    const ramp=new THREE.Mesh(new THREE.BoxGeometry(10.2,0.3,2), dk); ramp.position.set(39,DROOF/2-0.1,18); ramp.rotation.z=Math.atan2(DROOF,10); g.add(ramp);
+    const RH=2.6, Y=DROOF+RH/2, wm=mat(0xf0e2c0);
+    const add=(w,d,x,z)=>{ const m=new THREE.Mesh(new THREE.BoxGeometry(w,RH,d), wm); m.position.set(x,Y,z); g.add(m); return m; };
+    add(8,0.3,H.x,H.z-4); add(8,0.3,H.x,H.z+4); add(0.3,5,H.x+4,H.z+1.5); add(0.3,1,H.x+4,H.z-3.5);
+    add(0.3,3,H.x-4,H.z-2.5); add(0.3,3,H.x-4,H.z+2.5);
+    const sill=new THREE.Mesh(new THREE.BoxGeometry(0.3,0.9,2), wm); sill.position.set(H.x-4,DROOF+0.45,H.z); g.add(sill);
+    const lin=new THREE.Mesh(new THREE.BoxGeometry(0.3,0.5,2), wm); lin.position.set(H.x-4,DROOF+RH-0.25,H.z); g.add(lin);
+    const top=new THREE.Mesh(new THREE.BoxGeometry(8.3,0.2,8.3), dk); top.position.set(H.x,DROOF+RH+0.1,H.z); top.userData.noCast=true; g.add(top);
+    const rug=new THREE.Mesh(new THREE.PlaneGeometry(2.4,1.6), mat(0xb8402e)); rug.rotation.x=-Math.PI/2; rug.position.set(H.x-2.4,DROOF+0.1,H.z); g.add(rug);
+    const lamp=glowSprite(0xffb050,0.6); lamp.position.set(H.x+3,DROOF+1.2,H.z-3.2); g.add(lamp); W.lamp=lamp; }
+  /* the lions' den: a deep pit */
+  { const P0=DPIT; const rim=new THREE.Mesh(new THREE.CylinderGeometry(7.6,7.8,1.0,32,1,true), mat(0x9a8a6a,{side:THREE.DoubleSide})); rim.position.set(P0.x,0.4,P0.z); g.add(rim);
+    const lip=new THREE.Mesh(new THREE.RingGeometry(7,7.8,32), mat(0xa89a7a,{side:THREE.DoubleSide})); lip.rotation.x=-Math.PI/2; lip.position.set(P0.x,0.9,P0.z); g.add(lip);
+    const wall=new THREE.Mesh(new THREE.CylinderGeometry(7,7,7,32,1,true), new THREE.MeshLambertMaterial({color:0x8a7a5a,side:THREE.BackSide,map:GROUND_TEX})); wall.position.set(P0.x,-2.6,P0.z); g.add(wall);
+    const fl=new THREE.Mesh(new THREE.CircleGeometry(7,32), new THREE.MeshLambertMaterial({color:0x9a8460,map:GROUND_TEX})); fl.rotation.x=-Math.PI/2; fl.position.set(P0.x,-6,P0.z); fl.userData.noCast=true; g.add(fl);
+    for(let i=0;i<10;i++){ const b=new THREE.Mesh(new THREE.SphereGeometry(0.12,8,6), mat(0xe8e0d0)); b.scale.set(2.4,0.5,0.5); b.position.set(P0.x+(r()-0.5)*9,-5.92,P0.z+(r()-0.5)*9); b.rotation.y=r()*6; g.add(b); }
+    W.stone=new THREE.Mesh(new THREE.CylinderGeometry(7.9,7.9,0.7,32), mat(0x8a8276)); W.stone.position.set(P0.x+17,1.25,P0.z); g.add(W.stone);
+    for(let i=0;i<5;i++){ const L=animal('lion'); const a=i/5*Math.PI*2; place(L,P0.x+Math.cos(a)*4,P0.z+Math.sin(a)*4); L.position.y=-6; L.userData.a=a; L.userData.calm=0; g.add(L); W.lions.push(L); }
+    W.angel=new THREE.Group(); { const an=person({tunic:0xfaf8f0,sash:0xf5d070,hair:0xe8c880,h:2.0,skin:0xe0b080}); W.angel.add(an); const gl=glowSprite(0xfff4c8,3.6); gl.position.y=1.1; W.angel.add(gl); const pl=new THREE.PointLight(0xfff0c8,1.6,20); pl.position.y=2; W.angel.add(pl); }
+    W.angel.position.set(P0.x-1.5,-6,P0.z-2.5); W.angel.visible=false; g.add(W.angel);
+    W.guards=[]; for(let i=0;i<3;i++){ const gd=person({tunic:0x8a3a2a,helmet:0x8a7a5a,spear:true,shield:0xb8402e,hair:0x1a120a,beard:0x1a120a,h:1.8}); place(gd,P0.x-3+i*3,P0.z-9.5); faceTo(gd,P0.x,P0.z); gd.visible=false; g.add(gd); W.guards.push(gd); } }
+  W.beacon=makeBeacon(); W.beacon.visible=false; g.add(W.beacon);
+  P.x=0; P.z=-12; P.yaw=0; P.pitch=0; P.eye=1.8; P.speed=4.8; P.roll=0;
+  story={id:'daniel', step:'', t:0, lock:true, target:null, near:null, checked:0, prays:0, onRoof:false, inDen:false, fallT:-1, stoneT:-1, px:P.x, pz:P.z, fadeSky:null};
+  hand.visible=false; basket.visible=false; sling.visible=false; fruitHand.visible=false;
+  goDaniel('intro');
+}
+function danCut(fn, lines, then, color){ $('fade').style.background=color||'#0b0b14'; $('fade').style.opacity=1; setTimeout(()=>{ fn(); P.lockLook=null; $('fade').style.opacity=0; setTimeout(()=>{ $('fade').style.background='#fff8e6'; },900); if(lines) say(lines, then); else if(then) then(); },1000); }
+function danNight(){ scene.background.set(0x10183a); scene.fog.color.set(0x10183a); hemi.intensity=0.45; sun.intensity=0.2; }
+function danWorkGoal(){ const S=story; const i=[0,1,2].find(k=>!world.scrolls[k].userData.done); S.table=i; S.target=i===undefined?null:{position:new THREE.Vector3(DTABLES[i].x,0,DTABLES[i].z+1.4)}; setGoal(`Do your work for the king: check the <b>records</b> (${S.checked} of 3)`); }
+function goDaniel(step){
+  const S=story, W=world; S.step=step; $('prompt').classList.add('hidden');
+  if(step==='intro'){ S.lock=true; setGoal('Listen');
+    say([[SAY_BIBLE,'King Darius chose 120 leaders to rule his kingdom, and over them he put three governors. Daniel was one of the three.','Daniel 6:1-2'],
+      [SAY_BIBLE,'Daniel did his work so well that the king planned to put him in charge of the whole kingdom.','Daniel 6:3']], ()=>goDaniel('work')); }
+  if(step==='work'){ S.lock=false; danWorkGoal(); }
+  if(step==='law'){ S.lock=true; S.target=null; setGoal('Listen'); lookAt(W.plotters[2].position.x,1.9,W.plotters[2].position.z,0.8);
+    say([[SAY_BIBLE,'The other leaders were jealous. They tried to find something wrong with the way Daniel did his work, but they couldn’t. He was honest and did everything right.','Daniel 6:4'],
+      [SAY_BIBLE,'They said to each other, "The only way we will ever catch Daniel is with something about the law of his God."','Daniel 6:5'],
+      [SAY_BIBLE,'So they went to King Darius and said, "O king, make a law that for 30 days, anyone who prays to any god or person except you will be thrown into the lions’ den."','Daniel 6:6-7', ()=>{ W.plotters.forEach((p,i)=>{ place(p,DPAL.x-2+i,DPAL.z-4.5); p.position.y=0.4; faceTo(p,DPAL.x,DPAL.z-7); }); lookAt(DPAL.x,2.4,DPAL.z-6.9,0.8); }],
+      [SAY_BIBLE,'So King Darius signed the law.','Daniel 6:9']], ()=>{ P.lockLook=null; goDaniel('home'); }); }
+  if(step==='home'){ S.lock=false; setGoal('Go home to your <b>upstairs room</b>'); S.target={position:new THREE.Vector3(44,0,18)}; }
+  if(step==='pray'){ S.lock=false; S.target={position:new THREE.Vector3(DWIN.x,0,DWIN.z)}; setGoal(`Kneel by the <b>window</b> and pray toward Jerusalem (${S.prays} of 3)`); }
+  if(step==='caught'){ S.lock=true; S.target=null; setGoal('Listen'); P.eye=1.8;
+    W.plotters.forEach((p,i)=>{ place(p,19-i*0.6,18+i*1.1); faceTo(p,DHOUSE.x,DHOUSE.z); p.position.y=ground(p.position.x,p.position.z); });
+    say([[SAY_BIBLE,'Then the jealous leaders came as a group, and they found Daniel praying and asking God for help.','Daniel 6:11', ()=>lookAt(19,1.6,20,1)]], ()=>danCut(()=>{ S.onRoof=false; P.x=DPAL.x+1.5; P.z=DPAL.z-1; P.yaw=0; P.pitch=0.05; skyTo(0xe8a070,1); W.plotters.forEach((p,i)=>{ place(p,DPAL.x-3+i*1.2,DPAL.z-4.2); p.position.y=0.4; faceTo(p,DPAL.x,DPAL.z-7); }); },
+      [[SAY_BIBLE,'They went to the king and said, "Daniel pays no attention to you, O king, or to the law you signed. He still prays to his God three times a day!"','Daniel 6:13'],
+       [SAY_BIBLE,'When the king heard this, he was very upset. He wanted to save Daniel, and he tried until the sun went down to find a way.','Daniel 6:14'],
+       [SAY_BIBLE,'But the men said, "Remember, O king, a law of the Medes and Persians can never be changed."','Daniel 6:15'],
+       ['King Darius','Daniel, may your God, whom you serve all the time, rescue you!','Daniel 6:16']], ()=>goDaniel('thrown'))); }
+  if(step==='thrown'){ S.lock=true; setGoal('');
+    danCut(()=>{ danNight(); W.guards.forEach(g=>g.visible=true); P.x=DPIT.x; P.z=DPIT.z-8; P.yaw=0; P.pitch=-0.5; W.lions.forEach(L=>L.userData.prowl=true); },
+      [[SAY_BIBLE,'So the king gave the order, and they brought Daniel and threw him into the lions’ den.','Daniel 6:16', ()=>{ S.inDen=true; S.denY=0.9; S.fallT=0; rumble(1.5); }]], ()=>{ setTimeout(()=>{ if(story!==S) return;
+        say([[SAY_BIBLE,'A big stone was rolled over the opening of the den. The king sealed it with his own ring, so no one could get Daniel out.','Daniel 6:17', ()=>{ S.stoneT=0; }],
+          [SAY_BIBLE,'Then the king went back to his palace. He didn’t eat, and he couldn’t sleep all night.','Daniel 6:18']], ()=>goDaniel('lions')); },400); }); }
+  if(step==='lions'){ S.lock=false; P.speed=2.4; setGoal('The lions are hungry. <b>Pray</b> to God!'); }
+  if(step==='angel'){ S.lock=true; setGoal('Listen'); W.angel.visible=true; S.angelT=0; { const a=Math.atan2(P.x-DPIT.x,P.z-DPIT.z)+Math.PI; W.angel.position.set(P.x+Math.sin(a)*4,-6,P.z+Math.cos(a)*4); faceTo(W.angel,P.x,P.z); } lookAt(W.angel.position.x,-4.3,W.angel.position.z,1);
+    say([[SAY_BIBLE,'God sent His angel into the den, and the angel shut the lions’ mouths!','Daniel 6:22', ()=>{ W.lions.forEach(L=>{ L.userData.prowl=false; L.userData.calmT=0; }); }],
+      [SAY_BIBLE,'All night long, the lions did not hurt Daniel at all.','Daniel 6:22']], ()=>danCut(()=>{ W.angel.visible=false; S.stoneT=-1; S.stoneOpen=0; W.stone.position.set(DPIT.x+17,1.25,DPIT.z); scene.background.set(0xf2c898); scene.fog.color.set(0xf2c898); hemi.intensity=0.5; sun.intensity=0.8; W.king.position.set(DPIT.x,0.9,DPIT.z-7.3); W.king.rotation.set(0,0,0); faceTo(W.king,DPIT.x,DPIT.z); W.king.rotation.x=0.35; W.guards.forEach(g=>g.visible=false); P.lockLook=null; },
+      [[SAY_BIBLE,'At the very first light of morning, the king got up and hurried to the lions’ den.','Daniel 6:19'],
+       ['King Darius','Daniel, servant of the living God! Has your God, whom you serve all the time, been able to rescue you from the lions?','Daniel 6:20', ()=>lookAt(DPIT.x,2.4,DPIT.z-7.3,1)]], ()=>goDaniel('answer'))); }
+  if(step==='answer'){ S.lock=true; setGoal('Answer the <b>king</b>'); }
+  if(step==='end'){ S.lock=true; setGoal('Listen');
+    say([[SAY_BIBLE,'King Darius wrote to all the people in his whole kingdom: "Everyone must respect the God of Daniel. He is the living God, and He lasts forever!"','Daniel 6:25-26'],
+      [SAY_BIBLE,'"He rescues and He saves. He does amazing things in heaven and on earth. He saved Daniel from the power of the lions."','Daniel 6:27']], ()=>finishStory()); }
+}
+function updateDaniel(dt, now){
+  const S=story, W=world, t=(S.t+=dt);
+  if(S.fadeSky){ const f=S.fadeSky; f.t+=dt; const k=smooth(f.t/f.dur); scene.background.copy(f.from).lerp(f.to,k); scene.fog.color.copy(scene.background); if(k>=1) S.fadeSky=null; }
+  /* falling into the den */
+  if(S.fallT>=0 && S.fallT!==undefined){ S.fallT+=dt; const k=clamp(S.fallT/0.9,0,1); P.z=lerp(DPIT.z-8,DPIT.z-3,k); S.denY=lerp(0.9,-6,k*k); if(k>=1){ S.fallT=-1; S.denY=-6; shake=0.5; P.pitch=0; P.yaw=Math.PI; } }
+  if(S.stoneT>=0 && S.stoneT!==undefined){ S.stoneT+=dt; const k=clamp(S.stoneT/2.5,0,1); W.stone.position.x=DPIT.x+17*(1-smooth(k)); if(k>=1){ S.stoneT=-1; scene.background.set(0x050508); scene.fog.color.set(0x050508); hemi.intensity=0.38; sun.intensity=0; } }
+  /* the lions */
+  W.lions.forEach((L,i)=>{ const u=L.userData; if(u.prowl){ let tx,tz; if(S.step==='lions'){ const base=Math.atan2(DPIT.z-P.z,DPIT.x-P.x)+(i-2)*0.55+Math.sin(t*0.4+i)*0.15; tx=P.x+Math.cos(base)*(3.4+(i%2)*1.2); tz=P.z+Math.sin(base)*(3.4+(i%2)*1.2); const cd=Math.hypot(tx-DPIT.x,tz-DPIT.z); if(cd>5.8){ tx=DPIT.x+(tx-DPIT.x)/cd*5.8; tz=DPIT.z+(tz-DPIT.z)/cd*5.8; } } else { const want=u.a+t*0.25; tx=DPIT.x+Math.cos(want)*4.2; tz=DPIT.z+Math.sin(want)*4.2; } const dx=tx-L.position.x, dz=tz-L.position.z, d=Math.hypot(dx,dz);
+      if(d>0.3){ const v=Math.min(1.6,d)*dt; L.position.x+=dx/d*v; L.position.z+=dz/d*v; sheepWalk(L,dt,1); } const fx=P.x-L.position.x, fz=P.z-L.position.z; L.rotation.y=Math.atan2(fx,fz); L.position.y=-6; if(S.step==='lions' && Math.random()<dt*0.12){ rumble(0.7); shake=Math.max(shake,0.1); } }
+    else if(u.calmT!==undefined){ u.calmT+=dt; L.position.y=-6-Math.min(0.35,u.calmT*0.3); } });
+  if(W.angel.visible){ S.angelT+=dt; W.angel.children[1].scale.setScalar(3.6+Math.sin(t*3)*0.3); }
+  let near=null;
+  if(S.step==='work' && S.table!==undefined){ const tb=DTABLES[S.table]; if(Math.hypot(P.x-tb.x,P.z-(tb.z+1.4))<2.2) near={label:'Check the records', fn:()=>{ W.scrolls[S.table].userData.done=true; W.scrolls[S.table].children.forEach(s=>s.material=mat(0xe2b23a)); S.checked++;
+      if(S.checked===1) say([[SAY_BIBLE,'Daniel made sure that nobody cheated the king.','Daniel 6:2']], ()=>danWorkGoal());
+      else if(S.checked===2) say([[SAY_BIBLE,'Daniel was faithful. He was never lazy and never dishonest.','Daniel 6:4']], ()=>danWorkGoal());
+      else goDaniel('law'); }}; }
+  if(S.step==='home' && S.onRoof && Math.hypot(P.x-DHOUSE.x,P.z-DHOUSE.z)<3.5){ S.lock=true; S.target=null; say([[SAY_BIBLE,'When Daniel heard that the law had been signed, he went home to his upstairs room. Its windows opened toward Jerusalem.','Daniel 6:10'],[SAY_BIBLE,'Three times a day, Daniel got down on his knees and prayed, giving thanks to his God, just as he had always done.','Daniel 6:10']], ()=>goDaniel('pray')); S.step='homeTalk'; }
+  if(S.step==='pray' && !S.busy && Math.hypot(P.x-DWIN.x,P.z-DWIN.z)<1.8) near={label:['Pray in the morning','Pray at noon','Pray in the evening'][S.prays], fn:()=>{ S.busy=true; S.lock=true; P.eye=1.1; P.yaw=Math.PI/2; P.pitch=0.08;
+      const L=[[[SAY_BIBLE,'In the morning, Daniel knelt by the open window and prayed to God, giving thanks.','Daniel 6:10']],[[SAY_BIBLE,'At noon, Daniel knelt and prayed again, even though he knew about the law.','Daniel 6:10']],[[SAY_BIBLE,'In the evening, Daniel knelt and prayed again.','Daniel 6:10']]][S.prays];
+      say(L, ()=>{ S.prays++; S.busy=false; S.lock=false; P.eye=1.8; if(S.prays===1) skyTo(0xb9d6ee,2000); if(S.prays===2) skyTo(0xe8a070,2000); if(S.prays>=3) goDaniel('caught'); else goDaniel('pray'); }); }};
+  if(S.step==='lions' && !saying()) near={label:'Pray to God', fn:()=>goDaniel('angel')};
+  if(S.step==='answer' && !saying()) near={label:'Answer the king', fn:()=>{ S.lock=true;
+      say([['You are Daniel','O king, live forever! My God sent His angel, and he shut the lions’ mouths. They have not hurt me, because I did nothing wrong in God’s eyes, or against you, O king.','Daniel 6:21-22'],
+        [SAY_BIBLE,'The king was overjoyed! He ordered his men to lift Daniel out of the den. There wasn’t a single scratch on him, because he had trusted in his God.','Daniel 6:23']], ()=>danCut(()=>{ S.inDen=false; S.denY=undefined; P.x=DPIT.x+2; P.z=DPIT.z-10; P.yaw=0; P.speed=4.8; W.king.rotation.x=0; place(W.king,DPIT.x,DPIT.z-12.5); faceTo(W.king,P.x,P.z); }, null, ()=>goDaniel('end'))); }};
+  S.near=near;
+  const pr=$('prompt');
+  if(near && !saying()){ pr.textContent=(touch?'':'Space: ')+near.label; pr.classList.remove('hidden'); $('act').textContent=near.label.split(' ')[0]; }
+  else { pr.classList.add('hidden'); $('act').textContent= saying()?'Next':'Use'; }
+  showBeacon(t);
+}
+function boundsDaniel(){ const S=story;
+  if(S.inDen){ const dx=P.x-DPIT.x, dz=P.z-DPIT.z, d=Math.hypot(dx,dz); if(d>6.2&&S.fallT<0){ P.x=DPIT.x+dx/d*6.2; P.z=DPIT.z+dz/d*6.2; } S.px=P.x; S.pz=P.z; return; }
+  P.x=clamp(P.x,-70,70); P.z=clamp(P.z,-70,70);
+  const fp=(x,z)=>x>26&&x<34&&z>16&&z<24, onRamp=(x,z)=>x>=34&&x<44&&z>17&&z<19;
+  if(fp(P.x,P.z)){ if(!S.onRoof){ if(onRamp(S.px,S.pz)) S.onRoof=true; else { P.x=S.px; P.z=S.pz; } } }
+  else if(S.onRoof){ if(onRamp(P.x,P.z)) S.onRoof=false; else { P.x=S.px; P.z=S.pz; } }
+  if(S.onRoof){ /* the walls of the upstairs room, with a door to the stairs */ if(!(P.z>17.1&&P.z<18.9)) P.x=Math.min(P.x,33.6); P.x=Math.max(P.x,26.5); P.z=clamp(P.z,16.4,23.6); }
+  if(onRamp(P.x,P.z) && !onRamp(S.px,S.pz) && !fp(S.px,S.pz) && P.x<42){ P.x=S.px; P.z=S.pz; }
+  if(onRamp(S.px,S.pz) && P.x<42 && !fp(P.x,P.z) && !onRamp(P.x,P.z)){ P.x=S.px; P.z=S.pz; }
+  { const dx=P.x-DPIT.x, dz=P.z-DPIT.z, d=Math.hypot(dx,dz); if(d<8.2){ P.x=DPIT.x+dx/d*8.2; P.z=DPIT.z+dz/d*8.2; } }
+  if(Math.abs(P.x-DPAL.x)<12.6&&P.z<DPAL.z+9&&P.z>DPAL.z-9.6){ if(P.z<DPAL.z-8.2) P.z=DPAL.z-8.2; if(Math.abs(P.x-DPAL.x)>11.2){ P.x=DPAL.x+Math.sign(P.x-DPAL.x)*11.2; } }
+  S.px=P.x; S.pz=P.z; }
+function jumpDaniel(q){ // ?step=home | pray | den | morning
+  const S=story, W=world; sayQ.length=0; $('say').classList.add('hidden'); sayCb=null;
+  if(q==='home'){ P.x=10; P.z=-8; goDaniel('home'); }
+  if(q==='pray'){ P.x=29; P.z=20; S.onRoof=true; S.px=P.x; S.pz=P.z; goDaniel('pray'); }
+  if(q==='den'){ danNight(); S.inDen=true; S.denY=-6; P.x=DPIT.x; P.z=DPIT.z-3; P.yaw=Math.PI; P.speed=2.4; W.stone.position.x=DPIT.x; scene.background.set(0x050508); scene.fog.color.set(0x050508); hemi.intensity=0.38; sun.intensity=0; W.lions.forEach(L=>L.userData.prowl=true); goDaniel('lions'); }
+  if(q==='morning'){ S.inDen=true; S.denY=-6; P.x=DPIT.x; P.z=DPIT.z-3; W.lions.forEach(L=>{ L.userData.calmT=5; }); scene.background.set(0xf2c898); W.king.position.set(DPIT.x,0.9,DPIT.z-7.3); faceTo(W.king,DPIT.x,DPIT.z); W.king.rotation.x=0.35; goDaniel('answer'); }
+}
+
 /* David's story hooks */
 function boundsDavid(){ P.x=clamp(P.x,-34,34); P.z=clamp(P.z,-60,72); }
 const IMPL = {
+  daniel: { build:buildDaniel, go:goDaniel, update:updateDaniel, bounds:boundsDaniel, locked:S=>S.lock },
   jonah: { build:buildJonah, go:goJonah, update:updateJonah, bounds:boundsJonah, locked:S=>S.lock },
   elijah: { build:buildElijah, go:goElijah, update:updateElijah, bounds:boundsElijah, locked:S=>S.lock },
   samson: { build:buildSamson, go:goSamson, update:updateSamson, bounds:boundsSamson, locked:S=>S.lock },
@@ -3280,7 +3439,7 @@ function startStory(id){
   const q=new URLSearchParams(location.search).get('step'); if(q && story) jumpTo(q); // preview links for testing
 }
 function jumpTo(q){ // ?step=stones or ?step=sling
-  const S=story; if(story.id==='adam') return jumpAdam(q); if(story.id==='noah') return jumpNoah(q); if(story.id==='abraham') return jumpAbraham(q); if(story.id==='joseph') return jumpJoseph(q); if(story.id==='babymoses') return jumpMoses(q); if(story.id==='bush') return jumpBush(q); if(story.id==='redsea') return jumpRed(q); if(story.id==='jericho') return jumpJericho(q); if(story.id==='gideon') return jumpGideon(q); if(story.id==='samson') return jumpSamson(q); if(story.id==='elijah') return jumpElijah(q); if(story.id==='jonah') return jumpJonah(q);
+  const S=story; if(story.id==='adam') return jumpAdam(q); if(story.id==='noah') return jumpNoah(q); if(story.id==='abraham') return jumpAbraham(q); if(story.id==='joseph') return jumpJoseph(q); if(story.id==='babymoses') return jumpMoses(q); if(story.id==='bush') return jumpBush(q); if(story.id==='redsea') return jumpRed(q); if(story.id==='jericho') return jumpJericho(q); if(story.id==='gideon') return jumpGideon(q); if(story.id==='samson') return jumpSamson(q); if(story.id==='elijah') return jumpElijah(q); if(story.id==='jonah') return jumpJonah(q); if(story.id==='daniel') return jumpDaniel(q);
   if(q==='stones'||q==='sling'){ world.lamb.userData.following=true; world.lamb.userData.goal={x:world.flock.x+1,z:world.flock.z}; world.lamb.position.set(world.flock.x+1,0,world.flock.z); world.israel.forEach(p=>p.position.z+=12); }
   if(q==='stones'){ P.x=0; P.z=STREAM_Z+4; P.yaw=0; sayQ.length=0; $('say').classList.add('hidden'); go('stones'); }
   if(q==='sling'){ world.stones.forEach(s=>s.visible=false); S.stonesHeld=5; S.stonesLeft=5; P.x=0; P.z=-20; P.yaw=0; world.goliath.position.set(0,ground(0,-36),-36); sayQ.length=0; $('say').classList.add('hidden'); $('stones').classList.remove('hidden'); updateStonesHud(); go('sling'); }
@@ -3291,7 +3450,7 @@ function finishStory(){
   const nextReady=READY[READY.indexOf(s)+1], nextAny=STORIES[STORIES.indexOf(s)+1];
   $('fade').style.opacity=0.6;
   setTimeout(()=>{
-    $('endWho').textContent='You saw what '+({david:'David',adam:'Adam',noah:'Noah',abraham:'Abraham',joseph:'Joseph',babymoses:'Miriam',bush:'Moses',redsea:'Moses',jericho:'Joshua',gideon:'Gideon',samson:'Samson',elijah:'Elijah',jonah:'Jonah'}[s.id]||'they')+' did.';
+    $('endWho').textContent='You saw what '+({david:'David',adam:'Adam',noah:'Noah',abraham:'Abraham',joseph:'Joseph',babymoses:'Miriam',bush:'Moses',redsea:'Moses',jericho:'Joshua',gideon:'Gideon',samson:'Samson',elijah:'Elijah',jonah:'Jonah',daniel:'Daniel'}[s.id]||'they')+' did.';
     $('endVerse').textContent=s.endVerse; $('endRef').textContent=s.endRef;
     $('endUnlock').textContent= nextReady ? 'You unlocked '+nextReady.title+'!' : (nextAny ? 'Next up: '+nextAny.title+'. It is coming soon!' : 'You finished every story!');
     $('endNext').innerHTML = nextAny ? '<b>What happens next</b>'+nextAny.before : '';
