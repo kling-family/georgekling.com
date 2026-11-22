@@ -229,7 +229,7 @@ const STORIES = [
     blurb:'Find a lost lamb, bring food to your brothers, and face the giant with five smooth stones.',
     endVerse:'"The battle is the Lord\u2019s."', endRef:'1 Samuel 17:47' },
   { id:'elijah', ready:true, blurb:'Climb Mount Carmel, watch the prophets of Baal shout all day, build an altar with 12 stones, soak it with water, and see fire fall from heaven.', endVerse:'"The Lord, He is God! The Lord, He is God!"', endRef:'1 Kings 18:39', before:"David became a great king. His son Solomon was very wise and built a beautiful temple for God. After Solomon, the kingdom split into two parts. One of the worst kings was Ahab. He and his wife Jezebel made the people worship a fake god called Baal. So God sent no rain for three years, and God's prophet Elijah came to face Ahab.", title:'Elijah and the Fire on the Mountain', who:'You are Elijah', ref:'1 Kings 18' },
-  { id:'jonah', before:"Elijah showed everyone that the Lord is the real God. After Elijah, God kept sending prophets to warn His people and other nations. Nineveh was a huge city in the enemy country of Assyria, and its people were very wicked. God told a prophet named Jonah to go there and warn them. But Jonah did not want to go.", title:'Jonah and the Big Fish', who:'You are Jonah', ref:'Jonah 1 to 3' },
+  { id:'jonah', ready:true, blurb:'Run away on a ship, get caught in a giant storm, get swallowed by a huge fish, and then go to Nineveh after all.', endVerse:'"Salvation comes from the Lord."', endRef:'Jonah 2:9', before:"Elijah showed everyone that the Lord is the real God. After Elijah, God kept sending prophets to warn His people and other nations. Nineveh was a huge city in the enemy country of Assyria, and its people were very wicked. God told a prophet named Jonah to go there and warn them. But Jonah did not want to go.", title:'Jonah and the Big Fish', who:'You are Jonah', ref:'Jonah 1 to 3' },
   { id:'daniel', before:"Even after Jonah, God's people kept turning away from Him. So God let the army of Babylon take over Jerusalem and carry many of the people far away. One of them was a young man named Daniel. He kept praying to God every day, and he became one of the king's most important helpers. Later the Persians took over Babylon, and King Darius ruled.", title:'Daniel in the Lions\u2019 Den', who:'You are Daniel', ref:'Daniel 6' },
   { id:'esther', before:"God protected Daniel. After many years, some of God's people went back home to rebuild Jerusalem, but many stayed in Persia. The king of Persia, Xerxes, picked a young Jewish woman named Esther to be his new queen. Nobody knew she was Jewish. Then the king's evil helper Haman made a plan to destroy all the Jewish people.", title:'Esther the Brave Queen', who:'You are Esther', ref:'Esther 4 to 7' },
   // New Testament
@@ -3054,9 +3054,203 @@ function jumpElijah(q){ // ?step=baal | stones | pour | fire | rain | run
   if(q==='run'){ evening(); S.bowing=true; S.bow=1; W.rain.visible=true; scene.background.set(0x5a6470); scene.fog.color.set(0x5a6470); hemi.intensity=0.42; sun.intensity=0.35; P.x=0; P.z=8; goElijah('run'); }
 }
 
+/* ================= Story 13: Jonah ================= */
+const JSEA={x:-150,z:0}, JFIN={x:-400,z:0}, JNIN={x:180,z:0}, JPREACH=[{x:162,z:4},{x:176,z:-12},{x:186,z:12}];
+const JN={mode:'land', fallY:0};
+function landBase(x,z){ const c=x-14; return c<0?0.3+c*0.5:0.3+Math.min(5,c*0.12)+0.25*Math.sin(x*0.13)*Math.cos(z*0.11)*Math.min(1,c/10); }
+function landJonah(x,z){ let h=landBase(x,z);
+  if(Math.abs(z)<1.3 && x>-0.8 && x<16) h=Math.max(h,1.4); /* the pier */ return h; }
+function groundJonah(x,z){ if(JN.mode==='ship') return world&&world.ship? world.ship.position.y+1.55 : 1.55; if(JN.mode==='under') return JN.fallY; if(JN.mode==='fish') return 0; return landJonah(x,z); }
+function jonahWave(x,z,t,amp){ return amp*(Math.sin(x*0.16+t*1.4)*0.6+Math.cos(z*0.13+t*1.1)*0.5+Math.sin((x+z)*0.31+t*2.3)*0.25); }
+function shipMesh(){ const o=new THREE.Group(), wood=mat(0x8a6038), dk=mat(0x5a3a20);
+  const hull=new THREE.Mesh(new THREE.BoxGeometry(4.4,1.9,12), dk); hull.position.y=0.55; o.add(hull);
+  for(const sz of [-1,1]){ const b=new THREE.Mesh(new THREE.BoxGeometry(3.1,1.9,3.1), dk); b.rotation.y=Math.PI/4; b.position.set(0,0.55,sz*6); o.add(b); }
+  const post=new THREE.Mesh(new THREE.CylinderGeometry(0.14,0.2,2.4,8), dk); post.position.set(0,2.2,-8.1); post.rotation.x=-0.4; o.add(post);
+  const deck=new THREE.Mesh(new THREE.BoxGeometry(4.2,0.1,12.4), wood); deck.position.y=1.5; o.add(deck);
+  for(const sx of [-1,1]){ const r=new THREE.Mesh(new THREE.BoxGeometry(0.12,0.55,12.6), wood); r.position.set(sx*2.15,1.8,0); o.add(r); }
+  const mast=new THREE.Mesh(new THREE.CylinderGeometry(0.13,0.17,9,8), dk); mast.position.set(0,6,-1); o.add(mast);
+  const yard=new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.08,6.4,6), dk); yard.rotation.z=Math.PI/2; yard.position.set(0,9.2,-0.85); o.add(yard);
+  const sail=new THREE.Mesh(new THREE.PlaneGeometry(5.8,5.2), mat(0xf0e6cc,{side:THREE.DoubleSide})); sail.position.set(0,6.5,-0.8); o.add(sail); o.userData.sail=sail;
+  for(const y of [5.2,7.6]){ const st=new THREE.Mesh(new THREE.PlaneGeometry(5.8,0.45), mat(0xb8402e,{side:THREE.DoubleSide})); st.position.set(0,y,-0.78); o.add(st); }
+  const hatch=new THREE.Mesh(new THREE.BoxGeometry(1.4,0.12,1.4), mat(0x4a3020)); hatch.position.set(0,1.56,3.5); o.add(hatch);
+  return o; }
+function bigFish(){ const o=new THREE.Group(), c=0x4a6a8a;
+  blob(o,c,1,2.3,2.1,6,0,0,0,24); blob(o,0xa8c0d0,0.9,2.0,1.4,5.2,0,-0.8,0.3,20);
+  for(const sx of [-1,1]){ const e=new THREE.Mesh(new THREE.SphereGeometry(0.28,12,10), mat(0xf6f4ee)); e.position.set(sx*1.75,0.6,4.2); o.add(e); const pu=new THREE.Mesh(new THREE.SphereGeometry(0.15,10,8), mat(0x101010)); pu.position.set(sx*1.95,0.62,4.3); o.add(pu);
+    const fin=new THREE.Mesh(new THREE.ConeGeometry(0.6,2.2,4), mat(0x3a5a7a)); fin.rotation.z=sx*2.0; fin.position.set(sx*2.2,-0.6,1); o.add(fin); }
+  const tail=new THREE.Group(); for(const sy of [-1,1]){ const f=new THREE.Mesh(new THREE.ConeGeometry(1.4,3.2,4), mat(0x3a5a7a)); f.rotation.x=Math.PI/2+sy*0.6; f.position.set(0,sy*1.1,-1.2); tail.add(f); } tail.position.z=-6.2; o.add(tail); o.userData.tail=tail;
+  const top=new THREE.Mesh(new THREE.ConeGeometry(0.8,2.4,4), mat(0x3a5a7a)); top.position.set(0,2.4,-0.5); top.scale.z=2; o.add(top);
+  const jaw=new THREE.Group(); const jm=new THREE.Mesh(new THREE.SphereGeometry(1,20,12,0,Math.PI*2,Math.PI/2,Math.PI/2), mat(0x8aa0b4)); jm.scale.set(2.0,0.9,1.8); jaw.add(jm); jaw.position.set(0,-0.3,3.8); o.add(jaw); o.userData.jaw=jaw;
+  const mouth=new THREE.Mesh(new THREE.CircleGeometry(1.5,20), new THREE.MeshBasicMaterial({color:0x1a0606})); mouth.position.set(0,-0.3,6.0); mouth.scale.y=0.2; o.add(mouth); o.userData.mouth=mouth;
+  return o; }
+function wp(o){ const v=new THREE.Vector3(); o.getWorldPosition(v); return v; }
+function buildJonah(){
+  JN.mode='land'; ground=groundJonah; resetLook();
+  const g=new THREE.Group(); scene.add(g); world={group:g, crates:[], sailors:[], people:[], fishTeeth:[]}; const W=world, r=rnd(1303);
+  { const N=180, geo=new THREE.PlaneGeometry(320,220,N,N); geo.rotateX(-Math.PI/2); geo.translate(150,0,0); const pos=geo.attributes.position, cols=[], c=new THREE.Color(), sand=new THREE.Color(0xe2cf9a), a=new THREE.Color(0xa8a862), b=new THREE.Color(0xc0b07a), wet=new THREE.Color(0xb8a070);
+    for(let i=0;i<pos.count;i++){ const x=pos.getX(i), z=pos.getZ(i); pos.setY(i,landBase(x,z)); const n=0.5+0.5*Math.sin(x*0.5+z*0.9)*Math.cos(x*0.27-z*0.4); c.copy(a).lerp(b,n*0.8); if(x<24) c.copy(sand).lerp(wet,x<15?0.6:0); else if(x<30) c.lerp(sand,(30-x)/6); if(x>150&&x<210&&Math.abs(z)<30) c.lerp(new THREE.Color(0xcbb888),0.7); cols.push(c.r,c.g,c.b); }
+    geo.setAttribute('color',new THREE.Float32BufferAttribute(cols,3)); geo.computeVertexNormals(); const uv=geo.attributes.uv; for(let i=0;i<uv.count;i++) uv.setXY(i,uv.getX(i)*90,uv.getY(i)*60);
+    const m=new THREE.Mesh(geo,new THREE.MeshLambertMaterial({vertexColors:true,map:GROUND_TEX})); m.userData.noCast=true; g.add(m); W.land=m; }
+  /* the sea, with waves */
+  { const N=70, geo=new THREE.PlaneGeometry(260,260,N,N); geo.rotateX(-Math.PI/2); const sea=new THREE.Mesh(geo, new THREE.MeshPhongMaterial({color:0x2f78a8,specular:0xbfd8e8,shininess:70,side:THREE.DoubleSide,flatShading:true})); sea.userData.noCast=true; g.add(sea); W.sea=sea; W.seaBase=Float32Array.from(geo.attributes.position.array); }
+  /* the port of Joppa */
+  for(let i=0;i<4;i++){ const p=new THREE.Mesh(new THREE.CylinderGeometry(0.15,0.15,3,6), mat(0x5a3a20)); p.position.set(1+i*4.5,0,1.3); g.add(p); const p2=p.clone(); p2.position.z=-1.3; g.add(p2); }
+  { const pier=new THREE.Mesh(new THREE.BoxGeometry(16.8,0.2,2.6), mat(0x8a6038)); pier.position.set(7.6,1.3,0); g.add(pier); }
+  for(let i=0;i<22;i++){ const x=24+(i%5)*6.5+(r()-0.5)*2, z=(i<11?-1:1)*(7+Math.floor((i%11)/5)*7+r()*2); const hs=house(g,x,z); hs.scale.set(0.8,0.8+r()*0.6,0.8); }
+  for(let i=0;i<10;i++) palm(g,18+r()*30,(r()-0.5)*70,0.8+r()*0.3);
+  for(let i=0;i<14;i++){ const x=40+r()*100, z=(r()-0.5)*160; if(Math.abs(z)<8) continue; tree(g,x,z,0.9+r()*0.4); }
+  W.captain=person({tunic:0x2f5a8a,sash:0xe2b23a,hair:0x2a1a10,beard:0x5a4a3a,h:1.8}); place(W.captain,4,0); faceTo(W.captain,20,0); g.add(W.captain);
+  for(let i=0;i<5;i++){ const c=new THREE.Mesh(new THREE.BoxGeometry(0.9,0.8,0.9), mat(0x9a7a4a)); c.position.set(9+(i%3)*1.2,1.8,(i<3?-0.6:0.6)); g.add(c); }
+  /* the ship */
+  W.ship=shipMesh(); W.ship.position.set(-3,0,0); g.add(W.ship);
+  for(let i=0;i<4;i++){ const c=new THREE.Mesh(new THREE.BoxGeometry(0.85,0.8,0.85), mat([0x9a7a4a,0x8a6a3a][i%2])); c.position.set((i%2?1:-1)*1.2,1.95,1.5+Math.floor(i/2)*2.6); c.userData.fly=-1; W.ship.add(c); W.crates.push(c); }
+  for(let i=0;i<5;i++){ const s=person({tunic:[0x3a5a7a,0x7a4a3a,0x5a6a4a,0x8a7a5a,0x4a4a6a][i],hair:0x1a120a,beard:i%2?0x2a1a10:null,h:1.72}); const a=i/5*Math.PI*2; s.position.set(Math.cos(a)*1.2,1.55,-4.4+Math.sin(a)*1.0); s.rotation.y=Math.atan2(-Math.cos(a),-Math.sin(a)); W.ship.add(s); W.sailors.push(s); }
+  W.sailors.forEach(s=>s.visible=false);
+  /* the big fish */
+  W.fish=bigFish(); W.fish.visible=false; g.add(W.fish);
+  /* inside the fish */
+  { const F=new THREE.Group(); const tube=new THREE.Mesh(new THREE.CylinderGeometry(3.2,3.2,17,22,1,true), new THREE.MeshLambertMaterial({color:0x9a4a4a,emissive:0x2a0808,side:THREE.BackSide})); tube.rotation.x=Math.PI/2; tube.position.y=2.2; F.add(tube);
+    const fl=new THREE.Mesh(new THREE.PlaneGeometry(5.6,17), new THREE.MeshPhongMaterial({color:0x7a3434,emissive:0x1a0404,shininess:80,specular:0x806060})); fl.rotation.x=-Math.PI/2; fl.position.y=0.02; F.add(fl);
+    for(let k=0;k<8;k++){ const rb=new THREE.Mesh(new THREE.TorusGeometry(3.05,0.16,6,22,Math.PI*1.3), mat(0xe0d0b8)); rb.position.set(0,2.2,-7+k*2); rb.rotation.z=-Math.PI*0.15; F.add(rb); }
+    for(const sz of [-1,1]){ const e=new THREE.Mesh(new THREE.CircleGeometry(3.2,22), new THREE.MeshBasicMaterial({color:0x140404})); e.position.set(0,2.2,sz*8.5); e.rotation.y=sz>0?Math.PI:0; F.add(e); }
+    for(let i=0;i<14;i++){ const w=new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.05,0.8+Math.random()*1.2,5), mat(0x4a7a3a,{emissive:0x1a3a14})); w.position.set((Math.random()-0.5)*4,0.4,(Math.random()-0.5)*14); w.rotation.z=(Math.random()-0.5)*1.2; F.add(w); }
+    for(let i=0;i<6;i++){ const p=new THREE.Mesh(new THREE.CircleGeometry(0.4+Math.random()*0.5,12), new THREE.MeshPhongMaterial({color:0x5a2a2a,shininess:100,specular:0xffffff})); p.rotation.x=-Math.PI/2; p.position.set((Math.random()-0.5)*3,0.04,(Math.random()-0.5)*12); F.add(p); }
+    const pl=new THREE.PointLight(0xff9a7a,0.9,22); pl.position.y=2.6; F.add(pl);
+    F.position.set(JFIN.x,0,JFIN.z); F.visible=false; g.add(F); W.inFish=F; }
+  /* Nineveh */
+  { const wallM=mat(0xd8c49a), dk=mat(0xc0a878), X0=150, X1=212, Z=32;
+    const seg=(x0,z0,x1,z1)=>{ const L=Math.hypot(x1-x0,z1-z0); const w=new THREE.Mesh(new THREE.BoxGeometry(L,7,2.2), wallM); w.position.set((x0+x1)/2,landJonah((x0+x1)/2,(z0+z1)/2)+3,(z0+z1)/2); w.rotation.y=-Math.atan2(z1-z0,x1-x0); g.add(w); };
+    seg(X0,-Z,X1,-Z); seg(X0,Z,X1,Z); seg(X1,-Z,X1,Z); seg(X0,-Z,X0,-3.5); seg(X0,3.5,X0,Z);
+    for(const sz of [-1,1]){ const tw=new THREE.Mesh(new THREE.BoxGeometry(3.4,10,3.4), dk); tw.position.set(X0,landJonah(X0,sz*5)+4.5,sz*5); g.add(tw); for(const sx of [-1,1]){ const lam=new THREE.Mesh(new THREE.BoxGeometry(0.4,2.6,1.4), mat(0xe8dcc0)); lam.position.set(X0-1.9,landJonah(X0,sz*5)+1.8,sz*5+sx*0.5); g.add(lam); } }
+    const lin=new THREE.Mesh(new THREE.BoxGeometry(2.6,2,7), wallM); lin.position.set(X0,landJonah(X0,0)+7,0); g.add(lin);
+    for(let ix=0;ix<7;ix++) for(let iz=0;iz<6;iz++){ const x=156+ix*7.8, z=-26+iz*10.4; if(Math.abs(z-0)<5) continue; if(JPREACH.some(p=>Math.hypot(p.x-x,p.z-z)<5)) continue; if(x>192&&Math.abs(z)<12) continue; const hs=house(g,x+(r()-0.5)*1.5,z+(r()-0.5)*1.5); hs.scale.set(1.0,0.9+r()*0.8,0.9); }
+    const pal=new THREE.Group(); const pb=new THREE.Mesh(new THREE.BoxGeometry(12,6,16), mat(0xe6d6b0)); pb.position.y=3; pal.add(pb); const pt=new THREE.Mesh(new THREE.BoxGeometry(12.6,0.6,16.6), mat(0x2f6aa8)); pt.position.y=6.2; pal.add(pt);
+    const dr=new THREE.Mesh(new THREE.BoxGeometry(0.1,3.2,2.4), mat(0x3a2a18)); dr.position.set(-6.02,1.6,0); pal.add(dr); pal.position.set(204,landJonah(204,0),0); g.add(pal);
+    W.throne=new THREE.Mesh(new THREE.BoxGeometry(1.4,1.2,1.2), mat(0xe2b23a)); W.throne.position.set(196,landJonah(196,0)+0.6,0); g.add(W.throne);
+    W.king=person({tunic:0x8a2a5a,sash:0xe2b23a,crown:true,hair:0x1a120a,beard:0x1a120a,h:1.85}); place(W.king,196,-1.2); faceTo(W.king,160,0); g.add(W.king);
+    for(let i=0;i<40;i++){ const p=person({tunic:[0xb8402e,0x2f6aa8,0xd0902a,0x6a3a8a,0x3a8a6a,0xe8dcc0][i%6],hair:[0x1a120a,0x2a1a10][i%2],beard:i%3===0?0x1a120a:null,h:1.55+r()*0.35});
+      let x,z; if(i<30){ const sp=JPREACH[i%3]; const a=r()*Math.PI*2, d=3+r()*4; x=sp.x+Math.cos(a)*d; z=sp.z+Math.sin(a)*d; } else { x=156+r()*36; z=(r()-0.5)*4; }
+      place(p,x,z); p.rotation.y=r()*6; p.rotation.order='YXZ'; g.add(p); W.people.push(p); p.userData.wander=r()*6; } }
+  { const n=touch?1500:3000, geo=new THREE.BufferGeometry(), v=new Float32Array(n*6); for(let i=0;i<n;i++){ const x=(Math.random()-0.5)*50, z=(Math.random()-0.5)*50, y=Math.random()*30; v.set([x,y,z,x+0.25,y-0.8,z],i*6); }
+    geo.setAttribute('position',new THREE.BufferAttribute(v,3)); W.rain=new THREE.LineSegments(geo,new THREE.LineBasicMaterial({color:0xc8d8e8,transparent:true,opacity:.55})); W.rain.visible=false; W.rain.frustumCulled=false; g.add(W.rain); }
+  W.beacon=makeBeacon(); W.beacon.visible=false; g.add(W.beacon);
+  P.x=34; P.z=4; P.yaw=Math.PI/2; P.pitch=0; P.eye=1.8; P.speed=4.8; P.roll=0;
+  story={id:'jonah', step:'', t:0, lock:true, target:null, near:null, amp:0.12, storm:false, thrown:0, prays:0, preached:0, fishT:-1, fallT:-1, flash:0, sack:0, fadeSky:null};
+  hand.visible=false; basket.visible=false; sling.visible=false; fruitHand.visible=false;
+  goJonah('intro');
+}
+function jonCut(fn, lines, then, color){ $('fade').style.background=color||'#0b0b14'; $('fade').style.opacity=1; setTimeout(()=>{ fn(); P.lockLook=null; $('fade').style.opacity=0; setTimeout(()=>{ $('fade').style.background='#fff8e6'; },900); if(lines) say(lines, then); else if(then) then(); },1000); }
+function jonahToSea(){ const W=world; JN.mode='ship'; W.ship.position.set(JSEA.x,0,JSEA.z); W.sailors.forEach(s=>s.visible=true); W.captain.visible=false; P.x=JSEA.x+0.6; P.z=JSEA.z+3.2; P.yaw=0; }
+function jonahStorm(){ const S=story, W=world; S.storm=true; W.rain.visible=true; scene.background.set(0x3a4450); scene.fog.color.set(0x3a4450); scene.fog.near=20; scene.fog.far=120; hemi.intensity=0.4; sun.intensity=0.25; }
+function jonahCrateGoal(){ const S=story; let b=null,bd=1e9; world.crates.forEach(c=>{ if(c.userData.fly>=0) return; const p=wp(c), d=Math.hypot(p.x-P.x,p.z-P.z); if(d<bd){bd=d;b=c;} }); S.target=b?{position:wp(b)}:null; S.crate=b; setGoal(`Help the sailors throw the <b>cargo</b> into the sea (${S.thrown} of 4)`); }
+function goJonah(step){
+  const S=story, W=world; S.step=step; $('prompt').classList.add('hidden');
+  if(step==='intro'){ S.lock=true; setGoal('Listen');
+    say([[SAY_BIBLE,'The Lord spoke to Jonah: "Go to the great city of Nineveh and preach against it, because I have seen how wicked the people are."','Jonah 1:1-2'],
+      [SAY_BIBLE,'But Jonah ran away from the Lord. He went down to the port of Joppa and found a ship going to Tarshish, far away in the other direction.','Jonah 1:3']], ()=>goJonah('port')); }
+  if(step==='port'){ S.lock=false; setGoal('Find the <b>ship</b> going to Tarshish'); S.target=W.captain; }
+  if(step==='sail'){ S.lock=true; S.target=null; setGoal('');
+    jonCut(()=>{ jonahToSea(); }, [[SAY_BIBLE,'The ship set sail. Jonah went down below the deck, lay down, and fell fast asleep.','Jonah 1:5']], ()=>{ $('fade').style.background='#0b0b14'; $('fade').style.opacity=1;
+      setTimeout(()=>{ jonahStorm(); say([[SAY_BIBLE,'But the Lord sent a great wind on the sea. The storm was so wild that the ship was about to break apart!','Jonah 1:4'],
+        [SAY_BIBLE,'The sailors were terrified, and each one cried out to his own god.','Jonah 1:5'],
+        ['The captain','Wake up! How can you sleep? Get up and call on your god! Maybe he will notice us, and we won’t die.','Jonah 1:6', ()=>{ $('fade').style.opacity=0; setTimeout(()=>{ $('fade').style.background='#fff8e6'; },900); }]], ()=>goJonah('cargo')); },1400); }); }
+  if(step==='cargo'){ S.lock=false; jonahCrateGoal(); }
+  if(step==='lots'){ S.lock=false; setGoal('Cast <b>lots</b> with the sailors'); S.target={position:new THREE.Vector3(W.ship.position.x,0,W.ship.position.z-4.4)}; }
+  if(step==='rail'){ S.lock=false; setGoal('Go to the <b>side of the ship</b>'); S.target={position:new THREE.Vector3(W.ship.position.x-1.6,0,W.ship.position.z+0.5)}; }
+  if(step==='under'){ S.lock=true; S.target=null; setGoal('');
+    say([[SAY_BIBLE,'Then they picked Jonah up and threw him into the sea, and the wild sea grew calm.','Jonah 1:15'],
+      [SAY_BIBLE,'Now the Lord sent a huge fish to swallow Jonah.','Jonah 1:17', ()=>{ const W=world; W.fish.visible=true; W.fish.position.set(P.x-34,-5,P.z+3); S.fishT=0; }]]); }
+  if(step==='fish'){ S.lock=false; setGoal(`<b>Pray</b> to God from inside the fish (${S.prays} of 3)`); }
+  if(step==='beach'){ S.lock=true; setGoal('Listen');
+    say([[SAY_BIBLE,'Then the Lord spoke again to Jonah: "Go to the great city of Nineveh and give them the message I tell you."','Jonah 3:1-2'],
+      [SAY_BIBLE,'This time Jonah obeyed the Lord and went to Nineveh. It was so big that it took three days to walk through it.','Jonah 3:3']], ()=>jonCut(()=>{ P.x=JNIN.x-44; P.z=0; P.yaw=-Math.PI/2; W.fish.visible=false; }, null, ()=>goJonah('city'))); }
+  if(step==='city'){ S.lock=false; const sp=JPREACH[S.preached]; S.target={position:new THREE.Vector3(sp.x,0,sp.z)}; setGoal(`Go into <b>Nineveh</b> and give God’s message (${S.preached} of 3)`); }
+  if(step==='believe'){ S.lock=true; S.target=null; setGoal('Listen');
+    say([[SAY_BIBLE,'The people of Nineveh believed God! Everyone, from the most important to the least important, stopped eating and put on rough sackcloth to show they were sorry.','Jonah 3:5', ()=>{ S.sackOn=true; }],
+      [SAY_BIBLE,'When the king of Nineveh heard the message, he got up from his throne, took off his royal robes, put on sackcloth, and sat down in the dust.','Jonah 3:6', ()=>{ S.kingSits=true; lookAt(196,landJonah(196,0)+1.2,0,1.2); }],
+      ['The king of Nineveh','Everyone must pray hard to God and stop doing evil. Who knows? Maybe God will change His mind and not destroy us.','Jonah 3:8-9'],
+      [SAY_BIBLE,'When God saw that they had stopped doing evil, He had mercy on them, and He did not destroy the city.','Jonah 3:10']], ()=>finishStory()); }
+}
+function updateJonah(dt, now){
+  const S=story, W=world, t=(S.t+=dt);
+  if(S.fadeSky){ const f=S.fadeSky; f.t+=dt; const k=smooth(f.t/f.dur); scene.background.copy(f.from).lerp(f.to,k); scene.fog.color.copy(scene.background); if(k>=1) S.fadeSky=null; }
+  /* waves */
+  const ampTo=S.storm?1.5:0.12; S.amp+=(ampTo-S.amp)*Math.min(1,dt*0.6);
+  if(W.sea.visible){ const sea=W.sea, cell=260/70; sea.position.x=Math.round(P.x/cell)*cell; sea.position.z=Math.round(P.z/cell)*cell; const a=sea.geometry.attributes.position.array, b=W.seaBase;
+    for(let i=0;i<a.length;i+=3){ const x=b[i]+sea.position.x, z=b[i+2]+sea.position.z; a[i+1]=jonahWave(x,z,t,S.amp); } sea.geometry.attributes.position.needsUpdate=true; sea.geometry.computeVertexNormals(); }
+  /* the ship rocks */
+  const sh=W.ship; if(JN.mode==='ship'||S.step==='under'){ sh.position.y=jonahWave(sh.position.x,sh.position.z,t,S.amp)*0.6; sh.rotation.z=Math.sin(t*0.9)*0.1*S.amp; sh.rotation.x=Math.sin(t*0.7)*0.05*S.amp; P.roll=JN.mode==='ship'?Math.sin(t*0.9)*0.06*S.amp:0; }
+  if(S.storm){ sh.userData.sail.rotation.x=Math.sin(t*3)*0.15; W.sailors.forEach((s,i)=>{ if(!s.userData.armsBusy){ s.userData.arms[0].rotation.x=-2.6+Math.sin(t*4+i)*0.4; s.userData.arms[1].rotation.x=-2.6+Math.cos(t*4+i)*0.4; } });
+    if(Math.random()<dt*0.12) S.flash=1; }
+  if(S.flash>0){ S.flash=Math.max(0,S.flash-dt*3); hemi.intensity=0.4+S.flash*1.2; }
+  if(W.rain.visible){ W.rain.position.set(P.x,ground(P.x,P.z)-6,P.z); const p=W.rain.geometry.attributes.position, a=p.array; for(let i=0;i<a.length;i+=6){ a[i+1]-=dt*26; a[i+4]-=dt*26; if(a[i+1]<0){ a[i+1]+=30; a[i+4]+=30; } } p.needsUpdate=true; }
+  /* cargo flies overboard */
+  W.crates.forEach(c=>{ const u=c.userData; if(u.fly<0||u.fly>=1) return; if(!u.from) u.from=c.position.clone(); u.fly=Math.min(1,u.fly+dt*0.9); const k=u.fly, sx=Math.sign(u.from.x)||1; c.position.set(u.from.x+sx*k*5,u.from.y+Math.sin(k*Math.PI)*2-k*k*4,u.from.z); c.rotation.z=k*4; if(k>=1) c.visible=false; });
+  /* thrown into the sea */
+  if(S.fallT>=0){ S.fallT+=dt; const f=S.fallT; JN.fallY=f<0.8?lerp(S.fallFrom,0.2-P.eye,f/0.8):lerp(0.2-P.eye,-5,smooth(clamp((f-0.8)/2,0,1))); P.x=S.fallX-Math.min(1,f)*3.5;
+    if(f>0.8 && !S.splashed){ S.splashed=true; shake=0.3; S.storm=false; W.rain.visible=false; scene.background.set(0x1f5a7a); scene.fog.color.set(0x1f5a7a); scene.fog.near=1; scene.fog.far=40; hemi.intensity=0.45; sun.intensity=0.35; P.roll=0; P.pitch=-0.1; goJonah('under'); }
+    if(f>3) S.fallT=-1; }
+  /* the fish comes */
+  if(S.fishT>=0){ S.fishT+=dt; const F=W.fish, dx=P.x-F.position.x, dz=P.z-F.position.z, d=Math.hypot(dx,dz); if(d>8.6){ const v=Math.min(7,d-8)*dt; F.position.x+=dx/d*v; F.position.z+=dz/d*v; } F.position.y=JN.fallY+P.eye+0.3+Math.sin(t*2)*0.3; F.rotation.y=Math.atan2(dx,dz); F.userData.tail.rotation.y=Math.sin(t*6)*0.4; F.userData.jaw.rotation.x=d<20?Math.min(0.7,(20-d)*0.08):0; F.userData.mouth.scale.y=d<20?0.2+Math.min(0.8,(20-d)*0.1):0.2;
+    P.lockLook={x:F.position.x,y:F.position.y-0.2,z:F.position.z,t:0,dur:0.4};
+    if(d<9.2 && !S.swallowed){ S.swallowed=true; S.fishT=-1; rumble(1.5); jonCut(()=>{ JN.mode='fish'; W.sea.visible=false; W.inFish.visible=true; W.land.visible=false; scene.background.set(0x1a0606); scene.fog.color.set(0x1a0606); scene.fog.near=2; scene.fog.far=28; hemi.intensity=0.25; sun.intensity=0.05; P.x=JFIN.x; P.z=JFIN.z+5; P.yaw=0; P.pitch=0; P.speed=2.5; },
+      [[SAY_BIBLE,'The fish swallowed Jonah! And Jonah was inside the fish for three days and three nights.','Jonah 1:17']], ()=>goJonah('fish')); } }
+  /* Nineveh: people walk about, then put on sackcloth */
+  if(S.sackOn && S.sack<1){ S.sack=Math.min(1,S.sack+dt*0.5); const sk=new THREE.Color(0x6a5a44); W.people.concat([W.king]).forEach(p=>{ const m=p.userData.body.material; if(!p.userData.sackM){ p.userData.sackM=m.clone(); p.userData.body.material=p.userData.sackM; p.userData.c0=m.color.clone(); } p.userData.sackM.color.copy(p.userData.c0).lerp(sk,S.sack); p.rotation.x=S.sack*0.5; p.position.y=ground(p.position.x,p.position.z)-S.sack*0.35; }); }
+  if(S.kingSits){ const K=W.king; K.position.y=Math.max(ground(K.position.x,K.position.z)-0.6,K.position.y-dt); }
+  let near=null;
+  if(S.step==='port' && dist2(W.captain)<3) near={label:'Pay for a ride to Tarshish', fn:()=>{ S.lock=true; S.target=null;
+      say([['The captain','Tarshish? That’s a long way off. Pay your fare and come aboard.',''],[SAY_BIBLE,'Jonah paid the fare and got on the ship, to run away from the Lord.','Jonah 1:3']], ()=>goJonah('sail')); }};
+  if(S.step==='cargo' && S.crate){ const p=wp(S.crate); S.target.position.copy(p); if(Math.hypot(p.x-P.x,p.z-P.z)<1.9) near={label:'Throw it overboard', fn:()=>{ S.crate.userData.fly=0; S.thrown++; shake=0.12;
+      if(S.thrown<4) jonahCrateGoal(); else { S.lock=true; S.target=null; S.crate=null; setGoal('Listen'); say([[SAY_BIBLE,'The sailors threw the cargo into the sea to make the ship lighter. But the storm only got worse.','Jonah 1:5'],['A sailor','Come on, let’s cast lots to find out who is to blame for this trouble!','Jonah 1:7']], ()=>goJonah('lots')); } }}; }
+  if(S.step==='lots' && Math.hypot(P.x-W.ship.position.x,P.z-(W.ship.position.z-4.4))<2.6) near={label:'Cast lots', fn:()=>{ S.lock=true; S.target=null; lookAt(W.ship.position.x,W.ship.position.y+2.8,W.ship.position.z-4.4,0.6);
+      say([[SAY_BIBLE,'They cast lots, and the lot fell on Jonah.','Jonah 1:7'],
+        ['A sailor','Tell us, who are you? What do you do? Where do you come from?','Jonah 1:8'],
+        ['You are Jonah','I am a Hebrew. I worship the Lord, the God of heaven, who made the sea and the dry land.','Jonah 1:9'],
+        [SAY_BIBLE,'The sailors were terrified. Jonah had already told them he was running away from the Lord.','Jonah 1:10'],
+        ['A sailor','What should we do to you to make the sea calm down?','Jonah 1:11'],
+        ['You are Jonah','Pick me up and throw me into the sea, and it will become calm. I know this terrible storm is my fault.','Jonah 1:12'],
+        [SAY_BIBLE,'Instead, the men rowed as hard as they could to get back to land. But they couldn’t, because the sea was getting even wilder.','Jonah 1:13'],
+        [SAY_BIBLE,'Then they cried out to the Lord: "Please, Lord, don’t let us die for taking this man’s life."','Jonah 1:14']], ()=>{ P.lockLook=null; goJonah('rail'); }); }};
+  if(S.step==='rail' && Math.hypot(P.x-(W.ship.position.x-1.6),P.z-(W.ship.position.z+0.5))<1.8) near={label:'Let them throw you in', fn:()=>{ S.lock=true; S.target=null; S.fallFrom=ground(P.x,P.z); JN.fallY=S.fallFrom; JN.mode='under'; S.fallX=P.x; S.fallT=0; P.yaw=Math.PI/2; }};
+  if(S.step==='fish' && !S.busy) near={label:'Pray to God', fn:()=>{ S.busy=true; const n=S.prays;
+      const L=[[['You are Jonah','In my trouble I called to the Lord, and He answered me. From deep down in the sea I cried for help, and You listened to my cry.','Jonah 2:2']],
+        [['You are Jonah','The water was all around me. Seaweed was wrapped around my head. I sank down to the roots of the mountains.','Jonah 2:5-6']],
+        [['You are Jonah','But You, Lord my God, brought my life up from the pit! I will keep my promises to You. Salvation comes from the Lord.','Jonah 2:6, 2:9']]][n];
+      say(L, ()=>{ S.prays++; S.busy=false; setGoal(`<b>Pray</b> to God from inside the fish (${S.prays} of 3)`);
+        if(S.prays>=3){ S.lock=true; S.busy=true; shake=0.6; rumble(1.2); say([[SAY_BIBLE,'Then the Lord spoke to the fish, and it spit Jonah out onto dry land.','Jonah 2:10']], ()=>jonCut(()=>{ JN.mode='land'; W.inFish.visible=false; W.sea.visible=true; W.land.visible=true; resetLook(); P.x=20; P.z=40; P.yaw=Math.PI/2; P.speed=4.8; W.fish.visible=true; W.fish.position.set(4,-0.8,40); W.fish.rotation.y=-Math.PI/2; S.fishSwim=true; }, null, ()=>goJonah('beach'), '#fff8e6')); } }); }};
+  if(S.fishSwim){ const F=W.fish; F.position.x-=dt*3; F.position.y=Math.max(-6,F.position.y-dt*0.25); F.userData.tail.rotation.y=Math.sin(t*5)*0.4; }
+  if(S.step==='city'){ const sp=JPREACH[S.preached]; if(Math.hypot(P.x-sp.x,P.z-sp.z)<3.5) near={label:'Give God’s message', fn:()=>{ S.lock=true; S.target=null; W.people.forEach(p=>{ if(Math.hypot(p.position.x-sp.x,p.position.z-sp.z)<10) faceTo(p,P.x,P.z); });
+      const lines=[[['You are Jonah','Forty more days, and Nineveh will be destroyed!','Jonah 3:4']],[['You are Jonah','Forty more days, and Nineveh will be destroyed!','Jonah 3:4'],[SAY_BIBLE,'The people stopped to listen.','']],[['You are Jonah','Forty more days, and Nineveh will be destroyed!','Jonah 3:4']]][S.preached];
+      say(lines, ()=>{ S.preached++; if(S.preached<3) goJonah('city'); else goJonah('believe'); }); }}; }
+  S.near=near;
+  const pr=$('prompt');
+  if(near && !saying()){ pr.textContent=(touch?'':'Space: ')+near.label; pr.classList.remove('hidden'); $('act').textContent=near.label.split(' ')[0]; }
+  else { pr.classList.add('hidden'); $('act').textContent= saying()?'Next':'Use'; }
+  showBeacon(t);
+}
+function boundsJonah(){ const S=story, W=world;
+  if(JN.mode==='ship'){ P.x=clamp(P.x,W.ship.position.x-1.8,W.ship.position.x+1.8); P.z=clamp(P.z,W.ship.position.z-6,W.ship.position.z+6); return; }
+  if(JN.mode==='fish'){ P.x=clamp(P.x,JFIN.x-2,JFIN.x+2); P.z=clamp(P.z,JFIN.z-7.5,JFIN.z+7.5); return; }
+  if(JN.mode==='under') return;
+  P.x=clamp(P.x,-1,225); P.z=clamp(P.z,-100,100);
+  if(P.x<14 && Math.abs(P.z)>1.1) P.x=14; /* stay out of the water, except on the pier */
+  if(P.x>148 && P.x<152.5 && Math.abs(P.z)>3.2 && Math.abs(P.z)<33){ P.x=P.x<150?148:152.5; } /* city wall */
+  if(P.x>150 && P.x<213 && Math.abs(P.z)>30.8) P.z=Math.sign(P.z)*30.8;
+}
+function jumpJonah(q){ // ?step=storm | lots | sea | fish | nineveh
+  const S=story, W=world; sayQ.length=0; $('say').classList.add('hidden'); sayCb=null;
+  if(q==='storm'){ jonahToSea(); jonahStorm(); S.amp=1.5; goJonah('cargo'); }
+  if(q==='lots'){ jonahToSea(); jonahStorm(); S.amp=1.5; W.crates.forEach(c=>c.visible=false); S.thrown=4; goJonah('lots'); }
+  if(q==='sea'){ jonahToSea(); jonahStorm(); S.amp=1.5; W.crates.forEach(c=>c.visible=false); goJonah('rail'); }
+  if(q==='fish'){ JN.mode='fish'; W.sea.visible=false; W.inFish.visible=true; W.land.visible=false; scene.background.set(0x1a0606); scene.fog.color.set(0x1a0606); scene.fog.near=2; scene.fog.far=28; hemi.intensity=0.25; sun.intensity=0.05; P.x=JFIN.x; P.z=JFIN.z+5; P.yaw=0; P.speed=2.5; goJonah('fish'); }
+  if(q==='nineveh'){ P.x=JNIN.x-44; P.z=0; P.yaw=-Math.PI/2; goJonah('city'); }
+}
+
 /* David's story hooks */
 function boundsDavid(){ P.x=clamp(P.x,-34,34); P.z=clamp(P.z,-60,72); }
 const IMPL = {
+  jonah: { build:buildJonah, go:goJonah, update:updateJonah, bounds:boundsJonah, locked:S=>S.lock },
   elijah: { build:buildElijah, go:goElijah, update:updateElijah, bounds:boundsElijah, locked:S=>S.lock },
   samson: { build:buildSamson, go:goSamson, update:updateSamson, bounds:boundsSamson, locked:S=>S.lock },
   gideon: { build:buildGideon, go:goGideon, update:updateGideon, bounds:boundsGideon, locked:S=>S.lock },
@@ -3086,7 +3280,7 @@ function startStory(id){
   const q=new URLSearchParams(location.search).get('step'); if(q && story) jumpTo(q); // preview links for testing
 }
 function jumpTo(q){ // ?step=stones or ?step=sling
-  const S=story; if(story.id==='adam') return jumpAdam(q); if(story.id==='noah') return jumpNoah(q); if(story.id==='abraham') return jumpAbraham(q); if(story.id==='joseph') return jumpJoseph(q); if(story.id==='babymoses') return jumpMoses(q); if(story.id==='bush') return jumpBush(q); if(story.id==='redsea') return jumpRed(q); if(story.id==='jericho') return jumpJericho(q); if(story.id==='gideon') return jumpGideon(q); if(story.id==='samson') return jumpSamson(q); if(story.id==='elijah') return jumpElijah(q);
+  const S=story; if(story.id==='adam') return jumpAdam(q); if(story.id==='noah') return jumpNoah(q); if(story.id==='abraham') return jumpAbraham(q); if(story.id==='joseph') return jumpJoseph(q); if(story.id==='babymoses') return jumpMoses(q); if(story.id==='bush') return jumpBush(q); if(story.id==='redsea') return jumpRed(q); if(story.id==='jericho') return jumpJericho(q); if(story.id==='gideon') return jumpGideon(q); if(story.id==='samson') return jumpSamson(q); if(story.id==='elijah') return jumpElijah(q); if(story.id==='jonah') return jumpJonah(q);
   if(q==='stones'||q==='sling'){ world.lamb.userData.following=true; world.lamb.userData.goal={x:world.flock.x+1,z:world.flock.z}; world.lamb.position.set(world.flock.x+1,0,world.flock.z); world.israel.forEach(p=>p.position.z+=12); }
   if(q==='stones'){ P.x=0; P.z=STREAM_Z+4; P.yaw=0; sayQ.length=0; $('say').classList.add('hidden'); go('stones'); }
   if(q==='sling'){ world.stones.forEach(s=>s.visible=false); S.stonesHeld=5; S.stonesLeft=5; P.x=0; P.z=-20; P.yaw=0; world.goliath.position.set(0,ground(0,-36),-36); sayQ.length=0; $('say').classList.add('hidden'); $('stones').classList.remove('hidden'); updateStonesHud(); go('sling'); }
@@ -3097,7 +3291,7 @@ function finishStory(){
   const nextReady=READY[READY.indexOf(s)+1], nextAny=STORIES[STORIES.indexOf(s)+1];
   $('fade').style.opacity=0.6;
   setTimeout(()=>{
-    $('endWho').textContent='You saw what '+({david:'David',adam:'Adam',noah:'Noah',abraham:'Abraham',joseph:'Joseph',babymoses:'Miriam',bush:'Moses',redsea:'Moses',jericho:'Joshua',gideon:'Gideon',samson:'Samson',elijah:'Elijah'}[s.id]||'they')+' did.';
+    $('endWho').textContent='You saw what '+({david:'David',adam:'Adam',noah:'Noah',abraham:'Abraham',joseph:'Joseph',babymoses:'Miriam',bush:'Moses',redsea:'Moses',jericho:'Joshua',gideon:'Gideon',samson:'Samson',elijah:'Elijah',jonah:'Jonah'}[s.id]||'they')+' did.';
     $('endVerse').textContent=s.endVerse; $('endRef').textContent=s.endRef;
     $('endUnlock').textContent= nextReady ? 'You unlocked '+nextReady.title+'!' : (nextAny ? 'Next up: '+nextAny.title+'. It is coming soon!' : 'You finished every story!');
     $('endNext').innerHTML = nextAny ? '<b>What happens next</b>'+nextAny.before : '';
