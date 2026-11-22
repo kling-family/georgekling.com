@@ -238,7 +238,7 @@ const STORIES = [
   { id:'storm', ready:true, blurb:'Sail across the lake with Jesus, bail water as a wild storm crashes over the boat, and wake Jesus up.', endVerse:'"Who is this? Even the wind and the waves obey Him!"', endRef:'Mark 4:41', before:"King Herod tried to hurt baby Jesus, but His family escaped to Egypt and later moved back to Nazareth. Jesus grew up and, when He was about 30, He began teaching about God and healing sick people. He picked twelve friends, called disciples, to follow Him. Some of them, like Peter, were fishermen.", title:'Jesus Calms the Storm', who:'You are Peter', ref:'Mark 4' },
   { id:'loaves', ready:true, blurb:'Bring your little lunch to a giant crowd, give it to Jesus, help hand out food to thousands of people, and gather up the leftovers.', endVerse:'"I am the bread of life."', endRef:'John 6:35', before:"Jesus kept teaching and doing miracles, and more and more people came to see Him. One day a huge crowd followed Him out to a hillside far from any town. They stayed all day listening, and it got late. Everyone was hungry, and there was no food to buy.", title:'Five Loaves and Two Fish', who:'You are the boy with the lunch', ref:'John 6' },
   { id:'water', ready:true, blurb:'Row against the wind in the dark, see Jesus walking on the lake, step out of the boat, and walk on the water to Him.', endVerse:'"Truly You are the Son of God!"', endRef:'Matthew 14:33', before:"Jesus fed more than 5,000 people with one boy's lunch, and there were twelve baskets of leftovers! Right after that, Jesus sent His disciples ahead in a boat across the lake while He went up the mountain alone to pray. In the middle of the night, a strong wind blew against their boat.", title:'Peter Walks on Water', who:'You are Peter', ref:'Matthew 14' },
-  { id:'zacchaeus', before:"Jesus and His disciples traveled all around, and Jesus taught that God loves everyone, even people others hate. Now Jesus was on His way to Jerusalem, and He walked through the city of Jericho. A man there named Zacchaeus was a tax collector. He cheated people and got rich, so nobody liked him.", title:'Zacchaeus Climbs a Tree', who:'You are Zacchaeus', ref:'Luke 19' },
+  { id:'zacchaeus', ready:true, blurb:'Try to see Jesus over a big crowd, climb a tree, take Jesus home, and pay back everyone you cheated.', endVerse:'"For the Son of Man came to seek and to save the lost."', endRef:'Luke 19:10', before:"Jesus and His disciples traveled all around, and Jesus taught that God loves everyone, even people others hate. Now Jesus was on His way to Jerusalem, and He walked through the city of Jericho. A man there named Zacchaeus was a tax collector. He cheated people and got rich, so nobody liked him.", title:'Zacchaeus Climbs a Tree', who:'You are Zacchaeus', ref:'Luke 19' },
   { id:'easter', before:"Jesus rode into Jerusalem on a donkey, and crowds waved palm branches. But the leaders were jealous and wanted to get rid of Him. Jesus ate a last supper with His disciples. Then He was arrested and died on a cross on a Friday, taking the punishment for everyone's sins. His body was put in a tomb with a huge stone in front.", title:'The First Easter', who:'You are Mary Magdalene', ref:'John 20' },
   { id:'paul', before:"Jesus rose from the dead and visited His friends for 40 days. Then He went up to heaven and sent the Holy Spirit to help them. The disciples told everyone about Jesus, and many people believed. But a man named Saul hated the followers of Jesus. He put them in jail, and he set off to the city of Damascus to arrest even more.", title:'Paul on the Road to Damascus', who:'You are Paul', ref:'Acts 9' },
 ];
@@ -4142,9 +4142,130 @@ function jumpWater(q){ // ?step=ghost | walk | sink
     if(q==='sink'){ P.x=WJ_END.x-2.6; P.z=WJ_END.z+1.8; P.yaw=Math.atan2(-(WJ_END.x-P.x),-(WJ_END.z-P.z)); } }
 }
 
+/* ================= Story 21: Zacchaeus Climbs a Tree ================= */
+const ZTREE={x:3.2,z:-16}, ZHOME={x:-9.5,z:-34}, ZBOOTH={x:4,z:6};
+const ZOWED=[{name:'A farmer',x:-4.5,z:-29,say:'Four times as much? Thank you, Zacchaeus!'},{name:'A widow',x:-3,z:-34.5,say:'Now I can buy food for my children. God bless you!'},{name:'A fisherman',x:-4.2,z:-39.5,say:'I never thought I’d see my money again!'},{name:'A shopkeeper',x:0.5,z:-37,say:'You really have changed, haven’t you?'}];
+function groundZac(x,z){ let h=0.15*Math.sin(x*0.2)*Math.cos(z*0.15); if(Math.abs(x)>11) h+=Math.min(3,(Math.abs(x)-11)*0.3); return h; }
+function groundZacP(x,z){ const S=story; if(S&&S.climbK>0) return lerp(groundZac(x,z),2.6,S.climbK); return groundZac(x,z); }
+const bagView=new THREE.Group(); { const b=new THREE.Mesh(new THREE.SphereGeometry(0.12,12,10), mat(0x8a6a3a)); b.scale.set(1,1.15,1); bagView.add(b); const n=new THREE.Mesh(new THREE.CylinderGeometry(0.035,0.06,0.07,10), mat(0x6a4a2a)); n.position.y=0.14; bagView.add(n);
+  for(let i=0;i<3;i++){ const c=new THREE.Mesh(new THREE.CylinderGeometry(0.035,0.035,0.012,12), new THREE.MeshPhongMaterial({color:0xe8c040,specular:0xffffff,shininess:80})); c.position.set(-0.12+i*0.05,0.17+i*0.01,0.06); c.rotation.x=0.4; bagView.add(c); }
+  bagView.position.set(0.28,-0.32,-0.6); bagView.visible=false; view.add(bagView); }
+function sycamore(g,x,z){ const t=new THREE.Group(), bark=mat(0x6a5a40);
+  const trunk=new THREE.Mesh(new THREE.CylinderGeometry(0.45,0.7,2.6,10), bark); trunk.position.y=1.3; t.add(trunk);
+  [[1.6,0.9,0.3],[-1.5,0.7,-0.5],[0.2,0.8,1.6],[0.3,1.1,-1.5]].forEach(([dx,dy,dz])=>{ const L=Math.hypot(dx,dy,dz)+1.2; const b=new THREE.Mesh(new THREE.CylinderGeometry(0.16,0.3,L,8), bark); b.position.set(dx*0.55,2.5+dy*0.5,dz*0.55); b.lookAt(new THREE.Vector3(dx*3,2.5+dy*3,dz*3).add(t.position)); b.rotateX(Math.PI/2); t.add(b); });
+  const Lm=[mat(0x4f7a3a),mat(0x5f8a44),mat(0x456d33)];
+  [[0,6.0,0,2.4],[2.2,5.4,0.6,1.8],[-2.1,5.3,-0.6,1.9],[0.4,5.4,2.2,1.7],[0.2,5.6,-2.2,1.8],[1.5,6.4,-1.2,1.4],[-1.3,6.5,1.3,1.4]].forEach(([a,b,c,r],i)=>{ const m=new THREE.Mesh(LEAF_GEO[i%6], Lm[i%3]); m.scale.set(r,r*0.6,r); m.position.set(a,b,c); t.add(m); });
+  for(let i=0;i<30;i++){ const f=new THREE.Mesh(new THREE.SphereGeometry(0.08,6,5), mat(0x8a9a3a)); const a=i*2.4, R=1.2+(i%5)*0.4; f.position.set(Math.cos(a)*R,4.6+(i%4)*0.35,Math.sin(a)*R); t.add(f); }
+  t.position.set(x,groundZac(x,z),z); g.add(t); return t; }
+function buildZac(){
+  ground=groundZacP; resetLook(); scene.background.set(0xb8d8f0);
+  const g=new THREE.Group(); scene.add(g); world={group:g, crowd:[], owed:[]}; const W=world, r=rnd(1910);
+  { const N=120, geo=new THREE.PlaneGeometry(200,200,N,N); geo.rotateX(-Math.PI/2); const pos=geo.attributes.position, cols=[], c=new THREE.Color(), sand=new THREE.Color(0xd8c49a), a=new THREE.Color(0xc8b07a), b=new THREE.Color(0x9aa860);
+    for(let i=0;i<pos.count;i++){ const x=pos.getX(i), z=pos.getZ(i), h=groundZac(x,z); pos.setY(i,h); const n=0.5+0.5*Math.sin(x*0.5+z*0.9)*Math.cos(x*0.27-z*0.4); c.copy(sand).lerp(a,n*0.7); if(Math.abs(x)>18||Math.abs(z)>60) c.copy(a).lerp(b,0.6+n*0.4); cols.push(c.r,c.g,c.b); }
+    geo.setAttribute('color',new THREE.Float32BufferAttribute(cols,3)); geo.computeVertexNormals(); const uv=geo.attributes.uv; for(let i=0;i<uv.count;i++) uv.setXY(i,uv.getX(i)*70,uv.getY(i)*70);
+    const m=new THREE.Mesh(geo,new THREE.MeshLambertMaterial({vertexColors:true,map:GROUND_TEX})); m.userData.noCast=true; g.add(m); }
+  /* houses along the street */
+  for(let i=0;i<9;i++){ const z=36-i*9.5; if(Math.abs(z-ZHOME.z)>5){ const hl=house(g,-10,z+(r()-0.5)); hl.rotation.y=Math.PI/2; hl.scale.set(1,0.9+r()*0.4,1); }
+    const hr=house(g,10,z+(r()-0.5)); hr.rotation.y=-Math.PI/2; hr.scale.set(1,0.9+r()*0.4,1); }
+  W.home=house(g,ZHOME.x-1,ZHOME.z); W.home.rotation.y=Math.PI/2; W.home.scale.set(1.5,1.4,1.5); W.home.children[0].material=mat(0xf2e6c8); W.home.children[1].material=mat(0x9a6a40);
+  for(const dz of [-1.4,1.4]){ const pl=new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.22,3.4,10), mat(0xf6efe0)); pl.position.set(ZHOME.x+2.6,1.7,ZHOME.z-0.9+dz); g.add(pl); }
+  for(let i=0;i<22;i++){ const side=i%2?1:-1; palm(g,side*(15+r()*12),60-i*6+r()*3,0.9+r()*0.4); }
+  for(let i=0;i<5;i++) palm(g,(r()-0.5)*10,58+r()*12,1);
+  W.tree=sycamore(g,ZTREE.x,ZTREE.z);
+  /* the tax booth */
+  { const tb=new THREE.Mesh(new THREE.BoxGeometry(2.2,0.9,1), mat(0x8a6038)); tb.position.set(ZBOOTH.x,0.45,ZBOOTH.z); g.add(tb); const aw=new THREE.Mesh(new THREE.BoxGeometry(2.8,0.08,1.8), mat(0xb8402e)); aw.position.set(ZBOOTH.x,2.4,ZBOOTH.z+0.2); g.add(aw);
+    for(const dx of [-1.3,1.3]){ const po=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,2.4,6), mat(0x5a3a20)); po.position.set(ZBOOTH.x+dx,1.2,ZBOOTH.z+0.9); g.add(po); }
+    for(let i=0;i<9;i++){ const c=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,0.03,10), new THREE.MeshPhongMaterial({color:0xe8c040,specular:0xffffff,shininess:80})); c.position.set(ZBOOTH.x-0.6+(i%3)*0.15,0.92+Math.floor(i/3)*0.03,ZBOOTH.z-0.1); g.add(c); } }
+  /* the crowd, packed in the street */
+  const cols=[0x9a6a3a,0x5a6a8a,0x8a4a5a,0x6a7a4a,0xb08a5a,0xe8dcc0,0x3a6ab0,0xb8402e,0x7a5a8a];
+  for(let i=0;i<34;i++){ const p=person({tunic:cols[i%9],hair:[0x1a120a,0x3a2614,0x6a6a6a][i%3],beard:i%3===0?0x2a1a10:null,longHair:i%3===1,h:1.68+r()*0.3}); const x=-6.5+(i%9)*1.6+(r()-0.5)*0.6, z=12.5+Math.floor(i/9)*1.4+(r()-0.5)*0.5; place(p,x,z,0); g.add(p); p.userData.home={x,z}; p.userData.off={x:(r()-0.5)*9,z:3+r()*9}; W.crowd.push(p); }
+  ZOWED.forEach((o,i)=>{ const p=person({tunic:[0x6a7a4a,0x4a4a6a,0x3a5a7a,0xb08a5a][i],hair:[0x3a2614,0x6a6a6a,0x1a120a,0x2a1a10][i],beard:i===1?null:0x2a1a10,longHair:i===1,h:1.7}); place(p,o.x,o.z); p.visible=false; g.add(p); p.userData.o=o; W.owed.push(p); });
+  W.jesus=jesusPerson(); W.jesus.visible=false; place(W.jesus,0,40); g.add(W.jesus);
+  W.disciples=[]; for(let i=0;i<4;i++){ const d=person({tunic:[0x3a5a7a,0x7a4a3a,0x5a6a4a,0x8a7a5a][i],hair:0x1a120a,beard:0x2a1a10,h:1.75}); d.visible=false; g.add(d); W.disciples.push(d); }
+  W.coins=glowSprite(0xffe070,1.2); W.coins.visible=false; g.add(W.coins);
+  W.beacon=makeBeacon(); W.beacon.visible=false; g.add(W.beacon);
+  P.x=ZBOOTH.x; P.z=ZBOOTH.z-1.6; P.yaw=Math.PI; P.pitch=-0.1; P.eye=1.25; P.speed=4.6; P.roll=0;
+  story={id:'zacchaeus', step:'', t:0, lock:true, target:null, near:null, tries:0, climbK:0, paid:0, fadeSky:null};
+  hand.visible=false; basket.visible=false; sling.visible=false; fruitHand.visible=false;
+  goZac('intro');
+}
+function zacWalkTo(p,x,z,dt,sp){ const dx=x-p.position.x, dz=z-p.position.z, d=Math.hypot(dx,dz); if(d>0.25){ const s=Math.min(d,dt*sp); p.position.x+=dx/d*s; p.position.z+=dz/d*s; p.rotation.y=Math.atan2(dx,dz); animWalk(p,dt,1); } else animWalk(p,dt,0); p.position.y=groundZac(p.position.x,p.position.z); return d; }
+function goZac(step){
+  const S=story, W=world; S.step=step; $('prompt').classList.add('hidden');
+  if(step==='intro'){ S.lock=true; setGoal('Listen');
+    say([[SAY_BIBLE,'Jesus came to Jericho and was passing through the city.','Luke 19:1'],
+      [SAY_BIBLE,'A man named Zacchaeus lived there. He was a chief tax collector, and he was very rich.','Luke 19:2'],
+      ['You are Zacchaeus','What’s all that noise? Everyone is out in the street.',''],
+      ['A man','Jesus is coming! The teacher who heals people is coming down this road!','', ()=>lookAt(0,1.6,20,1)]], ()=>{ P.lockLook=null; goZac('see'); }); }
+  if(step==='see'){ S.lock=false; S.target={position:new THREE.Vector3(0,0,11)}; setGoal('Try to see <b>Jesus</b> over the crowd'); }
+  if(step==='run'){ S.lock=false; S.target=W.tree; setGoal('Run ahead and climb the <b>sycamore tree</b>!'); }
+  if(step==='wait'){ S.lock=true; S.target=null; setGoal('Watch for <b>Jesus</b>'); S.parade=true; W.jesus.visible=true; place(W.jesus,0.5,30); W.disciples.forEach((d,i)=>{ d.visible=true; place(d,-1.2+i*0.9,32+(i%2)); }); }
+  if(step==='down'){ S.lock=false; setGoal('Hurry and climb <b>down</b>!'); }
+  if(step==='home'){ S.lock=false; S.target={position:new THREE.Vector3(ZHOME.x+3.6,0,ZHOME.z)}; setGoal('Take Jesus to your <b>house</b>'); }
+  if(step==='repay'){ S.lock=false; bagView.visible=true; const p=W.owed[S.paid]; S.target=p; setGoal(`Pay back the people you <b>cheated</b> (${S.paid} of 4)`); }
+  if(step==='end'){ S.lock=true; S.target=null; bagView.visible=false; setGoal('Listen'); lookAt(W.jesus.position.x,1.7,W.jesus.position.z,0.8);
+    say([['Jesus','Today salvation has come to this house, because this man, too, is a son of Abraham.','Luke 19:9'],
+      ['Jesus','For the Son of Man came to seek and to save the lost.','Luke 19:10']], ()=>finishStory()); }
+}
+function updateZac(dt, now){
+  const S=story, W=world, t=(S.t+=dt);
+  /* crowd: cheer toward Jesus, then follow Him */
+  W.crowd.forEach((p,i)=>{ const u=p.userData;
+    if(S.parade || S.follow){ const J=W.jesus; let tx=J.position.x+u.off.x, tz=J.position.z+u.off.z; if(S.follow){ tx=u.home.x*0.8-1; tz=ZHOME.z+8+(i%5)*1.6+Math.floor(i/5)*0.2; tx=-2+(i%7)*1.4+((i*7)%3)*0.3; tz=ZHOME.z+7+Math.floor(i/7)*1.5; }
+      tx=clamp(tx,-7,7); const d=zacWalkTo(p,tx,tz,dt,S.follow?3:3.4); if(d<=0.25) faceTo(p,J.position.x,J.position.z); }
+    else { p.position.y=groundZac(p.position.x,p.position.z)+Math.max(0,Math.sin(t*6+i*1.3))*0.12; if(u.armsBusy!==false){ u.arms[0].rotation.x=-2.4+Math.sin(t*5+i)*0.4; u.armsBusy=true; } } });
+  /* Jesus walks down the street to the tree */
+  const J=W.jesus;
+  if(S.parade){ const d=zacWalkTo(J,ZTREE.x+2.2,ZTREE.z+1.2,dt,3.2); W.disciples.forEach((dd,i)=>zacWalkTo(dd,J.position.x-1.6+i*1.1,J.position.z+1.8+(i%2),dt,3.4));
+    if(d<=0.25 && !S.lookedUp){ S.lookedUp=true; S.parade=false; faceTo(J,P.x,P.z); lookAt(J.position.x,J.position.y+1.6,J.position.z,0.8);
+      say([[SAY_BIBLE,'When Jesus reached the spot, He looked up and said:','Luke 19:5'],
+        ['Jesus','Zacchaeus, come down right away. I must stay at your house today.','Luke 19:5']], ()=>{ P.lockLook=null; goZac('down'); }); } }
+  if(S.toHouse){ const tx=P.x+Math.sin(P.yaw)*2.2, tz=P.z+Math.cos(P.yaw)*2.2; if(Math.hypot(J.position.x-P.x,J.position.z-P.z)>2.4) zacWalkTo(J,tx,tz,dt,4.4); else animWalk(J,dt,0);
+    W.disciples.forEach((dd,i)=>zacWalkTo(dd,J.position.x+1.2+(i%2)*0.9,J.position.z+1.5+i*0.7,dt,4.4)); }
+  /* climbing */
+  const ck=S.climbTo===undefined?S.climbK:S.climbTo; if(S.climbTo!==undefined){ S.climbK+=Math.sign(S.climbTo-S.climbK)*Math.min(Math.abs(S.climbTo-S.climbK),dt*0.7); if(Math.abs(S.climbK-S.climbTo)<0.001){ S.climbK=S.climbTo; const cb=S.climbCb; S.climbTo=undefined; S.climbCb=null; if(cb) cb(); } }
+  if(S.coinT>0){ S.coinT-=dt; W.coins.visible=S.coinT>0; }
+  let near=null;
+  if(S.step==='see' && P.z>9.5 && !S.busy) near={label:S.tries===0?'Squeeze through the crowd':'Jump up and look', fn:()=>{ S.busy=true; S.lock=true; S.tries++;
+      if(S.tries===1){ P.z=8.4; shake=0.12; say([['A man in the crowd','Hey! Stop pushing! Get to the back, you cheater!',''],['A woman','Zacchaeus takes our money and gives it to the Romans. Don’t let him through!','']], ()=>{ S.busy=false; S.lock=false; }); }
+      else { S.jump=1; lookAt(0,2.6,26,0.4); say([['A boy','Ha ha! He’s too short to see anything!',''],[SAY_BIBLE,'Zacchaeus wanted to see who Jesus was. But he was a short man, and he could not see over the crowd.','Luke 19:3'],
+          [SAY_BIBLE,'So he ran ahead and climbed a sycamore-fig tree to see Jesus, because Jesus was coming that way.','Luke 19:4', ()=>lookAt(ZTREE.x,3,ZTREE.z,1)]], ()=>{ P.lockLook=null; S.busy=false; goZac('run'); }); } }};
+  if(S.step==='run' && dist2(W.tree)<2.6) near={label:'Climb the tree', fn:()=>{ S.lock=true; S.target=null; const a=Math.atan2(P.x-ZTREE.x,P.z-ZTREE.z); S.climbTo=1; P.x=ZTREE.x+Math.sin(a)*1.3; P.z=ZTREE.z+Math.cos(a)*1.3; P.yaw=0; S.climbCb=()=>{ P.x=ZTREE.x+0.9; P.z=ZTREE.z+0.4; P.yaw=Math.PI; P.pitch=-0.15;
+      say([['You are Zacchaeus','Now I can see everything! Here He comes!','', ()=>lookAt(0.5,1.6,24,1)]], ()=>{ P.lockLook=null; goZac('wait'); }); }; }};
+  if(S.step==='down' && S.climbK>=1) near={label:'Climb down', fn:()=>{ S.lock=true; S.climbTo=0; S.climbCb=()=>{ P.x=ZTREE.x+1.4; P.z=ZTREE.z+1.8; P.yaw=Math.atan2(-(J.position.x-P.x),-(J.position.z-P.z)); faceTo(J,P.x,P.z);
+      say([[SAY_BIBLE,'So Zacchaeus hurried down and welcomed Jesus gladly.','Luke 19:6'],
+        ['You are Zacchaeus','Welcome, Lord! Come, my house is just down the street!',''],
+        [SAY_BIBLE,'All the people saw this and began to grumble:','Luke 19:7', ()=>W.crowd.slice(0,6).forEach(p=>faceTo(p,P.x,P.z))],
+        ['The crowd','He has gone to be the guest of a sinner!','Luke 19:7']], ()=>{ S.toHouse=true; goZac('home'); }); }; }};
+  if(S.step==='home' && Math.hypot(P.x-(ZHOME.x+3.6),P.z-ZHOME.z)<2.2) near={label:'Stand up and speak', fn:()=>{ S.lock=true; S.target=null; S.toHouse=false; S.follow=true; P.yaw=Math.atan2(-(J.position.x-P.x),-(J.position.z-P.z)); faceTo(J,P.x,P.z); lookAt(J.position.x,1.7,J.position.z,0.6);
+      W.owed.forEach(p=>{ p.visible=true; faceTo(p,P.x,P.z); });
+      say([[SAY_BIBLE,'Zacchaeus stood up and said to the Lord:','Luke 19:8'],
+        ['You are Zacchaeus','Look, Lord! Here and now I give half of everything I own to the poor.','Luke 19:8'],
+        ['You are Zacchaeus','And if I have cheated anybody out of anything, I will pay back four times as much!','Luke 19:8']], ()=>{ P.lockLook=null; goZac('repay'); }); }};
+  if(S.step==='repay' && S.target && dist2(S.target)<2.2) near={label:'Pay back four times as much', fn:()=>{ const p=S.target, o=p.userData.o; S.lock=true; S.target=null; S.paid++; W.coins.position.set(p.position.x,1.3,p.position.z); S.coinT=1.2; shake=0.05; faceTo(p,P.x,P.z);
+      p.userData.armsBusy=true; p.userData.arms[0].rotation.x=-2.6; p.userData.arms[1].rotation.x=-2.6;
+      say([[o.name,o.say,'']], ()=>{ p.userData.arms[0].rotation.x=0; p.userData.arms[1].rotation.x=0; p.userData.armsBusy=false; if(S.paid<4) goZac('repay'); else goZac('end'); }); }};
+  S.near=near;
+  if(S.jump>0){ S.jump=Math.max(0,S.jump-dt*2.5); P.eye=1.25+Math.sin(S.jump*Math.PI)*0.35; }
+  const pr=$('prompt');
+  if(near && !saying()){ pr.textContent=(touch?'':'Space: ')+near.label; pr.classList.remove('hidden'); $('act').textContent=near.label.split(' ')[0]; }
+  else { pr.classList.add('hidden'); $('act').textContent= saying()?'Next':'Use'; }
+  showBeacon(t);
+}
+function boundsZac(){ const S=story; if(S.climbK>0) return; P.x=clamp(P.x,-7.6,7.6); P.z=clamp(P.z,-46,S.step==='see'?10.4:44);
+  if(Math.abs(P.x-ZBOOTH.x)<1.5 && Math.abs(P.z-ZBOOTH.z)<0.9) P.z=P.z<ZBOOTH.z?ZBOOTH.z-0.9:ZBOOTH.z+0.9;
+  const d=Math.hypot(P.x-ZTREE.x,P.z-ZTREE.z); if(d<0.9){ P.x=ZTREE.x+(P.x-ZTREE.x)/(d||1)*0.9; P.z=ZTREE.z+(P.z-ZTREE.z)/(d||1)*0.9; } }
+function jumpZac(q){ // ?step=tree | down | repay
+  const S=story, W=world; sayQ.length=0; $('say').classList.add('hidden'); sayCb=null; S.tries=2;
+  if(q==='tree'){ P.x=ZTREE.x; P.z=ZTREE.z+2; goZac('run'); }
+  if(q==='down'||q==='repay'){ S.climbK=1; P.x=ZTREE.x+0.9; P.z=ZTREE.z+0.4; P.yaw=Math.PI; W.jesus.visible=true; place(W.jesus,ZTREE.x+2.2,ZTREE.z+1.2); W.disciples.forEach((d,i)=>{ d.visible=true; place(d,W.jesus.position.x-1.6+i*1.1,W.jesus.position.z+2); }); W.crowd.forEach(p=>{ p.position.z-=27; }); S.lookedUp=true; goZac('down'); }
+  if(q==='repay'){ S.climbK=0; S.follow=true; P.x=ZHOME.x+3.6; P.z=ZHOME.z; P.yaw=-Math.PI/2; place(W.jesus,ZHOME.x+5.4,ZHOME.z+1.5); W.owed.forEach(p=>p.visible=true); goZac('repay'); }
+}
+
 /* David's story hooks */
 function boundsDavid(){ P.x=clamp(P.x,-34,34); P.z=clamp(P.z,-60,72); }
 const IMPL = {
+  zacchaeus: { build:buildZac, go:goZac, update:updateZac, bounds:boundsZac, locked:S=>S.lock },
   water: { build:buildWater, go:goWater, update:updateWater, bounds:boundsWater, locked:S=>S.lock },
   loaves: { build:buildLoaves, go:goLoaves, update:updateLoaves, bounds:boundsLoaves, locked:S=>S.lock },
   storm: { build:buildStorm, go:goStorm, update:updateStorm, bounds:boundsStorm, locked:S=>S.lock },
@@ -4172,7 +4293,7 @@ function stopStory(){
   running=false; story=null;
   if(world){ scene.remove(world.group); world.group.traverse(o=>{ if(o.geometry) o.geometry.dispose(); }); world=null; }
   sayQ.length=0; sayCb=null; $('say').classList.add('hidden'); $('armor').classList.add('hidden'); $('cross').classList.add('hidden'); $('meter').classList.add('hidden'); $('stones').classList.add('hidden');
-  basket.visible=hand.visible=sling.visible=fruitHand.visible=false; if(typeof logHand!=='undefined'){ logHand.visible=false; leafHand.visible=false; } if(typeof coatView!=='undefined'){ coatView.visible=false; sheafHand.visible=false; } if(typeof reedHand!=='undefined') reedHand.visible=false; if(typeof staffHand!=='undefined') staffHand.visible=false; $('cForm').style.display=''; P.roll=0; $('fade').style.opacity=0; $('choice').classList.add('hidden'); hand.material=handMat; if(typeof lunchView!=='undefined') lunchView.visible=false; if(typeof jarHand!=='undefined'){ jarHand.visible=false; hornView.visible=false; } if(typeof gateView!=='undefined'){ gateView.visible=false; pushView.visible=false; } if($('blind')) $('blind').style.opacity=0; P.eye=1.8; resetLook();
+  basket.visible=hand.visible=sling.visible=fruitHand.visible=false; if(typeof logHand!=='undefined'){ logHand.visible=false; leafHand.visible=false; } if(typeof coatView!=='undefined'){ coatView.visible=false; sheafHand.visible=false; } if(typeof reedHand!=='undefined') reedHand.visible=false; if(typeof staffHand!=='undefined') staffHand.visible=false; $('cForm').style.display=''; P.roll=0; $('fade').style.opacity=0; $('choice').classList.add('hidden'); hand.material=handMat; if(typeof lunchView!=='undefined') lunchView.visible=false; if(typeof bagView!=='undefined') bagView.visible=false; if(typeof jarHand!=='undefined'){ jarHand.visible=false; hornView.visible=false; } if(typeof gateView!=='undefined'){ gateView.visible=false; pushView.visible=false; } if($('blind')) $('blind').style.opacity=0; P.eye=1.8; resetLook();
 }
 function startStory(id){
   stopStory(); trackPlay();
@@ -4182,7 +4303,7 @@ function startStory(id){
   const q=new URLSearchParams(location.search).get('step'); if(q && story) jumpTo(q); // preview links for testing
 }
 function jumpTo(q){ // ?step=stones or ?step=sling
-  const S=story; if(story.id==='adam') return jumpAdam(q); if(story.id==='noah') return jumpNoah(q); if(story.id==='abraham') return jumpAbraham(q); if(story.id==='joseph') return jumpJoseph(q); if(story.id==='babymoses') return jumpMoses(q); if(story.id==='bush') return jumpBush(q); if(story.id==='redsea') return jumpRed(q); if(story.id==='jericho') return jumpJericho(q); if(story.id==='gideon') return jumpGideon(q); if(story.id==='samson') return jumpSamson(q); if(story.id==='elijah') return jumpElijah(q); if(story.id==='jonah') return jumpJonah(q); if(story.id==='daniel') return jumpDaniel(q); if(story.id==='esther') return jumpEsther(q); if(story.id==='christmas') return jumpXmas(q); if(story.id==='wisemen') return jumpWise(q); if(story.id==='storm') return jumpStorm(q); if(story.id==='loaves') return jumpLoaves(q); if(story.id==='water') return jumpWater(q);
+  const S=story; if(story.id==='adam') return jumpAdam(q); if(story.id==='noah') return jumpNoah(q); if(story.id==='abraham') return jumpAbraham(q); if(story.id==='joseph') return jumpJoseph(q); if(story.id==='babymoses') return jumpMoses(q); if(story.id==='bush') return jumpBush(q); if(story.id==='redsea') return jumpRed(q); if(story.id==='jericho') return jumpJericho(q); if(story.id==='gideon') return jumpGideon(q); if(story.id==='samson') return jumpSamson(q); if(story.id==='elijah') return jumpElijah(q); if(story.id==='jonah') return jumpJonah(q); if(story.id==='daniel') return jumpDaniel(q); if(story.id==='esther') return jumpEsther(q); if(story.id==='christmas') return jumpXmas(q); if(story.id==='wisemen') return jumpWise(q); if(story.id==='storm') return jumpStorm(q); if(story.id==='loaves') return jumpLoaves(q); if(story.id==='water') return jumpWater(q); if(story.id==='zacchaeus') return jumpZac(q);
   if(q==='stones'||q==='sling'){ world.lamb.userData.following=true; world.lamb.userData.goal={x:world.flock.x+1,z:world.flock.z}; world.lamb.position.set(world.flock.x+1,0,world.flock.z); world.israel.forEach(p=>p.position.z+=12); }
   if(q==='stones'){ P.x=0; P.z=STREAM_Z+4; P.yaw=0; sayQ.length=0; $('say').classList.add('hidden'); go('stones'); }
   if(q==='sling'){ world.stones.forEach(s=>s.visible=false); S.stonesHeld=5; S.stonesLeft=5; P.x=0; P.z=-20; P.yaw=0; world.goliath.position.set(0,ground(0,-36),-36); sayQ.length=0; $('say').classList.add('hidden'); $('stones').classList.remove('hidden'); updateStonesHud(); go('sling'); }
@@ -4193,7 +4314,7 @@ function finishStory(){
   const nextReady=READY[READY.indexOf(s)+1], nextAny=STORIES[STORIES.indexOf(s)+1];
   $('fade').style.opacity=0.6;
   setTimeout(()=>{
-    $('endWho').textContent='You saw what '+({david:'David',adam:'Adam',noah:'Noah',abraham:'Abraham',joseph:'Joseph',babymoses:'Miriam',bush:'Moses',redsea:'Moses',jericho:'Joshua',gideon:'Gideon',samson:'Samson',elijah:'Elijah',jonah:'Jonah',daniel:'Daniel',esther:'Esther',christmas:'the shepherds',wisemen:'the wise men',storm:'Peter',loaves:'the boy',water:'Peter'}[s.id]||'they')+' did.';
+    $('endWho').textContent='You saw what '+({david:'David',adam:'Adam',noah:'Noah',abraham:'Abraham',joseph:'Joseph',babymoses:'Miriam',bush:'Moses',redsea:'Moses',jericho:'Joshua',gideon:'Gideon',samson:'Samson',elijah:'Elijah',jonah:'Jonah',daniel:'Daniel',esther:'Esther',christmas:'the shepherds',wisemen:'the wise men',storm:'Peter',loaves:'the boy',water:'Peter',zacchaeus:'Zacchaeus'}[s.id]||'they')+' did.';
     $('endVerse').textContent=s.endVerse; $('endRef').textContent=s.endRef;
     $('endUnlock').textContent= nextReady ? 'You unlocked '+nextReady.title+'!' : (nextAny ? 'Next up: '+nextAny.title+'. It is coming soon!' : 'You finished every story!');
     $('endNext').innerHTML = nextAny ? '<b>What happens next</b>'+nextAny.before : '';
