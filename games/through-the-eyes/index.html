@@ -240,7 +240,7 @@ const STORIES = [
   { id:'water', ready:true, blurb:'Row against the wind in the dark, see Jesus walking on the lake, step out of the boat, and walk on the water to Him.', endVerse:'"Truly You are the Son of God!"', endRef:'Matthew 14:33', before:"Jesus fed more than 5,000 people with one boy's lunch, and there were twelve baskets of leftovers! Right after that, Jesus sent His disciples ahead in a boat across the lake while He went up the mountain alone to pray. In the middle of the night, a strong wind blew against their boat.", title:'Peter Walks on Water', who:'You are Peter', ref:'Matthew 14' },
   { id:'zacchaeus', ready:true, blurb:'Try to see Jesus over a big crowd, climb a tree, take Jesus home, and pay back everyone you cheated.', endVerse:'"For the Son of Man came to seek and to save the lost."', endRef:'Luke 19:10', before:"Jesus and His disciples traveled all around, and Jesus taught that God loves everyone, even people others hate. Now Jesus was on His way to Jerusalem, and He walked through the city of Jericho. A man there named Zacchaeus was a tax collector. He cheated people and got rich, so nobody liked him.", title:'Zacchaeus Climbs a Tree', who:'You are Zacchaeus', ref:'Luke 19' },
   { id:'easter', ready:true, blurb:'Walk to the tomb before sunrise, find the stone rolled away, see two angels, and meet Jesus, alive again!', endVerse:'"I have seen the Lord!"', endRef:'John 20:18', before:"Jesus rode into Jerusalem on a donkey, and crowds waved palm branches. But the leaders were jealous and wanted to get rid of Him. Jesus ate a last supper with His disciples. Then He was arrested and died on a cross on a Friday, taking the punishment for everyone's sins. His body was put in a tomb with a huge stone in front.", title:'The First Easter', who:'You are Mary Magdalene', ref:'John 20' },
-  { id:'paul', before:"Jesus rose from the dead and visited His friends for 40 days. Then He went up to heaven and sent the Holy Spirit to help them. The disciples told everyone about Jesus, and many people believed. But a man named Saul hated the followers of Jesus. He put them in jail, and he set off to the city of Damascus to arrest even more.", title:'Paul on the Road to Damascus', who:'You are Paul', ref:'Acts 9' },
+  { id:'paul', ready:true, blurb:'March to Damascus to arrest Jesus’ followers, get knocked down by a light from heaven, go blind, see again, and start telling everyone about Jesus.', endVerse:'"Jesus is the Son of God."', endRef:'Acts 9:20', before:"Jesus rose from the dead and visited His friends for 40 days. Then He went up to heaven and sent the Holy Spirit to help them. The disciples told everyone about Jesus, and many people believed. But a man named Saul hated the followers of Jesus. He put them in jail, and he set off to the city of Damascus to arrest even more.", title:'Paul on the Road to Damascus', who:'You are Paul', ref:'Acts 9' },
 ];
 const READY = STORIES.filter(s=>s.ready);
 // A ready story opens when the ready story before it is done (or you already finished it).
@@ -4376,9 +4376,114 @@ function jumpEaster(q){ // ?step=tomb | angels | mary
   if(q==='mary'){ S.lock=true; const J=W.jesus; J.visible=true; place(J,ETOMB.x+1.8,ETOMB.z+5.2); P.z=ETOMB.z+1.6; goEaster('turn'); }
 }
 
+/* ================= Story 23: Paul on the Road to Damascus ================= */
+const PGATE={x:0,z:-20}, PROOM={x:200,z:0}, PFLASH=14, PGROUPS=[{x:-6,z:-31,who:'A man',say:'Isn’t this the man who came to arrest the people who believe in Jesus?'},{x:6.5,z:-35,who:'A woman',say:'He used to hate Jesus. Now he says Jesus is God’s Son!'},{x:-1,z:-40,who:'An old man',say:'Something amazing must have happened to him. Tell us more!'}];
+function groundPaul(x,z){ if(x>150) return 0; let h=0.3*Math.sin(x*0.13)*Math.cos(z*0.09)+0.15*Math.sin(x*0.4+z*0.27); if(Math.abs(x)>9) h+=Math.min(6,(Math.abs(x)-9)*0.18)*(1+0.5*Math.sin(z*0.07)); return h; }
+function buildPaul(){
+  ground=groundPaul; resetLook(); scene.background.set(0xb8d8f0); P.lockLook=null;
+  const g=new THREE.Group(); scene.add(g); world={group:g, guards:[], people:[]}; const W=world, r=rnd(3409);
+  { const N=120, geo=new THREE.PlaneGeometry(220,220,N,N); geo.rotateX(-Math.PI/2); const pos=geo.attributes.position, cols=[], c=new THREE.Color(), sand=new THREE.Color(0xdcc496), a=new THREE.Color(0xc8a874), road=new THREE.Color(0xb89c70), green=new THREE.Color(0x8aa058);
+    for(let i=0;i<pos.count;i++){ const x=pos.getX(i), z=pos.getZ(i); pos.setY(i,groundPaul(x,z)); const n=0.5+0.5*Math.sin(x*0.5+z*0.9)*Math.cos(x*0.27-z*0.4); c.copy(sand).lerp(a,n); if(Math.abs(x)<1.8 && z>-22) c.lerp(road,0.8); if(z<-22) c.lerp(green,0.25); cols.push(c.r,c.g,c.b); }
+    geo.setAttribute('color',new THREE.Float32BufferAttribute(cols,3)); geo.computeVertexNormals(); const uv=geo.attributes.uv; for(let i=0;i<uv.count;i++) uv.setXY(i,uv.getX(i)*70,uv.getY(i)*70);
+    const m=new THREE.Mesh(geo,new THREE.MeshLambertMaterial({vertexColors:true,map:GROUND_TEX})); m.userData.noCast=true; g.add(m); }
+  for(let i=0;i<30;i++){ const side=i%2?1:-1; rock(g,side*(4+r()*14),-16+r()*70,0.5+r()*1.2); }
+  for(let i=0;i<14;i++){ const side=i%2?1:-1; palm(g,side*(5+r()*10),-26-r()*30,0.9+r()*0.3); }
+  /* Damascus: city wall, gate, houses and a synagogue */
+  const wm=mat(0xd6c49a), blk=(w,h,d,x,y,z,m)=>{ const b=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m||wm); b.position.set(x,y,z); g.add(b); return b; };
+  for(let i=0;i<14;i++){ const x=-41+i*6; if(Math.abs(x)<3) continue; blk(6,6,2,x+(x<0?-0.4:0.4),3,PGATE.z); for(let k=0;k<3;k++) blk(1,0.9,2,x-2+k*2,6.4,PGATE.z); }
+  blk(3,2,2.2,0,6,PGATE.z); for(const sx of [-1,1]){ blk(2.4,8,3,sx*3.6,4,PGATE.z); }
+  for(let i=0;i<14;i++){ const side=i%2?1:-1, z=-28-Math.floor(i/2)*5.5; if(Math.abs(z+44)<4 && side<0) continue; const hs=house(g,side*(11+r()*2),z); hs.rotation.y=side>0?-Math.PI/2:Math.PI/2; }
+  { const sy=new THREE.Group(); const base=new THREE.Mesh(new THREE.BoxGeometry(10,0.5,6), mat(0xe8dcc0)); base.position.y=0.25; sy.add(base); const body=new THREE.Mesh(new THREE.BoxGeometry(9,4.5,4.5), mat(0xeee4cc)); body.position.set(0,2.75,-0.6); sy.add(body); const roof=new THREE.Mesh(new THREE.BoxGeometry(9.6,0.4,5.2), mat(0xc8b48a)); roof.position.set(0,5.2,-0.6); sy.add(roof);
+    for(let i=0;i<5;i++){ const c=new THREE.Mesh(new THREE.CylinderGeometry(0.25,0.28,4.5,10), mat(0xf6efe0)); c.position.set(-4+i*2,2.75,2.4); sy.add(c); } const dr=new THREE.Mesh(new THREE.BoxGeometry(1.4,2.4,0.1), mat(0x5a3a1e)); dr.position.set(0,1.7,1.7); sy.add(dr);
+    sy.position.set(-1,groundPaul(-1,-47),-47); g.add(sy); }
+  /* the room on Straight Street (far away, for after the road) */
+  { const rm=new THREE.Mesh(new THREE.BoxGeometry(7,3.2,7), new THREE.MeshLambertMaterial({color:0xe2d2aa,side:THREE.BackSide})); rm.position.set(PROOM.x,1.6,PROOM.z); g.add(rm);
+    const fl=new THREE.Mesh(new THREE.PlaneGeometry(7,7), mat(0x9a8462)); fl.rotation.x=-Math.PI/2; fl.position.set(PROOM.x,0.01,PROOM.z); g.add(fl);
+    const mat1=new THREE.Mesh(new THREE.BoxGeometry(1.4,0.25,2.4), mat(0xb8402e)); mat1.position.set(PROOM.x-2.4,0.12,PROOM.z-1.6); g.add(mat1);
+    const win=new THREE.Mesh(new THREE.PlaneGeometry(1,0.8), new THREE.MeshBasicMaterial({color:0xfff4d0})); win.position.set(PROOM.x+3.49,2,PROOM.z); win.rotation.y=-Math.PI/2; g.add(win);
+    W.roomDoor=new THREE.Mesh(new THREE.BoxGeometry(1.1,2.1,0.08), mat(0x5a3a1e)); W.roomDoor.position.set(PROOM.x,1.05,PROOM.z+3.45); g.add(W.roomDoor);
+    W.lamp=new THREE.PointLight(0xffd8a0,0.8,12); W.lamp.position.set(PROOM.x,2.6,PROOM.z); g.add(W.lamp); }
+  W.friend=person({tunic:0x8a6a4a,hair:0x1a120a,beard:0x2a1a10,h:1.76}); place(W.friend,1.2,42.5,Math.PI); g.add(W.friend);
+  W.fglow=glowSprite(0xfff4d8,2.2); W.fglow.material.fog=false; W.fglow.material.opacity=0; W.fglow.position.y=1.2; W.friend.add(W.fglow);
+  for(let i=0;i<2;i++){ const gd=person({tunic:0x7a2a2a,helmet:true,spear:true,h:1.8}); place(gd,-1.3+i*2.6,46.5,Math.PI); g.add(gd); W.guards.push(gd); }
+  W.ananias=person({tunic:0x5a6a8a,hair:0x8a8a8a,beard:0x9a9a9a,h:1.74}); W.ananias.visible=false; g.add(W.ananias);
+  PGROUPS.forEach((G,gi)=>{ for(let k=0;k<3;k++){ const p=person({tunic:[0x9a6a3a,0x5a6a8a,0x8a4a5a,0x6a7a4a,0xb08a5a,0x3a6ab0][(gi*2+k)%6],hair:[0x1a120a,0x3a2614,0x6a6a6a][k],beard:k===0?0x2a1a10:null,longHair:k===1,h:1.6+k*0.08}); place(p,G.x+(k-1)*1.1,G.z+(k%2)*0.7); p.userData.group=gi; g.add(p); W.people.push(p); } });
+  W.heaven=glowSprite(0xffffff,60); W.heaven.material.fog=false; W.heaven.material.opacity=0; W.heaven.position.set(0,40,PFLASH-14); g.add(W.heaven);
+  W.beacon=makeBeacon(); W.beacon.visible=false; g.add(W.beacon);
+  P.x=0; P.z=44; P.yaw=0; P.pitch=0; P.eye=1.75; P.speed=4.4; P.roll=0;
+  story={id:'paul', step:'', t:0, lock:true, target:null, near:null, preached:0, fadeSky:null};
+  hand.visible=false; basket.visible=false; sling.visible=false; fruitHand.visible=false;
+  goPaul('intro');
+}
+function pWalk(p,x,z,dt,sp){ const dx=x-p.position.x, dz=z-p.position.z, d=Math.hypot(dx,dz); if(d>0.25){ const s=Math.min(d,dt*sp); p.position.x+=dx/d*s; p.position.z+=dz/d*s; p.rotation.y=Math.atan2(dx,dz); animWalk(p,dt,1); } else animWalk(p,dt,0); p.position.y=groundPaul(p.position.x,p.position.z); return d; }
+function paulBlind(on){ if(on){ blindOn(0.9); scene.fog.color.set(0x14110e); scene.fog.near=0.5; scene.fog.far=7; scene.background.set(0x14110e); } else { blindOn(0); resetLook(); } }
+function goPaul(step){
+  const S=story, W=world; S.step=step; $('prompt').classList.add('hidden');
+  if(step==='intro'){ S.lock=true; setGoal('Listen');
+    say([[SAY_BIBLE,'Saul was still very angry at the people who followed Jesus. He wanted to hurt them.','Acts 9:1'],
+      [SAY_BIBLE,'He got letters from the high priest so he could go to the city of Damascus, arrest any followers of Jesus there, and bring them back to Jerusalem as prisoners.','Acts 9:2'],
+      ['You are Saul','Come on, men. Damascus is just up this road.','']], ()=>goPaul('walk')); }
+  if(step==='walk'){ S.lock=false; S.target={position:new THREE.Vector3(0,0,PFLASH)}; setGoal('Walk down the road to <b>Damascus</b>'); }
+  if(step==='led'){ S.lock=false; S.target=null; S.lead=true; setGoal('You can’t see! Follow your <b>friend’s voice</b> into the city'); }
+  if(step==='room'){ S.lock=false; S.target=null; setGoal('Sit on the mat and <b>pray</b>'); }
+  if(step==='preach'){ S.lock=false; const G=PGROUPS[S.preached]; S.target={position:new THREE.Vector3(G.x,0,G.z)}; setGoal(`Tell the people that <b>Jesus</b> is the Son of God (${S.preached} of 3)`); }
+  if(step==='end'){ S.lock=true; S.target=null; setGoal('Listen');
+    say([[SAY_BIBLE,'Everyone who heard him was amazed. And Saul kept on telling people that Jesus is the Son of God.','Acts 9:21-22'],
+      [SAY_BIBLE,'Saul was also called Paul. He traveled all over the world, telling people about Jesus and starting new churches. He even wrote many of the books in the Bible!','Acts 13:9']], ()=>finishStory()); }
+}
+function updatePaul(dt, now){
+  const S=story, W=world, t=(S.t+=dt);
+  if(S.fadeSky){ const f=S.fadeSky; f.t+=dt; const k=smooth(f.t/f.dur); scene.background.copy(f.from).lerp(f.to,k); scene.fog.color.copy(scene.background); if(k>=1) S.fadeSky=null; }
+  if(S.step==='walk'||S.step==='intro'){ const fx=P.x+Math.sin(P.yaw)*-0.0, fz=P.z; pWalk(W.friend,P.x+1.3,fz+1.2,dt,P.speed*1.1); W.guards.forEach((gd,i)=>pWalk(gd,P.x-1.3+i*2.6,fz+2.8,dt,P.speed*1.1)); if(S.step==='intro') W.guards.forEach(gd=>gd.rotation.y=Math.PI); }
+  if(S.heavenK>0){ S.heavenK=Math.max(0,S.heavenK-dt*0.08); W.heaven.material.opacity=Math.min(1,S.heavenK); }
+  if(S.lead){ const f=W.friend, dz=f.position.z-P.z, dx=f.position.x-P.x; if(Math.hypot(dx,dz)<3.2) pWalk(f,PGATE.x+0.5,PGATE.z+1,dt,2.6); else animWalk(f,dt,0); W.guards.forEach((gd,i)=>pWalk(gd,P.x-1.4+i*2.8,P.z+2.6,dt,3)); W.fglow.material.opacity=0.55+Math.sin(t*3)*0.15; }
+  if(S.preachT>0){ S.preachT-=dt; }
+  let near=null;
+  if(S.step==='walk' && P.z<PFLASH+0.5){ S.lock=true; S.target=null; S.step='light'; W.heaven.position.set(P.x,40,P.z-20); S.heavenK=1.6; W.heaven.material.opacity=1; shake=0.4; scene.background.set(0xffffff); scene.fog.color.set(0xffffff); hemi.intensity=1.6; sun.intensity=1.4;
+    $('fade').style.opacity=0.85; setTimeout(()=>{ $('fade').style.opacity=0; },700);
+    P.eye=0.45; P.pitch=0.7; W.friend.userData.armsBusy=true; W.friend.userData.arms[0].rotation.x=-2.2; W.friend.userData.arms[1].rotation.x=-2.2; W.guards.forEach(gd=>{ gd.userData.armsBusy=true; gd.userData.arms[0].rotation.x=-1.8; });
+    say([[SAY_BIBLE,'As Saul came near Damascus, suddenly a bright light from heaven flashed all around him. He fell to the ground.','Acts 9:3-4'],
+      ['A voice from heaven','Saul, Saul, why are you being so cruel to Me?','Acts 9:4'],
+      ['You are Saul','Who are You, Lord?','Acts 9:5'],
+      ['Jesus','I am Jesus. When you hurt My followers, you are hurting Me. Now get up and go into the city. There you will be told what you must do.','Acts 9:5-6'],
+      [SAY_BIBLE,'The men traveling with Saul stood there and couldn’t say a word. They heard the sound, but they didn’t see anyone.','Acts 9:7'],
+      [SAY_BIBLE,'Saul got up from the ground. But when he opened his eyes, he couldn’t see anything!','Acts 9:8', ()=>{ P.eye=1.75; P.pitch=0; S.heavenK=0; W.heaven.material.opacity=0; paulBlind(true); W.friend.userData.armsBusy=false; W.guards.forEach(gd=>{ gd.userData.armsBusy=false; gd.userData.arms[0].rotation.x=0; }); place(W.friend,P.x+0.6,P.z-2.2); }],
+      ['Your friend','Saul! Can you hear me? Take my hand. I’ll lead you into Damascus.','Acts 9:8']], ()=>goPaul('led')); }
+  if(S.step==='led' && Math.hypot(P.x-PGATE.x,P.z-(PGATE.z+1.5))<2.6){ S.lock=true; S.lead=false; S.step='cut';
+    stCut(()=>{ P.x=PROOM.x+1; P.z=PROOM.z+1.6; P.yaw=Math.PI*0.75; P.pitch=0; W.friend.visible=false; W.guards.forEach(gd=>gd.visible=false); W.fglow.material.opacity=0; scene.fog.near=0.5; scene.fog.far=6; },
+      [[SAY_BIBLE,'They took Saul to a house on Straight Street in Damascus. For three days he was blind, and he didn’t eat or drink anything.','Acts 9:9, 11']], ()=>goPaul('room')); }
+  if(S.step==='room' && Math.hypot(P.x-(PROOM.x-2.4),P.z-(PROOM.z-1.6))<2.2) near={label:'Pray', fn:()=>{ S.lock=true; setGoal('Listen'); P.eye=1.1; shake=0.03;
+      say([[SAY_BIBLE,'Saul prayed. In a vision, God showed him a man named Ananias coming to put his hands on him so he could see again.','Acts 9:11-12'],
+        [SAY_BIBLE,'God also spoke to Ananias. Ananias was afraid of Saul, but God said: “Go! I have chosen this man to tell many people about Me.”','Acts 9:13-15', ()=>{ W.roomDoor.position.x=PROOM.x+1.1; const A=W.ananias; A.visible=true; place(A,clamp(P.x+1.6,PROOM.x-2.6,PROOM.x+2.6),clamp(P.z+1.6,PROOM.z-2.6,PROOM.z+2.6)); faceTo(A,P.x,P.z); shake=0.05; }],
+        ['Ananias','Brother Saul, the Lord Jesus, who appeared to you on the road, has sent me so that you can see again and be filled with the Holy Spirit.','Acts 9:17', ()=>{ const A=W.ananias; A.userData.armsBusy=true; A.userData.arms[0].rotation.x=-1.6; A.userData.arms[1].rotation.x=-1.6; }],
+        [SAY_BIBLE,'Right away, something like fish scales fell from Saul’s eyes. He could see again!','Acts 9:18', ()=>{ paulBlind(false); scene.background.set(0xb8d8f0); shake=0.15; W.lamp.intensity=1.2; lookAt(W.ananias.position.x,1.6,W.ananias.position.z,0.6); }],
+        [SAY_BIBLE,'He got up and was baptized. Then he ate some food and got his strength back.','Acts 9:18-19', ()=>{ P.eye=1.75; const A=W.ananias; A.userData.arms[0].rotation.x=0; A.userData.arms[1].rotation.x=0; A.userData.armsBusy=false; }]], ()=>{
+        stCut(()=>{ P.x=0; P.z=-25; P.yaw=0; P.pitch=0; P.eye=1.75; W.ananias.visible=false; }, [[SAY_BIBLE,'Right away, Saul went to the synagogues and began to tell everyone about Jesus.','Acts 9:20']], ()=>goPaul('preach')); }); }};
+  if(S.step==='preach' && S.preached<PGROUPS.length){ const G=PGROUPS[S.preached]; if(Math.hypot(P.x-G.x,P.z-G.z)<3.6) near={label:'Tell them about Jesus', fn:()=>{ S.lock=true; S.target=null; const gi=S.preached; W.people.forEach(p=>{ if(p.userData.group===gi) faceTo(p,P.x,P.z); });
+      const lines=[['You are Saul','Jesus is the Son of God! I used to fight against Him, but He met me on the road and changed my heart.',gi===0?'Acts 9:20':''],[G.who,G.say,gi===0?'Acts 9:21':'']];
+      say(lines, ()=>{ S.preached++; W.people.forEach(p=>{ if(p.userData.group===gi){ p.userData.armsBusy=true; p.userData.arms[0].rotation.x=-2.4; } }); if(S.preached<PGROUPS.length) goPaul('preach'); else goPaul('end'); }); }}; }
+  S.near=near;
+  const pr=$('prompt');
+  if(near && !saying()){ pr.textContent=(touch?'':'Space: ')+near.label; pr.classList.remove('hidden'); $('act').textContent=near.label.split(' ')[0]; }
+  else { pr.classList.add('hidden'); $('act').textContent= saying()?'Next':'Use'; }
+  showBeacon(t);
+}
+function boundsPaul(){ const S=story;
+  if(P.x>150){ P.x=clamp(P.x,PROOM.x-3,PROOM.x+3); P.z=clamp(P.z,PROOM.z-3,PROOM.z+3); return; }
+  if(S.step==='preach'||S.step==='end'){ P.x=clamp(P.x,-9,9); P.z=clamp(P.z,-43,-23); return; }
+  P.x=clamp(P.x,-8,8); P.z=clamp(P.z,PGATE.z+1.2,47); }
+function jumpPaul(q){ // ?step=light | led | room | preach
+  const S=story, W=world; sayQ.length=0; $('say').classList.add('hidden'); sayCb=null;
+  if(q==='light'){ P.z=PFLASH+3; goPaul('walk'); }
+  if(q==='led'){ P.z=PFLASH-1; paulBlind(true); place(W.friend,P.x+0.6,P.z-2.2); goPaul('led'); }
+  if(q==='room'){ P.x=PROOM.x+1; P.z=PROOM.z+1.6; P.yaw=Math.PI*0.75; paulBlind(true); scene.fog.near=0.5; scene.fog.far=6; W.friend.visible=false; W.guards.forEach(gd=>gd.visible=false); goPaul('room'); }
+  if(q==='preach'){ P.x=0; P.z=-25; P.yaw=0; W.friend.visible=false; W.guards.forEach(gd=>gd.visible=false); goPaul('preach'); }
+}
+
 /* David's story hooks */
 function boundsDavid(){ P.x=clamp(P.x,-34,34); P.z=clamp(P.z,-60,72); }
 const IMPL = {
+  paul: { build:buildPaul, go:goPaul, update:updatePaul, bounds:boundsPaul, locked:S=>S.lock },
   easter: { build:buildEaster, go:goEaster, update:updateEaster, bounds:boundsEaster, locked:S=>S.lock },
   zacchaeus: { build:buildZac, go:goZac, update:updateZac, bounds:boundsZac, locked:S=>S.lock },
   water: { build:buildWater, go:goWater, update:updateWater, bounds:boundsWater, locked:S=>S.lock },
@@ -4418,7 +4523,7 @@ function startStory(id){
   const q=new URLSearchParams(location.search).get('step'); if(q && story) jumpTo(q); // preview links for testing
 }
 function jumpTo(q){ // ?step=stones or ?step=sling
-  const S=story; if(story.id==='adam') return jumpAdam(q); if(story.id==='noah') return jumpNoah(q); if(story.id==='abraham') return jumpAbraham(q); if(story.id==='joseph') return jumpJoseph(q); if(story.id==='babymoses') return jumpMoses(q); if(story.id==='bush') return jumpBush(q); if(story.id==='redsea') return jumpRed(q); if(story.id==='jericho') return jumpJericho(q); if(story.id==='gideon') return jumpGideon(q); if(story.id==='samson') return jumpSamson(q); if(story.id==='elijah') return jumpElijah(q); if(story.id==='jonah') return jumpJonah(q); if(story.id==='daniel') return jumpDaniel(q); if(story.id==='esther') return jumpEsther(q); if(story.id==='christmas') return jumpXmas(q); if(story.id==='wisemen') return jumpWise(q); if(story.id==='storm') return jumpStorm(q); if(story.id==='loaves') return jumpLoaves(q); if(story.id==='water') return jumpWater(q); if(story.id==='zacchaeus') return jumpZac(q); if(story.id==='easter') return jumpEaster(q);
+  const S=story; if(story.id==='adam') return jumpAdam(q); if(story.id==='noah') return jumpNoah(q); if(story.id==='abraham') return jumpAbraham(q); if(story.id==='joseph') return jumpJoseph(q); if(story.id==='babymoses') return jumpMoses(q); if(story.id==='bush') return jumpBush(q); if(story.id==='redsea') return jumpRed(q); if(story.id==='jericho') return jumpJericho(q); if(story.id==='gideon') return jumpGideon(q); if(story.id==='samson') return jumpSamson(q); if(story.id==='elijah') return jumpElijah(q); if(story.id==='jonah') return jumpJonah(q); if(story.id==='daniel') return jumpDaniel(q); if(story.id==='esther') return jumpEsther(q); if(story.id==='christmas') return jumpXmas(q); if(story.id==='wisemen') return jumpWise(q); if(story.id==='storm') return jumpStorm(q); if(story.id==='loaves') return jumpLoaves(q); if(story.id==='water') return jumpWater(q); if(story.id==='zacchaeus') return jumpZac(q); if(story.id==='easter') return jumpEaster(q); if(story.id==='paul') return jumpPaul(q);
   if(q==='stones'||q==='sling'){ world.lamb.userData.following=true; world.lamb.userData.goal={x:world.flock.x+1,z:world.flock.z}; world.lamb.position.set(world.flock.x+1,0,world.flock.z); world.israel.forEach(p=>p.position.z+=12); }
   if(q==='stones'){ P.x=0; P.z=STREAM_Z+4; P.yaw=0; sayQ.length=0; $('say').classList.add('hidden'); go('stones'); }
   if(q==='sling'){ world.stones.forEach(s=>s.visible=false); S.stonesHeld=5; S.stonesLeft=5; P.x=0; P.z=-20; P.yaw=0; world.goliath.position.set(0,ground(0,-36),-36); sayQ.length=0; $('say').classList.add('hidden'); $('stones').classList.remove('hidden'); updateStonesHud(); go('sling'); }
@@ -4429,7 +4534,7 @@ function finishStory(){
   const nextReady=READY[READY.indexOf(s)+1], nextAny=STORIES[STORIES.indexOf(s)+1];
   $('fade').style.opacity=0.6;
   setTimeout(()=>{
-    $('endWho').textContent='You saw what '+({david:'David',adam:'Adam',noah:'Noah',abraham:'Abraham',joseph:'Joseph',babymoses:'Miriam',bush:'Moses',redsea:'Moses',jericho:'Joshua',gideon:'Gideon',samson:'Samson',elijah:'Elijah',jonah:'Jonah',daniel:'Daniel',esther:'Esther',christmas:'the shepherds',wisemen:'the wise men',storm:'Peter',loaves:'the boy',water:'Peter',zacchaeus:'Zacchaeus',easter:'Mary Magdalene'}[s.id]||'they')+' did.';
+    $('endWho').textContent='You saw what '+({david:'David',adam:'Adam',noah:'Noah',abraham:'Abraham',joseph:'Joseph',babymoses:'Miriam',bush:'Moses',redsea:'Moses',jericho:'Joshua',gideon:'Gideon',samson:'Samson',elijah:'Elijah',jonah:'Jonah',daniel:'Daniel',esther:'Esther',christmas:'the shepherds',wisemen:'the wise men',storm:'Peter',loaves:'the boy',water:'Peter',zacchaeus:'Zacchaeus',easter:'Mary Magdalene',paul:'Paul'}[s.id]||'they')+' did.';
     $('endVerse').textContent=s.endVerse; $('endRef').textContent=s.endRef;
     $('endUnlock').textContent= nextReady ? 'You unlocked '+nextReady.title+'!' : (nextAny ? 'Next up: '+nextAny.title+'. It is coming soon!' : 'You finished every story!');
     $('endNext').innerHTML = nextAny ? '<b>What happens next</b>'+nextAny.before : '';
