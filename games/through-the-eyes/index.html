@@ -222,7 +222,7 @@ const STORIES = [
   { id:'babymoses', ready:true, blurb:'Gather reeds for a basket, hide by the Nile to watch your baby brother, and be brave enough to talk to the princess.', endVerse:'"God heard His people crying, and He remembered His promise."', endRef:'Exodus 2:24', before:"Joseph's whole family moved to Egypt to live with him, and they were safe there. Their family grew and grew for 400 years, and they were called the Israelites. Then a new king of Egypt, called Pharaoh, was afraid of them. He made them slaves, and he ordered that every Israelite baby boy be thrown in the river.", title:'Baby Moses in the Basket', who:'You are Miriam, his big sister', ref:'Exodus 2' },
   { id:'bush', ready:true, blurb:'Lead your sheep to the mountain of God, see a bush that burns but never burns up, and hear God call your name.', endVerse:'"I will be with you."', endRef:'Exodus 3:12', before:"The princess of Egypt found baby Moses and raised him in the palace. When Moses grew up, he saw an Egyptian beating an Israelite slave, and Moses killed the Egyptian. Then Moses ran away to the desert. He lived there for 40 years and became a shepherd.", title:'Moses and the Burning Bush', who:'You are Moses', ref:'Exodus 3' },
   { id:'redsea', ready:true, blurb:'Lead God’s people to the sea, raise your staff as the water splits in two, and walk through on dry ground between walls of water.', endVerse:'"The Lord will fight for you. You only need to be still."', endRef:'Exodus 14:14', before:"God sent Moses back to Egypt to tell Pharaoh, \u201cLet my people go!\u201d Pharaoh said no again and again, so God sent ten plagues on Egypt, like frogs, bugs, hail, and darkness. After the last plague, Pharaoh finally let the Israelites go. But then he changed his mind and chased after them with his whole army.", title:'Moses and the Red Sea', who:'You are Moses', ref:'Exodus 14' },
-  { id:'jericho', before:"God led the Israelites through the desert for 40 years. He gave them food called manna and gave Moses the Ten Commandments. When Moses died, God chose Joshua to lead the people into the land He had promised to Abraham. But the first city in their way, Jericho, had huge walls.", title:'Joshua and the Walls of Jericho', who:'You are Joshua', ref:'Joshua 6' },
+  { id:'jericho', ready:true, blurb:'Meet the commander of the Lord’s army, march around Jericho with the ark and the rams’ horns, shout, and watch the walls fall down.', endVerse:'"Be strong and brave. Don’t be afraid, because the Lord your God will be with you everywhere you go."', endRef:'Joshua 1:9', before:"God led the Israelites through the desert for 40 years. He gave them food called manna and gave Moses the Ten Commandments. When Moses died, God chose Joshua to lead the people into the land He had promised to Abraham. But the first city in their way, Jericho, had huge walls.", title:'Joshua and the Walls of Jericho', who:'You are Joshua', ref:'Joshua 6' },
   { id:'gideon', before:"The Israelites moved into the promised land. But over and over, they forgot God and worshiped fake gods. Each time, enemies attacked them. When they cried out to God for help, He sent a leader called a judge to save them. This time the enemy was the Midianites, and they were stealing all of Israel's food.", title:'Gideon\u2019s 300', who:'You are Gideon', ref:'Judges 6 and 7' },
   { id:'samson', before:"Gideon's 300 men beat the huge Midianite army, and Israel had peace for 40 years. But then the people forgot God again, and the Philistines ruled over them. An angel told a woman her son would be very special. He would never cut his hair, and God would make him super strong. That son was Samson.", title:'Samson', who:'You are Samson', ref:'Judges 13 to 16' },
   { id:'david', before:"After Samson, the people of Israel wanted a king like the other nations had. God chose a tall man named Saul to be the first king. But Saul stopped obeying God. So God sent the prophet Samuel to Bethlehem to pick a new king, and Samuel chose the youngest son of Jesse, a shepherd boy named David. But David would not be king for a long time. And the Philistines were still at war with Israel.", ready:true, title:'David and Goliath', who:'You are David, a shepherd boy', ref:'1 Samuel 17',
@@ -2375,9 +2375,179 @@ function jumpRed(q){ // ?step=stretch | cross | chase | song
     W.people.concat(W.flock).forEach((p,i)=>{ place(p,(i%9-4)*2.2,-93-Math.floor(i/9)*2.2); }); goRed('song'); }
 }
 
+/* ================= Story 8: Joshua and the Walls of Jericho ================= */
+const JC={x:0,z:-30}, JRW=17, JRM=26, RAHAB_A=0.55;
+let AC=null; function audio(){ try{ AC=AC||new (window.AudioContext||window.webkitAudioContext)(); if(AC.state==='suspended') AC.resume(); return AC; }catch(e){ return null; } }
+function hornBlast(sec){ const a=audio(); if(!a) return; try{ const t=a.currentTime; const g=a.createGain(); g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(0.16,t+0.3); g.gain.setValueAtTime(0.16,t+sec-0.5); g.gain.linearRampToValueAtTime(0,t+sec);
+  const f=a.createBiquadFilter(); f.type='lowpass'; f.frequency.value=1100; f.connect(g); g.connect(a.destination);
+  [[174,0.5],[175.6,0.45],[261,0.3],[349,0.12]].forEach(([fr,v])=>{ const o=a.createOscillator(); o.type='sawtooth'; o.frequency.setValueAtTime(fr*0.93,t); o.frequency.linearRampToValueAtTime(fr,t+0.35); const og=a.createGain(); og.gain.value=v; o.connect(og); og.connect(f); o.start(t); o.stop(t+sec); }); }catch(e){} }
+function rumble(sec){ const a=audio(); if(!a) return; try{ const t=a.currentTime, n=a.sampleRate*sec, buf=a.createBuffer(1,n,a.sampleRate), d=buf.getChannelData(0); let v=0; for(let i=0;i<n;i++){ v=v*0.98+(Math.random()*2-1)*0.2; d[i]=v; }
+  const s=a.createBufferSource(); s.buffer=buf; const f=a.createBiquadFilter(); f.type='lowpass'; f.frequency.value=160; const g=a.createGain(); g.gain.setValueAtTime(0.9,t); g.gain.exponentialRampToValueAtTime(0.01,t+sec); s.connect(f); f.connect(g); g.connect(a.destination); s.start(t); }catch(e){} }
+function groundJericho(x,z){ let h=0.25*Math.sin(x*0.08)*Math.cos(z*0.07)+0.12*Math.sin(x*0.23+z*0.17);
+  const r=Math.hypot(x-JC.x,z-JC.z); h+=2.2*(1-smooth(clamp((r-19)/5,0,1))); /* the city sits on a hill */
+  const e=Math.hypot(x,z+10); if(e>78) h+=Math.min(9,Math.pow(e-78,1.1)*0.18)*(0.7+0.3*Math.sin(x*0.13+z*0.09)); return h; }
+function hornMesh(){ return tubeOf([[0,0,0],[0,0.12,-0.18],[0.02,0.3,-0.25],[0.06,0.42,-0.15]],0.012,0.055,0xe8dcc0); }
+function arkMesh(){ const o=new THREE.Group(), gold=mat(0xe2b23a);
+  const box=new THREE.Mesh(new THREE.BoxGeometry(0.75,0.7,1.25), gold); box.position.y=1.15; o.add(box);
+  const lid=new THREE.Mesh(new THREE.BoxGeometry(0.82,0.08,1.32), mat(0xf5c542)); lid.position.y=1.54; o.add(lid);
+  for(const sz of [-1,1]){ const c=new THREE.Group(); c.position.set(0,1.58,sz*0.42); blob(c,0xf5c542,0.12,1,1.3,1,0,0.15,0); for(const sx of [-1,1]){ const w=new THREE.Mesh(new THREE.BoxGeometry(0.04,0.22,0.36), gold); w.position.set(sx*0.12,0.3,-sz*0.14); w.rotation.x=-sz*0.6; c.add(w); } o.add(c); }
+  for(const sx of [-1,1]){ const p=new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.03,3.2,6), mat(0x8a6a3a)); p.rotation.x=Math.PI/2; p.position.set(sx*0.48,1.25,0); o.add(p); }
+  const bearers=[]; for(const sx of [-1,1]) for(const sz of [-1,1]){ const b=person({tunic:0xf2efe4,hair:0x2a1a10,beard:0x2a1a10,h:1.7,sash:0x2f6aa8}); b.position.set(sx*0.48,0,sz*1.35); o.add(b); b.userData.arms.forEach(a=>a.rotation.x=-2.7); b.userData.armsBusy=true; bearers.push(b); }
+  o.userData.bearers=bearers; return o; }
+function buildJericho(){
+  ground=groundJericho; resetLook();
+  const g=new THREE.Group(); scene.add(g); world={group:g, procession:[], trail:[], walls:[], dust:[], rahabFam:[], spies:[]}; const W=world, r=rnd(88);
+  { const N=160, geo=new THREE.PlaneGeometry(300,300,N,N); geo.rotateX(-Math.PI/2); const pos=geo.attributes.position, cols=[], c=new THREE.Color(), a=new THREE.Color(0xc8b47a), b=new THREE.Color(0xa8a060), rk=new THREE.Color(0xa08060);
+    for(let i=0;i<pos.count;i++){ const x=pos.getX(i), z=pos.getZ(i), h=groundJericho(x,z); pos.setY(i,h); const n=0.5+0.5*Math.sin(x*0.5+z*0.9)*Math.cos(x*0.27-z*0.4); c.copy(a).lerp(b,n*0.7); if(h>4) c.lerp(rk,clamp((h-4)/12,0,0.8)); c.multiplyScalar(1.05); cols.push(c.r,c.g,c.b); }
+    geo.setAttribute('color',new THREE.Float32BufferAttribute(cols,3)); geo.computeVertexNormals(); const uv=geo.attributes.uv; for(let i=0;i<uv.count;i++) uv.setXY(i,uv.getX(i)*90,uv.getY(i)*90);
+    const m=new THREE.Mesh(geo,new THREE.MeshLambertMaterial({vertexColors:true,map:GROUND_TEX})); m.userData.noCast=true; g.add(m); }
+  /* a worn path around the city */
+  { const ring=new THREE.Mesh(new THREE.RingGeometry(JRM-1.6,JRM+1.6,64), mat(0xb8a070)); ring.rotation.x=-Math.PI/2; ring.position.set(JC.x,0.06,JC.z); ring.userData.noCast=true; const p=ring.geometry.attributes.position; for(let i=0;i<p.count;i++){ const x=p.getX(i)+JC.x, z=-p.getY(i)+JC.z; p.setZ(i,groundJericho(x,z)+0.04); } ring.position.y=0; g.add(ring); }
+  grassField(g, touch?3500:7000, ()=>{ const x=(Math.random()-0.5)*130, z=(Math.random()-0.5)*130; const d=Math.hypot(x-JC.x,z-JC.z); if(Math.random()>0.45||d<JRW+1||Math.abs(d-JRM)<2.2) return null; return [x,z,0x8a9a4a]; });
+  /* Jericho, the city of palm trees */
+  for(let i=0;i<30;i++){ const a=r()*Math.PI*2, d=JRM+6+r()*30; const x=JC.x+Math.sin(a)*d, z=JC.z+Math.cos(a)*d; if(z>20&&Math.abs(x)<30) continue; if(Math.abs(((a-RAHAB_A+Math.PI*3)%(Math.PI*2))-Math.PI)<0.45) continue; palm(g,x,z,0.8+r()*0.4); }
+  for(let i=0;i<10;i++){ const a=r()*Math.PI*2, d=4+r()*10; palm(g,JC.x+Math.sin(a)*d,JC.z+Math.cos(a)*d,0.9+r()*0.3); }
+  for(let i=0;i<14;i++){ const a=i/14*Math.PI*2+r()*0.3, d=6+(i%3)*3.5; const hs=house(g,JC.x+Math.sin(a)*d,JC.z+Math.cos(a)*d); hs.rotation.y=a+Math.PI; hs.scale.set(0.8,1+(i%3)*0.5,0.8); }
+  { const k=new THREE.Mesh(new THREE.BoxGeometry(6,9,6), mat(0xd8c49a)); k.position.set(JC.x,groundJericho(JC.x,JC.z)+4.5,JC.z); g.add(k); const top=new THREE.Mesh(new THREE.BoxGeometry(6.6,0.5,6.6), mat(0xb59a6a)); top.position.set(JC.x,groundJericho(JC.x,JC.z)+9.2,JC.z); g.add(top); }
+  /* the great walls */
+  const N=32, segW=2*Math.PI*JRW/N+0.15, stone=mat(0xcfb98a), stone2=mat(0xbfa676);
+  for(let i=0;i<N;i++){ const a=i/N*Math.PI*2; const seg=new THREE.Group(); seg.rotation.order='YXZ'; seg.rotation.y=a; const bx=JC.x+Math.sin(a)*(JRW+0.9), bz=JC.z+Math.cos(a)*(JRW+0.9); seg.position.set(bx,groundJericho(bx,bz)-0.3,bz);
+    const tower=i%4===0, gate=i===0, h=tower?10:7.5;
+    if(gate){ for(const sx of [-1,1]){ const p=new THREE.Mesh(new THREE.BoxGeometry(segW*0.3,h,1.8), stone); p.position.set(sx*segW*0.35,h/2,-0.9); seg.add(p); } const lin=new THREE.Mesh(new THREE.BoxGeometry(segW,2.4,1.8), stone); lin.position.set(0,h-1.2,-0.9); seg.add(lin);
+      const door=new THREE.Mesh(new THREE.BoxGeometry(segW*0.42,h-2.4,0.3), mat(0x5a3a1e)); door.position.set(0,(h-2.4)/2,-0.2); seg.add(door); }
+    else { const m=new THREE.Mesh(new THREE.BoxGeometry(segW,h,1.8), (i%2?stone:stone2)); m.position.set(0,h/2,-0.9); seg.add(m); }
+    for(let k=-1;k<=1;k++){ const c=new THREE.Mesh(new THREE.BoxGeometry(segW*0.22,0.8,1.9), stone2); c.position.set(k*segW*0.33,h+0.4,-0.9); seg.add(c); }
+    if(tower){ const tw=new THREE.Mesh(new THREE.BoxGeometry(segW*1.1,1,2.6), stone2); tw.position.set(0,h-0.5,-0.9); seg.add(tw); }
+    const da=((a-RAHAB_A+Math.PI*3)%(Math.PI*2))-Math.PI; if(Math.abs(da)<0.11){ seg.userData.rahab=true; W.rahabSeg=seg;
+      const hs=new THREE.Mesh(new THREE.BoxGeometry(segW*0.9,2.4,2.2), mat(0xe6d3a8)); hs.position.set(0,h+1.2,-1.0); seg.add(hs); const rf=new THREE.Mesh(new THREE.BoxGeometry(segW,0.25,2.5), mat(0xb59a6a)); rf.position.set(0,h+2.5,-1.0); seg.add(rf);
+      const win=new THREE.Mesh(new THREE.BoxGeometry(0.7,0.6,0.1), mat(0x2a1a10)); win.position.set(0,h+1.3,0.12); seg.add(win);
+      const cord=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.05,h+0.9,6), mat(0xd0201a)); cord.position.set(0.15,(h+1.1)/2,0.2); seg.add(cord); }
+    seg.userData.a=a; seg.userData.fall=0; seg.userData.delay=Math.abs(((a+Math.PI)%(Math.PI*2))-Math.PI)*0.25+r()*0.4; g.add(seg); W.walls.push(seg); }
+  /* Gilgal: the camp of Israel */
+  [[-16,50],[-26,58],[-12,64],[14,50],[24,58],[10,66],[-30,44],[32,46],[-4,74],[18,74],[-20,72]].forEach(([x,z],i)=>tent(g,x,z,[0x8a5a3a,0x6e4a32,0x9a6a40,0x7a5236][i%4],0.9+(i%3)*0.15));
+  for(let i=0;i<10;i++){ const s=sheep(g,30+r()*10,64+r()*8,0.8); s.rotation.y=r()*6; }
+  /* the commander of the Lord's army */
+  { const c=person({tunic:0xf6f2e6,sash:0xe2b23a,hair:0xd8b060,helmet:0xe2b23a,h:1.95,skin:0xd6a070}); const sw=new THREE.Group(); const bl=new THREE.Mesh(new THREE.BoxGeometry(0.06,1.1,0.02), mat(0xe8eef4,{emissive:0x8090a0})); bl.position.y=0.55; sw.add(bl); const hilt=new THREE.Mesh(new THREE.BoxGeometry(0.28,0.05,0.05), mat(0xe2b23a)); sw.add(hilt);
+    sw.position.y=-0.62; sw.rotation.x=Math.PI; c.userData.arms[1].add(sw); c.userData.arms[1].rotation.x=-2.4; c.userData.armsBusy=true; const glow=glowSprite(0xfff2c0,4); glow.position.y=1.1; c.add(glow); place(c,3,4,0); g.add(c); W.commander=c; }
+  /* the march: armed men, seven priests with rams' horns, the ark, and more men */
+  const order=[]; for(let i=0;i<6;i++) order.push(person({tunic:0x7a5a3a,hair:0x2a1a10,beard:i%2?0x2a1a10:null,helmet:0x8a7a5a,spear:true,shield:0x8a5a2a,h:1.76}));
+  for(let i=0;i<7;i++){ const p=person({tunic:0xf2efe4,hair:0x2a1a10,beard:0x3a2a1a,sash:0x2f6aa8,h:1.72}); const hn=hornMesh(); hn.position.set(0,-0.62,0.05); p.userData.arms[1].add(hn); p.userData.priest=true; order.push(p); }
+  const ark=arkMesh(); ark.userData.ark=true; order.push(ark); W.ark=ark;
+  for(let i=0;i<8;i++) order.push(person({tunic:[0x8a5a3a,0x5a6a3a,0x6a4a3a,0x4a5a7a][i%4],hair:0x2a1a10,beard:i%2?0x2a1a10:null,helmet:i<4?0x8a7a5a:null,spear:i<4,h:1.74}));
+  let lag=4; order.forEach((p,i)=>{ p.userData.lag=lag; lag+=p.userData.ark?4.2:2.1; p.userData.side=(i%2?0.45:-0.45)*(p.userData.ark?0:1); g.add(p); W.procession.push(p); });
+  W.procession.forEach((p,i)=>{ place(p,-10+(i%6)*2.6,48+Math.floor(i/6)*2.4,Math.PI); });
+  /* Rahab and her family, and the two spies */
+  for(let i=0;i<5;i++){ const p=person({tunic:[0xb03a3a,0x7a4ab0,0x5a6a3a,0x8a5a3a,0x4a5a7a][i],hair:i===0?0x2a1a10:0x3a2a1a,longHair:i!==2&&i!==3,beard:i===2?0x8a8a84:null,h:i===4?1.25:1.65}); p.visible=false; g.add(p); W.rahabFam.push(p); }
+  for(let i=0;i<2;i++){ const p=person({tunic:0x6a5a3a,hair:0x2a1a10,beard:0x2a1a10,h:1.76}); place(p,-3+i*1.6,8); p.visible=false; g.add(p); W.spies.push(p); }
+  W.beacon=makeBeacon(); W.beacon.visible=false; g.add(W.beacon);
+  P.x=0; P.z=44; P.yaw=0; P.pitch=0; P.eye=1.75; P.speed=4.6; P.roll=0;
+  story={id:'jericho', step:'', t:0, lock:true, target:null, near:null, follow:false, day:1, lap:0, lapAng:0, lastA:null, fadeSky:null};
+  hand.visible=false; basket.visible=false; sling.visible=false; fruitHand.visible=false; if(typeof logHand!=='undefined'){ logHand.visible=false; leafHand.visible=false; } if(typeof coatView!=='undefined'){ coatView.visible=false; sheafHand.visible=false; } if(typeof reedHand!=='undefined') reedHand.visible=false; if(typeof staffHand!=='undefined') staffHand.visible=false;
+  goJericho('intro');
+}
+function jerLineUp(){ const W=world, S=story; P.x=JC.x; P.z=JC.z+JRM; P.yaw=-Math.PI/2; P.pitch=0; S.lastA=null; S.lapAng=0;
+  W.trail.length=0; for(let k=120;k>=0;k--){ const a=-k*0.5/JRM; W.trail.push({x:JC.x+Math.sin(a)*JRM, z:JC.z+Math.cos(a)*JRM}); }
+  W.procession.forEach(p=>{ const k=Math.max(0,W.trail.length-1-Math.floor(p.userData.lag)); const q=W.trail[k]; place(p,q.x,q.z); const q2=W.trail[Math.min(W.trail.length-1,k+1)]; faceTo(p,q2.x,q2.z); }); }
+function jerCut(lines, then){ $('fade').style.background='#0b0b14'; $('fade').style.opacity=1; setTimeout(()=>{ jerLineUp(); $('fade').style.opacity=0; setTimeout(()=>{ $('fade').style.background='#fff8e6'; },900); say(lines, then); },900); }
+function jerGoal(){ const S=story; setGoal(S.day<7 ? `Day ${S.day}: march around Jericho <b>one time</b>. Stay quiet!` : `Day 7: march around Jericho <b>seven times</b> (${S.lap} of 7)`); }
+function goJericho(step){
+  const S=story, W=world; S.step=step; $('prompt').classList.add('hidden');
+  if(step==='intro'){
+    S.lock=true; setGoal('Listen');
+    say([[SAY_BIBLE,'The Israelites crossed the Jordan River into the land God promised them, and they camped at Gilgal.','Joshua 4:19'],
+      ['You are Joshua','You are Joshua. Moses has died, and now you lead God’s people.',''],
+      ['God','Be strong and brave. Don’t be afraid, because the Lord your God will be with you everywhere you go.','Joshua 1:9'],
+      [SAY_BIBLE,'Jericho was shut up tight because of the Israelites. No one went out, and no one came in.','Joshua 6:1', ()=>lookAt(JC.x,6,JC.z,1.5)]], ()=>goJericho('meet'));
+  }
+  if(step==='meet'){ S.lock=false; setGoal('Go and look at <b>Jericho</b>'); S.target={position:new THREE.Vector3(3,0,8)}; }
+  if(step==='commander'){ S.lock=true; S.target=null; setGoal('Listen'); lookAt(W.commander.position.x,1.9,W.commander.position.z,1);
+    say([[SAY_BIBLE,'When Joshua was near Jericho, he looked up and saw a man standing in front of him, holding a sword.','Joshua 5:13'],
+      ['You are Joshua','Are you on our side, or on our enemies’ side?','Joshua 5:13'],
+      ['The man','Neither. I have come as the commander of the Lord’s army.','Joshua 5:14'],
+      [SAY_BIBLE,'Joshua bowed down with his face to the ground.','Joshua 5:14', ()=>{ P.lockLook=null; S.bow=true; }],
+      ['The commander','Take off your sandals, because the place where you are standing is holy.','Joshua 5:15', ()=>{ S.bow=false; lookAt(W.commander.position.x,1.9,W.commander.position.z,1); }],
+      ['God','See, I have given Jericho to you, with its king and its soldiers.','Joshua 6:2'],
+      ['God','March around the city one time each day for six days, with all the soldiers. Have seven priests carry rams’ horns in front of the ark.','Joshua 6:3-4'],
+      ['God','On the seventh day, march around the city seven times, with the priests blowing the horns. When you hear one long blast, have all the people shout. Then the wall of the city will fall down flat!','Joshua 6:4-5']], ()=>{ W.commander.visible=false; jerCut([[SAY_BIBLE,'So Joshua told the priests and the people what God said. The march began.','Joshua 6:6-8'],['You are Joshua','Don’t shout. Don’t say a single word until the day I tell you to shout.','Joshua 6:10']], ()=>goJericho('march')); });
+  }
+  if(step==='march'){ S.lock=false; S.follow=true; jerGoal(); S.target={position:new THREE.Vector3()}; }
+  if(step==='blast'){ S.lock=true; S.follow=false; S.target=null; setGoal('Listen'); lookAt(JC.x,5,JC.z,1.2);
+    say([[SAY_BIBLE,'On the seventh time around, the priests blew one long blast on their horns.','Joshua 6:16', ()=>{ S.blowing=3.5; hornBlast(3.4); }],
+      ['You are Joshua','Shout! The Lord has given you the city!','Joshua 6:16']], ()=>goJericho('shout')); }
+  if(step==='shout'){ S.lock=true; setGoal('Everyone <b>shout</b>!'); }
+  if(step==='fallen'){ S.lock=true; setGoal('Watch');
+    say([[SAY_BIBLE,'When the people heard the horns, they gave a loud shout, and the wall fell down flat!','Joshua 6:20'],
+      [SAY_BIBLE,'Every part of the wall fell, except one part: the house of Rahab, with a red cord hanging from its window.','Joshua 2:18, 6:22', ()=>{ lookAt(W.rahabSeg.position.x,7,W.rahabSeg.position.z,1.2); }],
+      [SAY_BIBLE,'Rahab had hidden two Israelite spies when they came to Jericho, and they promised to keep her family safe.','Joshua 2:1-14'],
+      ['You are Joshua','Go into Rahab’s house and bring her out, with all her family, just as you promised her.','Joshua 6:22', ()=>{ W.spies.forEach(s=>s.visible=true); }]], ()=>goJericho('rahab')); }
+  if(step==='rahab'){ S.lock=false; setGoal('Bring <b>Rahab</b> and her family out safely'); const a=RAHAB_A; S.target={position:new THREE.Vector3(JC.x+Math.sin(a)*(JRW+3.2),0,JC.z+Math.cos(a)*(JRW+3.2))}; }
+  if(step==='saved'){ S.lock=true; S.target=null; setGoal('Listen');
+    say([[SAY_BIBLE,'So the spies brought out Rahab, her father and mother, her brothers, and everyone with her, and kept them safe.','Joshua 6:23'],
+      ['Rahab','Thank you! I knew your God is the true God of heaven and earth.','Joshua 2:11'],
+      [SAY_BIBLE,'Rahab lived with the Israelites from then on. Many years later, her great-great-grandson was King David, and Jesus was born into her family!','Joshua 6:25, Matthew 1:5'],
+      [SAY_BIBLE,'So the Lord was with Joshua, and everyone in the land heard about him.','Joshua 6:27']], ()=>finishStory()); }
+}
+function updateJericho(dt, now){
+  const S=story, W=world, t=(S.t+=dt);
+  if(S.bow) P.pitch+=(-1.0-P.pitch)*Math.min(1,dt*3);
+  if(W.commander.visible){ W.commander.children.forEach(c=>{ if(c.isSprite) c.material.opacity=0.5+0.2*Math.sin(t*3); }); }
+  /* lap counting */
+  if(S.step==='march' && !S.lock && S.target){ const a=Math.atan2(P.x-JC.x,P.z-JC.z), d=Math.hypot(P.x-JC.x,P.z-JC.z);
+    if(S.lastA!==null && d<JRM+10){ let da=a-S.lastA; if(da>Math.PI) da-=Math.PI*2; if(da<-Math.PI) da+=Math.PI*2; S.lapAng+=da; } S.lastA=a;
+    const ta=a+0.45; S.target.position.set(JC.x+Math.sin(ta)*JRM,0,JC.z+Math.cos(ta)*JRM);
+    if(S.lapAng>=Math.PI*2-0.05){ S.lapAng=0; S.lap++; jerLapDone(); } }
+  /* the procession follows */
+  const tr=W.trail, lp=tr[tr.length-1]; if(!lp || Math.hypot(P.x-lp.x,P.z-lp.z)>0.5){ tr.push({x:P.x,z:P.z}); if(tr.length>300) tr.shift(); }
+  W.procession.forEach((p,i)=>{ const u=p.userData; if(S.follow){ const k=tr.length-1-Math.floor(u.lag); if(k>=0){ const q=tr[k]; const q2=tr[Math.min(tr.length-1,k+1)]; let nx=q2.z-q.z, nz=-(q2.x-q.x); const nl=Math.hypot(nx,nz)||1; const tx=q.x+nx/nl*u.side, tz=q.z+nz/nl*u.side;
+      const dx=tx-p.position.x, dz=tz-p.position.z, d=Math.hypot(dx,dz); if(d>0.25){ if(d>18){ p.position.x=tx; p.position.z=tz; } const v=Math.min(5.5,d*1.6)*dt; p.position.x+=dx/d*v; p.position.z+=dz/d*v; p.rotation.y=Math.atan2(dx,dz); if(u.ark) u.bearers.forEach(b=>animWalk(b,dt,1)); else animWalk(p,dt,1); } } }
+    p.position.y=ground(p.position.x,p.position.z);
+    if(u.priest){ const blow=S.blowing>0||(S.step==='march'&&S.day>=1&&Math.sin(t*0.9+i)>0.6); u.armsBusy=blow; if(blow) u.arms[1].rotation.x=-2.0; } });
+  if(S.blowing>0) S.blowing-=dt;
+  if(S.step==='march' && Math.floor(t*0.25)!==Math.floor((t-dt)*0.25)) hornBlast(0.9);
+  /* the walls fall down flat */
+  if(S.falling){ S.fallT+=dt; W.walls.forEach(s=>{ const u=s.userData; if(u.rahab) return; const k=clamp((S.fallT-u.delay)/1.4,0,1); if(k<=0) return; u.fall=k*k; s.rotation.x=u.fall*1.5; s.scale.set(1,1-u.fall*0.55,1-u.fall*0.3); s.position.y=groundJericho(s.position.x,s.position.z)-0.3-u.fall*1.2; if(k>=1&&!u.rubble){ u.rubble=true; for(let j=0;j<3;j++){ const a=u.a+(j-1)*0.06, d=JRW+1+j*1.7; rock(world.group,JC.x+Math.sin(a)*d,JC.z+Math.cos(a)*d,0.5+Math.random()*0.5); } } });
+    W.dust.forEach((d,i)=>{ d.scale.setScalar(Math.min(14,(d.scale.x||1)+dt*6)); d.material.opacity=Math.max(0,0.55-S.fallT*0.06); }); }
+  /* Rahab's family walks out to safety */
+  if(S.backTo){ const b=S.backTo; P.x+=(b.x-P.x)*Math.min(1,dt*1.5); P.z+=(b.z-P.z)*Math.min(1,dt*1.5); if(Math.hypot(b.x-P.x,b.z-P.z)<0.1){ S.backTo=null; } const f=W.rahabFam[0]; P.lockLook={x:f.position.x,y:ground(f.position.x,f.position.z)+1.4,z:f.position.z,t:0,dur:0.6}; }
+  if(S.step==='saved'){ W.rahabFam.concat(W.spies).forEach((p,i)=>{ const tx=JC.x+Math.sin(RAHAB_A)*(JRM+4)+(i%4-1.5)*1.3, tz=JC.z+Math.cos(RAHAB_A)*(JRM+4)+Math.floor(i/4)*1.4; const dx=tx-p.position.x, dz=tz-p.position.z, d=Math.hypot(dx,dz); if(d>0.3){ const v=Math.min(1.6,d)*dt; p.position.x+=dx/d*v; p.position.z+=dz/d*v; p.rotation.y=Math.atan2(dx,dz); animWalk(p,dt,0.8); } p.position.y=ground(p.position.x,p.position.z); }); }
+  let near=null;
+  if(S.step==='meet' && Math.hypot(P.x-W.commander.position.x,P.z-W.commander.position.z)<7) goJericho('commander');
+  if(S.step==='shout') near={label:'Shout!', fn:()=>{ shake=0.8; rumble(4); S.falling=true; S.fallT=0;
+      for(let i=0;i<14;i++){ const a=i/14*Math.PI*2; const d=glowSprite(0xcbb48a,4); d.material.blending=THREE.NormalBlending; d.material.opacity=0.55; d.position.set(JC.x+Math.sin(a)*(JRW+2),groundJericho(0,JC.z+JRW)+2,JC.z+Math.cos(a)*(JRW+2)); W.group.add(d); W.dust.push(d); }
+      setTimeout(()=>{ if(story===S) goJericho('fallen'); },2600); }};
+  if(S.step==='rahab' && dist2(S.target)<3.2) near={label:'Bring Rahab’s family out', fn:()=>{ const a=RAHAB_A; W.rahabFam.forEach((p,i)=>{ p.visible=true; place(p,JC.x+Math.sin(a)*(JRW+1.8)+(i-2)*0.9,JC.z+Math.cos(a)*(JRW+1.8)); });
+      W.spies.forEach((s,i)=>place(s,JC.x+Math.sin(a)*(JRW+2.6)+(i?1:-1),JC.z+Math.cos(a)*(JRW+2.6))); S.backTo={x:JC.x+Math.sin(a)*(JRM+9),z:JC.z+Math.cos(a)*(JRM+9)}; goJericho('saved'); }};
+  S.near=near;
+  const pr=$('prompt');
+  if(near && !saying()){ pr.textContent=(touch?'':'Space: ')+near.label; pr.classList.remove('hidden'); $('act').textContent=near.label.split(' ')[0].replace('!',''); }
+  else { pr.classList.add('hidden'); $('act').textContent= saying()?'Next':'Use'; }
+  showBeacon(t);
+}
+function jerLapDone(){ const S=story;
+  if(S.day<7){ S.lock=true; S.follow=false; S.target=null;
+    say([[SAY_BIBLE,'On the first day they marched around the city one time, and then went back to camp.','Joshua 6:11']], ()=>{ S.day=6;
+      jerCut([[SAY_BIBLE,'They did the same thing on the second day, and the third, the fourth, the fifth, and the sixth day. Six days in a row!','Joshua 6:14'],
+        [SAY_BIBLE,'On the seventh day, they got up at dawn and marched around the city, the same way, but this time seven times.','Joshua 6:15']], ()=>{ S.day=7; S.lap=0; goJericho('march'); }); });
+    return; }
+  jerGoal();
+  if(S.lap===1){ S.lock=true; S.follow=false; S.target=null;
+    say([[SAY_BIBLE,'Once around on the seventh day...','Joshua 6:15']], ()=>{ jerCut([[SAY_BIBLE,'Two times... three... four... five... six times around!','Joshua 6:15', ()=>{ S.lap=6; }]], ()=>{ goJericho('march'); }); }); }
+  if(S.lap>=7) goJericho('blast');
+}
+function boundsJericho(){ const S=story; P.x=clamp(P.x,-70,70); P.z=clamp(P.z,-95,80);
+  const d=Math.hypot(P.x-JC.x,P.z-JC.z), min=S.falling?0:JRW+2.6; if(d<min){ P.x=JC.x+(P.x-JC.x)/(d||1)*min; P.z=JC.z+(P.z-JC.z)/(d||1)*min; } }
+function jumpJericho(q){ // ?step=march | day7 | shout | rahab
+  const S=story, W=world; sayQ.length=0; $('say').classList.add('hidden'); sayCb=null; W.commander.visible=false;
+  if(q==='march'){ jerLineUp(); goJericho('march'); }
+  if(q==='day7'){ S.day=7; S.lap=6; jerLineUp(); goJericho('march'); }
+  if(q==='shout'||q==='rahab'){ S.day=7; S.lap=7; jerLineUp(); goJericho('shout'); }
+  if(q==='rahab'){ S.falling=true; S.fallT=30; W.spies.forEach(s=>s.visible=true); goJericho('rahab'); }
+}
+
 /* David's story hooks */
 function boundsDavid(){ P.x=clamp(P.x,-34,34); P.z=clamp(P.z,-60,72); }
 const IMPL = {
+  jericho: { build:buildJericho, go:goJericho, update:updateJericho, bounds:boundsJericho, locked:S=>S.lock },
   redsea: { build:buildRed, go:goRed, update:updateRed, bounds:boundsRed, locked:S=>S.lock },
   bush: { build:buildBush, go:goBush, update:updateBush, bounds:boundsBush, locked:S=>S.lock },
   babymoses: { build:buildMoses, go:goMoses, update:updateMoses, bounds:boundsMoses, locked:S=>S.lock },
@@ -2403,7 +2573,7 @@ function startStory(id){
   const q=new URLSearchParams(location.search).get('step'); if(q && story) jumpTo(q); // preview links for testing
 }
 function jumpTo(q){ // ?step=stones or ?step=sling
-  const S=story; if(story.id==='adam') return jumpAdam(q); if(story.id==='noah') return jumpNoah(q); if(story.id==='abraham') return jumpAbraham(q); if(story.id==='joseph') return jumpJoseph(q); if(story.id==='babymoses') return jumpMoses(q); if(story.id==='bush') return jumpBush(q); if(story.id==='redsea') return jumpRed(q);
+  const S=story; if(story.id==='adam') return jumpAdam(q); if(story.id==='noah') return jumpNoah(q); if(story.id==='abraham') return jumpAbraham(q); if(story.id==='joseph') return jumpJoseph(q); if(story.id==='babymoses') return jumpMoses(q); if(story.id==='bush') return jumpBush(q); if(story.id==='redsea') return jumpRed(q); if(story.id==='jericho') return jumpJericho(q);
   if(q==='stones'||q==='sling'){ world.lamb.userData.following=true; world.lamb.userData.goal={x:world.flock.x+1,z:world.flock.z}; world.lamb.position.set(world.flock.x+1,0,world.flock.z); world.israel.forEach(p=>p.position.z+=12); }
   if(q==='stones'){ P.x=0; P.z=STREAM_Z+4; P.yaw=0; sayQ.length=0; $('say').classList.add('hidden'); go('stones'); }
   if(q==='sling'){ world.stones.forEach(s=>s.visible=false); S.stonesHeld=5; S.stonesLeft=5; P.x=0; P.z=-20; P.yaw=0; world.goliath.position.set(0,ground(0,-36),-36); sayQ.length=0; $('say').classList.add('hidden'); $('stones').classList.remove('hidden'); updateStonesHud(); go('sling'); }
@@ -2414,7 +2584,7 @@ function finishStory(){
   const nextReady=READY[READY.indexOf(s)+1], nextAny=STORIES[STORIES.indexOf(s)+1];
   $('fade').style.opacity=0.6;
   setTimeout(()=>{
-    $('endWho').textContent='You saw what '+({david:'David',adam:'Adam',noah:'Noah',abraham:'Abraham',joseph:'Joseph',babymoses:'Miriam',bush:'Moses',redsea:'Moses'}[s.id]||'they')+' did.';
+    $('endWho').textContent='You saw what '+({david:'David',adam:'Adam',noah:'Noah',abraham:'Abraham',joseph:'Joseph',babymoses:'Miriam',bush:'Moses',redsea:'Moses',jericho:'Joshua'}[s.id]||'they')+' did.';
     $('endVerse').textContent=s.endVerse; $('endRef').textContent=s.endRef;
     $('endUnlock').textContent= nextReady ? 'You unlocked '+nextReady.title+'!' : (nextAny ? 'Next up: '+nextAny.title+'. It is coming soon!' : 'You finished every story!');
     $('endNext').innerHTML = nextAny ? '<b>What happens next</b>'+nextAny.before : '';
