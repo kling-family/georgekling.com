@@ -228,7 +228,7 @@ const STORIES = [
   { id:'david', before:"After Samson, the people of Israel wanted a king like the other nations had. God chose a tall man named Saul to be the first king. But Saul stopped obeying God. So God sent the prophet Samuel to Bethlehem to pick a new king, and Samuel chose the youngest son of Jesse, a shepherd boy named David. But David would not be king for a long time. And the Philistines were still at war with Israel.", ready:true, title:'David and Goliath', who:'You are David, a shepherd boy', ref:'1 Samuel 17',
     blurb:'Find a lost lamb, bring food to your brothers, and face the giant with five smooth stones.',
     endVerse:'"The battle is the Lord\u2019s."', endRef:'1 Samuel 17:47' },
-  { id:'elijah', before:"David became a great king. His son Solomon was very wise and built a beautiful temple for God. After Solomon, the kingdom split into two parts. One of the worst kings was Ahab. He and his wife Jezebel made the people worship a fake god called Baal. So God sent no rain for three years, and God's prophet Elijah came to face Ahab.", title:'Elijah and the Fire on the Mountain', who:'You are Elijah', ref:'1 Kings 18' },
+  { id:'elijah', ready:true, blurb:'Climb Mount Carmel, watch the prophets of Baal shout all day, build an altar with 12 stones, soak it with water, and see fire fall from heaven.', endVerse:'"The Lord, He is God! The Lord, He is God!"', endRef:'1 Kings 18:39', before:"David became a great king. His son Solomon was very wise and built a beautiful temple for God. After Solomon, the kingdom split into two parts. One of the worst kings was Ahab. He and his wife Jezebel made the people worship a fake god called Baal. So God sent no rain for three years, and God's prophet Elijah came to face Ahab.", title:'Elijah and the Fire on the Mountain', who:'You are Elijah', ref:'1 Kings 18' },
   { id:'jonah', before:"Elijah showed everyone that the Lord is the real God. After Elijah, God kept sending prophets to warn His people and other nations. Nineveh was a huge city in the enemy country of Assyria, and its people were very wicked. God told a prophet named Jonah to go there and warn them. But Jonah did not want to go.", title:'Jonah and the Big Fish', who:'You are Jonah', ref:'Jonah 1 to 3' },
   { id:'daniel', before:"Even after Jonah, God's people kept turning away from Him. So God let the army of Babylon take over Jerusalem and carry many of the people far away. One of them was a young man named Daniel. He kept praying to God every day, and he became one of the king's most important helpers. Later the Persians took over Babylon, and King Darius ruled.", title:'Daniel in the Lions\u2019 Den', who:'You are Daniel', ref:'Daniel 6' },
   { id:'esther', before:"God protected Daniel. After many years, some of God's people went back home to rebuild Jerusalem, but many stayed in Persia. The king of Persia, Xerxes, picked a young Jewish woman named Esther to be his new queen. Nobody knew she was Jewish. Then the king's evil helper Haman made a plan to destroy all the Jewish people.", title:'Esther the Brave Queen', who:'You are Esther', ref:'Esther 4 to 7' },
@@ -2875,9 +2875,189 @@ function jumpSamson(q){ // ?step=lion | gaza | grind | temple
   if(q==='temple'){ blindOn(0.85); P.x=STEMPLE.x; P.z=STEMPLE.z+1.5; P.yaw=Math.PI; P.speed=0; pushView.visible=true; goSamson('pray'); }
 }
 
+/* ================= Story 12: Elijah on Mount Carmel ================= */
+const EBAAL={x:-7,z:-3}, ELORD={x:6,z:-3}, ETOP={x:-12,z:-7}, EJEZ={x:62,z:52};
+function groundElijah(x,z){ let h=0.35*Math.sin(x*0.11)*Math.cos(z*0.09)+0.18*Math.sin(x*0.23+z*0.19);
+  const d=Math.hypot(x*0.9,z); if(d<15) h=14+0.04*Math.sin(x*0.9+z*0.7); else h+=14*(1-smooth(clamp((d-15)/50,0,1)));
+  if(x<-28) h-=Math.pow(-28-x,1.15)*0.35; /* the slope down to the sea */
+  const e=Math.hypot(x-10,z-10); if(e>115 && x>-40) h+=Math.min(10,Math.pow(e-115,1.1)*0.2); return h; }
+function buildElijah(){
+  ground=groundElijah; resetLook(); scene.background.set(0xdcd0a8); scene.fog.color.set(0xdcd0a8); hemi.intensity=0.55; sun.intensity=1.0;
+  const g=new THREE.Group(); scene.add(g); world={group:g, stones:[], prophets:[], crowd:[], helpers:[], flames:[], smoke:[], houses:[]}; const W=world, r=rnd(1218);
+  { const N=170, geo=new THREE.PlaneGeometry(320,320,N,N); geo.rotateX(-Math.PI/2); const pos=geo.attributes.position, cols=[], c=new THREE.Color(), a=new THREE.Color(0xb2a46e), b=new THREE.Color(0xc8b88a), top=new THREE.Color(0xa89c84), sand=new THREE.Color(0xd8c89a);
+    for(let i=0;i<pos.count;i++){ const x=pos.getX(i), z=pos.getZ(i), h=groundElijah(x,z); pos.setY(i,h); const n=0.5+0.5*Math.sin(x*0.5+z*0.9)*Math.cos(x*0.27-z*0.4); c.copy(a).lerp(b,n*0.8); if(Math.hypot(x*0.9,z)<15.5) c.lerp(top,0.6); if(h<0.4&&x<-30) c.copy(sand); c.multiplyScalar(1.03); cols.push(c.r,c.g,c.b); }
+    geo.setAttribute('color',new THREE.Float32BufferAttribute(cols,3)); geo.computeVertexNormals(); const uv=geo.attributes.uv; for(let i=0;i<uv.count;i++) uv.setXY(i,uv.getX(i)*90,uv.getY(i)*90);
+    const m=new THREE.Mesh(geo,new THREE.MeshLambertMaterial({vertexColors:true,map:GROUND_TEX})); m.userData.noCast=true; g.add(m); }
+  { const sea=new THREE.Mesh(new THREE.PlaneGeometry(700,700), new THREE.MeshPhongMaterial({color:0x3a86b8,specular:0xbfd8e8,shininess:80})); sea.rotation.x=-Math.PI/2; sea.position.set(-200,-1.5,0); sea.userData.noCast=true; g.add(sea); }
+  /* three years with no rain: dry grass, a few olive trees */
+  grassField(g, touch?2000:4000, ()=>{ const x=(Math.random()-0.5)*190, z=(Math.random()-0.5)*190; if(Math.hypot(x*0.9,z)<16) return null; if(groundElijah(x,z)<0.3) return null; if(Math.random()>0.45) return null; return [x,z,0xa89a58]; });
+  for(let i=0;i<26;i++){ const x=(r()-0.5)*150, z=(r()-0.5)*150; const d=Math.hypot(x*0.9,z); if(d<20||groundElijah(x,z)<1) continue; if(Math.hypot(x-EJEZ.x,z-EJEZ.z)<12) continue; tree(g,x,z,0.8+r()*0.4); }
+  for(let i=0;i<30;i++){ const x=(r()-0.5)*160, z=(r()-0.5)*160; if(Math.hypot(x*0.9,z)<17||groundElijah(x,z)<0.5||(Math.abs(x)<8&&z>10)) continue; rock(g,x,z,0.6+r()*1.2); }
+  /* Jezreel, far off in the valley */
+  for(let i=0;i<10;i++){ const x=EJEZ.x+6+(i%4)*5.5+(r()-0.5)*2, z=EJEZ.z+6+Math.floor(i/4)*6+(r()-0.5)*2; const hs=house(g,x,z); W.houses.push(hs); }
+  /* the altar of Baal, already built, with the bull on it */
+  { const st=mat(0x8e8676); for(let k=0;k<10;k++){ const s=new THREE.Mesh(ROCK_GEO[k%4], st); const a=k/5*Math.PI+(k>=5?0.6:0), rr=0.75; s.scale.set(0.5,0.38,0.45); s.position.set(EBAAL.x+Math.cos(a)*rr,14+0.22+(k>=5?0.4:0),EBAAL.z+Math.sin(a)*rr); g.add(s); }
+    for(let k=0;k<4;k++){ const l=new THREE.Mesh(new THREE.CylinderGeometry(0.07,0.07,1.6,6), mat(0x6a4a2a)); l.rotation.z=Math.PI/2; l.rotation.y=k*0.8; l.position.set(EBAAL.x,14.9+k*0.07,EBAAL.z); g.add(l); }
+    for(let k=0;k<3;k++) blob(g,0x9a4a3a,0.2,1.2,0.7,1,EBAAL.x+(k-1)*0.35,15.15,EBAAL.z+(k%2)*0.2,8); }
+  /* the broken altar of the Lord: 12 stones lying around */
+  W.stoneM=mat(0x9a9080);
+  for(let i=0;i<12;i++){ const s=new THREE.Mesh(ROCK_GEO[i%4], W.stoneM); s.scale.set(0.5,0.38,0.45); const a=i/12*Math.PI*2+(r()-0.5)*0.4, rr=3+(i%3)*1.1; s.position.set(ELORD.x+Math.cos(a)*rr,14.18,ELORD.z+Math.sin(a)*rr); s.rotation.y=r()*6;
+    const k=i, la=k<6?k/6*Math.PI*2:(k-6)/6*Math.PI*2+Math.PI/6; s.userData.slot=new THREE.Vector3(ELORD.x+Math.cos(la)*0.75,14+0.22+(k>=6?0.42:0),ELORD.z+Math.sin(la)*0.75); s.userData.fly=-1; g.add(s); W.stones.push(s); }
+  W.trench=new THREE.Mesh(new THREE.RingGeometry(1.35,1.9,36), mat(0x5a4228,{side:THREE.DoubleSide})); W.trench.rotation.x=-Math.PI/2; W.trench.position.set(ELORD.x,14.03,ELORD.z); W.trench.visible=false; W.trench.userData.noCast=true; g.add(W.trench);
+  W.water=new THREE.Mesh(new THREE.RingGeometry(1.35,1.9,36), new THREE.MeshPhongMaterial({color:0x4a8ac0,specular:0xffffff,shininess:90,side:THREE.DoubleSide,emissive:0x10304a})); W.water.rotation.x=-Math.PI/2; W.water.position.set(ELORD.x,13.95,ELORD.z); W.water.visible=false; W.water.userData.noCast=true; g.add(W.water);
+  W.wood=new THREE.Group(); for(let k=0;k<6;k++){ const l=new THREE.Mesh(new THREE.CylinderGeometry(0.07,0.07,1.7,6), mat(k%2?0x6a4a2a:0x7a5a34)); l.rotation.z=Math.PI/2; l.rotation.y=k*0.55; l.position.y=k*0.06; W.wood.add(l); }
+  for(let k=0;k<4;k++) blob(W.wood,0x9a4a3a,0.2,1.2,0.7,1,(k%2-0.5)*0.5,0.45,(k<2?-0.2:0.2),8);
+  W.wood.position.set(ELORD.x,14.95,ELORD.z); W.wood.visible=false; g.add(W.wood);
+  /* four helpers with big water jars */
+  for(let i=0;i<4;i++){ const p=person({tunic:[0x7a6a4a,0x5a6a7a,0x8a5a3a,0x6a7a5a][i],hair:0x2a1a10,beard:i%2?0x2a1a10:null,h:1.72}); const a=i/4*Math.PI*2+Math.PI/4; place(p,ELORD.x+Math.cos(a)*2.4,ELORD.z+Math.sin(a)*2.4); faceTo(p,ELORD.x,ELORD.z);
+    const j=new THREE.Group(); const jb=new THREE.Mesh(new THREE.SphereGeometry(0.26,12,10), mat(0xb0683a)); jb.scale.set(1,1.15,1); j.add(jb); const nk=new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.14,0.18,10), mat(0x9a5a30)); nk.position.y=0.32; j.add(nk); j.position.set(0,1.95,0.05); p.add(j); p.userData.jar=j;
+    const sp=glowSprite(0x9fd0ff,0.9); sp.visible=false; g.add(sp); p.userData.splash=sp; p.visible=false; g.add(p); W.helpers.push(p); }
+  /* the prophets of Baal */
+  for(let i=0;i<24;i++){ const p=person({tunic:[0xb8402e,0xd06a2a,0x8a3a6a,0xc0902a][i%4],hair:0x1a120a,beard:0x1a120a,sash:0xe2b23a,h:1.7+(i%3)*0.05}); p.userData.a0=i/24*Math.PI*2; p.userData.rr=2.6+(i%2)*1.3; p.userData.armsBusy=true; place(p,EBAAL.x+Math.cos(p.userData.a0)*p.userData.rr,EBAAL.z+Math.sin(p.userData.a0)*p.userData.rr); g.add(p); W.prophets.push(p); }
+  /* the people of Israel, and King Ahab */
+  for(let i=0;i<34;i++){ const row=Math.floor(i/12), x=-11+(i%12)*2+(row%2)*1, z=7+row*1.9+(r()-0.5)*0.6; const p=person({tunic:[0x7a6a4a,0x5a6a7a,0x8a5a3a,0x6a7a5a,0x9a8a6a,0x4a5a6a][i%6],hair:[0x2a1a10,0x4a3220,0x1a120a][i%3],beard:i%3===0?0x2a1a10:null,h:1.55+r()*0.3}); place(p,x,z); faceTo(p,0,-3); p.rotation.order='YXZ'; g.add(p); W.crowd.push(p); }
+  W.ahab=person({tunic:0x6a2a7a,sash:0xe2b23a,crown:true,hair:0x2a1a10,beard:0x2a1a10,h:1.8}); place(W.ahab,-1.5,4.2); faceTo(W.ahab,0,-3); g.add(W.ahab);
+  W.servant=person({tunic:0x8a7a5a,hair:0x3a2a1a,h:1.55}); place(W.servant,2,6); g.add(W.servant);
+  /* the fire of the Lord */
+  W.fire=new THREE.Group(); W.fire.position.set(ELORD.x,14,ELORD.z); g.add(W.fire);
+  W.column=new THREE.Mesh(new THREE.CylinderGeometry(1.2,1.6,70,20,1,true), new THREE.MeshBasicMaterial({color:0xffb040,transparent:true,opacity:0.8,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide})); W.column.geometry.translate(0,35,0); W.column.visible=false; W.fire.add(W.column);
+  for(let i=0;i<14;i++){ const f=glowSprite(i%3?0xff8a2a:0xffd060,2+(i%4)*0.6); f.userData.ph=i*1.7; f.position.set((Math.random()-0.5)*1.6,0.8+Math.random()*1.4,(Math.random()-0.5)*1.6); f.visible=false; W.fire.add(f); W.flames.push(f); }
+  W.fireLight=new THREE.PointLight(0xffa040,0,40); W.fireLight.position.y=2; W.fire.add(W.fireLight);
+  for(let i=0;i<8;i++){ const s=glowSprite(0x6a6460,2.5); s.material.blending=THREE.NormalBlending; s.material.opacity=0; s.userData.ph=i/8; W.fire.add(s); W.smoke.push(s); }
+  /* the little cloud over the sea, and the rain */
+  W.cloud=new THREE.Group(); for(let i=0;i<7;i++){ const c=glowSprite(0xe8eef4,8+i%3*3); c.material.blending=THREE.NormalBlending; c.position.set((i-3)*3,(i%2)*1.5,(i%3-1)*2); W.cloud.add(c); } W.cloud.position.set(-140,6,-12); W.cloud.scale.setScalar(0.25); W.cloud.visible=false; g.add(W.cloud);
+  { const n=touch?1500:3000, geo=new THREE.BufferGeometry(), v=new Float32Array(n*6); for(let i=0;i<n;i++){ const x=(Math.random()-0.5)*60, z=(Math.random()-0.5)*60, y=Math.random()*30; v.set([x,y,z,x+0.05,y-0.7,z],i*6); }
+    geo.setAttribute('position',new THREE.BufferAttribute(v,3)); W.rain=new THREE.LineSegments(geo,new THREE.LineBasicMaterial({color:0xc8d8e8,transparent:true,opacity:.55})); W.rain.visible=false; W.rain.frustumCulled=false; g.add(W.rain); }
+  W.char=chariot(); { const ah=person({tunic:0x6a2a7a,sash:0xe2b23a,crown:true,hair:0x2a1a10,beard:0x2a1a10,h:1.75}); ah.position.set(0.35,0.6,-0.7); W.char.add(ah); } W.char.visible=false; g.add(W.char);
+  W.beacon=makeBeacon(); W.beacon.visible=false; g.add(W.beacon);
+  P.x=0; P.z=60; P.yaw=0; P.pitch=0; P.eye=1.85; P.speed=4.8; P.roll=0;
+  story={id:'elijah', step:'', t:0, lock:true, target:null, near:null, placed:0, pours:0, looks:0, busy:false, dance:false, bow:0, fireT:-1, pourT:-1, servT:-1, px:P.x, pz:P.z, fadeSky:null};
+  hand.visible=false; basket.visible=false; sling.visible=false; fruitHand.visible=false;
+  goElijah('intro');
+}
+function elijahStoneGoal(){ const S=story; let b=null,bd=1e9; world.stones.forEach(s=>{ if(s.userData.fly>=0) return; const d=dist2(s); if(d<bd){bd=d;b=s;} }); S.target=b; setGoal(`Build the altar with <b>12 stones</b> (${S.placed} of 12)`); }
+function goElijah(step){
+  const S=story, W=world; S.step=step; $('prompt').classList.add('hidden');
+  if(step==='intro'){ S.lock=true; setGoal('Listen');
+    say([[SAY_BIBLE,'For three years there was no rain at all. Then the Lord said to Elijah, "Go and show yourself to King Ahab. I will send rain on the land."','1 Kings 18:1'],
+      [SAY_BIBLE,'When Ahab saw Elijah, he said, "Is that you, you troublemaker of Israel?"','1 Kings 18:17'],
+      ['You are Elijah','I have not made trouble for Israel. You and your family have, because you stopped obeying the Lord and followed Baal.','1 Kings 18:18'],
+      ['You are Elijah','Now call all the people to meet me on Mount Carmel. And bring the 450 prophets of Baal.','1 Kings 18:19']], ()=>goElijah('climb')); }
+  if(step==='climb'){ S.lock=false; setGoal('Climb to the top of <b>Mount Carmel</b>'); S.target={position:new THREE.Vector3(0,0,10)}; }
+  if(step==='challenge'){ S.lock=true; S.target=null; setGoal('Listen'); lookAt(0,15.5,9,0.8);
+    say([['You are Elijah','How long will you keep switching back and forth? If the Lord is God, follow Him. But if Baal is God, follow him!','1 Kings 18:21'],
+      [SAY_BIBLE,'But the people didn’t say a word.','1 Kings 18:21'],
+      ['You are Elijah','Let’s have a test. The prophets of Baal will get a bull ready, and I will get a bull ready. But nobody lights the fire.','1 Kings 18:23'],
+      ['You are Elijah','Then you call on your god, and I will call on the Lord. The God who answers with fire, He is the real God!','1 Kings 18:24'],
+      [SAY_BIBLE,'All the people said, "That’s a good idea!"','1 Kings 18:24'],
+      [SAY_BIBLE,'So the prophets of Baal got their bull ready. They called on Baal from morning until noon. "Baal, answer us!" they shouted, and they danced around their altar.','1 Kings 18:26', ()=>{ S.dance=true; lookAt(EBAAL.x,15,EBAAL.z,0.8); }]], ()=>goElijah('baal')); }
+  if(step==='baal'){ S.lock=false; setGoal('Go and watch the <b>prophets of Baal</b>'); S.target={position:new THREE.Vector3(EBAAL.x,0,EBAAL.z+5.5)}; }
+  if(step==='stones'){ S.lock=false; elijahStoneGoal(); }
+  if(step==='dig'){ S.lock=false; setGoal('Dig a <b>trench</b> around the altar'); S.target={position:new THREE.Vector3(ELORD.x,0,ELORD.z)}; }
+  if(step==='wood'){ S.lock=false; setGoal('Put the <b>wood</b> and the offering on the altar'); S.target={position:new THREE.Vector3(ELORD.x,0,ELORD.z)}; }
+  if(step==='pour'){ S.lock=false; S.target=null; W.helpers.forEach(h=>h.visible=true); setGoal(`Tell them to pour <b>water</b> on the altar (${S.pours} of 3)`); }
+  if(step==='pray'){ S.lock=true; S.target=null; lookAt(ELORD.x,15,ELORD.z,0.8); setGoal('<b>Pray</b> to the Lord'); }
+  if(step==='fire'){ S.lock=true; setGoal(''); S.fireT=0; rumble(3); W.helpers.forEach(h=>h.visible=false);
+    setTimeout(()=>{ if(story!==S) return; say([[SAY_BIBLE,'Then the fire of the Lord fell from heaven! It burned up the offering, the wood, the stones and the dirt, and it even licked up the water in the trench!','1 Kings 18:38'],
+      [SAY_BIBLE,'When all the people saw it, they fell face down on the ground.','1 Kings 18:39', ()=>{ S.bowing=true; }],
+      ['The people','"The Lord, He is God! The Lord, He is God!"','1 Kings 18:39'],
+      ['You are Elijah','King Ahab, go and eat and drink. I hear the sound of a big rain coming!','1 Kings 18:41'],
+      [SAY_BIBLE,'Ahab went off to eat and drink. But Elijah climbed to the top of Carmel.','1 Kings 18:42']], ()=>goElijah('top')); },3200); }
+  if(step==='top'){ S.lock=false; setGoal('Go to the edge where you can see the <b>sea</b>'); S.target={position:new THREE.Vector3(ETOP.x,0,ETOP.z)}; }
+  if(step==='bow'){ S.lock=true; S.target=null; P.yaw=Math.PI/2; P.pitch=-0.75; place(W.servant,ETOP.x+1.2,ETOP.z+1.4); faceTo(W.servant,ETOP.x-10,ETOP.z);
+    say([[SAY_BIBLE,'Elijah bent down to the ground and put his face between his knees, and he prayed.','1 Kings 18:42']], ()=>goElijah('look')); }
+  if(step==='look'){ S.lock=true; setGoal(`Send your servant to look at the <b>sea</b> (${S.looks} of 7)`); }
+  if(step==='run'){ S.lock=false; P.speed=7; P.pitch=0; W.char.visible=true; { const a=Math.atan2(EJEZ.x-P.x,EJEZ.z-P.z); P.yaw=a+Math.PI; P.lockLook=null; place(W.char,P.x-Math.sin(a)*9,P.z-Math.cos(a)*9); W.char.rotation.y=a; } setGoal('Run ahead of Ahab’s chariot all the way to <b>Jezreel</b>!'); S.target={position:new THREE.Vector3(EJEZ.x,0,EJEZ.z)}; }
+  if(step==='end'){ S.lock=true; S.target=null; setGoal('Listen');
+    say([[SAY_BIBLE,'Elijah ran ahead of Ahab all the way to Jezreel. The rain poured down, just as God had promised.','1 Kings 18:45-46'],
+      [SAY_BIBLE,'And on Mount Carmel, everyone saw that the Lord is the real God.','1 Kings 18:39']], ()=>finishStory()); }
+}
+function elijahSend(){ const S=story, W=world; S.busy=true;
+  const first=S.looks===0, go=()=>{ S.servT=0; };
+  say([['You are Elijah', first?'Go and look out toward the sea.':'Go back and look again.','1 Kings 18:43']], go); }
+function updateElijah(dt, now){
+  const S=story, W=world, t=(S.t+=dt);
+  if(S.fadeSky){ const f=S.fadeSky; f.t+=dt; const k=smooth(f.t/f.dur); scene.background.copy(f.from).lerp(f.to,k); scene.fog.color.copy(scene.background); if(k>=1) S.fadeSky=null; }
+  /* the prophets of Baal dance and shout */
+  W.prophets.forEach((p,i)=>{ const u=p.userData; if(S.dance){ const a=u.a0+t*0.5*(i%2?1:-1); p.position.set(EBAAL.x+Math.cos(a)*u.rr,14+Math.abs(Math.sin(t*6+i))*0.3,EBAAL.z+Math.sin(a)*u.rr); p.rotation.y=-a+(i%2?0:Math.PI); u.arms[0].rotation.x=-2.8+Math.sin(t*7+i)*0.3; u.arms[1].rotation.x=-2.8+Math.cos(t*7+i)*0.3; }
+    else if(S.tired){ p.position.y=Math.max(13.6,p.position.y-dt); u.arms[0].rotation.x*=0.9; u.arms[1].rotation.x*=0.9; } });
+  /* stones fly to the altar */
+  W.stones.forEach(s=>{ const u=s.userData; if(u.fly<0||u.fly>=1) return; if(!u.from) u.from=s.position.clone(); u.fly=Math.min(1,u.fly+dt*1.4); const k=smooth(u.fly); s.position.lerpVectors(u.from,u.slot,k); s.position.y+=Math.sin(k*Math.PI)*1.2; });
+  /* pouring water */
+  if(S.pourT>=0){ S.pourT+=dt; const k=S.pourT<0.8?S.pourT/0.8:(S.pourT<2.2?1:Math.max(0,1-(S.pourT-2.2)/0.8)); W.helpers.forEach((h,i)=>{ const j=h.userData.jar; j.rotation.x=k*1.9; j.position.z=0.05+k*0.45; j.position.y=1.95-k*0.35; const sp=h.userData.splash; sp.visible=k>0.6; sp.position.set((h.position.x*2+ELORD.x)/3,14.6+Math.sin(t*20+i)*0.1,(h.position.z*2+ELORD.z)/3); });
+    if(S.pourT>0.8&&S.pourT<2.2){ W.water.position.y=Math.min(13.95+0.045*S.pours, W.water.position.y+dt*0.05); }
+    if(S.pourT>3){ S.pourT=-1; W.helpers.forEach(h=>h.userData.splash.visible=false); } }
+  /* the fire of the Lord */
+  if(S.fireT>=0){ S.fireT+=dt; const f=S.fireT; W.column.visible=f<1.8; W.column.scale.set(1,1,1); W.column.material.opacity=f<0.3?f/0.3*0.85:Math.max(0,0.85-(f-0.9)*0.9); W.column.position.y=f<0.5?(1-f/0.5)*40:0;
+    if(f<0.3) $('fade').style.background='#fff4d0', $('fade').style.opacity=f/0.3*0.7; else if(f<1.2) $('fade').style.opacity=Math.max(0,0.7-(f-0.3)); else if(f<1.4) $('fade').style.opacity=0;
+    if(f>0.4) shake=Math.max(shake,f<2.5?0.35:0.05);
+    const burn=f>0.4&&f<8, fk=f<7?1:Math.max(0,1-(f-7)); W.fireLight.intensity=burn?2.4*fk*(0.85+0.15*Math.sin(t*20)):0;
+    W.flames.forEach((fl,i)=>{ fl.visible=burn; const s=(1.6+Math.sin(t*9+fl.userData.ph)*0.5)*fk*(f<1?f:1); fl.scale.set(s*1.4,s*2,1); fl.position.y=0.8+((t*1.5+fl.userData.ph)%1)*1.8; });
+    if(f>1.5){ W.wood.visible=false; const k=clamp((f-1.5)/3,0,1); W.stones.forEach(s=>s.scale.set(0.5*(1-k)+0.001,0.38*(1-k)+0.001,0.45*(1-k)+0.001)); W.trench.scale.setScalar(1); W.water.position.y=13.95+0.135*(1-k)-0.1*k; if(k>=1){ W.water.visible=false; W.stones.forEach(s=>s.visible=false); } }
+    W.smoke.forEach(s=>{ const p=(t*0.25+s.userData.ph)%1; s.position.set(Math.sin(s.userData.ph*9)*0.6,1+p*9,Math.cos(s.userData.ph*9)*0.6); s.material.opacity=f>2&&f<14?0.45*(1-p)*Math.min(1,(f-2)/2)*Math.min(1,(14-f)/3):0; s.scale.setScalar(2+p*5); }); }
+  /* everyone falls face down */
+  if(S.bowing){ S.bow=Math.min(1,S.bow+dt*0.8); W.crowd.concat([W.ahab]).forEach(c=>{ c.rotation.order='YXZ'; c.rotation.x=S.bow*1.15; c.position.y=ground(c.position.x,c.position.z)-S.bow*0.55; }); W.prophets.forEach(p=>{ p.rotation.order='YXZ'; p.rotation.x=S.bow*1.0; }); }
+  /* the servant goes to look at the sea */
+  if(S.servT>=0){ S.servT+=dt; const sv=W.servant, T=1.3, k=S.servT<T?S.servT/T:(S.servT<T+0.6?1:Math.max(0,1-(S.servT-T-0.6)/T)); const x=ETOP.x+1.2-k*5, z=ETOP.z+1.4-k*1; sv.position.set(x,ground(x,z),z); sv.rotation.y=S.servT<T+0.3?-Math.PI/2:Math.PI/2; animWalk(sv,dt,S.servT<T||S.servT>T+0.6?1:0);
+    if(S.servT>T*2+0.6){ S.servT=-1; S.looks++; faceTo(sv,ETOP.x-10,ETOP.z);
+      if(S.looks<7){ say([['Your servant','There is nothing there.','1 Kings 18:43']], ()=>{ S.busy=false; goElijah('look'); }); }
+      else { W.cloud.visible=true; P.pitch=0.05; lookAt(W.cloud.position.x,6,W.cloud.position.z,1.2); setGoal('Listen');
+        say([['Your servant','A little cloud, as small as a man’s hand, is rising from the sea!','1 Kings 18:44'],
+          ['You are Elijah','Go tell Ahab: "Get your chariot ready and go down the mountain, before the rain stops you!"','1 Kings 18:44'],
+          [SAY_BIBLE,'Soon the sky grew black with clouds and wind, and a heavy rain began to fall!','1 Kings 18:45', ()=>{ W.rain.visible=true; skyTo(0x5a6470,3000); hemi.intensity=0.42; sun.intensity=0.35; S.grow=true; }],
+          [SAY_BIBLE,'Ahab rode off to Jezreel in his chariot. Then the power of the Lord came on Elijah. He tucked his robe into his belt and ran ahead of Ahab all the way to Jezreel!','1 Kings 18:45-46']], ()=>{ P.lockLook=null; goElijah('run'); }); } } }
+  if(S.grow){ const c=W.cloud; c.scale.setScalar(Math.min(4,c.scale.x+dt*0.6)); c.position.x=Math.min(-40,c.position.x+dt*12); c.position.y=Math.min(26,c.position.y+dt*3); c.children.forEach(s=>s.material.color.lerp(new THREE.Color(0x5a6068),dt*0.4)); }
+  if(W.rain.visible){ W.rain.position.set(P.x,ground(P.x,P.z)-6,P.z); const p=W.rain.geometry.attributes.position, a=p.array; for(let i=0;i<a.length;i+=6){ a[i+1]-=dt*22; a[i+4]-=dt*22; if(a[i+1]<0){ a[i+1]+=30; a[i+4]+=30; } } p.needsUpdate=true; }
+  /* Ahab's chariot follows behind */
+  if(S.step==='run'||S.step==='end'){ const C=W.char, tx=P.x-Math.sin(Math.atan2(EJEZ.x-P.x,EJEZ.z-P.z))*7, tz=P.z-Math.cos(Math.atan2(EJEZ.x-P.x,EJEZ.z-P.z))*7, dx=tx-C.position.x, dz=tz-C.position.z, d=Math.hypot(dx,dz);
+    if(d>0.4){ const v=Math.min(7.4,d*1.6)*dt; C.position.x+=dx/d*v; C.position.z+=dz/d*v; C.rotation.y=Math.atan2(dx,dz); C.userData.horses.forEach(h=>{ if(h.userData.legs4) sheepWalk(h,dt,1.6); }); } C.position.y=ground(C.position.x,C.position.z); }
+  let near=null;
+  if(S.step==='climb' && Math.hypot(P.x,P.z-10)<4.5) goElijah('challenge');
+  if(S.step==='baal' && Math.hypot(P.x-EBAAL.x,P.z-EBAAL.z)<7) near={label:'Tease the prophets of Baal', fn:()=>{ S.lock=true; S.target=null; lookAt(EBAAL.x,15,EBAAL.z,0.6);
+      say([[SAY_BIBLE,'But nothing happened. No one answered.','1 Kings 18:26'],
+        ['You are Elijah','Shout louder! He’s a god, isn’t he? Maybe he’s busy, or he went on a trip. Maybe he’s asleep and you have to wake him up!','1 Kings 18:27'],
+        [SAY_BIBLE,'So they shouted even louder, and they kept it up all afternoon, until it was time for the evening offering. But there was no answer. No one paid any attention.','1 Kings 18:28-29', ()=>{ skyTo(0xe8b07a,3000); sun.intensity=0.75; S.dance=false; S.tired=true; }],
+        ['You are Elijah','Everyone, come over here to me.','1 Kings 18:30'],
+        [SAY_BIBLE,'The altar of the Lord had been torn down. So Elijah took 12 stones, one for each of the 12 tribes of Israel.','1 Kings 18:30-31']], ()=>{ P.lockLook=null; goElijah('stones'); }); }};
+  if(S.step==='stones'){ const s=S.target; if(s && dist2(s)<2.4) near={label:'Set the stone on the altar', fn:()=>{ s.userData.fly=0; S.placed++; if(S.placed<12) elijahStoneGoal(); else { S.lock=true; S.target=null; setGoal('Listen'); say([[SAY_BIBLE,'With the stones, Elijah built an altar in the name of the Lord.','1 Kings 18:32']], ()=>goElijah('dig')); } }}; }
+  if(S.step==='dig' && Math.hypot(P.x-ELORD.x,P.z-ELORD.z)<3.6) near={label:'Dig a trench', fn:()=>{ W.trench.visible=true; shake=0.15; S.lock=true; S.target=null; say([[SAY_BIBLE,'He dug a big trench all the way around the altar.','1 Kings 18:32']], ()=>goElijah('wood')); }};
+  if(S.step==='wood' && Math.hypot(P.x-ELORD.x,P.z-ELORD.z)<3.6) near={label:'Put on the wood and the offering', fn:()=>{ W.wood.visible=true; S.lock=true; S.target=null; say([[SAY_BIBLE,'He put the wood on the altar, cut the bull into pieces, and laid it on the wood.','1 Kings 18:33']], ()=>goElijah('pour')); }};
+  if(S.step==='pour' && !S.busy && S.pourT<0 && Math.hypot(P.x-ELORD.x,P.z-ELORD.z)<6) near={label:['Say: Pour water on it','Say: Do it again','Say: Do it a third time'][S.pours], fn:()=>{ S.busy=true; const n=S.pours;
+      const lines=[[['You are Elijah','Fill four big jars with water and pour it on the offering and on the wood.','1 Kings 18:33']],[['You are Elijah','Do it again.','1 Kings 18:34']],[['You are Elijah','Do it a third time.','1 Kings 18:34']]][n];
+      say(lines, ()=>{ S.pours++; S.pourT=0; W.water.visible=true; W.stoneM.color.lerp(new THREE.Color(0x5a5650),0.35); setGoal(`Tell them to pour <b>water</b> on the altar (${S.pours} of 3)`);
+        setTimeout(()=>{ if(story!==S) return; if(S.pours>=3) say([[SAY_BIBLE,'The water ran down all around the altar and even filled up the trench.','1 Kings 18:35']], ()=>{ S.busy=false; goElijah('pray'); }); else S.busy=false; },3100); }); }};
+  if(S.step==='pray' && !saying()) near={label:'Pray to the Lord', fn:()=>{ S.lock=true;
+      say([['You are Elijah','Lord, God of Abraham, Isaac and Israel, show everyone today that You are God in Israel, and that I am Your servant.','1 Kings 18:36'],
+        ['You are Elijah','Answer me, Lord, answer me! Then these people will know that You, Lord, are God, and that You are turning their hearts back to You.','1 Kings 18:37']], ()=>goElijah('fire')); }};
+  if(S.step==='top' && Math.hypot(P.x-ETOP.x,P.z-ETOP.z)<3) near={label:'Bow down and pray', fn:()=>goElijah('bow')};
+  if(S.step==='look' && !S.busy && S.servT<0) near={label:S.looks?'Say: Go back and look':'Say: Go and look', fn:elijahSend};
+  if(S.step==='run' && Math.hypot(P.x-EJEZ.x,P.z-EJEZ.z)<7) goElijah('end');
+  S.near=near;
+  const pr=$('prompt');
+  if(near && !saying()){ pr.textContent=(touch?'':'Space: ')+near.label; pr.classList.remove('hidden'); $('act').textContent=near.label.replace('Say: ','').split(' ')[0]; }
+  else { pr.classList.add('hidden'); $('act').textContent= saying()?'Next':'Use'; }
+  showBeacon(t);
+}
+function boundsElijah(){ const S=story; P.x=clamp(P.x,-95,95); P.z=clamp(P.z,-95,95);
+  if(groundElijah(P.x,P.z)<-1.0){ P.x=S.px; P.z=S.pz; } /* don't walk into the sea */
+  for(const A of [EBAAL,ELORD]){ const dx=P.x-A.x, dz=P.z-A.z, d=Math.hypot(dx,dz); if(d<1.4&&d>0){ P.x=A.x+dx/d*1.4; P.z=A.z+dz/d*1.4; } }
+  S.px=P.x; S.pz=P.z; }
+function jumpElijah(q){ // ?step=baal | stones | pour | fire | rain | run
+  const S=story, W=world; sayQ.length=0; $('say').classList.add('hidden'); sayCb=null;
+  const evening=()=>{ scene.background.set(0xe8b07a); scene.fog.color.set(0xe8b07a); sun.intensity=0.75; S.tired=true; };
+  const built=()=>{ W.stones.forEach(s=>{ s.position.copy(s.userData.slot); s.userData.fly=1; }); S.placed=12; W.trench.visible=true; W.wood.visible=true; };
+  if(q==='baal'){ P.x=0; P.z=8; S.dance=true; goElijah('baal'); }
+  if(q==='stones'){ evening(); P.x=6; P.z=3; goElijah('stones'); }
+  if(q==='pour'){ evening(); built(); P.x=ELORD.x; P.z=ELORD.z+4.5; P.yaw=0; goElijah('pour'); }
+  if(q==='fire'){ evening(); built(); S.pours=3; W.water.visible=true; W.water.position.y=13.95+0.135; P.x=ELORD.x; P.z=ELORD.z+5; P.yaw=0; goElijah('pray'); }
+  if(q==='rain'){ evening(); W.stones.forEach(s=>s.visible=false); S.bowing=true; S.bow=1; P.x=ETOP.x+2; P.z=ETOP.z+2; goElijah('bow'); }
+  if(q==='run'){ evening(); S.bowing=true; S.bow=1; W.rain.visible=true; scene.background.set(0x5a6470); scene.fog.color.set(0x5a6470); hemi.intensity=0.42; sun.intensity=0.35; P.x=0; P.z=8; goElijah('run'); }
+}
+
 /* David's story hooks */
 function boundsDavid(){ P.x=clamp(P.x,-34,34); P.z=clamp(P.z,-60,72); }
 const IMPL = {
+  elijah: { build:buildElijah, go:goElijah, update:updateElijah, bounds:boundsElijah, locked:S=>S.lock },
   samson: { build:buildSamson, go:goSamson, update:updateSamson, bounds:boundsSamson, locked:S=>S.lock },
   gideon: { build:buildGideon, go:goGideon, update:updateGideon, bounds:boundsGideon, locked:S=>S.lock },
   jericho: { build:buildJericho, go:goJericho, update:updateJericho, bounds:boundsJericho, locked:S=>S.lock },
@@ -2906,7 +3086,7 @@ function startStory(id){
   const q=new URLSearchParams(location.search).get('step'); if(q && story) jumpTo(q); // preview links for testing
 }
 function jumpTo(q){ // ?step=stones or ?step=sling
-  const S=story; if(story.id==='adam') return jumpAdam(q); if(story.id==='noah') return jumpNoah(q); if(story.id==='abraham') return jumpAbraham(q); if(story.id==='joseph') return jumpJoseph(q); if(story.id==='babymoses') return jumpMoses(q); if(story.id==='bush') return jumpBush(q); if(story.id==='redsea') return jumpRed(q); if(story.id==='jericho') return jumpJericho(q); if(story.id==='gideon') return jumpGideon(q); if(story.id==='samson') return jumpSamson(q);
+  const S=story; if(story.id==='adam') return jumpAdam(q); if(story.id==='noah') return jumpNoah(q); if(story.id==='abraham') return jumpAbraham(q); if(story.id==='joseph') return jumpJoseph(q); if(story.id==='babymoses') return jumpMoses(q); if(story.id==='bush') return jumpBush(q); if(story.id==='redsea') return jumpRed(q); if(story.id==='jericho') return jumpJericho(q); if(story.id==='gideon') return jumpGideon(q); if(story.id==='samson') return jumpSamson(q); if(story.id==='elijah') return jumpElijah(q);
   if(q==='stones'||q==='sling'){ world.lamb.userData.following=true; world.lamb.userData.goal={x:world.flock.x+1,z:world.flock.z}; world.lamb.position.set(world.flock.x+1,0,world.flock.z); world.israel.forEach(p=>p.position.z+=12); }
   if(q==='stones'){ P.x=0; P.z=STREAM_Z+4; P.yaw=0; sayQ.length=0; $('say').classList.add('hidden'); go('stones'); }
   if(q==='sling'){ world.stones.forEach(s=>s.visible=false); S.stonesHeld=5; S.stonesLeft=5; P.x=0; P.z=-20; P.yaw=0; world.goliath.position.set(0,ground(0,-36),-36); sayQ.length=0; $('say').classList.add('hidden'); $('stones').classList.remove('hidden'); updateStonesHud(); go('sling'); }
@@ -2917,7 +3097,7 @@ function finishStory(){
   const nextReady=READY[READY.indexOf(s)+1], nextAny=STORIES[STORIES.indexOf(s)+1];
   $('fade').style.opacity=0.6;
   setTimeout(()=>{
-    $('endWho').textContent='You saw what '+({david:'David',adam:'Adam',noah:'Noah',abraham:'Abraham',joseph:'Joseph',babymoses:'Miriam',bush:'Moses',redsea:'Moses',jericho:'Joshua',gideon:'Gideon',samson:'Samson'}[s.id]||'they')+' did.';
+    $('endWho').textContent='You saw what '+({david:'David',adam:'Adam',noah:'Noah',abraham:'Abraham',joseph:'Joseph',babymoses:'Miriam',bush:'Moses',redsea:'Moses',jericho:'Joshua',gideon:'Gideon',samson:'Samson',elijah:'Elijah'}[s.id]||'they')+' did.';
     $('endVerse').textContent=s.endVerse; $('endRef').textContent=s.endRef;
     $('endUnlock').textContent= nextReady ? 'You unlocked '+nextReady.title+'!' : (nextAny ? 'Next up: '+nextAny.title+'. It is coming soon!' : 'You finished every story!');
     $('endNext').innerHTML = nextAny ? '<b>What happens next</b>'+nextAny.before : '';
