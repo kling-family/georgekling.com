@@ -234,7 +234,7 @@ const STORIES = [
   { id:'esther', ready:true, blurb:'Send messages to Mordecai, put on your royal robes, go to the king without being called, and bravely speak up to save your people.', endVerse:'"Who knows? Maybe you became queen for a time just like this."', endRef:'Esther 4:14', before:"God protected Daniel. After many years, some of God's people went back home to rebuild Jerusalem, but many stayed in Persia. The king of Persia, Xerxes, picked a young Jewish woman named Esther to be his new queen. Nobody knew she was Jewish. Then the king's evil helper Haman made a plan to destroy all the Jewish people.", title:'Esther the Brave Queen', who:'You are Esther', ref:'Esther 4 to 7' },
   // New Testament
   { id:'christmas', ready:true, blurb:'Watch your sheep at night, see the angels light up the sky, hurry to Bethlehem to find the baby in the manger, and tell everyone the good news.', endVerse:'"Today a Savior has been born to you. He is the Messiah, the Lord."', endRef:'Luke 2:11', before:"Esther saved her people. After that, God's people waited about 400 years for the Savior God had promised. Then an angel named Gabriel visited a young woman named Mary in Nazareth. He told her she would have a baby, the Son of God, and she would name Him Jesus. Mary and Joseph had to travel to Bethlehem, David's hometown, and there was no room for them anywhere.", title:'The First Christmas', who:'You are a shepherd', ref:'Luke 2' },
-  { id:'wisemen', before:"The shepherds found baby Jesus lying in a manger, just like the angel said. Far away in the east, wise men who studied the stars saw a brand new star. They knew it meant a new king had been born, so they set out on a long trip to find Him.", title:'The Wise Men and the Star', who:'You are one of the wise men', ref:'Matthew 2' },
+  { id:'wisemen', ready:true, blurb:'Follow the new star across the desert, ask King Herod where the baby King is, find Jesus, give your gifts, and go home another way.', endVerse:'"When they saw the star, they were filled with joy!"', endRef:'Matthew 2:10', before:"The shepherds found baby Jesus lying in a manger, just like the angel said. Far away in the east, wise men who studied the stars saw a brand new star. They knew it meant a new king had been born, so they set out on a long trip to find Him.", title:'The Wise Men and the Star', who:'You are one of the wise men', ref:'Matthew 2' },
   { id:'storm', before:"King Herod tried to hurt baby Jesus, but His family escaped to Egypt and later moved back to Nazareth. Jesus grew up and, when He was about 30, He began teaching about God and healing sick people. He picked twelve friends, called disciples, to follow Him. Some of them, like Peter, were fishermen.", title:'Jesus Calms the Storm', who:'You are Peter', ref:'Mark 4' },
   { id:'loaves', before:"Jesus kept teaching and doing miracles, and more and more people came to see Him. One day a huge crowd followed Him out to a hillside far from any town. They stayed all day listening, and it got late. Everyone was hungry, and there was no food to buy.", title:'Five Loaves and Two Fish', who:'You are the boy with the lunch', ref:'John 6' },
   { id:'water', before:"Jesus fed more than 5,000 people with one boy's lunch, and there were twelve baskets of leftovers! Right after that, Jesus sent His disciples ahead in a boat across the lake while He went up the mountain alone to pray. In the middle of the night, a strong wind blew against their boat.", title:'Peter Walks on Water', who:'You are Peter', ref:'Matthew 14' },
@@ -3692,9 +3692,150 @@ function jumpXmas(q){ // ?step=angel | town | manger
   if(q==='manger'){ P.x=XSTABLE.x; P.z=XSTABLE.z+4.5; P.yaw=0; goXmas('kneel'); }
 }
 
+/* ================= Story 17: The Wise Men and the Star ================= */
+const WJER={x:0,z:-20}, WEAST={x:21,z:-10}, WHALL={x:0,z:-24}, WBH={x:-10,z:60}, WCAMP={x:-4,z:74}, WHOME={x:46,z:86};
+function groundWise(x,z){ let h=0.3*Math.sin(x*0.09)*Math.cos(z*0.08)+0.15*Math.sin(x*0.21+z*0.17); if(x>28) h+=Math.min(1,(x-28)/15)*(1.3*Math.sin(x*0.13+z*0.05)*Math.cos(z*0.09)+0.6); const e=Math.hypot(x-20,z-25); if(e>110) h+=Math.min(10,Math.pow(e-110,1.1)*0.2); return h; }
+function segDist(px,pz,x0,z0,x1,z1){ const dx=x1-x0, dz=z1-z0, L=dx*dx+dz*dz||1, k=clamp(((px-x0)*dx+(pz-z0)*dz)/L,0,1); return Math.hypot(px-(x0+dx*k),pz-(z0+dz*k)); }
+function magus(tunic,turban){ const p=person({tunic,sash:0xe2b23a,hair:0x1a120a,beard:0x2a1a10,h:1.8}); const tb=new THREE.Mesh(new THREE.SphereGeometry(0.2,12,10), mat(turban)); tb.scale.set(1,0.8,1); tb.position.y=1.8; p.add(tb); return p; }
+function buildWise(){
+  ground=groundWise; resetLook(); scene.background.set(0x0e1430); scene.fog.color.set(0x0e1430); scene.fog.near=60; scene.fog.far=180; hemi.intensity=0.55; sun.intensity=0.22;
+  const g=new THREE.Group(); scene.add(g); world={group:g, segs:[], magi:[], camels:[], gifts:[], placed:[]}; const W=world, r=rnd(212);
+  { const N=150, geo=new THREE.PlaneGeometry(260,260,N,N); geo.rotateX(-Math.PI/2); geo.translate(20,0,25); const pos=geo.attributes.position, cols=[], c=new THREE.Color(), a=new THREE.Color(0xa8a46a), b=new THREE.Color(0xc8b48a), sand=new THREE.Color(0xe0c88e);
+    for(let i=0;i<pos.count;i++){ const x=pos.getX(i), z=pos.getZ(i); pos.setY(i,groundWise(x,z)); const n=0.5+0.5*Math.sin(x*0.5+z*0.9)*Math.cos(x*0.27-z*0.4); c.copy(a).lerp(b,n*0.8); if(x>28) c.lerp(sand,Math.min(1,(x-28)/15)); cols.push(c.r,c.g,c.b); }
+    geo.setAttribute('color',new THREE.Float32BufferAttribute(cols,3)); geo.computeVertexNormals(); const uv=geo.attributes.uv; for(let i=0;i<uv.count;i++) uv.setXY(i,uv.getX(i)*80,uv.getY(i)*80);
+    const m=new THREE.Mesh(geo,new THREE.MeshLambertMaterial({vertexColors:true,map:GROUND_TEX})); m.userData.noCast=true; g.add(m); }
+  grassField(g, touch?2500:5000, ()=>{ const x=(Math.random()-0.5)*120-10, z=(Math.random()-0.5)*160+20; if(x>26) return null; if(x>-22&&x<22&&z>-42&&z<2) return null; if(Math.random()>0.6) return null; return [x,z,0x8a9a52]; });
+  { const n=1400, v=new Float32Array(n*3); for(let i=0;i<n;i++){ const th=Math.random()*Math.PI*2, ph=Math.random()*Math.PI*0.42, R=170; v.set([Math.cos(th)*Math.sin(ph)*R+20,Math.cos(ph)*R*0.9+5,Math.sin(th)*Math.sin(ph)*R+25],i*3); }
+    const geo=new THREE.BufferGeometry(); geo.setAttribute('position',new THREE.BufferAttribute(v,3)); const st=new THREE.Points(geo,new THREE.PointsMaterial({color:0xffffff,size:1.1,sizeAttenuation:false,fog:false})); st.frustumCulled=false; g.add(st); W.stars=st; }
+  /* the star */
+  W.star=new THREE.Group(); { const core=glowSprite(0xffffff,6); W.star.add(core); const halo=glowSprite(0xfff0b0,22); halo.material.opacity=0.7; W.star.add(halo); W.star.userData.halo=halo;
+    for(const rot of [0,Math.PI/2]){ const ray=new THREE.Mesh(new THREE.PlaneGeometry(0.6,26), new THREE.MeshBasicMaterial({color:0xfff6d0,transparent:true,opacity:0.55,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide,fog:false})); ray.rotation.z=rot; W.star.add(ray); W.star.userData['ray'+rot]=ray; } }
+  W.star.traverse(o=>{ if(o.material) o.material.fog=false; });
+  W.star.position.set(-30,48,-60); g.add(W.star);
+  W.beam=makeBeacon(); W.beam.material.opacity=0.0; W.beam.scale.set(3,1.6,3); W.beam.position.set(WBH.x,groundWise(WBH.x,WBH.z),WBH.z); g.add(W.beam);
+  /* Jerusalem */
+  { const wm=mat(0xd8c89a), dk=mat(0xc0ac7c), X0=-20, X1=20, Z0=-40, Z1=0;
+    const seg=(x0,z0,x1,z1)=>{ const L=Math.hypot(x1-x0,z1-z0); const w=new THREE.Mesh(new THREE.BoxGeometry(L,7,1.6), wm); w.position.set((x0+x1)/2,3.3,(z0+z1)/2); w.rotation.y=-Math.atan2(z1-z0,x1-x0); g.add(w); W.segs.push([x0,z0,x1,z1]); };
+    seg(X0,Z0,X1,Z0); seg(X0,Z0,X0,Z1); seg(X1,Z0,X1,-13); seg(X1,-7,X1,Z1); seg(X0,Z1,-3,Z1); seg(3,Z1,X1,Z1);
+    for(const [x,z] of [[X1,-15],[X1,-5],[-4.5,Z1],[4.5,Z1],[X0,Z0],[X1,Z0],[X0,Z1],[X1,Z1]]){ const tw=new THREE.Mesh(new THREE.BoxGeometry(3,9.5,3), dk); tw.position.set(x,4.4,z); g.add(tw); }
+    for(let i=0;i<22;i++){ const x=-15+(i%6)*6+(r()-0.5)*1.5, z=-35+Math.floor(i/6)*8+(r()-0.5)*1.5; if(Math.abs(x)<9&&z<-15&&z>-34) continue; if(Math.abs(z+10)<3) continue; const hs=house(g,x,z); hs.scale.set(0.9,0.9+r()*0.6,0.9); }
+    /* Herod's hall */
+    const H=WHALL; const fl=new THREE.Mesh(new THREE.BoxGeometry(16,0.2,16), mat(0xe8dcc0)); fl.position.set(H.x,0.1,H.z); g.add(fl);
+    const bk=new THREE.Mesh(new THREE.BoxGeometry(16,7,0.6), mat(0x8a3a3a)); bk.position.set(H.x,3.5,H.z-8); g.add(bk);
+    for(const sx of [-1,1]){ const sw=new THREE.Mesh(new THREE.BoxGeometry(0.6,7,16), mat(0x8a3a3a)); sw.position.set(H.x+sx*8,3.5,H.z); g.add(sw); for(let k=0;k<3;k++){ const col=new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.5,6.6,12), mat(0xf2ead8)); col.position.set(H.x+sx*4,3.3,H.z-5+k*5); g.add(col); } }
+    const rf=new THREE.Mesh(new THREE.BoxGeometry(16.6,0.4,16.6), mat(0xc8b48a)); rf.position.set(H.x,7.2,H.z); rf.userData.noCast=true; g.add(rf);
+    const th=new THREE.Mesh(new THREE.BoxGeometry(1.6,2.6,1.1), mat(0xe2b23a)); th.position.set(H.x,1.5,H.z-6.8); g.add(th);
+    W.herod=person({tunic:0x8a2a3a,sash:0xe2b23a,crown:true,hair:0x2a1a10,beard:0x2a1a10,h:1.85}); W.herod.position.set(H.x,0.2,H.z-6); g.add(W.herod);
+    W.priests=[]; for(let i=0;i<4;i++){ const p=person({tunic:0xf2ead8,sash:0x3a6ab0,hair:0x8a8a8a,beard:0xb0b0b0,h:1.75}); const tb=new THREE.Mesh(new THREE.CylinderGeometry(0.17,0.19,0.22,12), mat(0xf2ead8)); tb.position.y=1.82; p.add(tb); place(p,H.x+(i<2?-3:3)+(i%2)*1.1,H.z-3.6+(i%2)*1.2); p.position.y=0.2; faceTo(p,H.x,H.z+2); g.add(p); W.priests.push(p);
+      const sc=new THREE.Mesh(new THREE.CylinderGeometry(0.07,0.07,0.6,8), mat(0xf0e2c0)); sc.rotation.z=Math.PI/2; sc.position.set(0,-0.6,0.15); p.userData.arms[1].add(sc); p.userData.arms[1].rotation.x=-1.0; p.userData.armsBusy=true; } }
+  /* Bethlehem and the house where the child was */
+  for(let i=0;i<14;i++){ const a=r()*Math.PI*2, d=9+r()*14; const x=WBH.x+Math.cos(a)*d, z=WBH.z+6+Math.sin(a)*d; if(z<WBH.z-2&&Math.abs(x-WBH.x)<10) continue; const hs=house(g,x,z); hs.rotation.y=Math.floor(r()*4)*Math.PI/2; if(i%2) hs.children[3].material=mat(0xf0c060,{emissive:0xd09030}); }
+  for(let i=0;i<10;i++) palm(g,WBH.x+(r()-0.5)*40,WBH.z+(r()-0.5)*30,0.8+r()*0.3);
+  { const B=new THREE.Group(), wm=mat(0xe6d3a8), y=groundWise(WBH.x,WBH.z); B.position.set(WBH.x,y,WBH.z); B.rotation.y=Math.PI; g.add(B); W.house=B;
+    const fl=new THREE.Mesh(new THREE.PlaneGeometry(6,5), mat(0xc8b48a)); fl.rotation.x=-Math.PI/2; fl.position.y=0.03; B.add(fl);
+    const bk=new THREE.Mesh(new THREE.BoxGeometry(6,3,0.3), wm); bk.position.set(0,1.5,-2.5); B.add(bk); for(const sx of [-1,1]){ const sw=new THREE.Mesh(new THREE.BoxGeometry(0.3,3,5), wm); sw.position.set(sx*3,1.5,0); B.add(sw); const fw=new THREE.Mesh(new THREE.BoxGeometry(1.4,3,0.3), wm); fw.position.set(sx*2.3,1.5,2.5); B.add(fw); }
+    const lin=new THREE.Mesh(new THREE.BoxGeometry(3.2,0.6,0.3), wm); lin.position.set(0,2.7,2.5); B.add(lin);
+    const rf=new THREE.Mesh(new THREE.BoxGeometry(6.4,0.25,5.4), mat(0xb59a6a)); rf.position.y=3.1; rf.userData.noCast=true; B.add(rf);
+    const rug=new THREE.Mesh(new THREE.PlaneGeometry(3,2), mat(0x3a6ab0)); rug.rotation.x=-Math.PI/2; rug.position.set(0,0.05,-0.8); B.add(rug);
+    const lampL=new THREE.PointLight(0xffc070,1.2,10); lampL.position.set(1.8,2.2,-1.6); B.add(lampL); const ls=glowSprite(0xffb050,0.5); ls.position.copy(lampL.position); B.add(ls);
+    W.mary=person({tunic:0x3a6ab0,hair:0x3a2614,longHair:true,h:1.62}); W.mary.position.set(-0.9,-0.3,-1.6); B.add(W.mary);
+    W.child=person({tunic:0xf2ead8,hair:0x3a2614,h:0.95,skin:0xc68a5e}); W.child.position.set(0.3,0,-1.4); B.add(W.child);
+    W.joseph=person({tunic:0x8a5a34,hair:0x2a1a10,beard:0x2a1a10,h:1.8}); W.joseph.position.set(2,0,-1.9); W.joseph.rotation.y=-0.4; B.add(W.joseph);
+    B.updateMatrixWorld(true); const wpt=(lx,lz)=>{ const v=new THREE.Vector3(lx,0,lz).applyMatrix4(B.matrixWorld); return [v.x,v.z]; };
+    for(const [a,b] of [[[-3,-2.5],[3,-2.5]],[[-3,-2.5],[-3,2.5]],[[3,-2.5],[3,2.5]],[[-3,2.5],[-1.6,2.5]],[[1.6,2.5],[3,2.5]]]){ const p0=wpt(...a), p1=wpt(...b); W.segs.push([p0[0],p0[1],p1[0],p1[1]]); }
+    /* the gifts */
+    const gold=new THREE.Group(); const gb=new THREE.Mesh(new THREE.BoxGeometry(0.5,0.32,0.36), mat(0xe2b23a)); gb.position.y=0.16; gold.add(gb); const gl=new THREE.Mesh(new THREE.BoxGeometry(0.54,0.08,0.4), mat(0xf5d060)); gl.position.y=0.36; gold.add(gl);
+    const frank=new THREE.Group(); const fj=new THREE.Mesh(new THREE.CylinderGeometry(0.14,0.18,0.42,12), mat(0xe8e0d0)); fj.position.y=0.21; frank.add(fj); const fs=glowSprite(0xd8d0c0,0.4); fs.material.blending=THREE.NormalBlending; fs.position.y=0.6; frank.add(fs);
+    const myrrh=new THREE.Group(); const mj=new THREE.Mesh(new THREE.SphereGeometry(0.2,12,10), mat(0x7a3a6a)); mj.scale.y=1.3; mj.position.y=0.26; myrrh.add(mj); const mn=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.07,0.16,8), mat(0xe2b23a)); mn.position.y=0.56; myrrh.add(mn);
+    [gold,frank,myrrh].forEach((o,i)=>{ o.position.set(-0.7+i*0.7,0,-0.4); o.visible=false; B.add(o); W.placed.push(o); }); }
+  /* camp near Bethlehem */
+  { const y=groundWise(WCAMP.x,WCAMP.z); for(let k=0;k<4;k++){ const l=new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.08,1.1,6), mat(0x5a3a20)); l.rotation.z=Math.PI/2; l.rotation.y=k*0.8; l.position.set(WCAMP.x,y+0.1,WCAMP.z); g.add(l); }
+    W.campFire=glowSprite(0xff9a30,1.2); W.campFire.position.set(WCAMP.x,y+0.5,WCAMP.z); g.add(W.campFire); W.campLight=new THREE.PointLight(0xffa040,1.2,14); W.campLight.position.set(WCAMP.x,y+1.2,WCAMP.z); g.add(W.campLight);
+    const mat2=new THREE.Mesh(new THREE.PlaneGeometry(1,2.2), mat(0x8a3a3a)); mat2.rotation.x=-Math.PI/2; mat2.position.set(WCAMP.x+2,y+0.05,WCAMP.z); g.add(mat2); }
+  /* the other wise men and the camels */
+  for(const [tu,tb] of [[0x2f5aa8,0xf2ead8],[0x3a8a5a,0xe2b23a]]){ const m=magus(tu,tb); g.add(m); W.magi.push(m); }
+  for(let i=0;i<3;i++){ const c=camel(); g.add(c); W.camels.push(c); }
+  W.beacon=makeBeacon(); W.beacon.visible=false; g.add(W.beacon);
+  P.x=92; P.z=-12; P.yaw=Math.PI/2; P.pitch=0.15; P.eye=1.8; P.speed=5; P.roll=0;
+  const lineUp=()=>{ [...W.magi,...W.camels].forEach((o,i)=>{ const d=3+i*2.8, a=P.yaw+(i%2?0.12:-0.12); place(o,P.x+Math.sin(a)*d,P.z+Math.cos(a)*d); o.rotation.y=P.yaw+Math.PI; }); };
+  lineUp(); W.lineUp=lineUp;
+  story={id:'wisemen', step:'', t:0, lock:true, target:null, near:null, follow:true, given:0, px:P.x, pz:P.z, starK:0, fadeSky:null};
+  hand.visible=false; basket.visible=false; sling.visible=false; fruitHand.visible=false;
+  goWise('intro');
+}
+function wiseCut(fn, lines, then, color){ $('fade').style.background=color||'#0b0b14'; $('fade').style.opacity=1; setTimeout(()=>{ fn(); P.lockLook=null; $('fade').style.opacity=0; setTimeout(()=>{ $('fade').style.background='#fff8e6'; },900); if(lines) say(lines, then); else if(then) then(); },1000); }
+function wiseNight(){ scene.background.set(0x0e1430); scene.fog.color.set(0x0e1430); hemi.intensity=0.55; sun.intensity=0.22; world.stars.visible=true; }
+function goWise(step){
+  const S=story, W=world; S.step=step; $('prompt').classList.add('hidden');
+  if(step==='intro'){ S.lock=true; setGoal('Listen'); lookAt(W.star.position.x,W.star.position.y,W.star.position.z,1);
+    say([[SAY_BIBLE,'After Jesus was born in Bethlehem, wise men who studied the stars came from the east.','Matthew 2:1'],
+      ['You are one of the wise men','You and your friends have traveled a long, long way, following the new star. It must mean a new King has been born!','Matthew 2:2']], ()=>{ P.lockLook=null; goWise('travel'); }); }
+  if(step==='travel'){ S.lock=false; setGoal('Lead the camels to the city of <b>Jerusalem</b>'); S.target={position:new THREE.Vector3(WEAST.x+1.5,0,WEAST.z)}; }
+  if(step==='herod'){ S.lock=true; S.target=null; setGoal('Listen');
+    wiseCut(()=>{ S.follow=false; scene.background.set(0xbcd8f0); scene.fog.color.set(0xb9d6ee); hemi.intensity=0.5; sun.intensity=0.9; W.stars.visible=false; W.star.visible=false; P.x=WHALL.x+0.8; P.z=WHALL.z+5; P.yaw=0; P.pitch=0;
+        W.magi.forEach((m,i)=>{ place(m,WHALL.x-1.2+i*3,WHALL.z+5.4); faceTo(m,WHALL.x,WHALL.z-6); m.position.y=0.2; }); W.camels.forEach((c,i)=>{ place(c,WEAST.x+5+i*2.5,WEAST.z+2); }); },
+      [['You are one of the wise men','Where is the One who has been born King of the Jews? We saw His star when it rose, and we have come to worship Him.','Matthew 2:2', ()=>lookAt(WHALL.x,2.1,WHALL.z-6,1)],
+       [SAY_BIBLE,'When King Herod heard this, he was very upset, and so was everyone in Jerusalem with him.','Matthew 2:3'],
+       [SAY_BIBLE,'Herod called together all the chief priests and teachers of the law, and asked them where the Messiah was supposed to be born.','Matthew 2:4', ()=>lookAt(W.priests[0].position.x,1.7,W.priests[0].position.z,0.8)],
+       ['The priests','"In Bethlehem in Judea." The prophet wrote: "Bethlehem, out of you will come a ruler who will be the shepherd of my people Israel."','Matthew 2:5-6'],
+       [SAY_BIBLE,'Then Herod called the wise men secretly, and found out exactly when the star had appeared.','Matthew 2:7', ()=>lookAt(WHALL.x,2.1,WHALL.z-6,0.8)],
+       ['King Herod','Go and search carefully for the child. As soon as you find Him, come and tell me, so that I can go and worship Him too.','Matthew 2:8']], ()=>{ P.lockLook=null;
+      wiseCut(()=>{ wiseNight(); W.star.visible=true; W.star.position.set(0,34,-6); P.x=0; P.z=4; P.yaw=Math.PI; S.follow=true; W.lineUp(); },
+        [[SAY_BIBLE,'After they had heard the king, they went on their way. And the star they had seen in the east went ahead of them!','Matthew 2:9', ()=>lookAt(0,30,18,1.2)],
+         [SAY_BIBLE,'When they saw the star, they were filled with joy!','Matthew 2:10']], ()=>{ P.lockLook=null; goWise('star'); }); }); }
+  if(step==='star'){ S.lock=false; S.target=null; setGoal('Follow the <b>star</b> to Bethlehem'); }
+  if(step==='worship'){ S.lock=false; S.target={position:new THREE.Vector3(WBH.x,0,WBH.z-0.4)}; setGoal('Go into the <b>house</b>'); }
+  if(step==='gifts'){ S.lock=false; S.target=null; setGoal(`Bow down and give your <b>gifts</b> (${S.given} of 3)`); }
+  if(step==='sleep'){ S.lock=false; S.target={position:new THREE.Vector3(WCAMP.x+2,0,WCAMP.z)}; setGoal('Go back to your <b>camp</b> and sleep'); }
+  if(step==='home'){ S.lock=false; S.follow=true; W.lineUp(); S.target={position:new THREE.Vector3(WHOME.x,0,WHOME.z)}; setGoal('Go home <b>another way</b>, not back to Herod'); }
+  if(step==='end'){ S.lock=true; S.target=null; setGoal('Listen');
+    say([[SAY_BIBLE,'So the wise men went back to their own country by another road.','Matthew 2:12'],
+      [SAY_BIBLE,'They had come a long, long way to find Jesus. And when they found Him, they worshiped Him and gave Him their best gifts.','Matthew 2:11']], ()=>finishStory()); }
+}
+function updateWise(dt, now){
+  const S=story, W=world, t=(S.t+=dt);
+  if(S.fadeSky){ const f=S.fadeSky; f.t+=dt; const k=smooth(f.t/f.dur); scene.background.copy(f.from).lerp(f.to,k); scene.fog.color.copy(scene.background); if(k>=1) S.fadeSky=null; }
+  /* the star twinkles, and goes ahead of them */
+  const tw=1+Math.sin(t*3)*0.08; W.star.userData.halo.scale.setScalar(22*tw); W.star.userData.ray0.scale.y=tw; W.star.userData['ray'+Math.PI/2].scale.y=1.05-Math.sin(t*3)*0.08; W.star.rotation.z=0; W.star.quaternion.copy(camera.quaternion);
+  if(S.step==='star'){ const hx=WBH.x, hz=WBH.z, dx=hx-P.x, dz=hz-P.z, d=Math.hypot(dx,dz); let tx,tz; if(d<28){ tx=hx; tz=hz; } else { tx=P.x+dx/d*24; tz=P.z+dz/d*24; } W.star.position.x+= (tx-W.star.position.x)*Math.min(1,dt*0.8); W.star.position.z+=(tz-W.star.position.z)*Math.min(1,dt*0.8); W.star.position.y+=((d<28?22:34)-W.star.position.y)*Math.min(1,dt*0.5);
+    if(d<28 && !S.stopped){ S.stopped=true; S.lock=true; say([[SAY_BIBLE,'The star went ahead of them until it stopped over the place where the child was.','Matthew 2:9', ()=>{ S.beamOn=true; lookAt(WBH.x,18,WBH.z,1.2); }]], ()=>{ P.lockLook=null; goWise('worship'); }); } }
+  if(S.beamOn) W.beam.material.opacity=Math.min(0.22,W.beam.material.opacity+dt*0.1);
+  /* the other wise men and the camels follow */
+  if(S.follow){ const chain=[...W.magi,...W.camels]; let lx=P.x, lz=P.z; chain.forEach((o,i)=>{ const gap=i<2?2.6:3.2; const dx=lx-o.position.x, dz=lz-o.position.z, d=Math.hypot(dx,dz); if(d>gap){ const v=Math.min(6.5,(d-gap)*3)*dt; o.position.x+=dx/d*v; o.position.z+=dz/d*v; o.rotation.y=Math.atan2(dx,dz); if(i<2) animWalk(o,dt,1); else sheepWalk(o,dt,0.8); } o.position.y=ground(o.position.x,o.position.z); lx=o.position.x; lz=o.position.z; }); }
+  if(W.campFire) W.campFire.scale.setScalar(1.2+Math.sin(t*11)*0.12);
+  let near=null;
+  if(S.step==='travel' && Math.hypot(P.x-(WEAST.x+1.5),P.z-WEAST.z)<3.5) goWise('herod');
+  if(S.step==='worship' && Math.hypot(P.x-WBH.x,P.z-(WBH.z-0.4))<1.8){ S.lock=true; S.target=null; S.follow=false; W.magi.forEach((m,i)=>{ place(m,WBH.x+(i?1.6:-1.6),WBH.z-1.4); faceTo(m,WBH.x,WBH.z+2); }); lookAt(WBH.x-0.3,groundWise(WBH.x,WBH.z)+0.9,WBH.z+1.4,1);
+    say([[SAY_BIBLE,'They went into the house and saw the child with His mother Mary.','Matthew 2:11']], ()=>goWise('gifts')); S.step='enter'; }
+  if(S.step==='gifts' && !S.busy){ const names=['gold','frankincense','myrrh']; near={label:S.given===0?'Bow down and worship Him':'Give the '+names[S.given-1], fn:()=>{ S.busy=true; const n=S.given;
+      if(n===0){ P.eye=1.0; W.magi.forEach(m=>{ m.rotation.order='YXZ'; m.rotation.x=0.6; m.position.y=ground(m.position.x,m.position.z)-0.35; }); say([[SAY_BIBLE,'They bowed down and worshiped Him. Then they opened their treasures and gave Him gifts.','Matthew 2:11']], ()=>{ S.given++; S.busy=false; goWise('gifts'); }); return; }
+      W.placed[n-1].visible=true; const L=[[['You are one of the wise men','Gold, for a King.','Matthew 2:11']],[['You are one of the wise men','Frankincense, sweet-smelling incense like the priests burn for God.','Matthew 2:11']],[['You are one of the wise men','Myrrh, a precious perfume.','Matthew 2:11']]][n-1];
+      say(L, ()=>{ S.given++; S.busy=false; if(S.given>3){ P.eye=1.8; W.magi.forEach(m=>{ m.rotation.x=0; m.position.y=ground(m.position.x,m.position.z); }); goWise('sleep'); } else goWise('gifts'); }); }}; }
+  if(S.step==='sleep' && Math.hypot(P.x-(WCAMP.x+2),P.z-WCAMP.z)<2.2) near={label:'Go to sleep', fn:()=>{ S.lock=true; S.target=null; P.pitch=0.6;
+      wiseCut(()=>{ P.pitch=0; },
+        [[SAY_BIBLE,'That night, God warned the wise men in a dream not to go back to Herod.','Matthew 2:12', ()=>{ $('fade').style.opacity=0.82; $('fade').style.background='#141c3a'; }]], ()=>{ $('fade').style.opacity=0; skyTo(0xf0c8a0,2500); hemi.intensity=0.5; sun.intensity=0.8; W.stars.visible=false; W.star.visible=false; W.beam.visible=false; setTimeout(()=>{ if(story===S) goWise('home'); },1200); }); }};
+  if(S.step==='home' && Math.hypot(P.x-WHOME.x,P.z-WHOME.z)<5) goWise('end');
+  S.near=near;
+  const pr=$('prompt');
+  if(near && !saying()){ pr.textContent=(touch?'':'Space: ')+near.label; pr.classList.remove('hidden'); $('act').textContent=near.label.split(' ')[0]; }
+  else { pr.classList.add('hidden'); $('act').textContent= saying()?'Next':'Use'; }
+  showBeacon(t);
+}
+function boundsWise(){ const S=story, W=world; P.x=clamp(P.x,-70,105); P.z=clamp(P.z,-60,105);
+  if(W.segs.some(s=>segDist(P.x,P.z,...s)<0.7)){ P.x=S.px; P.z=S.pz; }
+  S.px=P.x; S.pz=P.z; }
+function jumpWise(q){ // ?step=herod | star | gifts | home
+  const S=story, W=world; sayQ.length=0; $('say').classList.add('hidden'); sayCb=null;
+  if(q==='herod'){ P.x=WEAST.x+3; P.z=WEAST.z; goWise('herod'); }
+  if(q==='star'){ W.star.position.set(0,34,-6); P.x=0; P.z=4; P.yaw=Math.PI; S.px=P.x; S.pz=P.z; W.lineUp(); goWise('star'); }
+  if(q==='gifts'){ S.beamOn=true; S.stopped=true; W.star.position.set(WBH.x,22,WBH.z); P.x=WBH.x; P.z=WBH.z-5; P.yaw=Math.PI; S.px=P.x; S.pz=P.z; W.lineUp(); goWise('worship'); }
+  if(q==='home'){ W.stars.visible=false; W.star.visible=false; scene.background.set(0xf0c8a0); P.x=WCAMP.x+2; P.z=WCAMP.z; S.px=P.x; S.pz=P.z; goWise('home'); }
+}
+
 /* David's story hooks */
 function boundsDavid(){ P.x=clamp(P.x,-34,34); P.z=clamp(P.z,-60,72); }
 const IMPL = {
+  wisemen: { build:buildWise, go:goWise, update:updateWise, bounds:boundsWise, locked:S=>S.lock },
   christmas: { build:buildXmas, go:goXmas, update:updateXmas, bounds:boundsXmas, locked:S=>S.lock },
   esther: { build:buildEsther, go:goEsther, update:updateEsther, bounds:boundsEsther, locked:S=>S.lock || choosing() },
   daniel: { build:buildDaniel, go:goDaniel, update:updateDaniel, bounds:boundsDaniel, locked:S=>S.lock },
@@ -3728,7 +3869,7 @@ function startStory(id){
   const q=new URLSearchParams(location.search).get('step'); if(q && story) jumpTo(q); // preview links for testing
 }
 function jumpTo(q){ // ?step=stones or ?step=sling
-  const S=story; if(story.id==='adam') return jumpAdam(q); if(story.id==='noah') return jumpNoah(q); if(story.id==='abraham') return jumpAbraham(q); if(story.id==='joseph') return jumpJoseph(q); if(story.id==='babymoses') return jumpMoses(q); if(story.id==='bush') return jumpBush(q); if(story.id==='redsea') return jumpRed(q); if(story.id==='jericho') return jumpJericho(q); if(story.id==='gideon') return jumpGideon(q); if(story.id==='samson') return jumpSamson(q); if(story.id==='elijah') return jumpElijah(q); if(story.id==='jonah') return jumpJonah(q); if(story.id==='daniel') return jumpDaniel(q); if(story.id==='esther') return jumpEsther(q); if(story.id==='christmas') return jumpXmas(q);
+  const S=story; if(story.id==='adam') return jumpAdam(q); if(story.id==='noah') return jumpNoah(q); if(story.id==='abraham') return jumpAbraham(q); if(story.id==='joseph') return jumpJoseph(q); if(story.id==='babymoses') return jumpMoses(q); if(story.id==='bush') return jumpBush(q); if(story.id==='redsea') return jumpRed(q); if(story.id==='jericho') return jumpJericho(q); if(story.id==='gideon') return jumpGideon(q); if(story.id==='samson') return jumpSamson(q); if(story.id==='elijah') return jumpElijah(q); if(story.id==='jonah') return jumpJonah(q); if(story.id==='daniel') return jumpDaniel(q); if(story.id==='esther') return jumpEsther(q); if(story.id==='christmas') return jumpXmas(q); if(story.id==='wisemen') return jumpWise(q);
   if(q==='stones'||q==='sling'){ world.lamb.userData.following=true; world.lamb.userData.goal={x:world.flock.x+1,z:world.flock.z}; world.lamb.position.set(world.flock.x+1,0,world.flock.z); world.israel.forEach(p=>p.position.z+=12); }
   if(q==='stones'){ P.x=0; P.z=STREAM_Z+4; P.yaw=0; sayQ.length=0; $('say').classList.add('hidden'); go('stones'); }
   if(q==='sling'){ world.stones.forEach(s=>s.visible=false); S.stonesHeld=5; S.stonesLeft=5; P.x=0; P.z=-20; P.yaw=0; world.goliath.position.set(0,ground(0,-36),-36); sayQ.length=0; $('say').classList.add('hidden'); $('stones').classList.remove('hidden'); updateStonesHud(); go('sling'); }
@@ -3739,7 +3880,7 @@ function finishStory(){
   const nextReady=READY[READY.indexOf(s)+1], nextAny=STORIES[STORIES.indexOf(s)+1];
   $('fade').style.opacity=0.6;
   setTimeout(()=>{
-    $('endWho').textContent='You saw what '+({david:'David',adam:'Adam',noah:'Noah',abraham:'Abraham',joseph:'Joseph',babymoses:'Miriam',bush:'Moses',redsea:'Moses',jericho:'Joshua',gideon:'Gideon',samson:'Samson',elijah:'Elijah',jonah:'Jonah',daniel:'Daniel',esther:'Esther',christmas:'the shepherds'}[s.id]||'they')+' did.';
+    $('endWho').textContent='You saw what '+({david:'David',adam:'Adam',noah:'Noah',abraham:'Abraham',joseph:'Joseph',babymoses:'Miriam',bush:'Moses',redsea:'Moses',jericho:'Joshua',gideon:'Gideon',samson:'Samson',elijah:'Elijah',jonah:'Jonah',daniel:'Daniel',esther:'Esther',christmas:'the shepherds',wisemen:'the wise men'}[s.id]||'they')+' did.';
     $('endVerse').textContent=s.endVerse; $('endRef').textContent=s.endRef;
     $('endUnlock').textContent= nextReady ? 'You unlocked '+nextReady.title+'!' : (nextAny ? 'Next up: '+nextAny.title+'. It is coming soon!' : 'You finished every story!');
     $('endNext').innerHTML = nextAny ? '<b>What happens next</b>'+nextAny.before : '';
