@@ -665,7 +665,12 @@ function genMap(i){
   if(!secret&&i<MAIN){const cand=[];for(const o of objs){const nb=N4.map(([dx,dy])=>({x:o.x+dx,y:o.y+dy})).find(q=>q.x>0&&q.y>0&&q.x<W-1&&q.y<H-1&&walk(g[q.y][q.x])&&dist[q.y][q.x]>=8&&g[q.y][q.x]!==T_PATH&&zoneOf(q.x,q.y)>=1&&zoneOf(q.x,q.y)<=2);
       if(!nb||route.some(c=>Math.abs(c.x-o.x)+Math.abs(c.y-o.y)<3)||chests.some(c=>c.x===nb.x&&c.y===nb.y))continue;cand.push({x:o.x,y:o.y,fx:nb.x,fy:nb.y})}
     if(cand.length)secretStone=cand[Math.floor(r()*cand.length)]}
-  return MAPS[i]={g,start,champ,tent,grass,dist,chests,objs,trainers,gates,towns,houses,zoneOf,springs,secretStone,secret};
+  // Earth Island hides a little secret cave in one of its rocks. Teddy's Crystal Crash lives there, and nowhere else
+  let cave=null;
+  if(i===EARTH){const cand=[];for(const o of objs){const nb=N4.map(([dx,dy])=>({x:o.x+dx,y:o.y+dy})).find(q=>q.x>0&&q.y>0&&q.x<W-1&&q.y<H-1&&walk(g[q.y][q.x])&&dist[q.y][q.x]>=8&&g[q.y][q.x]!==T_PATH&&zoneOf(q.x,q.y)>=1&&zoneOf(q.x,q.y)<=2);
+      if(!nb||route.some(c=>Math.abs(c.x-o.x)+Math.abs(c.y-o.y)<3)||chests.some(c=>c.x===nb.x&&c.y===nb.y))continue;cand.push({x:o.x,y:o.y,fx:nb.x,fy:nb.y})}
+    if(cand.length)cave=cand[Math.floor(r()*cand.length)]}
+  return MAPS[i]={g,start,champ,tent,grass,dist,chests,objs,trainers,gates,towns,houses,zoneOf,springs,secretStone,cave,secret};
 }
 // who each trainer is: leaders come from the island list, the others get made up from the island's monsters
 // trainers grow with you: if your best monster gets ahead of a trainer's team, their whole team levels up to match
@@ -1399,8 +1404,8 @@ function island(i,fromMap){
     ${i===CHAMP?'Walk into the <b>big arena</b> at the far end to enter the Champion Tournament.':'Each island has <b>three towns</b> split by locked <b>gates</b>.'} Beat each town's <b>leader</b> to open the gate to the next town. Other <b>trainers</b> battle you if they see you! Find the hidden <b>treasure chests</b>. Heal your team at the <b>tent</b>, any <b>Rest House</b> (the ones with a heart), or a sparkly <b>healing spring</b>. ${s.champ.name} waits at the far end. Every town has a <b>Move Shop</b>.${i===CHAMP?'':' And somewhere on this island is a <b>secret</b>...'}</details></div>`}
     <div class="dpad" aria-label="Move"><button class="u" data-d="up" aria-label="Up">&#9650;</button><button class="l" data-d="left" aria-label="Left">&#9664;</button><button class="r" data-d="right" aria-label="Right">&#9654;</button><button class="d" data-d="down" aria-label="Down">&#9660;</button></div></div>
   ${s.secret?'':boardHTML()}
-  <div class="box"><h3>Monsters on ${s.name}</h3><div class="wild">${list.map(sp=>{const got=S.caught[sp],isR=sp===s.rare||(s.rares||[]).includes(sp);return `<div class="${got?'':'unknown'}"><div class="art">${spr(sp)}</div>${got?SP[sp].name:'???'}${s.secret?(sp===s.legend?'<div class="muted" style="font-size:12px">Legendary!</div>':''):(NIGHT[i]||[]).includes(sp)?'<div class="muted" style="font-size:12px">Only at night</div>':isR?`<div class="muted" style="font-size:12px">${done?'Rare. It runs away!':'Appears after the champion'}</div>`:''}</div>`}).join('')}</div>
-    <p class="muted small" style="margin-top:10px">${s.secret?`Monsters here are level ${s.lv[0]} to ${s.lv[1]}. ${SP[s.legend].name} is level ${s.llv}. Bring your strongest team and a Super Net!`:`Wild monsters here are level ${s.lv[0]} to ${s.lv[1]}. ${s.champ.name} has ${champTeam(i).length} monsters, up to level ${Math.max(...champTeam(i).map(t=>t[1]))}. ${i===CHAMP?'':`Secret: ${S.secrets[i]?'<b>found!</b> '+SECRETS[i].name:'not found yet'}. `}${i===CHAMP?'':`Trainers beaten: ${m.trainers.filter(t=>(S.tb[i]||[]).includes(t.k)).length} of ${m.trainers.length}${m.trainers.some(t=>t.rival&&!(S.tb[i]||[]).includes(t.k))?' (Rival Rex is waiting just past the first gate!)':''}.`}`}</p></div>`;
+  <div class="box"><h3>Monsters on ${s.name}</h3><div class="wild">${list.map(sp=>{const got=S.caught[sp],isR=sp===s.rare||(s.rares||[]).includes(sp);return `<div class="${got?'':'unknown'}"><div class="art">${spr(sp)}</div>${got?SP[sp].name:'???'}${s.secret?(sp===s.legend?'<div class="muted" style="font-size:12px">Legendary!</div>':''):(NIGHT[i]||[]).includes(sp)?'<div class="muted" style="font-size:12px">Only at night</div>':(s.extra||[]).includes(sp)?'<div class="muted" style="font-size:12px">Hides in a secret cave</div>':isR?`<div class="muted" style="font-size:12px">${done?'Rare. It runs away!':'Appears after the champion'}</div>`:''}</div>`}).join('')}</div>
+    <p class="muted small" style="margin-top:10px">${s.secret?`Monsters here are level ${s.lv[0]} to ${s.lv[1]}. ${SP[s.legend].name} is level ${s.llv}. Bring your strongest team and a Super Net!`:`Wild monsters here are level ${s.lv[0]} to ${s.lv[1]}. ${s.champ.name} has ${champTeam(i).length} monsters, up to level ${Math.max(...champTeam(i).map(t=>t[1]))}. ${i===CHAMP?'':i===EARTH?`Secret cave: ${S.cave?'<b>found!</b>':'not found yet'}. `:`Secret: ${S.secrets[i]?'<b>found!</b> '+SECRETS[i].name:'not found yet'}. `}${i===CHAMP?'':`Trainers beaten: ${m.trainers.filter(t=>(S.tb[i]||[]).includes(t.k)).length} of ${m.trainers.length}${m.trainers.some(t=>t.rival&&!(S.tb[i]||[]).includes(t.k))?' (Rival Rex is waiting just past the first gate!)':''}.`}`}</p></div>`;
   document.getElementById('team').onclick=()=>{WORLD=null;team(()=>island(i))};bindJournal(()=>island(i));
   const ab=document.getElementById('askb');if(ab)ab.onclick=()=>{if(WORLD)WORLD.lastBuddy=performance.now();buddySay(buddyHint(i),true)};
   document.getElementById('mapb').onclick=()=>{SFX.select();if(s.deep)return map();if(s.secret){S.pos[s.parent]=secretReturn(s.parent);island(s.parent,'portal')}else map()};
@@ -1434,7 +1439,7 @@ function tapWalk(e){const Wd=WORLD;if(!Wd||Wd.z===0||Wd.paused||Wd.appr)return;c
   const path=findPath(Wd.p.x,Wd.p.y,tx,ty);if(!path){SFX.bump();Wd.tap={x:tx,y:ty,t:performance.now(),bad:1};return}
   Wd.path=path;Wd.held=null;Wd.tap={x:tx,y:ty,t:performance.now()};SFX.select()}
 function findPath(sx,sy,tx,ty){const Wd=WORLD,m=Wd.m;if(tx<0||ty<0||tx>=W||ty>=H||(tx===sx&&ty===sy))return null;
-  const special=(x,y)=>(x===m.champ.x&&y===m.champ.y)||(m.secretStone&&x===m.secretStone.x&&y===m.secretStone.y)||chestAt(x,y)||trainerAt(x,y)||houseAt(x,y)||monAt(x,y);
+  const special=(x,y)=>(x===m.champ.x&&y===m.champ.y)||(m.secretStone&&x===m.secretStone.x&&y===m.secretStone.y)||(m.cave&&x===m.cave.x&&y===m.cave.y)||chestAt(x,y)||trainerAt(x,y)||houseAt(x,y)||monAt(x,y);
   const goalOk=walk(m.g[ty][tx])||special(tx,ty);if(!goalOk)return null;
   const pass=(x,y)=>{if(x<0||y<0||x>=W||y>=H||!walk(m.g[y][x]))return false;const gt=gateAt(x,y);if(gt&&!gateOpen(Wd.i,gt.k)&&m.zoneOf(sx,sy)<=gt.k)return false;return !special(x,y)};
   const prev=new Int32Array(W*H).fill(-1),q=[sy*W+sx];prev[sy*W+sx]=sy*W+sx;
@@ -1505,10 +1510,9 @@ function spawn(rare,minD){
   let opts=m.grass.filter(c=>!monAt(c.x,c.y)&&Math.abs(c.x-p.x)+Math.abs(c.y-p.y)>=minD&&reach(c));if(opts.length<3)opts=m.grass.filter(c=>!monAt(c.x,c.y)&&Math.abs(c.x-p.x)+Math.abs(c.y-p.y)>=minD);
   if(!opts.length)return false;const c=opts[Math.floor(Math.random()*opts.length)];
   let night=!rare&&i<MAIN&&isNight()&&Math.random()<.45,rp=[s.rare,...(s.rares||[])],sp=rare?rp[Math.floor(Math.random()*rp.length)]:night?NIGHT[i][rnd(0,1)]:s.wild[rnd(0,s.wild.length-1)];
-  // an island's own one-of-a-kind monster (like Teddy's Crystal Crash on Earth Island) shows up now and then
-  if(!rare&&!night&&s.extra&&Math.random()<.17)sp=s.extra[0];
   // Spikeburst and Hydro Washy are one of a kind: only one roams at a time, it's level 28, and once you own it no more appear
   const UNIQUE={spikeburst:28,hydrowashy:28,lighteningbolt:28,fernwood:28,crystalrock:28};
+  if(sp==='crystalrock')sp=s.wild[rnd(0,s.wild.length-1)];
   if(UNIQUE[sp]){const owned=[...S.team,...(S.box||[])].some(x=>x.sp===sp)||ws.mons.some(x=>x.sp===sp);if(owned){const alt=s.wild.filter(x=>!UNIQUE[x]);sp=alt[rnd(0,alt.length-1)]}}
   ws.mons.push({sp,rare,lvl:UNIQUE[sp]||(rare?s.lv[1]+1:rnd(s.lv[0],s.lv[1])),x:c.x,y:c.y,hx:c.x,hy:c.y,fx:c.x,fy:c.y,mv:null,next:t+600+Math.random()*1200,face:Math.random()<.5,chase:false});
   return true;
@@ -1554,6 +1558,7 @@ function tryMove(dir,t){
   const nx=p.x+dx,ny=p.y+dy;
   if(nx===m.champ.x&&ny===m.champ.y&&!(m.secret&&S.caught[ISLES[Wd.i].legend])){Wd.held=null;return openChamp()}
   if(m.secretStone&&nx===m.secretStone.x&&ny===m.secretStone.y){Wd.held=null;return openSecret()}
+  if(m.cave&&nx===m.cave.x&&ny===m.cave.y){Wd.held=null;return openCave()}
   const o=monAt(nx,ny);if(o){Wd.held=null;return encounter(o)}
   const c=chestAt(nx,ny);if(c){Wd.held=null;return openChest(c)}
   const tr=trainerAt(nx,ny);if(tr){Wd.held=null;if(!trBeaten(tr.k)){tr.alert=true;SFX.alert();tr.dir=dx>0?'left':dx<0?'right':dy>0?'up':'down'}return trainerTalk(tr)}
@@ -1608,6 +1613,23 @@ function leaveSecret(){
   document.getElementById('py').onclick=()=>{pr.hidden=true;SFX.whoosh();S.pos[s.parent]=secretReturn(s.parent);island(s.parent,'portal')};
   focusFirst('#prompt');
 }
+// there is only one Crystal Crash: it waits in Earth Island's little cave until you catch it
+const ownCrystal=()=>[...S.team,...(S.box||[])].some(x=>x.sp==='crystalrock');
+// the little cave: a dark opening in the rock, with a purple glint while Crystal Crash is still inside
+function drawCave(ctx,q,t){const cx=q.x+.5,cy=q.y+.9;ctx.save();ctx.fillStyle='#120d16';ctx.strokeStyle='#3a3430';ctx.lineWidth=.06;ctx.beginPath();ctx.moveTo(cx-.34,cy);ctx.quadraticCurveTo(cx-.36,cy-.52,cx,cy-.56);ctx.quadraticCurveTo(cx+.36,cy-.52,cx+.34,cy);ctx.closePath();ctx.fill();ctx.stroke();
+  if(!ownCrystal()){const k=.5+.5*Math.sin(t/300);ctx.globalAlpha=.5+.5*k;ctx.fillStyle='#c77dff';ctx.beginPath();ctx.arc(cx-.06,cy-.2,.07+.03*k,0,7);ctx.fill();ctx.fillStyle='#fff';ctx.globalAlpha=.7*k;ctx.fillRect(cx-.075,cy-.32,.03,.24);ctx.fillRect(cx-.18,cy-.215,.24,.03)}ctx.restore()}
+function openCave(){
+  const Wd=WORLD,pr=document.getElementById('prompt'),first=!S.cave,tired=!S.team.some(x=>x.hp>0);Wd.paused=true;Wd.held=null;pr.hidden=false;
+  if(first){S.cave=1;save();SFX.chest();Wd.sparkle=performance.now()}
+  const nm=SP.crystalrock.name;
+  pr.innerHTML=ownCrystal()?`<div class="who">The little cave</div><div>It's quiet in here now. ${nm} lives with you!</div><div class="row"><button class="btn sm" id="pn">OK</button></div>`
+    :tired?`<div class="who">${first?'You found a secret cave!':'The little cave'}</div><div>Something purple glitters deep inside... but your team is too tired. Go heal first!</div><div class="row"><button class="btn sm" id="pn">OK</button></div>`
+    :`<div class="who">${first?'You found a secret cave!':'The little cave'}</div><div>Something purple glitters in the dark... it's <b>${nm}</b>! There's only one in the whole world. It's level ${UNIQUE_LV}. A Super Net always works!</div><div class="row"><button class="btn hot sm" id="py">Battle!</button><button class="btn ghost sm" id="pn">Not yet</button></div>`;
+  document.getElementById('pn').onclick=()=>{pr.hidden=true;Wd.paused=false};
+  const y=document.getElementById('py');if(y)y.onclick=()=>{pr.hidden=true;battle({wild:true,legend:true,isle:Wd.i,enemies:[mk('crystalrock',UNIQUE_LV)],ent:null})};
+  focusFirst('#prompt');
+}
+const UNIQUE_LV=28;
 function openLegend(){
   const Wd=WORLD,s=ISLES[Wd.i],pr=document.getElementById('prompt'),tired=!S.team.some(x=>x.hp>0);Wd.paused=true;Wd.held=null;pr.hidden=false;
   pr.innerHTML=tired?`<div class="who">${SP[s.legend].name}</div><div>It stares at your tired team. Go heal at the spring first!</div><div class="row"><button class="btn sm" id="pn">OK</button></div>`
@@ -1656,6 +1678,7 @@ function drawOver(t){
     if(tilePx>=16)for(const g of m.grass)if(vis(g.x,g.y))drawTufts(ctx,th,g.x,g.y,t);
     const ents=[];
     for(const ob of m.objs)if(vis(ob.x,ob.y))ents.push({y:ob.y+.5,d:()=>drawObj(ctx,th,ob,t)});
+    if(m.cave&&vis(m.cave.x,m.cave.y))ents.push({y:m.cave.y+.51,d:()=>drawCave(ctx,m.cave,t)});
     for(const c of m.chests)if(vis(c.x,c.y))ents.push({y:c.y+.4,d:()=>drawChest(ctx,c.x,c.y,ws.opened.has(c.x+','+c.y),t)});
     ents.push({y:m.tent.y+.5,d:()=>drawTent(ctx,m.tent.x,m.tent.y,t)});
     for(const h of m.houses)if(vis(h.x,h.y))ents.push({y:h.y+.7,d:()=>drawHouse(ctx,h,s.el,t)});
@@ -1788,6 +1811,7 @@ function build3D(i){
   R3.portals=[];const ring=(x,z)=>{const g=new T.Mesh(new T.TorusGeometry(.42,.07,10,28),new T.MeshPhongMaterial({color:'#7ee4f4',emissive:'#4a8aff'}));g.position.set(x,.55,z);sc.add(g);R3.portals.push(g);return g};
   if(m.secret){const [x,z]=P(m.start.x,m.start.y);ring(x,z)}
   if(m.secretStone){const [x,z]=P(m.secretStone.x,m.secretStone.y);R3.secretRing=ring(x,z);R3.secretRing.position.y=1.1}else R3.secretRing=null;
+  if(m.cave){const [x,z]=P(m.cave.x,m.cave.y);R3.caveRing=ring(x,z);R3.caveRing.material.color.set('#c77dff');R3.caveRing.material.emissive.set('#7a22c0');R3.caveRing.position.y=1.1}else R3.caveRing=null;
   R3.trainers=new Map();R3.mons=new Map();R3.player=player;R3.champ=champ;
   R3.monTex={};R3.shadowGeo=new T.CircleGeometry(.36,16);R3.shadowMat=new T.MeshBasicMaterial({color:0,transparent:true,opacity:.25,depthWrite:false});
   // a few clouds
@@ -1809,7 +1833,7 @@ function render3D(t){
   for(const tr of ws.trainers){let g=R3.trainers.get(tr.k);if(!g){g=person3D(palFor(tr));R3.scene.add(g);R3.trainers.set(tr.k,g)}
     g.position.set(O.x+tr.fx+.5,0,O.y+tr.fy+.5);g.rotation.y=ROT[tr.dir];const s2=Math.sin(tr.walkT||0)*.6;g.legs[0].rotation.x=s2;g.legs[1].rotation.x=-s2;g.bang.visible=!!tr.alert&&!trBeaten(tr.k)}
   R3.champ.bang.position.y=1.75+Math.sin(t/300)*.06;
-  for(const r of R3.portals){r.rotation.y=t/600;r.rotation.x=Math.sin(t/900)*.4}if(R3.secretRing)R3.secretRing.visible=!!S.secrets[i];
+  for(const r of R3.portals){r.rotation.y=t/600;r.rotation.x=Math.sin(t/900)*.4}if(R3.secretRing)R3.secretRing.visible=!!S.secrets[i];if(R3.caveRing)R3.caveRing.visible=!!S.cave&&!ownCrystal();
   if(m.secret&&!S.caught[ISLES[i].legend]&&!ws.mons.includes(R3.legendObj)){R3.legendObj={sp:ISLES[i].legend,rare:true,fx:m.champ.x,fy:m.champ.y,hx:0,face:true,legend:1};}
   // monsters
   const monList=R3.legendObj&&m.secret&&!S.caught[ISLES[i].legend]?[...ws.mons,R3.legendObj]:ws.mons;const live=new Set(monList);for(const [o,obj] of R3.mons)if(!live.has(o)){R3.scene.remove(obj);R3.mons.delete(o)}
