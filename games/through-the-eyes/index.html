@@ -55,6 +55,8 @@
   #say .txt{font-size:19px;line-height:1.35;margin:2px 0 4px}
   #say .ref{font-size:13px;color:#8a6a3a}
   #say .tap{float:right;font-size:13px;color:#8a6a3a}
+  #say .sback{float:right;margin:-4px 10px 0 0;padding:3px 10px;font-size:13px;border-radius:10px;background:rgba(122,74,26,.12);color:#7a4a1a;box-shadow:none}
+  #say.asking .sback{visibility:hidden}
   #say .extra{margin-top:8px;padding:8px 10px;border-radius:10px;font-size:15px;line-height:1.35;background:#f3e2b8;color:#3a2a14}
   #say .extra.deep{background:#e4ecdf;border-left:4px solid #1f6b45}
   #say .ask{display:flex;flex-direction:column;gap:7px;margin-top:8px}
@@ -150,7 +152,7 @@
   <div id="stick"><i></i></div>
   <button id="act">Use</button>
   <div id="keys">WASD or arrows to walk &middot; drag to look &middot; Space to use</div>
-  <div id="say" class="hidden"><span class="tap">tap or Space &#9656;</span><div class="who"></div><div class="txt"></div><div class="ref"></div><div class="extra hidden"></div><div class="ask hidden"></div></div>
+  <div id="say" class="hidden"><span class="tap">tap or Space &#9656;</span><button type="button" class="sback hidden" aria-label="Go back to the last line">&#9666; Back</button><div class="who"></div><div class="txt"></div><div class="ref"></div><div class="extra hidden"></div><div class="ask hidden"></div></div>
   <button id="menuBtn" class="ghost">&#9776; Stories</button>
   <div id="fade"></div>
 </div>
@@ -524,104 +526,104 @@ function levelExtra(txt, ref){ // returns [kind, html] for the current line, or 
   if(LEVEL==='grown' && ref){ const n=(GO_DEEPER[story.id]||{})[ref]; if(n && !seen.has(ref)){ seen.add(ref); return ['deep','<b>Go deeper.</b> '+n]; } }
   return null;
 }
-// Grown-up level: questions you answer as you play. [question, right answer, wrong, wrong, why]
-// Each one appears right after the line with that Bible reference (first time it shows).
+// Grown-up level: questions you answer as you play. [question, right answer, wrong, wrong, wrong, why]
+// Grown-up questions are 4-choice. Each one appears right after the line with that Bible reference (first time it shows).
 const GROWN_ASK={
   adam:{
-    'Genesis 3:4-5':['The serpent’s trick started with a question. What did it do to God’s words?','Made a generous rule sound stingy','Read them out exactly right','Added a promise of gold','God said they could eat from every tree but one (Genesis 2:16). The serpent asked if God said they could not eat from any tree. Doubt about God’s goodness came before the bite.'],
-    'Genesis 3:24':['Cherubim guarded the way back into Eden. Where else do cherubim show up guarding God’s presence?','Woven into the curtain of the tabernacle','Painted on Noah’s ark','On Goliath’s armor','Exodus 26:31. That curtain kept people out of the Most Holy Place, a lot like the guarded garden. When Jesus died, the temple curtain tore from top to bottom (Matthew 27:51).']
+    'Genesis 3:4-5':['Compare God’s command (Genesis 2:16-17) with Eve’s answer to the serpent (Genesis 3:2-3). What did Eve add to God’s words?','“You must not touch it”','“You must not look at it”','“Only Adam may eat it”','“You must not smell it”','God never said not to touch the tree. Eve made the rule stricter and left out God’s generous “from any tree.” The serpent works best when people already picture God as harsher than He is.'],
+    'Genesis 3:24':['Cherubim guarded the way back to God in Eden. Where else are cherubim pictured guarding God’s presence?','Woven into the curtain before the Most Holy Place','Carved on the gates of Jericho','Painted on the sides of Noah’s ark','Stitched on the high priest’s belt','Exodus 26:31. That curtain kept people out of the Most Holy Place, like the guarded garden. When Jesus died, the temple curtain tore from top to bottom (Matthew 27:51). The way back was open.']
   },
   noah:{
-    'Genesis 7:1-4':['Noah took pairs of animals. How many of the “clean” animals did God tell him to take?','Seven pairs','Just one pair','Ten pairs','Genesis 7:2. Clean animals were the kind that could be offered to God. Noah needed extra, because right after the flood he offered some as a sacrifice (Genesis 8:20).'],
-    'Genesis 8:15-17':['How long were Noah and his family on the ark, from the first rain to stepping out?','About a year','Forty days','About a month','The rain began in Noah’s 600th year, on the 17th day of the 2nd month (Genesis 7:11). They came out on the 27th day of the 2nd month the next year (Genesis 8:14). The forty days was only the rain.']
+    'Genesis 7:1-4':['God told Noah to take seven pairs of “clean” animals, long before the Law of Moses listed which animals were clean. What does that suggest?','Offering animals to God was known before Moses','Noah wrote the Law of Moses','Clean meant washed in the river','Only clean animals could swim','Abel offered from his flock (Genesis 4:4), and Noah offered clean animals right after the flood (Genesis 8:20). The detailed list came centuries later in Leviticus 11.'],
+    'Genesis 8:15-17':['Using the dates in Genesis 7:11 and 8:14, how long were Noah’s family on the ark?','About a year','Forty days','Exactly 150 days','About seven months','They went in on the 17th day of the 2nd month of Noah’s 600th year and came out on the 27th day of the 2nd month of the next year. The forty days was only the rain. The 150 days was how long the water stayed high.']
   },
   abraham:{
-    'Genesis 12:1':['Before Haran, where did Abram’s family come from?','Ur, a big city in what is now Iraq','Egypt','Jerusalem','Genesis 11:31. Joshua 24:2 says Abram’s family there worshiped other gods. God called him out of all of it, with no map, only a promise.'],
-    'Genesis 15:4':['Abraham’s first son was not Isaac. Who was it?','Ishmael, son of Hagar','Lot','Eliezer','Sarai gave her servant Hagar to Abram, and Hagar had Ishmael (Genesis 16). Isaac, the son God promised to Sarah, came about 14 years later, when Abraham was 100 (Genesis 21:5).']
+    'Genesis 12:1':['Before God called Abram, what does Joshua 24:2 say his family did?','Worshiped other gods','Built the tower of Babel','Served as priests of God','Lived as slaves in Egypt','“Your ancestors, including Terah the father of Abraham, lived beyond the river and worshiped other gods.” God’s call came to a man from an idol-worshiping family, by grace, not because he was already religious.'],
+    'Genesis 15:4':['In Galatians 4, Paul uses Abraham’s two sons, Ishmael and Isaac, as a picture. What do they stand for?','Trying to earn God’s promise versus receiving it as a gift','Jewish people versus Romans','The Old Testament versus the New','Farmers versus shepherds','Galatians 4:22-31. Ishmael was born by human planning. Isaac was born by God’s promise when it was impossible. Paul says believers are children of the promise, like Isaac.']
   },
   joseph:{
-    'Genesis 37:26-27':['Judah came up with selling Joseph. Years later, what did Judah offer to do for his youngest brother Benjamin?','Become a slave in Benjamin’s place','Sell Benjamin too','Run away to Canaan','Genesis 44:33. The brother who sold one brother now gives himself up for another. Jesus would one day be born from Judah’s family line.'],
-    'Genesis 41:25-30':['Pharaoh had the same dream twice, with cows and then grain. What did Joseph say the double dream meant?','God had firmly decided it and would do it soon','There would be two famines','Pharaoh needed a second opinion','Genesis 41:32. Joseph himself had two dreams as a boy (Genesis 37:5-9), and both came true.']
+    'Genesis 37:26-27':['Judah came up with selling Joseph. Later, how does Judah show he has changed?','He offers to be a slave in Benjamin’s place','He pays back the twenty pieces of silver','He goes to Egypt alone to find Joseph','He confesses to Jacob right away','Genesis 44:33. The brother who sold one brother now gives himself up for another. Jacob later says the scepter will not depart from Judah (Genesis 49:10), and Jesus is born from Judah’s line.'],
+    'Genesis 41:25-30':['Joseph’s story moves in pairs. Which pair is NOT in it?','Two coats from his father','Two dreams as a boy','Two prisoners with dreams','Two sons born in Egypt','Genesis 37:5-9, 40:5, 41:1-7 and 41:50-52. Joseph said a dream given twice means God has firmly decided it (Genesis 41:32). Only one coat, and it was torn from him.']
   },
   babymoses:{
-    'Exodus 2:4':['Hebrews 11 praises Moses’ parents. What for?','They hid him and were not afraid of the king’s order','They built a big boat','They moved out of Egypt','Hebrews 11:23. They saw he was no ordinary child, and their faith was stronger than their fear.'],
-    'Exodus 2:8':['Moses had a big brother too. Who was he?','Aaron','Joshua','Caleb','Exodus 7:7 says Aaron was three years older than Moses. Miriam, Aaron and Moses would all lead Israel together (Micah 6:4).']
+    'Exodus 2:4':['Hebrews 11:23 praises Moses’ parents for their faith. What exactly does it say they did?','Hid him three months, unafraid of the king’s order','Prayed at the Nile every morning','Asked the princess to adopt him','Moved the family to Midian','Hebrews 11:23. They saw he was no ordinary child. Their faith was stronger than their fear of Pharaoh.'],
+    'Exodus 2:8':['Micah 6:4 says God sent Moses, Aaron and Miriam to lead Israel. Which of these did Miriam NOT do?','Help carry the ark across the Jordan','Lead a song after the Red Sea','Get called a prophet','Speak against Moses with Aaron','Exodus 15:20-21 and Numbers 12:1-2. Miriam died in the wilderness at Kadesh (Numbers 20:1), before Israel crossed the Jordan. The priests carried the ark across (Joshua 3).']
   },
   bush:{
-    'Exodus 3:6':['Years later, Moses asked to see God’s glory. What happened?','God hid him in a rock and let him see His back','God showed him His face','God said no and left','Exodus 33:18-23. God covered Moses with His hand as He passed by. Afterward Moses’ face shone so brightly that he wore a veil (Exodus 34:29-35).'],
-    'Exodus 3:10':['Moses was 80 years old here. How long had he been a shepherd in Midian?','About 40 years','About 4 years','About 70 years','Acts 7:23, 7:30 and Exodus 7:7. Moses spent 40 years in Pharaoh’s palace, 40 in the wilderness, and 40 leading Israel. He died at 120 (Deuteronomy 34:7).']
+    'Exodus 3:6':['Later Moses asked to see God’s glory. God said no one may see His face and live. What did God do instead?','Put him in a crack in a rock and let him see His back','Showed His face for a single moment','Sent an angel in His place','Spoke from the burning bush again','Exodus 33:18-23. God covered Moses with His hand as He passed by. Afterward Moses’ face shone so brightly that he wore a veil (Exodus 34:29-35).'],
+    'Exodus 3:10':['Stephen says Moses’ life came in three 40-year parts (Acts 7). What were they, in order?','Palace, wilderness, leading Israel','Wilderness, palace, leading Israel','Slavery, palace, wilderness','Palace, leading Israel, wilderness','Acts 7:23, 7:30, 7:36 and Exodus 7:7. Moses was 80 at the burning bush. He died at 120 (Deuteronomy 34:7). God spent 80 years getting him ready for 40 years of work.']
   },
   redsea:{
-    'Exodus 14:13-14':['God did not take the people on the short road out of Egypt. Why not?','They might see war, get scared and go back','The short road was flooded','Pharaoh owned that road','Exodus 13:17-18. The short road along the coast went through Philistine land. God knew they were not ready for war, so He led them toward the sea instead.'],
-    'Exodus 15:21':['Paul says crossing the sea was a picture of something Christians do. What?','Baptism','Communion','Christmas','1 Corinthians 10:1-2 says the Israelites were “baptized into Moses in the cloud and in the sea.” They went through the water and came out free.']
+    'Exodus 14:13-14':['Pharaoh thought the Israelites were wandering around lost by the sea (Exodus 14:3). Who set that up?','God, so Pharaoh would chase them','Moses, who took a wrong turn','Aaron, who misread the stars','The people, who wanted to go back','Exodus 14:1-4. God had them turn back and camp by the sea on purpose, “and the Egyptians will know that I am the Lord.” What looked like a trap was God’s plan.'],
+    'Exodus 15:21':['In 1 Corinthians 10:1-4, Paul says the sea and cloud pictured baptism. What does he say the rock that gave them water pictured?','Christ','The Holy Spirit','The Law of Moses','Heaven','“They drank from the spiritual rock that accompanied them, and that rock was Christ” (1 Corinthians 10:4). Paul read the whole Exodus story as pointing to Jesus.']
   },
   jericho:{
-    'Joshua 6:3-4':['How many trips around Jericho did the army make in all?','13','7','6','Once a day for six days, then seven times on the seventh day. Seven priests, seven horns, seven days, seven trips. In the Bible, seven often stands for something complete.'],
-    'Joshua 6:22':['Jericho is one of the oldest cities in the world. Where is it?','About 850 feet below sea level','On top of a tall mountain','Right on the seashore','It sits in the Jordan Valley near the Dead Sea, the lowest land on earth. Springs keep it green in the desert, so it was called the City of Palms (Deuteronomy 34:3).']
+    'Joshua 6:3-4':['Counting all seven days, how many times did the army march around Jericho?','13','7','12','14','Once a day for six days, then seven times on the seventh day. Seven priests, seven horns, seven days and seven laps on the last day. In the Bible, seven often means complete.'],
+    'Joshua 6:22':['Jericho shows up again in the Gospels. Which two people did Jesus meet there?','Zacchaeus and blind Bartimaeus','Nicodemus and Lazarus','Matthew and Thomas','Martha and Mary','Luke 19:1-10 and Mark 10:46-52. The city that fell to God’s people became a place where Jesus rescued people. He also set the story of the Good Samaritan on the road to Jericho (Luke 10:30).']
   },
   gideon:{
-    'Judges 6:23':['That same night God gave Gideon a first job. What was it?','Tear down his father’s altar to Baal','Count his soldiers','Build a winepress','Judges 6:25-32. Gideon did it at night because he was afraid. The town wanted him killed, but his father said, “Let Baal fight for himself.” So Gideon was called Jerub-Baal.'],
-    'Judges 7:7':['Later the Bible counts the enemy army. About how big was it?','About 135,000 men','About 3,000 men','About 30,000 men','Judges 8:10 says 120,000 fell and 15,000 were left. That is 450 enemy soldiers for every one of Gideon’s 300.']
+    'Judges 6:23':['After God called him, Gideon got a new nickname from his own town. What was it?','Jerub-Baal: “Let Baal fight him”','Mighty Warrior: “God is with him”','Yahweh Shalom: “The Lord is peace”','Ephraim: “Fruitful”','Judges 6:25-32. Gideon tore down his father’s altar to Baal. His father said, if Baal is a god, let him defend himself. Baal never did.'],
+    'Judges 7:7':['Judges 8:10 says the enemy army was about 135,000. About how many enemies did each of Gideon’s 300 men face?','About 450','About 4','About 45','About 4,500','135,000 divided by 300 is 450. God cut the army from 32,000 so that no one could say their own strength won the battle (Judges 7:2).']
   },
   samson:{
-    'Judges 16:17':['Which tribe of Israel was Samson from?','Dan','Judah','Levi','Judges 13:2. Dan was a small tribe squeezed by the Philistines along the coast. Long before, Jacob said Dan would “provide justice for his people” (Genesis 49:16).'],
-    'Judges 16:28':['Hebrews 11 lists heroes of faith. Is Samson on the list?','Yes','No, he made too many mistakes','Only his parents are','Hebrews 11:32 names Samson, along with Gideon and David. The list is not about perfect people. It is about people who trusted God.']
+    'Judges 16:17':['Samson was from the tribe of Dan. Which list of the twelve tribes leaves Dan out completely?','Revelation 7','Genesis 49','Numbers 1','Deuteronomy 33','Revelation 7:4-8 lists 12,000 from each tribe but skips Dan, perhaps because Dan led Israel into idol worship (Judges 18:30). Samson, Dan’s most famous son, shows a tribe that kept drifting from God.'],
+    'Judges 16:28':['Hebrews 11:32 names Samson as a person of faith. Who else is named in that same verse?','Gideon, Barak, Jephthah, David and Samuel','Elijah, Elisha and Jonah','Joseph, Moses and Joshua','Daniel, Esther and Ruth','Hebrews 11:32. Several of them had serious failures. The list praises faith, not perfection.']
   },
   david:{
-    '1 Samuel 17:8-9':['Goliath’s bronze armor weighed 5,000 shekels. About how much is that?','About 125 pounds','About 12 pounds','About 500 pounds','1 Samuel 17:5. His coat weighed about as much as a grown man, and the iron point of his spear alone weighed about 15 pounds (17:7).'],
-    '1 Samuel 17:37-38':['Why is it surprising that Saul offered David his armor?','Saul was the tallest man in Israel','Saul had no armor','Armor was against the law','1 Samuel 9:2 says Saul was a head taller than anyone else. Israel’s tallest warrior should have been the one to face the giant. Instead he sent a boy.']
+    '1 Samuel 17:8-9':['Goliath’s bronze armor weighed 5,000 shekels (1 Samuel 17:5). About how much is that?','About 125 pounds','About 12 pounds','About 60 pounds','About 500 pounds','A shekel was about 0.4 ounces. His coat weighed about as much as a grown man, and the iron point of his spear alone weighed about 15 pounds (1 Samuel 17:7).'],
+    '1 Samuel 17:37-38':['Why is it surprising that Saul, not someone else, offered David armor?','Saul was taller than anyone in Israel','Saul had beaten Goliath once before','Saul’s armor was made for a boy','Saul was David’s uncle','1 Samuel 9:2 says Saul was a head taller than everyone. Israel’s tallest warrior should have faced the giant. Instead he sent a boy and tried to make the boy look like Saul.']
   },
   elijah:{
-    '1 Kings 18:19':['Who was pushing Israel to worship Baal?','Queen Jezebel, King Ahab’s wife','Queen Esther','Delilah','1 Kings 16:31. Jezebel was a princess from Sidon, where Baal was worshiped. She had been hunting down the Lord’s prophets (1 Kings 18:4).'],
-    '1 Kings 18:44':['James in the New Testament uses Elijah as an example. Of what?','An ordinary person whose prayers were powerful','The fastest runner in Israel','Someone who was never afraid','James 5:17-18. Elijah was a human being just like us. Right after this he got so scared and tired that he ran away and asked to die (1 Kings 19:3-4), and God cared for him with food and rest.']
+    '1 Kings 18:19':['Who was pushing Israel to worship Baal, and where was she from?','Jezebel, a princess of Sidon','Athaliah, Ahab’s daughter','Delilah of the valley of Sorek','The Queen of Sheba','1 Kings 16:31. Jezebel was the daughter of the king of Sidon, where Baal was worshiped, and she hunted the Lord’s prophets (1 Kings 18:4). Athaliah, Ahab’s daughter, later did the same in Judah.'],
+    '1 Kings 18:44':['James 5:17 says how long it did not rain in Elijah’s time. How long?','Three and a half years','Exactly three years','Forty days','Seven years','James 5:17 and Luke 4:25. 1 Kings 18:1 says “in the third year,” counted from Elijah’s time hiding. James uses Elijah to show that an ordinary person’s prayers are powerful.']
   },
   jonah:{
-    'Jonah 1:9':['Jonah got his ship at Joppa. Who has a big moment in Joppa later in the Bible?','Peter, when God sent him to non-Jewish people','Paul, in prison','Mary Magdalene','Acts 10. In Joppa, Peter had a vision and was sent to a Roman officer named Cornelius. Jonah ran from Joppa to get away from foreigners. Peter went from Joppa to welcome them.'],
-    'Jonah 3:4':['When God spared Nineveh, how did Jonah feel?','Angry','Happy','Proud of himself','Jonah 4:1-2. He said he ran away because he knew God is “gracious and compassionate, slow to anger.” The book ends with God asking Jonah if He should not care about this great city.']
+    'Jonah 1:9':['Jonah sailed from Joppa. Who has a big moment in Joppa later in the Bible?','Peter, sent from there to welcome non-Jews','Paul, when he was in prison','Philip, baptizing a traveler','Mary Magdalene, telling the news','Acts 10. In Joppa, Peter had a vision and was sent to a Roman officer named Cornelius. Jonah ran from Joppa to get away from foreigners. Peter went from Joppa to welcome them.'],
+    'Jonah 3:4':['In Jonah 4:2 Jonah explains why he ran: he knew God is “gracious and compassionate, slow to anger.” Where was God first described that way?','Exodus 34:6, to Moses','Genesis 1:1, at creation','Psalm 23:1, by David','Isaiah 53:5, by Isaiah','Exodus 34:6, when God passed by Moses on the mountain. Jonah knew God’s character perfectly. He was angry that it applied to his enemies.']
   },
   daniel:{
-    'Daniel 6:16':['Before King Darius, Daniel served kings of which empire?','Babylon','Egypt','Rome','Daniel was taken from Jerusalem to Babylon as a teenager (Daniel 1:1-6). He served King Nebuchadnezzar, and he read the writing on the wall the night Babylon fell (Daniel 5).'],
-    'Daniel 6:20':['Which of Daniel’s friends were thrown into a fiery furnace years before?','Shadrach, Meshach and Abednego','Shem, Ham and Japheth','Peter, James and John','Daniel 3. They would not bow to a gold statue. Someone who looked like a son of the gods walked with them in the fire, and they came out without even smelling like smoke.']
+    'Daniel 6:16':['Daniel served under kings of two empires. Which pair, in order, is right?','Babylon, then Persia','Egypt, then Assyria','Assyria, then Babylon','Persia, then Greece','Daniel was taken to Babylon as a teenager (Daniel 1). He read the writing on the wall the night Babylon fell (Daniel 5), and then served Darius and Cyrus of Persia (Daniel 6:28).'],
+    'Daniel 6:20':['Babylon gave Daniel’s three friends new names: Shadrach, Meshach and Abednego. What were their Hebrew names?','Hananiah, Mishael and Azariah','Shem, Ham and Japheth','Hophni, Phinehas and Eli','Caleb, Joshua and Othniel','Daniel 1:6-7. Daniel’s Babylonian name was Belteshazzar. Babylon renamed them after its gods, but they stayed loyal to the Lord, even in a fiery furnace (Daniel 3).']
   },
   esther:{
-    'Esther 5:3':['Esther also had a Hebrew name. What was it?','Hadassah','Hannah','Deborah','Esther 2:7. Hadassah means myrtle, a sweet-smelling tree. Esther may come from a Persian word for star.'],
-    'Esther 7:6':['Haman came from the family of Agag. Which king of Israel was told to defeat Agag long before?','King Saul','King David','King Solomon','Haman is called an Agagite (Esther 3:1). Saul failed to finish the job with Agag (1 Samuel 15). Mordecai came from Saul’s own tribe, Benjamin (Esther 2:5). An old story finally ends.']
+    'Esther 5:3':['Esther also had a Hebrew name. What was it?','Hadassah','Hannah','Deborah','Abigail','Esther 2:7. Hadassah means myrtle, a sweet-smelling tree. Esther may come from a Persian word for star.'],
+    'Esther 7:6':['Haman was an Agagite (Esther 3:1). Which king of Israel had been told to wipe out Agag’s people and failed?','King Saul','King David','King Solomon','King Ahab','1 Samuel 15. Saul spared Agag. Mordecai was from Saul’s own tribe, Benjamin, and his family line includes a Kish, the same name as Saul’s father (Esther 2:5). An old story finally ends.']
   },
   christmas:{
-    'Luke 2:10':['Why were Mary and Joseph in Bethlehem at all?','A Roman census made people go to their family’s hometown','They lived there','They were on their way to Egypt','Luke 2:1-4. Emperor Augustus ordered it. Joseph was from David’s family, so he went to Bethlehem, the town Micah said the Messiah would come from (Micah 5:2).'],
-    'Luke 2:15':['When Jesus was a few weeks old, He was taken to the temple. Who knew who He was?','Simeon and Anna','Herod and his priests','Zacchaeus and Peter','Luke 2:25-38. Simeon had been promised he would see the Messiah before he died. He held Jesus and said, “My eyes have seen your salvation.”']
+    'Luke 2:10':['Luke 2:1 names the emperor whose census sent Joseph to Bethlehem. Who was it?','Caesar Augustus','Tiberius Caesar','Nero','Julius Caesar','Augustus was called “savior” and “son of god” on Roman coins and monuments. Luke quietly shows that the real Savior was born because of Augustus’ order, in the town Micah named (Micah 5:2).'],
+    'Luke 2:15':['When Jesus was about 40 days old, He was brought to the temple. Who recognized Him there?','Simeon and Anna','Zechariah and Elizabeth','Herod and the chief priests','Nicodemus and Joseph of Arimathea','Luke 2:22-38. Simeon had been promised he would see the Messiah before he died. Anna, a prophet in her 80s, told everyone. Zechariah and Elizabeth were John the Baptist’s parents (Luke 1).']
   },
   wisemen:{
-    'Matthew 2:8':['Which Herod was this?','Herod the Great, who rebuilt the temple','The Herod at Jesus’ trial','Herod, king of Egypt','Herod the Great ruled for Rome and made the Jerusalem temple huge and beautiful (John 2:20). His son Herod Antipas is the one Jesus stood before at His trial (Luke 23:7).'],
-    'Matthew 2:11':['After the wise men left, where did Joseph take Mary and Jesus?','Egypt','Rome','Babylon','Matthew 2:13-15. Matthew connects it to Hosea 11:1, “Out of Egypt I called my son.” Like Israel long ago, Jesus came up out of Egypt.']
+    'Matthew 2:8':['There are several Herods in the New Testament. Which one met the wise men?','Herod the Great, who rebuilt the temple','Herod Antipas, at Jesus’ trial','Herod Agrippa, who jailed Peter','Herod Philip, ruler of Iturea','Herod the Great made the Jerusalem temple huge and beautiful (John 2:20). His son Antipas met Jesus at His trial (Luke 23:7), and his grandson Agrippa I put Peter in prison (Acts 12).'],
+    'Matthew 2:11':['Matthew says Jesus’ time in Egypt fulfilled Hosea 11:1, “Out of Egypt I called my son.” In Hosea, who was that son?','The nation of Israel','Moses','Joseph','Benjamin','Hosea is looking back to the Exodus. Matthew shows Jesus living out Israel’s story: out of Egypt, through the water at His baptism, then 40 days in the wilderness.']
   },
   storm:{
-    'Mark 4:35':['The Sea of Galilee has other names in the Bible. Which one is right?','The Lake of Gennesaret','The Dead Sea','The Great Sea','Luke 5:1 calls it the Lake of Gennesaret, and John 6:1 calls it the Sea of Tiberias. It is only about 13 miles long and 8 miles wide.'],
-    'Mark 4:38':['Which prophet also slept in a boat during a storm?','Jonah','Elijah','Daniel','Jonah 1:5. Jonah was running from God, and the sailors threw him overboard. Jesus stays in the boat and calms the sea Himself. He said, “Something greater than Jonah is here” (Matthew 12:41).']
+    'Mark 4:35':['The Sea of Galilee goes by other names in the Bible. Which set is right?','Gennesaret, Tiberias and Kinnereth','The Salt Sea and the Sea of the Arabah','The Great Sea and the Western Sea','The Sea of Reeds and Yam Suph','Luke 5:1, John 6:1 and Numbers 34:11. Kinnereth may come from the Hebrew word for harp, because of the lake’s shape. The Salt Sea is the Dead Sea, and the Great Sea is the Mediterranean.'],
+    'Mark 4:38':['Jesus asleep in a storm echoes Jonah asleep in a storm. What is the biggest difference?','Jonah caused the storm; Jesus calms it Himself','Jonah stayed awake the whole time','Jesus was thrown overboard','Jonah’s boat sank','Jonah 1:5-15. The sailors had to throw Jonah in to calm the sea. Jesus just speaks. He said, “Something greater than Jonah is here” (Matthew 12:41).']
   },
   loaves:{
-    'John 6:7':['Philip said 200 denarii would not be enough. What was one denarius?','About one day’s pay for a worker','About one hour’s pay','About one month’s pay','Matthew 20:2. So 200 denarii was more than six months of work, and it still would not have fed the crowd.'],
-    'John 6:12':['After this miracle, what did the crowd want to do?','Make Jesus king by force','Send Him away','Throw Him a feast','John 6:15. They wanted a king who would fill their stomachs and fight Rome. Jesus slipped away to the mountain by Himself.']
+    'John 6:7':['A denarius was a day’s pay (Matthew 20:2). Resting on Sabbaths, about how long would a worker need to earn 200 denarii?','About 8 months','About 2 weeks','About 2 months','About 3 years','200 workdays at six days a week is about 33 weeks. Philip did the math, and it still was not enough. Andrew brought the boy’s lunch instead.'],
+    'John 6:12':['The next day Jesus told the crowd they were following Him for the wrong reason. What was it?','They had eaten the loaves and were filled','They wanted to see Him walk on water','They hoped He would pay their taxes','They thought He was John the Baptist','John 6:26-27. Jesus said, “Do not work for food that spoils, but for food that lasts for eternal life.” After His teaching many followers left (John 6:66).']
   },
   water:{
-    'Matthew 14:26':['Which Gospel writer was in the boat that night?','Matthew','Luke','Mark','Matthew was one of the twelve disciples, a former tax collector (Matthew 9:9). Mark and Luke were not among the twelve. Only Matthew tells about Peter walking on the water.'],
-    'Matthew 14:31':['After Easter, Peter jumped out of a boat toward Jesus again. What happened that time?','He swam to Jesus on the shore','He walked on the water','He caught 12 fish','John 21:7. Peter saw the risen Jesus on the beach and jumped in to swim to Him. That morning Jesus cooked the disciples breakfast.']
+    'Matthew 14:26':['Which Gospel writer was actually in the boat that night?','Matthew','Luke','Mark','Paul','Matthew was one of the twelve, a former tax collector (Matthew 9:9). Mark and Luke were not among the twelve, and Paul came to faith years later. Only Matthew tells about Peter walking on the water.'],
+    'Matthew 14:31':['After Easter, Peter jumped out of a boat toward Jesus again. What did Jesus ask him three times that morning?','“Do you love me?”','“Why did you doubt?”','“Who do you say I am?”','“Where is your faith?”','John 21:15-17. Peter had denied Jesus three times. Jesus gave him three chances to say he loved Him, and each time told him to care for His sheep.']
   },
   zacchaeus:{
-    'Luke 19:5':['Tax collectors like Zacchaeus collected money for whom?','The Roman government','The temple','King Herod’s horses','Tax collectors worked for Rome and often took extra for themselves, so many Jews saw them as traitors. Jesus chose a tax collector, Matthew, as one of His twelve (Matthew 9:9).'],
-    'Luke 19:7':['Where was Jesus going right after Jericho?','Jerusalem, where He would die and rise','Home to Nazareth','To Galilee to go fishing','Luke 19:28. Jericho is about 15 miles from Jerusalem. Within days Jesus would ride into the city on a donkey.']
+    'Luke 19:5':['Jesus said, “I must stay at your house.” Luke uses “must” for God’s plan. Which is another “must” in Luke?','The Son of Man must suffer and be raised','The disciples must fast twice a week','Zacchaeus must give away everything','The temple must be rebuilt in three days','Luke 9:22 and 24:7. Staying with Zacchaeus was not a whim. It belonged to the same mission as the cross.'],
+    'Luke 19:7':['People grumbled that Jesus welcomed sinners in Luke 15 too. Which three stories did He tell in answer?','Lost sheep, lost coin, lost son','Sower, mustard seed, yeast','Good Samaritan, rich fool, ten virgins','Talents, sheep and goats, wedding feast','Luke 15:1-32. Each ends with a party when the lost is found. Zacchaeus is the lost son coming home, and the grumbling crowd sounds like the older brother.']
   },
   easter:{
-    'John 20:2':['Who buried Jesus in this tomb?','Joseph of Arimathea and Nicodemus','Peter and John','Mary and Martha','John 19:38-42. Both were Jewish leaders who had followed Jesus in secret. Nicodemus brought about 75 pounds of spices, a burial fit for a king.'],
-    'John 20:13':['How long after Easter did Jesus go back up to heaven?','40 days','3 days','7 years','Acts 1:3-9. For 40 days He appeared to His followers and taught them. Ten days after that, on Pentecost, the Holy Spirit came.']
+    'John 20:2':['Nicodemus helped bury Jesus in this tomb. When did he first come to Jesus?','At night, asking how to be born again','At the feeding of the 5,000','At the wedding in Cana','On Palm Sunday, waving branches','John 3:1-21 and 19:39. The man who came secretly in the dark ended up publicly honoring Jesus’ body with about 75 pounds of spices.'],
+    'John 20:13':['How long after Easter did Jesus go back up to heaven?','40 days','3 days','7 days','50 days','Acts 1:3-9. For 40 days He appeared to His followers and taught them. Ten days later, at Pentecost (50 days after Passover), the Holy Spirit came.']
   },
   paul:{
-    'Acts 9:5-6':['Before this, Saul watched over the coats of people who killed which follower of Jesus?','Stephen','Peter','Andrew','Acts 7:58 to 8:1. Stephen was the first Christian to die for Jesus. As he died he prayed for the people hurting him. Now Jesus meets one of them on the road.'],
-    'Acts 9:17':['Later Saul had to escape from Damascus. How?','His friends lowered him over the wall in a basket','He sailed away on a ship','An angel opened the gate','Acts 9:23-25. The people who once welcomed his letters now wanted to kill him. Paul still talked about it years later (2 Corinthians 11:32-33).']
+    'Acts 9:5-6':['As Stephen died with Saul watching, he prayed, “Lord, do not hold this sin against them.” Whose words does that echo?','Jesus on the cross','Moses on Mount Nebo','Samson in the temple','Elijah in the whirlwind','Luke 23:34, “Father, forgive them.” Luke wrote both books and shows Stephen dying like his Lord (Acts 7:58-60). Now Jesus answers that prayer by meeting Saul.'],
+    'Acts 9:17':['Soon after this, Saul had to escape from Damascus. How?','Friends lowered him over the wall in a basket','He sailed away at night','An angel opened the city gate','He hid in a wagon of grain','Acts 9:23-25 and 2 Corinthians 11:32-33. The man who came to arrest believers left in a basket, helped by the believers he once hunted.']
   }
 };
 function askFor(ref){
-  if(LEVEL!=='grown' || !story || !ref) return null;
+  if(LEVEL!=='grown' || !story || !ref || story._part) return null;
   const a=(GROWN_ASK[story.id]||{})[ref], seen=story._seen||(story._seen=new Set());
   if(!a || seen.has('ask:'+ref)) return null; seen.add('ask:'+ref); return a;
 }
@@ -633,7 +635,7 @@ function showAsk(a){
   el.querySelector('.ref').textContent='';
   el.querySelector('.extra').className='extra hidden';
   el.classList.add('asking');
-  const opts=[a[1],a[2],a[3]].sort(()=>Math.random()-0.5);
+  const opts=a.slice(1,-1).sort(()=>Math.random()-0.5), why=a[a.length-1];
   box.innerHTML=''; box.className='ask';
   opts.forEach((o,i)=>{ const b=document.createElement('button'); b.type='button'; b.innerHTML='<span>'+(i+1)+'</span> '; b.appendChild(document.createTextNode(o));
     b.addEventListener('pointerdown',e=>e.stopPropagation());
@@ -642,7 +644,7 @@ function showAsk(a){
       story._askN=(story._askN||0)+1; if(!tries) story._askRight=(story._askRight||0)+1;
       box.querySelectorAll('button').forEach(x=>{ x.disabled=true; if(x!==b) x.classList.add('dim'); }); b.classList.add('right');
       const t=box.querySelector('.try'); if(t) t.remove();
-      const w=document.createElement('div'); w.className='why'; w.innerHTML='<b>'+(tries?'That’s it!':'Yes!')+'</b> '; w.appendChild(document.createTextNode(a[4])); box.appendChild(w);
+      const w=document.createElement('div'); w.className='why'; w.innerHTML='<b>'+(tries?'That’s it!':'Yes!')+'</b> '; w.appendChild(document.createTextNode(why)); box.appendChild(w);
       story._ask=null; el.classList.remove('asking'); sayBusyUntil=performance.now()+500; };
     box.appendChild(b); });
   el.classList.remove('hidden'); sayBusyUntil=performance.now()+350;
@@ -687,7 +689,6 @@ const GROWN_LINES={
       [GL_B,'Soon they ate food grown in the land, and the manna stopped. After 40 years, God’s people were finally eating from the land He promised.','Joshua 5:11-12']]
   },
   gideon:{
-    'Judges 6:24':[[GL_B,'That same night, Gideon took ten servants and tore down his father’s altar to Baal. He did it at night because he was afraid of his family and the town.','Judges 6:25-27']],
     'Judges 8:28':[[GL_B,'Afterward the people asked Gideon to be their king. Gideon said, “I will not rule over you. The Lord will rule over you.”','Judges 8:22-23']]
   },
   samson:{
@@ -699,7 +700,6 @@ const GROWN_LINES={
   },
   elijah:{
     '1 Kings 18:1':[[GL_B,'During the drought, God had sent ravens to bring Elijah bread and meat by a brook. Later a widow shared her last flour and oil with him, and her jars never ran out.','1 Kings 17:2-16']],
-    '1 Kings 18:17':[[GL_B,'On the way, Elijah had met Obadiah, who ran Ahab’s palace but loved the Lord. When the Lord’s prophets were being hunted, Obadiah hid 100 of them in two caves.','1 Kings 18:3-4, 18:7']]
   },
   jonah:{
     'Jonah 3:10':[[GL_B,'But Jonah was angry. He went out east of the city and sat down to watch what would happen. God made a leafy plant grow up to shade him, and Jonah was very happy about it.','Jonah 4:1-6'],
@@ -742,7 +742,7 @@ const GROWN_LINES={
   }
 };
 function linesFor(who, ref){
-  if(LEVEL!=='grown' || !story || !ref) return null;
+  if(LEVEL!=='grown' || !story || !ref || story._part) return null;
   const m=GROWN_LINES[story.id]; if(!m) return null;
   const c=story._refN||(story._refN={}); c[ref]=(c[ref]||0)+1;
   const seen=story._seen||(story._seen=new Set());
@@ -1040,15 +1040,33 @@ function nextSay(){
   if(story && story._ask) return; // waiting for an answer
   el.querySelector('.ask').className='ask hidden'; el.classList.remove('asking');
   if(!sayQ.length){ el.classList.add('hidden'); const cb=sayCb; sayCb=null; if(cb) cb(); return; }
-  const item=sayQ.shift(); if(item && item.ask){ showAsk(item.ask); return; }
+  const item=sayQ.shift(); if(item && item.ask){ sayKeep(); showAsk(item.ask); return; }
+  if(item && item.replay){ sayKeep(); sayShow(item.replay); return; } // moving forward again after going back
   const [who,txt,ref,fn]=item; if(fn) fn();
   { const more=linesFor(who,ref); if(more) sayQ.unshift(...more.map(l=>l.slice())); const a=askFor(ref); if(a) sayQ.unshift({ask:a}); }
-  el.querySelector('.who').textContent=who||'';
-  el.querySelector('.txt').textContent=txt;
-  el.querySelector('.ref').textContent=ref||'';
-  { const ex=el.querySelector('.extra'), x=levelExtra(txt,ref); ex.className='extra'+(x?' '+x[0]:' hidden'); ex.innerHTML=x?x[1]:''; }
+  const x=levelExtra(txt,ref);
+  sayKeep(); sayShow({who:who||'', txt, ref:ref||'', exK:x?x[0]:'', exH:x?x[1]:''});
+}
+// Going back: the lines you already read in this story, so you can read them again.
+let sayCur=null;
+function sayHist(){ return story ? (story._hist||(story._hist=[])) : []; }
+function sayKeep(){ if(sayCur){ const h=sayHist(); h.push(sayCur); if(h.length>40) h.shift(); } sayCur=null; }
+function sayShow(l){
+  const el=$('say'); sayCur=l;
+  el.querySelector('.who').textContent=l.who;
+  el.querySelector('.txt').textContent=l.txt;
+  el.querySelector('.ref').textContent=l.ref;
+  { const ex=el.querySelector('.extra'); ex.className='extra'+(l.exK?' '+l.exK:' hidden'); ex.innerHTML=l.exH||''; }
+  el.querySelector('.sback').classList.toggle('hidden', !sayHist().length);
   el.classList.remove('hidden');
   sayBusyUntil = performance.now()+350;
+}
+function sayBack(){
+  if(!story || story._ask || !saying()) return;
+  const h=sayHist(); if(!h.length) return;
+  $('say').querySelector('.ask').className='ask hidden'; $('say').classList.remove('asking');
+  if(sayCur) sayQ.unshift({replay:sayCur});
+  sayShow(h.pop());
 }
 let sayBusyUntil=0;
 function saying(){ return !$('say').classList.contains('hidden'); }
@@ -1587,6 +1605,7 @@ function goAdam(step){
   if(step==='leave'){ S.lock=false; S.eveFollow=true; W.god.visible=false; setGoal('Leave the garden through the <b>east side</b>'); S.target={position:new THREE.Vector3(EDEN_R+5,0,0)}; }
   if(step==='cherub'){
     S.lock=true; S.target=null; setGoal('');
+    S.eveFollow=false; S.eveTo={x:Math.max(P.x-0.6,EDEN_R+2.6), z:P.z+1.7}; // Eve stays outside, next to you
     place(W.cherub,EDEN_R-0.5,0,Math.PI/2); W.cherub.visible=true;
     lookAt(W.cherub.position.x, W.cherub.position.y+2, 0, 1.2);
     say([[SAY_BIBLE,'God placed angels called cherubim, and a flaming sword that flashed back and forth, on the east side of the garden. They guarded the way to the tree of life.','Genesis 3:24'],
@@ -1890,11 +1909,11 @@ function updateNoah(dt, now){
     say([[SAY_BIBLE,'Noah covered the ark with pitch, a thick sticky tar, inside and outside, so the water could not get in.','Genesis 6:14'],
          ['God','Go into the ark, you and your whole family. In seven days I will send rain on the earth.','Genesis 7:1-4', ()=>{ noahGod(P.x+3,P.z+2); S.doorTo=1; }]], ()=>{ W.god.visible=false; goNoah('animals'); }); }};
   if(S.step==='animals'){ const pr=nearestPair(); S.target=pr?pr.a[0]:null;
-    if(pr && dist2(pr.a[0])<(pr.kind==='elephant'||pr.kind==='giraffe'?5:3.5)) near={label:'Lead the '+PAIR_NAME[pr.kind]+' to the ark', fn:()=>{ pr.led=true; S.led++; animalGoal(); if(S.led>=NOAH_PAIRS.length){ S.target=null; setTimeout(()=>goNoah('family'),1500); } }}; }
+    if(pr && dist2(pr.a[0])<(pr.kind==='elephant'||pr.kind==='giraffe'?5:3.5)) near={label:'Lead the '+PAIR_NAME[pr.kind]+' to the ark', fn:()=>{ pr.led=true; S.led++; animalGoal(); if(S.led>=NOAH_PAIRS.length){ S.target=null; setTimeout(()=>goNoah('family'),500); } }}; }
   if(S.step==='board' && Math.hypot(P.x-6,P.z-9)<3.5) near={label:'Go into the ark', fn:()=>{ S.step='boarding'; goInside(); }};
   if(S.step==='window' && P.z<-1.4 && Math.abs(P.x)<2.2) near={label:'Open the window', fn:()=>{ A.userData.shutter.visible=false; S.target=null; goNoah('raven'); setGoal('Send out the <b>raven</b>'); }};
   const win=()=>new THREE.Vector3(0,A.position.y+ARK.wallH+0.6,-ARK.wid/2-0.4);
-  const flyOut=(back)=>{ const s0=win(), far=new THREE.Vector3(s0.x+(back?-25:-60),s0.y+(back?10:20),s0.z-(back?40:120)); const path={dur:back?6:5, at:k=>{ if(!back) return s0.clone().lerp(far,k); const kk=k<0.5?k*2:(1-k)*2; return s0.clone().lerp(far,smooth(kk)); }}; return path; };
+  const flyOut=(back)=>{ const s0=win(), far=new THREE.Vector3(s0.x+(back?-25:-60),s0.y+(back?10:20),s0.z-(back?40:120)); const path={dur:back?3.2:2.4, at:k=>{ if(!back) return s0.clone().lerp(far,k); const kk=k<0.5?k*2:(1-k)*2; return s0.clone().lerp(far,smooth(kk)); }}; return path; };
   if(S.step==='raven' && !S.birdFly) near={label:'Send out the raven', fn:()=>{ S.step='ravenGone'; birdFlight(W.raven, flyOut(false), ()=>{ W.raven.visible=false; say([[SAY_BIBLE,'After forty days, Noah opened the window and sent out a raven. It kept flying back and forth until the water dried up.','Genesis 8:6-7']], ()=>{ goNoah('dove1'); setGoal('Send out the <b>dove</b>'); }); }); }};
   if(S.step==='dove1' && !S.birdFly) near={label:'Send out the dove', fn:()=>{ S.step='d1'; birdFlight(W.dove, flyOut(true), ()=>{ W.dove.visible=false; say([[SAY_BIBLE,'Then Noah sent out a dove. But it could not find anywhere to land, because water still covered the ground. So it came back, and Noah reached out and brought it into the ark.','Genesis 8:8-9']], ()=>{ goNoah('dove2'); setGoal('Wait seven days, then send out the <b>dove</b> again'); }); }); }};
   if(S.step==='dove2' && !S.birdFly) near={label:'Send the dove again', fn:()=>{ S.step='d2'; W.doveLeaf.visible=false; const path=flyOut(true); const at=path.at; path.at=k=>{ if(k>0.5) W.doveLeaf.visible=true; return at(k); }; birdFlight(W.dove, path, ()=>{ W.dove.visible=false; leafHand.visible=true; say([[SAY_BIBLE,'Seven days later Noah sent out the dove again. In the evening it came back with a fresh olive leaf in its beak! Then Noah knew the water was going down.','Genesis 8:10-11', ()=>{ W.wlTo=20; }]], ()=>{ leafHand.visible=false; W.wlTo=12; goNoah('dove3'); setGoal('Wait seven more days, then send out the <b>dove</b>'); }); }); }};
@@ -3801,7 +3820,7 @@ function buildDaniel(){
   { const wall=mat(0xe6d3a8), dk=mat(0xb59a6a), H=DHOUSE;
     const low=new THREE.Mesh(new THREE.BoxGeometry(8,DROOF,8), wall); low.position.set(H.x,DROOF/2,H.z); g.add(low);
     const rf=new THREE.Mesh(new THREE.BoxGeometry(8.2,0.12,8.2), dk); rf.position.set(H.x,DROOF+0.02,H.z); g.add(rf);
-    const ramp=new THREE.Mesh(new THREE.BoxGeometry(10.2,0.3,2), dk); ramp.position.set(39,DROOF/2-0.1,18); ramp.rotation.z=Math.atan2(DROOF,10); g.add(ramp);
+    const ramp=new THREE.Mesh(new THREE.BoxGeometry(10.2,0.3,2), dk); ramp.position.set(39,DROOF/2-0.1,18); ramp.rotation.z=-Math.atan2(DROOF,10); g.add(ramp);
     const RH=2.6, Y=DROOF+RH/2, wm=mat(0xf0e2c0);
     const add=(w,d,x,z)=>{ const m=new THREE.Mesh(new THREE.BoxGeometry(w,RH,d), wm); m.position.set(x,Y,z); g.add(m); return m; };
     add(8,0.3,H.x,H.z-4); add(8,0.3,H.x,H.z+4); add(0.3,5,H.x+4,H.z+1.5); add(0.3,1,H.x+4,H.z-3.5);
@@ -5019,12 +5038,143 @@ const IMPL = {
   adam:  { build:buildAdam,  go:goAdam,  update:updateAdam,  bounds:boundsAdam,  locked:S=>S.lock || choosing() },
   david: { build:buildDavid, go:goDavid, update:updateDavid, bounds:boundsDavid, locked:S=>S.step==='taunt'||S.step==='shout'||S.step==='fall'||(S.step==='sling'&&!!S.flying) },
 };
+/* Grown-up level: an extra part you play in each story, on the way to the next goal.
+   step: the walking goal it comes before. who: a person to talk to (or none for a glowing spot). */
+const GP_B='Bible';
+const GROWN_PARTS={
+  adam:{ step:'middle', atTarget:true, tree:1.5, color:0x9ee07a, goal:'Go and look at the <b>tree of life</b>', label:'Look at the tree of life', lines:[
+    [GP_B,'In the middle of the garden were two special trees: the tree of life, and the tree of the knowledge of good and evil.','Genesis 2:9'],
+    [GP_B,'The tree of life shows up again on the very last pages of the Bible, beside the river of the water of life. Its leaves are for the healing of the nations.','Revelation 22:1-2']]},
+  noah:{ step:'altar', who:{tunic:0x6a7a4a,hair:0x2a1a10,beard:0x2a1a10,h:1.78}, name:'Shem', goal:'Talk to your son <b>Shem</b>', label:'Talk to Shem', lines:[
+    ['Shem','Father, the whole world is empty. What happens now?',''],
+    ['You are Noah','God will fill it again, through you and your brothers and your children.','Genesis 9:1'],
+    [GP_B,'Noah’s sons were Shem, Ham and Japheth. From them came all the peoples who spread out over the whole earth.','Genesis 9:18-19, 10:32'],
+    [GP_B,'Many generations later, Shem’s family line led to a man named Abram.','Genesis 11:10-26']]},
+  abraham:{ step:'altar', useLot:true, goal:'Talk to <b>Lot</b> about where to live', label:'Talk to Lot', lines:[
+    [GP_B,'Later, Abram and Lot had so many animals that the land could not hold them both, and their herders began to argue.','Genesis 13:5-7'],
+    ['You are Abram','Let’s not argue, you and I, because we are family. The whole land is in front of you. If you go left, I’ll go right. If you go right, I’ll go left.','Genesis 13:8-9'],
+    [GP_B,'Lot looked and saw that the plain of the Jordan was well watered, like the garden of the Lord. So Lot chose it, and he moved his tents near Sodom.','Genesis 13:10-12'],
+    [GP_B,'Abram let Lot choose first, and trusted God to give him what He had promised.','Genesis 13:14-17']]},
+  joseph:{ step:'go', who:{tunic:0x8a7a5a,hair:0x3a2614,beard:0x4a3a2a,h:1.72}, goal:'Ask the <b>man in the field</b> for directions', label:'Talk to the man', lines:[
+    ['A man in the field','What are you looking for?','Genesis 37:15'],
+    ['You are Joseph','I’m looking for my brothers. Can you tell me where they are grazing their flocks?','Genesis 37:16'],
+    ['A man in the field','They have moved on from here. I heard them say, “Let’s go to Dothan.”','Genesis 37:17'],
+    [GP_B,'Joseph’s father had sent him from the valley of Hebron, a long way, all the way past Shechem.','Genesis 37:14']]},
+  babymoses:{ step:'river', who:{tunic:0x8a6a4a,hair:0x1a120a,h:1.0}, goal:'Say goodbye to your little brother <b>Aaron</b>', label:'Talk to Aaron', lines:[
+    ['You are Miriam','Stay here, Aaron. Mom and I will be back soon.',''],
+    [GP_B,'Miriam’s family was from the tribe of Levi. Her little brother Aaron was three years older than the baby.','Exodus 2:1, 7:7'],
+    [GP_B,'One day Aaron would speak for Moses in front of Pharaoh, and he would become Israel’s first high priest.','Exodus 4:14-16, 28:1']]},
+  bush:{ step:'lead', color:0x7ac0f0, goal:'Water the sheep at the <b>well</b>', label:'Water the sheep', lines:[
+    [GP_B,'When Moses first ran away to Midian, he sat down by a well. Seven daughters of the priest of Midian came to water their father’s flock.','Exodus 2:15-16'],
+    [GP_B,'Some shepherds came and chased them away. But Moses stood up, rescued them, and watered their flock himself.','Exodus 2:17'],
+    [GP_B,'Their father, Jethro, invited Moses to stay, and he gave Moses his daughter Zipporah to marry.','Exodus 2:20-21, 3:1']]},
+  redsea:{ step:'shore', color:0xf0d27a, goal:'Check on the <b>bones of Joseph</b>', label:'Check on Joseph’s bones', lines:[
+    [GP_B,'Moses took the bones of Joseph with him out of Egypt.','Exodus 13:19'],
+    [GP_B,'Hundreds of years before, Joseph had made his family promise: “God will surely come to help you, and then you must carry my bones up from this place.”','Genesis 50:24-25'],
+    [GP_B,'Forty years later they buried Joseph’s bones at Shechem, in the land God promised.','Joshua 24:32']]},
+  jericho:{ step:'meet', who:{tunic:0x5a4a3a,hair:0x1a120a,beard:0x2a1a10,h:1.76}, goal:'Hear what the <b>two spies</b> saw', label:'Talk to the spy', lines:[
+    [GP_B,'Before the battle, Joshua had sent two spies into Jericho. Rahab hid them on her roof under stalks of flax, then let them down from her window with a rope.','Joshua 2:1-15'],
+    ['A spy','The Lord has surely given the whole land into our hands. All the people are melting in fear because of us.','Joshua 2:24'],
+    ['A spy','Rahab told us they had heard how the Lord dried up the Red Sea for us, forty years ago.','Joshua 2:9-10']]},
+  gideon:{ step:'fleece1', color:0xf08a5a, goal:'Tear down the <b>altar of Baal</b>', label:'Tear down Baal’s altar', lines:[
+    [GP_B,'That night the Lord told Gideon to tear down his father’s altar to Baal and build a proper altar to the Lord.','Judges 6:25-26'],
+    [GP_B,'Gideon took ten servants and did it at night, because he was afraid of his family and the men of the town.','Judges 6:27'],
+    [GP_B,'In the morning the men of the town wanted Gideon killed. But his father Joash said, “If Baal really is a god, he can defend himself.”','Judges 6:28-31'],
+    [GP_B,'So they called Gideon Jerub-Baal, which means “Let Baal fight him.” Baal never did.','Judges 6:32']]},
+  samson:{ step:'walk', who:{tunic:0x7a6a5a,hair:0x8a8a8a,beard:0x9a9a9a,h:1.72}, goal:'Talk to your father, <b>Manoah</b>', label:'Talk to Manoah', lines:[
+    ['Manoah, your father','Before you were born, the angel of the Lord told us about you. When we offered a young goat on a rock, the angel went up toward heaven in the flame!','Judges 13:19-20'],
+    ['Manoah, your father','Remember, you belong to God. No razor may touch your head.','Judges 13:5, 13:14'],
+    [GP_B,'Samson was a Nazirite, set apart to God from birth. He was also not supposed to drink wine or touch anything dead.','Numbers 6:2-6']]},
+  david:{ step:'camp', who:{tunic:0x6a5a4a,hair:0x1a120a,beard:0x2a1a10,h:1.8,helmet:true}, goal:'Ask the <b>soldier</b> about the giant', label:'Talk to the soldier', lines:[
+    ['A soldier','Have you seen that man Goliath? He comes out every morning and every evening to make fun of us. He has done it for forty days.','1 Samuel 17:16, 17:25'],
+    ['A soldier','The king will give great riches to whoever kills him. He will give him his own daughter to marry, and his family will never pay taxes again.','1 Samuel 17:25'],
+    [GP_B,'David asked about it again and again. Someone told King Saul, and Saul sent for him.','1 Samuel 17:27-31']]},
+  elijah:{ step:'climb', who:{tunic:0x4a5a6a,hair:0x3a2614,beard:0x3a2a1a,h:1.75}, goal:'Talk to <b>Obadiah</b>', label:'Talk to Obadiah', lines:[
+    ['Obadiah','My lord Elijah! I have worshiped the Lord since I was young.','1 Kings 18:7, 18:12'],
+    ['Obadiah','When Jezebel was killing the Lord’s prophets, I hid a hundred of them in two caves, fifty in each, and gave them food and water.','1 Kings 18:13'],
+    ['You are Elijah','As surely as the Lord lives, I will show myself to Ahab today.','1 Kings 18:15'],
+    [GP_B,'Obadiah was in charge of King Ahab’s palace, yet he served the Lord in secret.','1 Kings 18:3']]},
+  jonah:{ step:'city', color:0xf0c05a, goal:'Look out over the great city of <b>Nineveh</b>', label:'Look at Nineveh', lines:[
+    [GP_B,'Nineveh was a great city of Assyria. Its kings were known for cruelty, and the prophet Nahum later called it “the city of blood.”','Nahum 3:1'],
+    [GP_B,'Years after Jonah, Assyria would conquer the northern kingdom of Israel and carry its people away.','2 Kings 17:5-6'],
+    [GP_B,'Jonah was a prophet from Gath Hepher in Israel. Before this, he had told King Jeroboam II that God would win back Israel’s land.','2 Kings 14:25']]},
+  daniel:{ step:'home', color:0xf0d27a, goal:'Read the king’s new <b>law</b>', label:'Read the new law', lines:[
+    [GP_B,'The law said: “For 30 days, anyone who prays to any god or person except the king will be thrown into the lions’ den.”','Daniel 6:7'],
+    [GP_B,'The officials told King Darius that all the royal leaders agreed. That was not true. Daniel was one of the top three, and no one asked him.','Daniel 6:2, 6:7'],
+    [GP_B,'The law was sealed by the king, so it could never be changed.','Daniel 6:8-9']]},
+  esther:{ step:'robes', who:{tunic:0xb07a9a,hair:0x2a1a10,h:1.62,longHair:true}, goal:'Talk to your <b>maid</b>', label:'Talk to your maid', lines:[
+    ['Your maid','My queen, do you remember when Mordecai saved the king’s life?',''],
+    [GP_B,'Some time before, Mordecai heard two of the king’s guards plotting to kill King Xerxes. He told Esther, and she warned the king, giving Mordecai the credit.','Esther 2:21-22'],
+    [GP_B,'It was written down in the king’s record book. But nobody thanked Mordecai.','Esther 2:23']]},
+  christmas:{ step:'go', who:{tunic:0x7a5a3a,hair:0x8a8a8a,beard:0x9a9a9a,h:1.7}, goal:'Ask the <b>old man</b> the way into town', label:'Talk to the old man', lines:[
+    ['An old man of Bethlehem','This is the town of David. King David was born here, and he kept his father’s sheep in these fields, just like you.','1 Samuel 16:1, 16:11'],
+    ['An old man of Bethlehem','And David’s great-grandmother Ruth gathered grain in the fields of Boaz, right over there.','Ruth 2:3, 4:17'],
+    [GP_B,'The prophet Micah had said the ruler of Israel would come from little Bethlehem.','Micah 5:2']]},
+  wisemen:{ step:'travel', who:{tunic:0x4a3a6a,hair:0x8a8a8a,beard:0x9a9a9a,h:1.75}, goal:'Talk to your <b>teacher</b> about the star', label:'Talk to your teacher', lines:[
+    ['Your teacher','Long ago a prophet named Balaam said: “A star will come out of Jacob. A scepter will rise out of Israel.”','Numbers 24:17'],
+    [GP_B,'Jewish people had lived in the east ever since the exile. Their prophet Daniel was once put in charge of all the wise men of Babylon.','Daniel 2:48'],
+    ['Your teacher','Perhaps this star is the sign. Go and find the King.','']]},
+  storm:{ step:'untie', who:{tunic:0x8a6a4a,hair:0x2a1a10,beard:0x2a1a10,h:1.74}, goal:'Talk to the <b>man from the crowd</b>', label:'Talk to the man', lines:[
+    ['A man from the crowd','Did you hear His story today? A farmer scattered seed. Some fell on the path, some on rocks, some in thorns, and some on good soil.','Mark 4:3-8'],
+    ['A man from the crowd','And the seed on good soil grew a crop thirty, sixty, even a hundred times more!','Mark 4:8, 4:20'],
+    [GP_B,'Jesus taught the crowds with many stories like this. When He was alone with His disciples, He explained everything.','Mark 4:33-34']]},
+  loaves:{ step:'climb', who:{tunic:0x9a8a6a,hair:0x3a2614,beard:0x3a2614,h:1.76}, goal:'Talk to the man who was <b>healed</b>', label:'Talk to the man', lines:[
+    ['A man who was healed','He healed me! That is why this whole crowd is following Him.','John 6:2'],
+    [GP_B,'Jesus had just heard that John the Baptist had died, and He went across the lake to be alone. But the crowds followed Him on foot.','Matthew 14:12-13'],
+    [GP_B,'When Jesus saw the huge crowd, He had compassion on them, because they were like sheep without a shepherd.','Mark 6:34']]},
+  water:{ step:'out', color:0xf0e0a0, near:true, goal:'Look at the <b>other disciples</b>', label:'Look at your friends', lines:[
+    [GP_B,'Peter’s brother Andrew was in the boat, and so were James and John, the sons of Zebedee. All four had been fishermen on this lake.','Matthew 4:18-22'],
+    [GP_B,'Earlier that day, they had seen Jesus feed thousands with five loaves. Mark says they still did not understand it, because their hearts were hard.','Mark 6:51-52']]},
+  zacchaeus:{ step:'home', who:{tunic:0xe8e0d0,hair:0x2a1a10,beard:0x2a1a10,h:1.76,sash:0x2a4a8a}, goal:'Talk to the <b>Pharisee</b>', label:'Talk to the Pharisee', lines:[
+    ['A Pharisee','That man is a sinner! A real teacher would never eat in his house.','Luke 19:7'],
+    [GP_B,'Jesus had heard this before. He said, “It is not the healthy who need a doctor, but the sick. I have not come to call the righteous, but sinners, to turn back to God.”','Luke 5:31-32']]},
+  easter:{ step:'tell', who:{tunic:0x8a6a8a,hair:0x2a1a10,h:1.62,longHair:true}, goal:'Talk to <b>Joanna</b>', label:'Talk to Joanna', lines:[
+    ['Joanna','We brought spices to the tomb too! Two men in shining clothes said, “Why do you look for the living among the dead? He is not here. He has risen!”','Luke 24:4-6'],
+    [GP_B,'Mary Magdalene, Joanna, Mary the mother of James and the other women told the apostles. But at first the apostles thought it was nonsense.','Luke 24:10-11']]},
+  paul:{ step:'walk', who:{tunic:0xe8e0d0,hair:0x3a2614,beard:0x3a2614,h:1.74,sash:0x2a4a8a}, goal:'Talk to your <b>friend</b>', label:'Talk to your friend', lines:[
+    ['Your friend','Saul, do you remember what Gamaliel told the council about these followers of Jesus?',''],
+    [GP_B,'Gamaliel had said: “Leave these men alone! If this is from people, it will fail. But if it is from God, you will not be able to stop them. You might even be fighting against God.”','Acts 5:38-39'],
+    ['You are Saul','We will see. I have letters from the high priest.','Acts 9:1-2']]}
+};
+function partStart(id, step){
+  const pt=GROWN_PARTS[id], S=story;
+  if(LEVEL!=='grown' || !S || S.id!==id || !pt || pt.step!==step || S._part || S._partDone) return;
+  const tp=S.target && S.target.position; if(!tp) return;
+  const dx=tp.x-P.x, dz=tp.z-P.z, d=Math.hypot(dx,dz)||1, ux=dx/d, uz=dz/d;
+  const along=pt.near ? Math.min(2,d*0.5) : Math.min(8, Math.max(3, d*0.45)), side=pt.near?0.8:2.2;
+  const g0=ground(P.x,P.z); let x, z;
+  for(const sd of [side,-side,0]){ x=P.x+ux*along-uz*sd; z=P.z+uz*along+ux*sd; if(Math.abs(ground(x,z)-g0)<1.2) break; }
+  if(pt.atTarget){ x=tp.x-uz*5; z=tp.z+ux*5; }
+  let obj;
+  if(pt.useLot && world.lot){ obj=world.lot; obj.visible=true; place(obj,x,z); }
+  else if(pt.who){ obj=person(pt.who); world.group.add(obj); place(obj,x,z); }
+  else { obj=new THREE.Group(); const gl=glowSprite(pt.color||0xfff0b0, 2.4); gl.position.y=1.1; obj.add(gl); obj.userData.glow=gl; world.group.add(obj); obj.position.set(x,ground(x,z),z);
+    if(pt.tree){ const tg=new THREE.Group(); tree(tg,0,0,pt.tree); tg.position.set(x+1.6,ground(x,z),z); world.group.add(tg); gl.position.y=2.4; gl.scale.set(4,4,1); } }
+  obj.rotation.y=Math.atan2(P.x-x,P.z-z);
+  S._part={pt, obj, saved:{step:S.step, target:S.target, goal:$('goal').innerHTML}};
+  S.step='grownPart'; S.target=obj; setGoal(pt.goal);
+}
+function partUpdate(t){
+  const S=story; if(!S || !S._part) return;
+  const p=S._part; if(p.obj.userData.glow) p.obj.userData.glow.material.opacity=0.7+Math.sin(t*3)*0.3;
+  if(p.talking || saying()) return;
+  if(dist2(p.obj)<2.8){
+    S.near={label:p.pt.label, fn:()=>{ p.talking=true; if(!p.obj.userData.glow) p.obj.rotation.y=Math.atan2(P.x-p.obj.position.x,P.z-p.obj.position.z);
+      say(p.pt.lines.map(l=>l.slice()), ()=>{ if(p.obj.userData.glow) p.obj.visible=false; S.step=p.saved.step; S.target=p.saved.target; setGoal(p.saved.goal); S._part=null; S._partDone=true; }); }};
+    const pr=$('prompt'); pr.textContent=(touch?'':'Space: ')+p.pt.label; pr.classList.remove('hidden'); $('act').textContent=p.pt.label.split(' ').slice(0,2).join(' ');
+  }
+}
+['goAdam','goNoah','goAbraham','goJoseph','goMoses','goBush','goRed','goJericho','goGideon','goSamson','goDavid','goElijah','goJonah','goDaniel','goEsther','goXmas','goWise','goStorm','goLoaves','goWater','goZac','goEaster','goPaul'].forEach(name=>{
+  const orig=window[name]; if(typeof orig!=='function') return;
+  window[name]=function(step){ const r=orig.apply(this,arguments); if(story) partStart(story.id, step); return r; };
+});
+
 
 /* ================= Start / finish ================= */
 function stopStory(){
   running=false; story=null;
   if(world){ scene.remove(world.group); world.group.traverse(o=>{ if(o.geometry) o.geometry.dispose(); }); world=null; }
-  sayQ.length=0; sayCb=null; $('say').classList.add('hidden'); $('armor').classList.add('hidden'); $('cross').classList.add('hidden'); $('meter').classList.add('hidden'); $('stones').classList.add('hidden');
+  sayQ.length=0; sayCb=null; sayCur=null; $('say').classList.add('hidden'); $('armor').classList.add('hidden'); $('cross').classList.add('hidden'); $('meter').classList.add('hidden'); $('stones').classList.add('hidden');
   basket.visible=hand.visible=sling.visible=fruitHand.visible=false; if(typeof logHand!=='undefined'){ logHand.visible=false; leafHand.visible=false; } if(typeof coatView!=='undefined'){ coatView.visible=false; sheafHand.visible=false; } if(typeof reedHand!=='undefined') reedHand.visible=false; if(typeof staffHand!=='undefined') staffHand.visible=false; $('cForm').style.display=''; P.roll=0; $('fade').style.opacity=0; $('choice').classList.add('hidden'); hand.material=handMat; if(typeof lunchView!=='undefined') lunchView.visible=false; if(typeof bagView!=='undefined') bagView.visible=false; if(typeof jarHand!=='undefined'){ jarHand.visible=false; hornView.visible=false; } if(typeof gateView!=='undefined'){ gateView.visible=false; pushView.visible=false; } if($('blind')) $('blind').style.opacity=0; P.eye=1.8; resetLook();
 }
 function startStory(id){
@@ -5097,11 +5247,13 @@ addEventListener('keydown',e=>{
   const k=e.key.toLowerCase(); if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k)) e.preventDefault();
   if(k===' '||k==='e'||k==='enter'){ if(!e.repeat) pressAct(); else if(story&&story.step==='sling'&&!saying()) actHeld=true; return; }
   if(k==='escape'){ if(running) showMenu(); return; }
-  if(['1','2','3'].includes(k) && askKey(k)) return;
+  if(['1','2','3','4'].includes(k) && askKey(k)) return;
+  if((k==='backspace'||k==='b') && running && saying()){ e.preventDefault(); sayBack(); return; }
   keys[k]=true;
 });
 addEventListener('keyup',e=>{ if(e.target && e.target.tagName==='INPUT') return; const k=e.key.toLowerCase(); keys[k]=false; if(k===' '||k==='e'||k==='enter') releaseAct(); });
 addEventListener('blur',()=>{ for(const k in keys) keys[k]=false; actHeld=false; });
+$('say').querySelector('.sback').addEventListener('pointerdown',e=>{ e.stopPropagation(); sayBack(); });
 $('say').addEventListener('pointerdown',e=>{ e.stopPropagation(); if(performance.now()>sayBusyUntil) nextSay(); });
 const actBtn=$('act');
 actBtn.addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); pressAct(); });
@@ -5166,7 +5318,7 @@ function frame(now){
       const wantYaw=Math.atan2(-dx,-dz), wantPitch=Math.atan2(dy,Math.hypot(dx,dz));
       let dyaw=((wantYaw-P.yaw+Math.PI)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)-Math.PI;
       P.yaw+=dyaw*k; P.pitch+=(wantPitch-P.pitch)*k; if(L.t>L.dur+0.6) P.lockLook=null; }
-    IMPL[story.id].update(dt, now);
+    IMPL[story.id].update(dt, now); partUpdate(now/1000);
     // camera
     const bobY = moving ? Math.sin(P.bob)*(story.armor?0.07:0.035) : 0;
     let shx=0,shy=0; if(shake>0){ shake=Math.max(0,shake-dt*1.4); shx=(Math.random()-0.5)*0.08*shake; shy=(Math.random()-0.5)*0.08*shake; }
