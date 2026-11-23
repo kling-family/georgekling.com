@@ -3821,7 +3821,7 @@ function buildDaniel(){
   { const wall=mat(0xe6d3a8), dk=mat(0xb59a6a), H=DHOUSE;
     const low=new THREE.Mesh(new THREE.BoxGeometry(8,DROOF,8), wall); low.position.set(H.x,DROOF/2,H.z); g.add(low);
     const rf=new THREE.Mesh(new THREE.BoxGeometry(8.2,0.12,8.2), dk); rf.position.set(H.x,DROOF+0.02,H.z); g.add(rf);
-    const ramp=new THREE.Mesh(new THREE.BoxGeometry(10.2,0.3,2), dk); ramp.position.set(39,DROOF/2-0.1,18); ramp.rotation.z=Math.atan2(DROOF,10); g.add(ramp);
+    const ramp=new THREE.Mesh(new THREE.BoxGeometry(10.2,0.3,2), dk); ramp.position.set(39,DROOF/2-0.1,18); ramp.rotation.z=-Math.atan2(DROOF,10); g.add(ramp);
     const RH=2.6, Y=DROOF+RH/2, wm=mat(0xf0e2c0);
     const add=(w,d,x,z)=>{ const m=new THREE.Mesh(new THREE.BoxGeometry(w,RH,d), wm); m.position.set(x,Y,z); g.add(m); return m; };
     add(8,0.3,H.x,H.z-4); add(8,0.3,H.x,H.z+4); add(0.3,5,H.x+4,H.z+1.5); add(0.3,1,H.x+4,H.z-3.5);
