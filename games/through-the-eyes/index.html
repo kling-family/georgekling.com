@@ -57,6 +57,17 @@
   #say .tap{float:right;font-size:13px;color:#8a6a3a}
   #say .extra{margin-top:8px;padding:8px 10px;border-radius:10px;font-size:15px;line-height:1.35;background:#f3e2b8;color:#3a2a14}
   #say .extra.deep{background:#e4ecdf;border-left:4px solid #1f6b45}
+  #say .ask{display:flex;flex-direction:column;gap:7px;margin-top:8px}
+  #say .ask button{text-align:left;font-size:16px;padding:8px 12px;border-radius:12px;box-shadow:0 3px 0 var(--gold-d)}
+  #say .ask button span{display:inline-block;min-width:1.4em;font-weight:700;color:#7a4a1a}
+  #say .ask button.right{background:#1f6b45;color:#fff6ea;box-shadow:0 3px 0 #17563a}
+  #say .ask button.right span{color:#fff6ea}
+  #say .ask button.wrong{background:#f3d0c8;color:#8a2a1e;box-shadow:none;text-decoration:line-through}
+  #say .ask button.dim{opacity:.55;box-shadow:none}
+  #say .ask .try{font-size:14px;color:#d2402f;font-weight:700}
+  #say .ask .why{padding:8px 10px;border-radius:10px;font-size:15px;line-height:1.35;background:#e4ecdf;border-left:4px solid #1f6b45;color:#1e2b3f}
+  #say .ask .why b{color:#1f6b45}
+  #say.asking .tap{visibility:hidden}
   #say .extra.help{background:#fbe6d2;border-left:4px solid #ee8133}
   .levels{margin:4px auto 16px;max-width:560px;text-align:center}
   .levels .lt{font-family:'Cinzel',Georgia,serif;font-weight:700;color:#7a4a1a;font-size:16px;margin-bottom:6px}
@@ -65,6 +76,7 @@
   .levels .lb button.on{background:#7a4a1a;color:#fff8e6}
   .levels .ln{font-size:14px;color:#6a5030;margin-top:6px;min-height:1.3em}
   #end .deep{font-size:15px;text-align:left;background:#e4ecdf;border-left:4px solid #1f6b45;border-radius:12px;padding:10px 14px;line-height:1.4}
+  #end .deep .score{margin:8px 0 0;font-weight:700;color:#1f6b45}
   #end .deep b{display:block;color:#1f6b45}
   #prompt{position:absolute;left:50%;top:58%;transform:translateX(-50%);background:rgba(42,29,14,.75);color:#fff6e3;padding:6px 14px;border-radius:12px;font-size:17px;white-space:nowrap}
   #cross{position:absolute;left:50%;top:50%;width:18px;height:18px;margin:-9px 0 0 -9px;border:2px solid rgba(255,255,255,.85);border-radius:50%;box-shadow:0 0 0 1px rgba(0,0,0,.4)}
@@ -138,7 +150,7 @@
   <div id="stick"><i></i></div>
   <button id="act">Use</button>
   <div id="keys">WASD or arrows to walk &middot; drag to look &middot; Space to use</div>
-  <div id="say" class="hidden"><span class="tap">tap or Space &#9656;</span><div class="who"></div><div class="txt"></div><div class="ref"></div><div class="extra hidden"></div></div>
+  <div id="say" class="hidden"><span class="tap">tap or Space &#9656;</span><div class="who"></div><div class="txt"></div><div class="ref"></div><div class="extra hidden"></div><div class="ask hidden"></div></div>
   <button id="menuBtn" class="ghost">&#9776; Stories</button>
   <div id="fade"></div>
 </div>
@@ -257,7 +269,7 @@ const STORIES = [
 ];
 /* ================= Bible levels ================= */
 // Beginner: easier "before" pages and Word help. Kids (10 to 12): the game as written. Grown-up: Go deeper notes and a Big picture note.
-const LEVELS=[{id:'beginner',name:'Beginner',note:'For people who have never read the Bible. Bible words get explained as you go.'},{id:'kids',name:'Ages 10 to 12',note:'The stories just as the Bible tells them.'},{id:'grown',name:'Grown-up',note:'Extra “Go deeper” notes about history, Hebrew and Greek words, and how each story connects to the rest of the Bible.'}];
+const LEVELS=[{id:'beginner',name:'Beginner',note:'For people who have never read the Bible. Bible words get explained as you go.'},{id:'kids',name:'Ages 10 to 12',note:'The stories just as the Bible tells them.'},{id:'grown',name:'Grown-up',note:'Extra “Go deeper” notes about history, Hebrew and Greek words, and how each story connects to the rest of the Bible, plus harder questions to answer as you play.'}];
 const LEVEL_KEY='throughTheEyes.level';
 let LEVEL=(()=>{ try{ const v=localStorage.getItem(LEVEL_KEY); return LEVELS.some(l=>l.id===v)?v:'kids'; }catch(e){ return 'kids'; } })();
 function setLevel(v){ LEVEL=v; try{ localStorage.setItem(LEVEL_KEY,v); }catch(e){} }
@@ -512,6 +524,130 @@ function levelExtra(txt, ref){ // returns [kind, html] for the current line, or 
   if(LEVEL==='grown' && ref){ const n=(GO_DEEPER[story.id]||{})[ref]; if(n && !seen.has(ref)){ seen.add(ref); return ['deep','<b>Go deeper.</b> '+n]; } }
   return null;
 }
+// Grown-up level: questions you answer as you play. [question, right answer, wrong, wrong, why]
+// Each one appears right after the line with that Bible reference (first time it shows).
+const GROWN_ASK={
+  adam:{
+    'Genesis 3:4-5':['The serpent’s trick started with a question. What did it do to God’s words?','Made a generous rule sound stingy','Read them out exactly right','Added a promise of gold','God said they could eat from every tree but one (Genesis 2:16). The serpent asked if God said they could not eat from any tree. Doubt about God’s goodness came before the bite.'],
+    'Genesis 3:24':['Cherubim guarded the way back into Eden. Where else do cherubim show up guarding God’s presence?','Woven into the curtain of the tabernacle','Painted on Noah’s ark','On Goliath’s armor','Exodus 26:31. That curtain kept people out of the Most Holy Place, a lot like the guarded garden. When Jesus died, the temple curtain tore from top to bottom (Matthew 27:51).']
+  },
+  noah:{
+    'Genesis 7:1-4':['Noah took pairs of animals. How many of the “clean” animals did God tell him to take?','Seven pairs','Just one pair','Ten pairs','Genesis 7:2. Clean animals were the kind that could be offered to God. Noah needed extra, because right after the flood he offered some as a sacrifice (Genesis 8:20).'],
+    'Genesis 8:15-17':['How long were Noah and his family on the ark, from the first rain to stepping out?','About a year','Forty days','About a month','The rain began in Noah’s 600th year, on the 17th day of the 2nd month (Genesis 7:11). They came out on the 27th day of the 2nd month the next year (Genesis 8:14). The forty days was only the rain.']
+  },
+  abraham:{
+    'Genesis 12:1':['Before Haran, where did Abram’s family come from?','Ur, a big city in what is now Iraq','Egypt','Jerusalem','Genesis 11:31. Joshua 24:2 says Abram’s family there worshiped other gods. God called him out of all of it, with no map, only a promise.'],
+    'Genesis 15:4':['Abraham’s first son was not Isaac. Who was it?','Ishmael, son of Hagar','Lot','Eliezer','Sarai gave her servant Hagar to Abram, and Hagar had Ishmael (Genesis 16). Isaac, the son God promised to Sarah, came about 14 years later, when Abraham was 100 (Genesis 21:5).']
+  },
+  joseph:{
+    'Genesis 37:26-27':['Judah came up with selling Joseph. Years later, what did Judah offer to do for his youngest brother Benjamin?','Become a slave in Benjamin’s place','Sell Benjamin too','Run away to Canaan','Genesis 44:33. The brother who sold one brother now gives himself up for another. Jesus would one day be born from Judah’s family line.'],
+    'Genesis 41:25-30':['Pharaoh had the same dream twice, with cows and then grain. What did Joseph say the double dream meant?','God had firmly decided it and would do it soon','There would be two famines','Pharaoh needed a second opinion','Genesis 41:32. Joseph himself had two dreams as a boy (Genesis 37:5-9), and both came true.']
+  },
+  babymoses:{
+    'Exodus 2:4':['Hebrews 11 praises Moses’ parents. What for?','They hid him and were not afraid of the king’s order','They built a big boat','They moved out of Egypt','Hebrews 11:23. They saw he was no ordinary child, and their faith was stronger than their fear.'],
+    'Exodus 2:8':['Moses had a big brother too. Who was he?','Aaron','Joshua','Caleb','Exodus 7:7 says Aaron was three years older than Moses. Miriam, Aaron and Moses would all lead Israel together (Micah 6:4).']
+  },
+  bush:{
+    'Exodus 3:6':['Years later, Moses asked to see God’s glory. What happened?','God hid him in a rock and let him see His back','God showed him His face','God said no and left','Exodus 33:18-23. God covered Moses with His hand as He passed by. Afterward Moses’ face shone so brightly that he wore a veil (Exodus 34:29-35).'],
+    'Exodus 3:10':['Moses was 80 years old here. How long had he been a shepherd in Midian?','About 40 years','About 4 years','About 70 years','Acts 7:23, 7:30 and Exodus 7:7. Moses spent 40 years in Pharaoh’s palace, 40 in the wilderness, and 40 leading Israel. He died at 120 (Deuteronomy 34:7).']
+  },
+  redsea:{
+    'Exodus 14:13-14':['God did not take the people on the short road out of Egypt. Why not?','They might see war, get scared and go back','The short road was flooded','Pharaoh owned that road','Exodus 13:17-18. The short road along the coast went through Philistine land. God knew they were not ready for war, so He led them toward the sea instead.'],
+    'Exodus 15:21':['Paul says crossing the sea was a picture of something Christians do. What?','Baptism','Communion','Christmas','1 Corinthians 10:1-2 says the Israelites were “baptized into Moses in the cloud and in the sea.” They went through the water and came out free.']
+  },
+  jericho:{
+    'Joshua 6:3-4':['How many trips around Jericho did the army make in all?','13','7','6','Once a day for six days, then seven times on the seventh day. Seven priests, seven horns, seven days, seven trips. In the Bible, seven often stands for something complete.'],
+    'Joshua 6:22':['Jericho is one of the oldest cities in the world. Where is it?','About 850 feet below sea level','On top of a tall mountain','Right on the seashore','It sits in the Jordan Valley near the Dead Sea, the lowest land on earth. Springs keep it green in the desert, so it was called the City of Palms (Deuteronomy 34:3).']
+  },
+  gideon:{
+    'Judges 6:23':['That same night God gave Gideon a first job. What was it?','Tear down his father’s altar to Baal','Count his soldiers','Build a winepress','Judges 6:25-32. Gideon did it at night because he was afraid. The town wanted him killed, but his father said, “Let Baal fight for himself.” So Gideon was called Jerub-Baal.'],
+    'Judges 7:7':['Later the Bible counts the enemy army. About how big was it?','About 135,000 men','About 3,000 men','About 30,000 men','Judges 8:10 says 120,000 fell and 15,000 were left. That is 450 enemy soldiers for every one of Gideon’s 300.']
+  },
+  samson:{
+    'Judges 16:17':['How much did each Philistine ruler promise Delilah to find Samson’s secret?','1,100 pieces of silver','30 pieces of silver','10 pieces of gold','Judges 16:5. There were five Philistine rulers, so that could be 5,500 pieces of silver, a huge fortune. Judas was paid 30 pieces to hand over Jesus.'],
+    'Judges 16:28':['Hebrews 11 lists heroes of faith. Is Samson on the list?','Yes','No, he made too many mistakes','Only his parents are','Hebrews 11:32 names Samson, along with Gideon and David. The list is not about perfect people. It is about people who trusted God.']
+  },
+  david:{
+    '1 Samuel 17:8-9':['Goliath’s bronze armor weighed 5,000 shekels. About how much is that?','About 125 pounds','About 12 pounds','About 500 pounds','1 Samuel 17:5. His coat weighed about as much as a grown man, and the iron point of his spear alone weighed about 15 pounds (17:7).'],
+    '1 Samuel 17:37-38':['Why is it surprising that Saul offered David his armor?','Saul was the tallest man in Israel','Saul had no armor','Armor was against the law','1 Samuel 9:2 says Saul was a head taller than anyone else. Israel’s tallest warrior should have been the one to face the giant. Instead he sent a boy.']
+  },
+  elijah:{
+    '1 Kings 18:19':['Who was pushing Israel to worship Baal?','Queen Jezebel, King Ahab’s wife','Queen Esther','Delilah','1 Kings 16:31. Jezebel was a princess from Sidon, where Baal was worshiped. She had been hunting down the Lord’s prophets (1 Kings 18:4).'],
+    '1 Kings 18:44':['James in the New Testament uses Elijah as an example. Of what?','An ordinary person whose prayers were powerful','The fastest runner in Israel','Someone who was never afraid','James 5:17-18. Elijah was a human being just like us. Right after this he got so scared and tired that he ran away and asked to die (1 Kings 19:3-4), and God cared for him with food and rest.']
+  },
+  jonah:{
+    'Jonah 1:9':['Jonah got his ship at Joppa. Who has a big moment in Joppa later in the Bible?','Peter, when God sent him to non-Jewish people','Paul, in prison','Mary Magdalene','Acts 10. In Joppa, Peter had a vision and was sent to a Roman officer named Cornelius. Jonah ran from Joppa to get away from foreigners. Peter went from Joppa to welcome them.'],
+    'Jonah 3:4':['When God spared Nineveh, how did Jonah feel?','Angry','Happy','Proud of himself','Jonah 4:1-2. He said he ran away because he knew God is “gracious and compassionate, slow to anger.” The book ends with God asking Jonah if He should not care about this great city.']
+  },
+  daniel:{
+    'Daniel 6:16':['Before King Darius, Daniel served kings of which empire?','Babylon','Egypt','Rome','Daniel was taken from Jerusalem to Babylon as a teenager (Daniel 1:1-6). He served King Nebuchadnezzar, and he read the writing on the wall the night Babylon fell (Daniel 5).'],
+    'Daniel 6:20':['Which of Daniel’s friends were thrown into a fiery furnace years before?','Shadrach, Meshach and Abednego','Shem, Ham and Japheth','Peter, James and John','Daniel 3. They would not bow to a gold statue. Someone who looked like a son of the gods walked with them in the fire, and they came out without even smelling like smoke.']
+  },
+  esther:{
+    'Esther 5:3':['Esther also had a Hebrew name. What was it?','Hadassah','Hannah','Deborah','Esther 2:7. Hadassah means myrtle, a sweet-smelling tree. Esther may come from a Persian word for star.'],
+    'Esther 7:6':['Haman came from the family of Agag. Which king of Israel was told to defeat Agag long before?','King Saul','King David','King Solomon','Haman is called an Agagite (Esther 3:1). Saul failed to finish the job with Agag (1 Samuel 15). Mordecai came from Saul’s own tribe, Benjamin (Esther 2:5). An old story finally ends.']
+  },
+  christmas:{
+    'Luke 2:10':['Why were Mary and Joseph in Bethlehem at all?','A Roman census made people go to their family’s hometown','They lived there','They were on their way to Egypt','Luke 2:1-4. Emperor Augustus ordered it. Joseph was from David’s family, so he went to Bethlehem, the town Micah said the Messiah would come from (Micah 5:2).'],
+    'Luke 2:15':['When Jesus was a few weeks old, He was taken to the temple. Who knew who He was?','Simeon and Anna','Herod and his priests','Zacchaeus and Peter','Luke 2:25-38. Simeon had been promised he would see the Messiah before he died. He held Jesus and said, “My eyes have seen your salvation.”']
+  },
+  wisemen:{
+    'Matthew 2:8':['Which Herod was this?','Herod the Great, who rebuilt the temple','The Herod at Jesus’ trial','Herod, king of Egypt','Herod the Great ruled for Rome and made the Jerusalem temple huge and beautiful (John 2:20). His son Herod Antipas is the one Jesus stood before at His trial (Luke 23:7).'],
+    'Matthew 2:11':['After the wise men left, where did Joseph take Mary and Jesus?','Egypt','Rome','Babylon','Matthew 2:13-15. Matthew connects it to Hosea 11:1, “Out of Egypt I called my son.” Like Israel long ago, Jesus came up out of Egypt.']
+  },
+  storm:{
+    'Mark 4:35':['The Sea of Galilee has other names in the Bible. Which one is right?','The Lake of Gennesaret','The Dead Sea','The Great Sea','Luke 5:1 calls it the Lake of Gennesaret, and John 6:1 calls it the Sea of Tiberias. It is only about 13 miles long and 8 miles wide.'],
+    'Mark 4:38':['Which prophet also slept in a boat during a storm?','Jonah','Elijah','Daniel','Jonah 1:5. Jonah was running from God, and the sailors threw him overboard. Jesus stays in the boat and calms the sea Himself. He said, “Something greater than Jonah is here” (Matthew 12:41).']
+  },
+  loaves:{
+    'John 6:7':['Philip said 200 denarii would not be enough. What was one denarius?','About one day’s pay for a worker','About one hour’s pay','About one month’s pay','Matthew 20:2. So 200 denarii was more than six months of work, and it still would not have fed the crowd.'],
+    'John 6:12':['After this miracle, what did the crowd want to do?','Make Jesus king by force','Send Him away','Throw Him a feast','John 6:15. They wanted a king who would fill their stomachs and fight Rome. Jesus slipped away to the mountain by Himself.']
+  },
+  water:{
+    'Matthew 14:26':['Which Gospel writer was in the boat that night?','Matthew','Luke','Mark','Matthew was one of the twelve disciples, a former tax collector (Matthew 9:9). Mark and Luke were not among the twelve. Only Matthew tells about Peter walking on the water.'],
+    'Matthew 14:31':['After Easter, Peter jumped out of a boat toward Jesus again. What happened that time?','He swam to Jesus on the shore','He walked on the water','He caught 12 fish','John 21:7. Peter saw the risen Jesus on the beach and jumped in to swim to Him. That morning Jesus cooked the disciples breakfast.']
+  },
+  zacchaeus:{
+    'Luke 19:5':['Tax collectors like Zacchaeus collected money for whom?','The Roman government','The temple','King Herod’s horses','Tax collectors worked for Rome and often took extra for themselves, so many Jews saw them as traitors. Jesus chose a tax collector, Matthew, as one of His twelve (Matthew 9:9).'],
+    'Luke 19:7':['Where was Jesus going right after Jericho?','Jerusalem, where He would die and rise','Home to Nazareth','To Galilee to go fishing','Luke 19:28. Jericho is about 15 miles from Jerusalem. Within days Jesus would ride into the city on a donkey.']
+  },
+  easter:{
+    'John 20:2':['Who buried Jesus in this tomb?','Joseph of Arimathea and Nicodemus','Peter and John','Mary and Martha','John 19:38-42. Both were Jewish leaders who had followed Jesus in secret. Nicodemus brought about 75 pounds of spices, a burial fit for a king.'],
+    'John 20:13':['How long after Easter did Jesus go back up to heaven?','40 days','3 days','7 years','Acts 1:3-9. For 40 days He appeared to His followers and taught them. Ten days after that, on Pentecost, the Holy Spirit came.']
+  },
+  paul:{
+    'Acts 9:5-6':['Before this, Saul watched over the coats of people who killed which follower of Jesus?','Stephen','Peter','Andrew','Acts 7:58 to 8:1. Stephen was the first Christian to die for Jesus. As he died he prayed for the people hurting him. Now Jesus meets one of them on the road.'],
+    'Acts 9:17':['Later Saul had to escape from Damascus. How?','His friends lowered him over the wall in a basket','He sailed away on a ship','An angel opened the gate','Acts 9:23-25. The people who once welcomed his letters now wanted to kill him. Paul still talked about it years later (2 Corinthians 11:32-33).']
+  }
+};
+function askFor(ref){
+  if(LEVEL!=='grown' || !story || !ref) return null;
+  const a=(GROWN_ASK[story.id]||{})[ref], seen=story._seen||(story._seen=new Set());
+  if(!a || seen.has('ask:'+ref)) return null; seen.add('ask:'+ref); return a;
+}
+function showAsk(a){
+  const el=$('say'), box=el.querySelector('.ask');
+  story._ask=a; let tries=0;
+  el.querySelector('.who').textContent='Think about it';
+  el.querySelector('.txt').textContent=a[0];
+  el.querySelector('.ref').textContent='';
+  el.querySelector('.extra').className='extra hidden';
+  el.classList.add('asking');
+  const opts=[a[1],a[2],a[3]].sort(()=>Math.random()-0.5);
+  box.innerHTML=''; box.className='ask';
+  opts.forEach((o,i)=>{ const b=document.createElement('button'); b.type='button'; b.innerHTML='<span>'+(i+1)+'</span> '; b.appendChild(document.createTextNode(o));
+    b.addEventListener('pointerdown',e=>e.stopPropagation());
+    b.onclick=e=>{ e.stopPropagation(); if(!story||story._ask!==a||b.disabled) return;
+      if(o!==a[1]){ tries++; b.disabled=true; b.classList.add('wrong'); let n=box.querySelector('.try'); if(!n){ n=document.createElement('div'); n.className='try'; box.appendChild(n); } n.textContent='Not quite. Try again!'; return; }
+      story._askN=(story._askN||0)+1; if(!tries) story._askRight=(story._askRight||0)+1;
+      box.querySelectorAll('button').forEach(x=>{ x.disabled=true; if(x!==b) x.classList.add('dim'); }); b.classList.add('right');
+      const t=box.querySelector('.try'); if(t) t.remove();
+      const w=document.createElement('div'); w.className='why'; w.innerHTML='<b>'+(tries?'That’s it!':'Yes!')+'</b> '; w.appendChild(document.createTextNode(a[4])); box.appendChild(w);
+      story._ask=null; el.classList.remove('asking'); sayBusyUntil=performance.now()+500; };
+    box.appendChild(b); });
+  el.classList.remove('hidden'); sayBusyUntil=performance.now()+350;
+}
+function askKey(k){ if(!story||!story._ask) return false; const b=$('say').querySelectorAll('.ask button')[+k-1]; if(b) b.click(); return true; }
 const READY = STORIES.filter(s=>s.ready);
 // A ready story opens when the ready story before it is done (or you already finished it).
 function isUnlocked(s){ const i=READY.indexOf(s); return i===0 || SAVE.done.includes(s.id) || SAVE.done.includes(READY[i-1].id); }
@@ -800,8 +936,12 @@ function say(lines, cb){ // lines: [[who, text, ref?], ...]
 }
 function nextSay(){
   const el=$('say');
+  if(story && story._ask) return; // waiting for an answer
+  el.querySelector('.ask').className='ask hidden'; el.classList.remove('asking');
   if(!sayQ.length){ el.classList.add('hidden'); const cb=sayCb; sayCb=null; if(cb) cb(); return; }
-  const [who,txt,ref,fn]=sayQ.shift(); if(fn) fn();
+  const item=sayQ.shift(); if(item && item.ask){ showAsk(item.ask); return; }
+  const [who,txt,ref,fn]=item; if(fn) fn();
+  { const a=askFor(ref); if(a) sayQ.unshift({ask:a}); }
   el.querySelector('.who').textContent=who||'';
   el.querySelector('.txt').textContent=txt;
   el.querySelector('.ref').textContent=ref||'';
@@ -4809,7 +4949,8 @@ function finishStory(){
     $('endVerse').textContent=s.endVerse; $('endRef').textContent=s.endRef;
     $('endUnlock').textContent= nextReady ? 'You unlocked '+nextReady.title+'!' : (nextAny ? 'Next up: '+nextAny.title+'. It is coming soon!' : 'You finished every story!');
     $('endNext').innerHTML = nextAny ? '<b>What happens next</b>'+beforeText(nextAny) : '';
-    { const d=$('endDeep'), bp=LEVEL==='grown'&&BIG_PICTURE[s.id]; d.classList.toggle('hidden',!bp); d.innerHTML=bp?'<b>The big picture</b>':''; if(bp) d.appendChild(document.createTextNode(bp)); }
+    { const d=$('endDeep'), bp=LEVEL==='grown'&&BIG_PICTURE[s.id]; d.classList.toggle('hidden',!bp); d.innerHTML=bp?'<b>The big picture</b>':''; if(bp) d.appendChild(document.createTextNode(bp));
+      if(LEVEL==='grown' && story && story._askN){ const q=document.createElement('p'); q.className='score'; q.textContent='Questions: you got '+(story._askRight||0)+' of '+story._askN+' right on the first try.'; d.appendChild(q); d.classList.remove('hidden'); } }
     $('endNext').classList.toggle('hidden', !nextAny);
     $('end').classList.remove('hidden');
   },900);
@@ -4855,6 +4996,7 @@ addEventListener('keydown',e=>{
   const k=e.key.toLowerCase(); if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k)) e.preventDefault();
   if(k===' '||k==='e'||k==='enter'){ if(!e.repeat) pressAct(); else if(story&&story.step==='sling'&&!saying()) actHeld=true; return; }
   if(k==='escape'){ if(running) showMenu(); return; }
+  if(['1','2','3'].includes(k) && askKey(k)) return;
   keys[k]=true;
 });
 addEventListener('keyup',e=>{ if(e.target && e.target.tagName==='INPUT') return; const k=e.key.toLowerCase(); keys[k]=false; if(k===' '||k==='e'||k==='enter') releaseAct(); });
