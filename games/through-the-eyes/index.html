@@ -55,6 +55,8 @@
   #say .txt{font-size:19px;line-height:1.35;margin:2px 0 4px}
   #say .ref{font-size:13px;color:#8a6a3a}
   #say .tap{float:right;font-size:13px;color:#8a6a3a}
+  #say .sback{float:right;margin:-4px 10px 0 0;padding:3px 10px;font-size:13px;border-radius:10px;background:rgba(122,74,26,.12);color:#7a4a1a;box-shadow:none}
+  #say.asking .sback{visibility:hidden}
   #say .extra{margin-top:8px;padding:8px 10px;border-radius:10px;font-size:15px;line-height:1.35;background:#f3e2b8;color:#3a2a14}
   #say .extra.deep{background:#e4ecdf;border-left:4px solid #1f6b45}
   #say .ask{display:flex;flex-direction:column;gap:7px;margin-top:8px}
@@ -150,7 +152,7 @@
   <div id="stick"><i></i></div>
   <button id="act">Use</button>
   <div id="keys">WASD or arrows to walk &middot; drag to look &middot; Space to use</div>
-  <div id="say" class="hidden"><span class="tap">tap or Space &#9656;</span><div class="who"></div><div class="txt"></div><div class="ref"></div><div class="extra hidden"></div><div class="ask hidden"></div></div>
+  <div id="say" class="hidden"><span class="tap">tap or Space &#9656;</span><button type="button" class="sback hidden" aria-label="Go back to the last line">&#9666; Back</button><div class="who"></div><div class="txt"></div><div class="ref"></div><div class="extra hidden"></div><div class="ask hidden"></div></div>
   <button id="menuBtn" class="ghost">&#9776; Stories</button>
   <div id="fade"></div>
 </div>
@@ -1040,15 +1042,33 @@ function nextSay(){
   if(story && story._ask) return; // waiting for an answer
   el.querySelector('.ask').className='ask hidden'; el.classList.remove('asking');
   if(!sayQ.length){ el.classList.add('hidden'); const cb=sayCb; sayCb=null; if(cb) cb(); return; }
-  const item=sayQ.shift(); if(item && item.ask){ showAsk(item.ask); return; }
+  const item=sayQ.shift(); if(item && item.ask){ sayKeep(); showAsk(item.ask); return; }
+  if(item && item.replay){ sayKeep(); sayShow(item.replay); return; } // moving forward again after going back
   const [who,txt,ref,fn]=item; if(fn) fn();
   { const more=linesFor(who,ref); if(more) sayQ.unshift(...more.map(l=>l.slice())); const a=askFor(ref); if(a) sayQ.unshift({ask:a}); }
-  el.querySelector('.who').textContent=who||'';
-  el.querySelector('.txt').textContent=txt;
-  el.querySelector('.ref').textContent=ref||'';
-  { const ex=el.querySelector('.extra'), x=levelExtra(txt,ref); ex.className='extra'+(x?' '+x[0]:' hidden'); ex.innerHTML=x?x[1]:''; }
+  const x=levelExtra(txt,ref);
+  sayKeep(); sayShow({who:who||'', txt, ref:ref||'', exK:x?x[0]:'', exH:x?x[1]:''});
+}
+// Going back: the lines you already read in this story, so you can read them again.
+let sayCur=null;
+function sayHist(){ return story ? (story._hist||(story._hist=[])) : []; }
+function sayKeep(){ if(sayCur){ const h=sayHist(); h.push(sayCur); if(h.length>40) h.shift(); } sayCur=null; }
+function sayShow(l){
+  const el=$('say'); sayCur=l;
+  el.querySelector('.who').textContent=l.who;
+  el.querySelector('.txt').textContent=l.txt;
+  el.querySelector('.ref').textContent=l.ref;
+  { const ex=el.querySelector('.extra'); ex.className='extra'+(l.exK?' '+l.exK:' hidden'); ex.innerHTML=l.exH||''; }
+  el.querySelector('.sback').classList.toggle('hidden', !sayHist().length);
   el.classList.remove('hidden');
   sayBusyUntil = performance.now()+350;
+}
+function sayBack(){
+  if(!story || story._ask || !saying()) return;
+  const h=sayHist(); if(!h.length) return;
+  $('say').querySelector('.ask').className='ask hidden'; $('say').classList.remove('asking');
+  if(sayCur) sayQ.unshift({replay:sayCur});
+  sayShow(h.pop());
 }
 let sayBusyUntil=0;
 function saying(){ return !$('say').classList.contains('hidden'); }
@@ -5024,7 +5044,7 @@ const IMPL = {
 function stopStory(){
   running=false; story=null;
   if(world){ scene.remove(world.group); world.group.traverse(o=>{ if(o.geometry) o.geometry.dispose(); }); world=null; }
-  sayQ.length=0; sayCb=null; $('say').classList.add('hidden'); $('armor').classList.add('hidden'); $('cross').classList.add('hidden'); $('meter').classList.add('hidden'); $('stones').classList.add('hidden');
+  sayQ.length=0; sayCb=null; sayCur=null; $('say').classList.add('hidden'); $('armor').classList.add('hidden'); $('cross').classList.add('hidden'); $('meter').classList.add('hidden'); $('stones').classList.add('hidden');
   basket.visible=hand.visible=sling.visible=fruitHand.visible=false; if(typeof logHand!=='undefined'){ logHand.visible=false; leafHand.visible=false; } if(typeof coatView!=='undefined'){ coatView.visible=false; sheafHand.visible=false; } if(typeof reedHand!=='undefined') reedHand.visible=false; if(typeof staffHand!=='undefined') staffHand.visible=false; $('cForm').style.display=''; P.roll=0; $('fade').style.opacity=0; $('choice').classList.add('hidden'); hand.material=handMat; if(typeof lunchView!=='undefined') lunchView.visible=false; if(typeof bagView!=='undefined') bagView.visible=false; if(typeof jarHand!=='undefined'){ jarHand.visible=false; hornView.visible=false; } if(typeof gateView!=='undefined'){ gateView.visible=false; pushView.visible=false; } if($('blind')) $('blind').style.opacity=0; P.eye=1.8; resetLook();
 }
 function startStory(id){
@@ -5098,10 +5118,12 @@ addEventListener('keydown',e=>{
   if(k===' '||k==='e'||k==='enter'){ if(!e.repeat) pressAct(); else if(story&&story.step==='sling'&&!saying()) actHeld=true; return; }
   if(k==='escape'){ if(running) showMenu(); return; }
   if(['1','2','3'].includes(k) && askKey(k)) return;
+  if((k==='backspace'||k==='b') && running && saying()){ e.preventDefault(); sayBack(); return; }
   keys[k]=true;
 });
 addEventListener('keyup',e=>{ if(e.target && e.target.tagName==='INPUT') return; const k=e.key.toLowerCase(); keys[k]=false; if(k===' '||k==='e'||k==='enter') releaseAct(); });
 addEventListener('blur',()=>{ for(const k in keys) keys[k]=false; actHeld=false; });
+$('say').querySelector('.sback').addEventListener('pointerdown',e=>{ e.stopPropagation(); sayBack(); });
 $('say').addEventListener('pointerdown',e=>{ e.stopPropagation(); if(performance.now()>sayBusyUntil) nextSay(); });
 const actBtn=$('act');
 actBtn.addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); pressAct(); });
