@@ -623,7 +623,7 @@ const GROWN_ASK={
   }
 };
 function askFor(ref){
-  if(LEVEL!=='grown' || !story || !ref) return null;
+  if(LEVEL!=='grown' || !story || !ref || story._part) return null;
   const a=(GROWN_ASK[story.id]||{})[ref], seen=story._seen||(story._seen=new Set());
   if(!a || seen.has('ask:'+ref)) return null; seen.add('ask:'+ref); return a;
 }
@@ -689,7 +689,6 @@ const GROWN_LINES={
       [GL_B,'Soon they ate food grown in the land, and the manna stopped. After 40 years, God’s people were finally eating from the land He promised.','Joshua 5:11-12']]
   },
   gideon:{
-    'Judges 6:24':[[GL_B,'That same night, Gideon took ten servants and tore down his father’s altar to Baal. He did it at night because he was afraid of his family and the town.','Judges 6:25-27']],
     'Judges 8:28':[[GL_B,'Afterward the people asked Gideon to be their king. Gideon said, “I will not rule over you. The Lord will rule over you.”','Judges 8:22-23']]
   },
   samson:{
@@ -701,7 +700,6 @@ const GROWN_LINES={
   },
   elijah:{
     '1 Kings 18:1':[[GL_B,'During the drought, God had sent ravens to bring Elijah bread and meat by a brook. Later a widow shared her last flour and oil with him, and her jars never ran out.','1 Kings 17:2-16']],
-    '1 Kings 18:17':[[GL_B,'On the way, Elijah had met Obadiah, who ran Ahab’s palace but loved the Lord. When the Lord’s prophets were being hunted, Obadiah hid 100 of them in two caves.','1 Kings 18:3-4, 18:7']]
   },
   jonah:{
     'Jonah 3:10':[[GL_B,'But Jonah was angry. He went out east of the city and sat down to watch what would happen. God made a leafy plant grow up to shade him, and Jonah was very happy about it.','Jonah 4:1-6'],
@@ -744,7 +742,7 @@ const GROWN_LINES={
   }
 };
 function linesFor(who, ref){
-  if(LEVEL!=='grown' || !story || !ref) return null;
+  if(LEVEL!=='grown' || !story || !ref || story._part) return null;
   const m=GROWN_LINES[story.id]; if(!m) return null;
   const c=story._refN||(story._refN={}); c[ref]=(c[ref]||0)+1;
   const seen=story._seen||(story._seen=new Set());
@@ -5039,6 +5037,137 @@ const IMPL = {
   adam:  { build:buildAdam,  go:goAdam,  update:updateAdam,  bounds:boundsAdam,  locked:S=>S.lock || choosing() },
   david: { build:buildDavid, go:goDavid, update:updateDavid, bounds:boundsDavid, locked:S=>S.step==='taunt'||S.step==='shout'||S.step==='fall'||(S.step==='sling'&&!!S.flying) },
 };
+/* Grown-up level: an extra part you play in each story, on the way to the next goal.
+   step: the walking goal it comes before. who: a person to talk to (or none for a glowing spot). */
+const GP_B='Bible';
+const GROWN_PARTS={
+  adam:{ step:'middle', atTarget:true, tree:1.5, color:0x9ee07a, goal:'Go and look at the <b>tree of life</b>', label:'Look at the tree of life', lines:[
+    [GP_B,'In the middle of the garden were two special trees: the tree of life, and the tree of the knowledge of good and evil.','Genesis 2:9'],
+    [GP_B,'The tree of life shows up again on the very last pages of the Bible, beside the river of the water of life. Its leaves are for the healing of the nations.','Revelation 22:1-2']]},
+  noah:{ step:'altar', who:{tunic:0x6a7a4a,hair:0x2a1a10,beard:0x2a1a10,h:1.78}, name:'Shem', goal:'Talk to your son <b>Shem</b>', label:'Talk to Shem', lines:[
+    ['Shem','Father, the whole world is empty. What happens now?',''],
+    ['You are Noah','God will fill it again, through you and your brothers and your children.','Genesis 9:1'],
+    [GP_B,'Noah’s sons were Shem, Ham and Japheth. From them came all the peoples who spread out over the whole earth.','Genesis 9:18-19, 10:32'],
+    [GP_B,'Many generations later, Shem’s family line led to a man named Abram.','Genesis 11:10-26']]},
+  abraham:{ step:'altar', useLot:true, goal:'Talk to <b>Lot</b> about where to live', label:'Talk to Lot', lines:[
+    [GP_B,'Later, Abram and Lot had so many animals that the land could not hold them both, and their herders began to argue.','Genesis 13:5-7'],
+    ['You are Abram','Let’s not argue, you and I, because we are family. The whole land is in front of you. If you go left, I’ll go right. If you go right, I’ll go left.','Genesis 13:8-9'],
+    [GP_B,'Lot looked and saw that the plain of the Jordan was well watered, like the garden of the Lord. So Lot chose it, and he moved his tents near Sodom.','Genesis 13:10-12'],
+    [GP_B,'Abram let Lot choose first, and trusted God to give him what He had promised.','Genesis 13:14-17']]},
+  joseph:{ step:'go', who:{tunic:0x8a7a5a,hair:0x3a2614,beard:0x4a3a2a,h:1.72}, goal:'Ask the <b>man in the field</b> for directions', label:'Talk to the man', lines:[
+    ['A man in the field','What are you looking for?','Genesis 37:15'],
+    ['You are Joseph','I’m looking for my brothers. Can you tell me where they are grazing their flocks?','Genesis 37:16'],
+    ['A man in the field','They have moved on from here. I heard them say, “Let’s go to Dothan.”','Genesis 37:17'],
+    [GP_B,'Joseph’s father had sent him from the valley of Hebron, a long way, all the way past Shechem.','Genesis 37:14']]},
+  babymoses:{ step:'river', who:{tunic:0x8a6a4a,hair:0x1a120a,h:1.0}, goal:'Say goodbye to your little brother <b>Aaron</b>', label:'Talk to Aaron', lines:[
+    ['You are Miriam','Stay here, Aaron. Mom and I will be back soon.',''],
+    [GP_B,'Miriam’s family was from the tribe of Levi. Her little brother Aaron was three years older than the baby.','Exodus 2:1, 7:7'],
+    [GP_B,'One day Aaron would speak for Moses in front of Pharaoh, and he would become Israel’s first high priest.','Exodus 4:14-16, 28:1']]},
+  bush:{ step:'lead', color:0x7ac0f0, goal:'Water the sheep at the <b>well</b>', label:'Water the sheep', lines:[
+    [GP_B,'When Moses first ran away to Midian, he sat down by a well. Seven daughters of the priest of Midian came to water their father’s flock.','Exodus 2:15-16'],
+    [GP_B,'Some shepherds came and chased them away. But Moses stood up, rescued them, and watered their flock himself.','Exodus 2:17'],
+    [GP_B,'Their father, Jethro, invited Moses to stay, and he gave Moses his daughter Zipporah to marry.','Exodus 2:20-21, 3:1']]},
+  redsea:{ step:'shore', color:0xf0d27a, goal:'Check on the <b>bones of Joseph</b>', label:'Check on Joseph’s bones', lines:[
+    [GP_B,'Moses took the bones of Joseph with him out of Egypt.','Exodus 13:19'],
+    [GP_B,'Hundreds of years before, Joseph had made his family promise: “God will surely come to help you, and then you must carry my bones up from this place.”','Genesis 50:24-25'],
+    [GP_B,'Forty years later they buried Joseph’s bones at Shechem, in the land God promised.','Joshua 24:32']]},
+  jericho:{ step:'meet', who:{tunic:0x5a4a3a,hair:0x1a120a,beard:0x2a1a10,h:1.76}, goal:'Hear what the <b>two spies</b> saw', label:'Talk to the spy', lines:[
+    [GP_B,'Before the battle, Joshua had sent two spies into Jericho. Rahab hid them on her roof under stalks of flax, then let them down from her window with a rope.','Joshua 2:1-15'],
+    ['A spy','The Lord has surely given the whole land into our hands. All the people are melting in fear because of us.','Joshua 2:24'],
+    ['A spy','Rahab told us they had heard how the Lord dried up the Red Sea for us, forty years ago.','Joshua 2:9-10']]},
+  gideon:{ step:'fleece1', color:0xf08a5a, goal:'Tear down the <b>altar of Baal</b>', label:'Tear down Baal’s altar', lines:[
+    [GP_B,'That night the Lord told Gideon to tear down his father’s altar to Baal and build a proper altar to the Lord.','Judges 6:25-26'],
+    [GP_B,'Gideon took ten servants and did it at night, because he was afraid of his family and the men of the town.','Judges 6:27'],
+    [GP_B,'In the morning the men of the town wanted Gideon killed. But his father Joash said, “If Baal really is a god, he can defend himself.”','Judges 6:28-31'],
+    [GP_B,'So they called Gideon Jerub-Baal, which means “Let Baal fight him.” Baal never did.','Judges 6:32']]},
+  samson:{ step:'walk', who:{tunic:0x7a6a5a,hair:0x8a8a8a,beard:0x9a9a9a,h:1.72}, goal:'Talk to your father, <b>Manoah</b>', label:'Talk to Manoah', lines:[
+    ['Manoah, your father','Before you were born, the angel of the Lord told us about you. When we offered a young goat on a rock, the angel went up toward heaven in the flame!','Judges 13:19-20'],
+    ['Manoah, your father','Remember, you belong to God. No razor may touch your head.','Judges 13:5, 13:14'],
+    [GP_B,'Samson was a Nazirite, set apart to God from birth. He was also not supposed to drink wine or touch anything dead.','Numbers 6:2-6']]},
+  david:{ step:'camp', who:{tunic:0x6a5a4a,hair:0x1a120a,beard:0x2a1a10,h:1.8,helmet:true}, goal:'Ask the <b>soldier</b> about the giant', label:'Talk to the soldier', lines:[
+    ['A soldier','Have you seen that man Goliath? He comes out every morning and every evening to make fun of us. He has done it for forty days.','1 Samuel 17:16, 17:25'],
+    ['A soldier','The king will give great riches to whoever kills him. He will give him his own daughter to marry, and his family will never pay taxes again.','1 Samuel 17:25'],
+    [GP_B,'David asked about it again and again. Someone told King Saul, and Saul sent for him.','1 Samuel 17:27-31']]},
+  elijah:{ step:'climb', who:{tunic:0x4a5a6a,hair:0x3a2614,beard:0x3a2a1a,h:1.75}, goal:'Talk to <b>Obadiah</b>', label:'Talk to Obadiah', lines:[
+    ['Obadiah','My lord Elijah! I have worshiped the Lord since I was young.','1 Kings 18:7, 18:12'],
+    ['Obadiah','When Jezebel was killing the Lord’s prophets, I hid a hundred of them in two caves, fifty in each, and gave them food and water.','1 Kings 18:13'],
+    ['You are Elijah','As surely as the Lord lives, I will show myself to Ahab today.','1 Kings 18:15'],
+    [GP_B,'Obadiah was in charge of King Ahab’s palace, yet he served the Lord in secret.','1 Kings 18:3']]},
+  jonah:{ step:'city', color:0xf0c05a, goal:'Look out over the great city of <b>Nineveh</b>', label:'Look at Nineveh', lines:[
+    [GP_B,'Nineveh was a great city of Assyria. Its kings were known for cruelty, and the prophet Nahum later called it “the city of blood.”','Nahum 3:1'],
+    [GP_B,'Years after Jonah, Assyria would conquer the northern kingdom of Israel and carry its people away.','2 Kings 17:5-6'],
+    [GP_B,'Jonah was a prophet from Gath Hepher in Israel. Before this, he had told King Jeroboam II that God would win back Israel’s land.','2 Kings 14:25']]},
+  daniel:{ step:'home', color:0xf0d27a, goal:'Read the king’s new <b>law</b>', label:'Read the new law', lines:[
+    [GP_B,'The law said: “For 30 days, anyone who prays to any god or person except the king will be thrown into the lions’ den.”','Daniel 6:7'],
+    [GP_B,'The officials told King Darius that all the royal leaders agreed. That was not true. Daniel was one of the top three, and no one asked him.','Daniel 6:2, 6:7'],
+    [GP_B,'The law was sealed by the king, so it could never be changed.','Daniel 6:8-9']]},
+  esther:{ step:'robes', who:{tunic:0xb07a9a,hair:0x2a1a10,h:1.62,longHair:true}, goal:'Talk to your <b>maid</b>', label:'Talk to your maid', lines:[
+    ['Your maid','My queen, do you remember when Mordecai saved the king’s life?',''],
+    [GP_B,'Some time before, Mordecai heard two of the king’s guards plotting to kill King Xerxes. He told Esther, and she warned the king, giving Mordecai the credit.','Esther 2:21-22'],
+    [GP_B,'It was written down in the king’s record book. But nobody thanked Mordecai.','Esther 2:23']]},
+  christmas:{ step:'go', who:{tunic:0x7a5a3a,hair:0x8a8a8a,beard:0x9a9a9a,h:1.7}, goal:'Ask the <b>old man</b> the way into town', label:'Talk to the old man', lines:[
+    ['An old man of Bethlehem','This is the town of David. King David was born here, and he kept his father’s sheep in these fields, just like you.','1 Samuel 16:1, 16:11'],
+    ['An old man of Bethlehem','And David’s great-grandmother Ruth gathered grain in the fields of Boaz, right over there.','Ruth 2:3, 4:17'],
+    [GP_B,'The prophet Micah had said the ruler of Israel would come from little Bethlehem.','Micah 5:2']]},
+  wisemen:{ step:'travel', who:{tunic:0x4a3a6a,hair:0x8a8a8a,beard:0x9a9a9a,h:1.75}, goal:'Talk to your <b>teacher</b> about the star', label:'Talk to your teacher', lines:[
+    ['Your teacher','Long ago a prophet named Balaam said: “A star will come out of Jacob. A scepter will rise out of Israel.”','Numbers 24:17'],
+    [GP_B,'Jewish people had lived in the east ever since the exile. Their prophet Daniel was once put in charge of all the wise men of Babylon.','Daniel 2:48'],
+    ['Your teacher','Perhaps this star is the sign. Go and find the King.','']]},
+  storm:{ step:'untie', who:{tunic:0x8a6a4a,hair:0x2a1a10,beard:0x2a1a10,h:1.74}, goal:'Talk to the <b>man from the crowd</b>', label:'Talk to the man', lines:[
+    ['A man from the crowd','Did you hear His story today? A farmer scattered seed. Some fell on the path, some on rocks, some in thorns, and some on good soil.','Mark 4:3-8'],
+    ['A man from the crowd','And the seed on good soil grew a crop thirty, sixty, even a hundred times more!','Mark 4:8, 4:20'],
+    [GP_B,'Jesus taught the crowds with many stories like this. When He was alone with His disciples, He explained everything.','Mark 4:33-34']]},
+  loaves:{ step:'climb', who:{tunic:0x9a8a6a,hair:0x3a2614,beard:0x3a2614,h:1.76}, goal:'Talk to the man who was <b>healed</b>', label:'Talk to the man', lines:[
+    ['A man who was healed','He healed me! That is why this whole crowd is following Him.','John 6:2'],
+    [GP_B,'Jesus had just heard that John the Baptist had died, and He went across the lake to be alone. But the crowds followed Him on foot.','Matthew 14:12-13'],
+    [GP_B,'When Jesus saw the huge crowd, He had compassion on them, because they were like sheep without a shepherd.','Mark 6:34']]},
+  water:{ step:'out', color:0xf0e0a0, near:true, goal:'Look at the <b>other disciples</b>', label:'Look at your friends', lines:[
+    [GP_B,'Peter’s brother Andrew was in the boat, and so were James and John, the sons of Zebedee. All four had been fishermen on this lake.','Matthew 4:18-22'],
+    [GP_B,'Earlier that day, they had seen Jesus feed thousands with five loaves. Mark says they still did not understand it, because their hearts were hard.','Mark 6:51-52']]},
+  zacchaeus:{ step:'home', who:{tunic:0xe8e0d0,hair:0x2a1a10,beard:0x2a1a10,h:1.76,sash:0x2a4a8a}, goal:'Talk to the <b>Pharisee</b>', label:'Talk to the Pharisee', lines:[
+    ['A Pharisee','That man is a sinner! A real teacher would never eat in his house.','Luke 19:7'],
+    [GP_B,'Jesus had heard this before. He said, “It is not the healthy who need a doctor, but the sick. I have not come to call the righteous, but sinners, to turn back to God.”','Luke 5:31-32']]},
+  easter:{ step:'tell', who:{tunic:0x8a6a8a,hair:0x2a1a10,h:1.62,longHair:true}, goal:'Talk to <b>Joanna</b>', label:'Talk to Joanna', lines:[
+    ['Joanna','We brought spices to the tomb too! Two men in shining clothes said, “Why do you look for the living among the dead? He is not here. He has risen!”','Luke 24:4-6'],
+    [GP_B,'Mary Magdalene, Joanna, Mary the mother of James and the other women told the apostles. But at first the apostles thought it was nonsense.','Luke 24:10-11']]},
+  paul:{ step:'walk', who:{tunic:0xe8e0d0,hair:0x3a2614,beard:0x3a2614,h:1.74,sash:0x2a4a8a}, goal:'Talk to your <b>friend</b>', label:'Talk to your friend', lines:[
+    ['Your friend','Saul, do you remember what Gamaliel told the council about these followers of Jesus?',''],
+    [GP_B,'Gamaliel had said: “Leave these men alone! If this is from people, it will fail. But if it is from God, you will not be able to stop them. You might even be fighting against God.”','Acts 5:38-39'],
+    ['You are Saul','We will see. I have letters from the high priest.','Acts 9:1-2']]}
+};
+function partStart(id, step){
+  const pt=GROWN_PARTS[id], S=story;
+  if(LEVEL!=='grown' || !S || S.id!==id || !pt || pt.step!==step || S._part || S._partDone) return;
+  const tp=S.target && S.target.position; if(!tp) return;
+  const dx=tp.x-P.x, dz=tp.z-P.z, d=Math.hypot(dx,dz)||1, ux=dx/d, uz=dz/d;
+  const along=pt.near ? Math.min(2,d*0.5) : Math.min(8, Math.max(3, d*0.45)), side=pt.near?0.8:2.2;
+  const g0=ground(P.x,P.z); let x, z;
+  for(const sd of [side,-side,0]){ x=P.x+ux*along-uz*sd; z=P.z+uz*along+ux*sd; if(Math.abs(ground(x,z)-g0)<1.2) break; }
+  if(pt.atTarget){ x=tp.x-uz*5; z=tp.z+ux*5; }
+  let obj;
+  if(pt.useLot && world.lot){ obj=world.lot; obj.visible=true; place(obj,x,z); }
+  else if(pt.who){ obj=person(pt.who); world.group.add(obj); place(obj,x,z); }
+  else { obj=new THREE.Group(); const gl=glowSprite(pt.color||0xfff0b0, 2.4); gl.position.y=1.1; obj.add(gl); obj.userData.glow=gl; world.group.add(obj); obj.position.set(x,ground(x,z),z);
+    if(pt.tree){ const tg=new THREE.Group(); tree(tg,0,0,pt.tree); tg.position.set(x+1.6,ground(x,z),z); world.group.add(tg); gl.position.y=2.4; gl.scale.set(4,4,1); } }
+  obj.rotation.y=Math.atan2(P.x-x,P.z-z);
+  S._part={pt, obj, saved:{step:S.step, target:S.target, goal:$('goal').innerHTML}};
+  S.step='grownPart'; S.target=obj; setGoal(pt.goal);
+}
+function partUpdate(t){
+  const S=story; if(!S || !S._part) return;
+  const p=S._part; if(p.obj.userData.glow) p.obj.userData.glow.material.opacity=0.7+Math.sin(t*3)*0.3;
+  if(p.talking || saying()) return;
+  if(dist2(p.obj)<2.8){
+    S.near={label:p.pt.label, fn:()=>{ p.talking=true; if(!p.obj.userData.glow) p.obj.rotation.y=Math.atan2(P.x-p.obj.position.x,P.z-p.obj.position.z);
+      say(p.pt.lines.map(l=>l.slice()), ()=>{ if(p.obj.userData.glow) p.obj.visible=false; S.step=p.saved.step; S.target=p.saved.target; setGoal(p.saved.goal); S._part=null; S._partDone=true; }); }};
+    const pr=$('prompt'); pr.textContent=(touch?'':'Space: ')+p.pt.label; pr.classList.remove('hidden'); $('act').textContent=p.pt.label.split(' ').slice(0,2).join(' ');
+  }
+}
+['goAdam','goNoah','goAbraham','goJoseph','goMoses','goBush','goRed','goJericho','goGideon','goSamson','goDavid','goElijah','goJonah','goDaniel','goEsther','goXmas','goWise','goStorm','goLoaves','goWater','goZac','goEaster','goPaul'].forEach(name=>{
+  const orig=window[name]; if(typeof orig!=='function') return;
+  window[name]=function(step){ const r=orig.apply(this,arguments); if(story) partStart(story.id, step); return r; };
+});
+
 
 /* ================= Start / finish ================= */
 function stopStory(){
@@ -5188,7 +5317,7 @@ function frame(now){
       const wantYaw=Math.atan2(-dx,-dz), wantPitch=Math.atan2(dy,Math.hypot(dx,dz));
       let dyaw=((wantYaw-P.yaw+Math.PI)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)-Math.PI;
       P.yaw+=dyaw*k; P.pitch+=(wantPitch-P.pitch)*k; if(L.t>L.dur+0.6) P.lockLook=null; }
-    IMPL[story.id].update(dt, now);
+    IMPL[story.id].update(dt, now); partUpdate(now/1000);
     // camera
     const bobY = moving ? Math.sin(P.bob)*(story.armor?0.07:0.035) : 0;
     let shx=0,shy=0; if(shake>0){ shake=Math.max(0,shake-dt*1.4); shx=(Math.random()-0.5)*0.08*shake; shy=(Math.random()-0.5)*0.08*shake; }
