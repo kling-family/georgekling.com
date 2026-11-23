@@ -688,7 +688,8 @@ function makeHeadGeo(face){
     let X = x*0.118, Y = y*0.155, Z = z*0.135;
     if(face && Z > 0.05){
       // storybook face: a small soft nose, gentle eye hollows and round cheeks (the eyes and mouth are painted on)
-      Z += 0.009*gs(X, 0.014)*gs(Y+0.028, 0.024);
+      const prof = Math.min(1, Math.max(0, (0.03 - Y)/0.06)) * Math.exp(-Math.pow(Math.max(0, -0.045 - Y)/0.006, 2));
+      Z += 0.02*prof*gs(X, 0.011 + 0.006*prof);                                // a grown-up nose: a bridge that comes out to a tip
       Z -= 0.004*(gs(X-0.045,0.022)*gs(Y-0.022,0.014) + gs(X+0.045,0.022)*gs(Y-0.022,0.014));
       Z += 0.006*(gs(X-0.058,0.024)+gs(X+0.058,0.024))*gs(Y+0.035,0.022);
     }
@@ -705,7 +706,7 @@ function makeHeadGeo(face){
 }
 const HEAD_GEO = makeHeadGeo(false), FACE_GEO = makeHeadGeo(true);
 // ---- painted faces ----
-// Faces are painted like a storybook: big friendly eyes with a shine, soft eyebrows, rosy cheeks and a smile.
+// Faces are painted like grown-ups in a storybook: textured skin, eyes with lids, fuller eyebrows, smile lines and a calm smile.
 // The picture is wrapped onto the head, which has a small soft nose shaped into it.
 const FACE_TEX = {};
 function faceTexture(o){
@@ -720,32 +721,54 @@ function faceTexture(o){
   const path = pts => { c.beginPath(); pts.forEach((q,i)=>{ const [x,y] = P(q[0], q[1]); if(i===0) c.moveTo(x,y); else if(q.length===4){ const [cx,cy] = P(q[2], q[3]); c.quadraticCurveTo(cx, cy, x, y); } else c.lineTo(x,y); }); };
   c.lineCap = c.lineJoin = 'round';
   c.fillStyle = css(sk); c.fillRect(0, 0, N, N);
-  [-1,1].forEach(s=>soft(s*0.058, -0.035, 0.026, 0.02, [235,110,100], 0.28));   // rosy cheeks
-  soft(0, -0.05, 0.01, 0.004, shade, 0.18);                                     // a little shadow under the nose
-  // a friendly smile: one curved line with a hint of pink below it
-  path([[-0.024,-0.077],[0,-0.0845,-0.012,-0.0848],[0.024,-0.077,0.012,-0.0848]]); c.strokeStyle = css(line, 0.9); c.lineWidth = 0.0024*S; c.stroke();
-  soft(0, -0.0885, 0.012, 0.0035, [220,100,100], 0.3);
+  // skin texture: soft warm and cool patches, then tiny pores and specks, so the skin isn't one smooth color
+  let seed = 11; const rnd = () => (seed = (seed*16807) % 2147483647) / 2147483647;
+  for(let i=0;i<160;i++){ const r = 20 + rnd()*60, x = rnd()*N, y = rnd()*N, gr = c.createRadialGradient(x, y, 0, x, y, r);
+    const col = rnd() < 0.5 ? mix(sk, [255,200,180], 0.5) : mix(sk, [120,60,50], 0.5); gr.addColorStop(0, css(col, 0.22)); gr.addColorStop(1, css(col, 0));
+    c.fillStyle = gr; c.fillRect(x-r, y-r, r*2, r*2); }
+  for(let i=0;i<14000;i++){ c.fillStyle = rnd() < 0.5 ? 'rgba(255,240,230,0.16)' : css(shade, 0.18); c.fillRect(rnd()*N, rnd()*N, 1.5 + rnd()*3, 1.5 + rnd()*3); }
+  // grown-up shading: hollows under the cheekbones, shade at the temples and along the jaw, a little color in the cheeks
+  [-1,1].forEach(s=>{ soft(s*0.1, 0.02, 0.03, 0.06, shade, 0.2); soft(s*0.075, -0.09, 0.03, 0.04, shade, 0.18); soft(s*0.072, -0.045, 0.018, 0.012, shade, 0.2);
+    soft(s*0.06, -0.028, 0.022, 0.016, [225,110,95], 0.12);
+    // smile lines from the nose to the corners of the mouth
+    path([[s*0.019, -0.05], [s*0.03, -0.079, s*0.03, -0.06]]); c.strokeStyle = css(shade, 0.35); c.lineWidth = 0.0013*S; c.stroke(); });
+  soft(0, -0.052, 0.011, 0.004, shade, 0.3);                                    // shadow under the nose
+  [-1,1].forEach(s=>soft(s*0.0085, -0.0505, 0.0035, 0.002, line, 0.5));        // nostrils
+  soft(0, -0.066, 0.004, 0.008, shade, 0.2);                                    // the groove above the lip
+  // mouth: a thin upper lip, a lower lip, and a calm, slightly smiling line between them
+  soft(0, -0.0775, 0.018, 0.003, mix(sk, [150,70,65], 0.5), 0.45);
+  soft(0, -0.0875, 0.016, 0.0045, mix(sk, [175,85,80], 0.45), 0.5);
+  path([[-0.024,-0.079],[0,-0.0825,-0.012,-0.0832],[0.024,-0.079,0.012,-0.0832]]); c.strokeStyle = css(line, 0.85); c.lineWidth = 0.0018*S; c.stroke();
+  soft(0, -0.097, 0.014, 0.004, shade, 0.25);                                   // shadow under the lower lip
   if(o.eyes){
     const ir = rgb(o.iris);
     [-1,1].forEach(s=>{
-      const ex = s*0.045, ey = 0.021, [x, y] = P(ex, ey);
-      c.fillStyle = '#fbf8f2'; c.beginPath(); c.ellipse(x, y, 0.0135*S, 0.0105*S, 0, 0, Math.PI*2); c.fill();   // eye white
-      const R = 0.0088*S, iy = y + 0.0012*S;
-      const gr = c.createRadialGradient(x, iy, 0, x, iy, R); gr.addColorStop(0, css(mix(ir, [255,255,255], 0.15))); gr.addColorStop(1, css(mix(ir, [0,0,0], 0.35)));
-      c.save(); c.beginPath(); c.ellipse(x, y, 0.0135*S, 0.0105*S, 0, 0, Math.PI*2); c.clip();
+      const ex = s*0.045, ey = 0.021, [x, y] = P(ex, ey), rx = 0.0122*S, ry = 0.0068*S;
+      soft(ex, 0.03, 0.017, 0.006, shade, 0.3);                                  // eyelid shade
+      c.fillStyle = '#f2ede6'; c.beginPath(); c.ellipse(x, y, rx, ry, 0, 0, Math.PI*2); c.fill();   // eye white
+      const R = 0.0062*S, iy = y + 0.0004*S;
+      const gr = c.createRadialGradient(x, iy, 0, x, iy, R); gr.addColorStop(0, css(mix(ir, [255,255,255], 0.12))); gr.addColorStop(0.8, css(ir)); gr.addColorStop(1, css(mix(ir, [0,0,0], 0.5)));
+      c.save(); c.beginPath(); c.ellipse(x, y, rx, ry, 0, 0, Math.PI*2); c.clip();
       c.fillStyle = gr; c.beginPath(); c.arc(x, iy, R, 0, Math.PI*2); c.fill();
-      c.fillStyle = '#17110e'; c.beginPath(); c.arc(x, iy, R*0.5, 0, Math.PI*2); c.fill();
+      c.fillStyle = '#17110e'; c.beginPath(); c.arc(x, iy, R*0.45, 0, Math.PI*2); c.fill();
+      const lg = c.createLinearGradient(0, y - ry, 0, y); lg.addColorStop(0, 'rgba(40,25,20,0.45)'); lg.addColorStop(1, 'rgba(40,25,20,0)'); c.fillStyle = lg; c.fillRect(x - rx, y - ry, rx*2, ry);   // the lid shades the top of the eye
       c.restore();
-      c.fillStyle = '#ffffff'; c.beginPath(); c.arc(x + s*R*0.35, iy - R*0.4, R*0.3, 0, Math.PI*2); c.fill();   // a big shiny glint
-      c.beginPath(); c.arc(x - s*R*0.3, iy + R*0.35, R*0.12, 0, Math.PI*2); c.fill();
-      c.strokeStyle = css(line); c.lineWidth = 0.0022*S; c.beginPath(); c.ellipse(x, y, 0.0137*S, 0.0107*S, 0, Math.PI*1.08, Math.PI*1.92); c.stroke();   // upper eyelid line
-      // eyebrow: one smooth, soft arch
-      path([[s*0.031, 0.044], [s*0.06, 0.045, s*0.046, 0.054]]); c.strokeStyle = css(hr); c.lineWidth = 0.0042*S; c.stroke();
+      c.fillStyle = 'rgba(255,255,255,0.9)'; c.beginPath(); c.arc(x + s*R*0.35, iy - R*0.35, R*0.2, 0, Math.PI*2); c.fill();   // a glint
+      c.strokeStyle = css(line); c.lineWidth = 0.0022*S; c.beginPath(); c.ellipse(x, y, rx*1.02, ry*1.05, 0, Math.PI*1.05, Math.PI*1.95); c.stroke();   // upper eyelid line
+      c.strokeStyle = css(shade, 0.6); c.lineWidth = 0.0012*S; c.beginPath(); c.ellipse(x, y - 0.002*S, rx*1.05, ry*1.5, 0, Math.PI*1.15, Math.PI*1.85); c.stroke();   // lid crease
+      c.strokeStyle = css(shade, 0.35); c.beginPath(); c.ellipse(x, y + 0.0015*S, rx*0.95, ry*1.4, 0, Math.PI*0.2, Math.PI*0.8); c.stroke();   // a soft line under the eye
+      // eyebrow: fuller and flatter, thicker near the nose
+      for(let k=0;k<3;k++){ path([[s*0.029, 0.041 + k*0.0012], [s*0.063, 0.042 + k*0.0006, s*0.048, 0.049 + k*0.0008]]); c.strokeStyle = css(hr, 0.75); c.lineWidth = (0.0045 - k*0.0011)*S; c.stroke(); }
     });
   }
   const t = new THREE.CanvasTexture(cv); t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
   return FACE_TEX[key] = t;
 }
+// a bumpy pore pattern the light catches, shared by every face
+const SKIN_BUMP = (() => { const N = 512, cv = document.createElement('canvas'); cv.width = cv.height = N; const c = cv.getContext('2d');
+  c.fillStyle = '#808080'; c.fillRect(0, 0, N, N); let seed = 5; const rnd = () => (seed = (seed*16807) % 2147483647) / 2147483647;
+  for(let i=0;i<12000;i++){ const v = rnd() < 0.5 ? 50 : 200; c.fillStyle = `rgba(${v},${v},${v},0.4)`; c.beginPath(); c.arc(rnd()*N, rnd()*N, 0.8 + rnd()*1.6, 0, Math.PI*2); c.fill(); }
+  return new THREE.CanvasTexture(cv); })();
 // hair has strands: a picture of thin light and dark lines running from the crown down, shared by everyone
 const HAIR_TEX = (() => { const N = 256, cv = document.createElement('canvas'); cv.width = cv.height = N; const c = cv.getContext('2d');
   c.fillStyle = 'rgb(205,205,205)'; c.fillRect(0, 0, N, N); let seed = 3; const rnd = () => (seed = (seed*16807) % 2147483647) / 2147483647;
@@ -758,7 +781,7 @@ function humanHead(o, parent){
   o = Object.assign({skin:0xe8b48a, hair:0x5a3a1c, iris:0x4a3020, face:true, eyes:true, hairCap:true}, o);
   const g = new THREE.Group(); parent.add(g);
   let skinM = o.skinM || M(o.skin);
-  if(o.face){ skinM = M(0xffffff, {map:faceTexture(o), roughness:.8}); skinM.onBeforeCompile = function(){}; }   // smooth painted face
+  if(o.face){ skinM = M(0xffffff, {map:faceTexture(o), bumpMap:SKIN_BUMP, bumpScale:0.0003, roughness:.7}); skinM.onBeforeCompile = function(){}; }   // smooth painted face
   const hm = mesh(o.face ? FACE_GEO : HEAD_GEO, skinM, 0, 0, 0, g); if(o.face) hm.castShadow = hm.receiveShadow = false;   // no dark smudges across the face
   // ears: a curved ear shape instead of a ball
   const earSh = new THREE.Shape(); earSh.moveTo(0, -0.03); earSh.quadraticCurveTo(-0.022, -0.02, -0.02, 0.012); earSh.quadraticCurveTo(-0.014, 0.038, 0.004, 0.032); earSh.quadraticCurveTo(0.012, 0.02, 0.006, -0.004); earSh.quadraticCurveTo(0.008, -0.022, 0, -0.03);
