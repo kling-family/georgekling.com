@@ -1034,8 +1034,8 @@ function goAdam(step){
   if(step==='sleep'){
     S.lock=true; setGoal('');
     say([[SAY_BIBLE,'Adam gave names to all the animals. But there was no helper just right for Adam.','Genesis 2:20'],
-         [SAY_BIBLE,'So God made Adam fall into a deep sleep.','Genesis 2:21', ()=>{ $('fade').style.background='#0b0b14'; $('fade').style.opacity=1; }],
-         [SAY_BIBLE,'While he was sleeping, God took one of Adam’s ribs. From it, God made a woman, and He brought her to Adam.','Genesis 2:21-22', ()=>{ const fx=P.x-Math.sin(P.yaw)*2.2, fz=P.z-Math.cos(P.yaw)*2.2; place(W.eve,fx,fz); faceTo(W.eve,P.x,P.z); W.eve.visible=true; W.god.visible=false; setTimeout(()=>{ if(story&&story.id==='adam') $('fade').style.opacity=0; },600); }],
+         [SAY_BIBLE,'So God made Adam fall into a deep sleep.','Genesis 2:21', ()=>{ $('fade').style.background='#0b0b14'; $('fade').style.opacity=1; setTimeout(()=>{ if(!story||story.id!=='adam') return; const W=world; const fx=P.x-Math.sin(P.yaw)*2.2, fz=P.z-Math.cos(P.yaw)*2.2; place(W.eve,fx,fz); faceTo(W.eve,P.x,P.z); W.eve.visible=true; W.god.visible=false; $('fade').style.opacity=0; },900); }],
+         [SAY_BIBLE,'While he was sleeping, God took one of Adam’s ribs. From it, God made a woman, and He brought her to Adam.','Genesis 2:21-22', ()=>{ if(!W.eve.visible){ const fx=P.x-Math.sin(P.yaw)*2.2, fz=P.z-Math.cos(P.yaw)*2.2; place(W.eve,fx,fz); faceTo(W.eve,P.x,P.z); W.eve.visible=true; W.god.visible=false; } $('fade').style.opacity=0; }],
          ['You are Adam','At last! She is bone of my bones and flesh of my flesh. She will be called woman.','Genesis 2:23', ()=>{ $('fade').style.opacity=0; lookAt(W.eve.position.x, W.eve.position.y+1.5, W.eve.position.z, 0.8); }],
          [SAY_BIBLE,'Adam named his wife Eve. God looked at everything He had made, and it was very good. On the seventh day, God rested.','Genesis 1:31, 2:2-3, 3:20']], ()=>goAdam('middle'));
   }
