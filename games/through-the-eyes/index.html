@@ -1605,6 +1605,7 @@ function goAdam(step){
   if(step==='leave'){ S.lock=false; S.eveFollow=true; W.god.visible=false; setGoal('Leave the garden through the <b>east side</b>'); S.target={position:new THREE.Vector3(EDEN_R+5,0,0)}; }
   if(step==='cherub'){
     S.lock=true; S.target=null; setGoal('');
+    S.eveFollow=false; S.eveTo={x:Math.max(P.x-0.6,EDEN_R+2.6), z:P.z+1.7}; // Eve stays outside, next to you
     place(W.cherub,EDEN_R-0.5,0,Math.PI/2); W.cherub.visible=true;
     lookAt(W.cherub.position.x, W.cherub.position.y+2, 0, 1.2);
     say([[SAY_BIBLE,'God placed angels called cherubim, and a flaming sword that flashed back and forth, on the east side of the garden. They guarded the way to the tree of life.','Genesis 3:24'],
