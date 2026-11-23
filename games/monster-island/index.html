@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Monster Island | a game by George</title>
-<meta name="description" content="Monster Island: catch monsters, battle trainers and champions, and explore six islands. A game by George.">
+<meta name="description" content="Monster Island: catch monsters, battle trainers and champions, and explore seven islands. A game by George.">
 <meta property="og:title" content="Monster Island">
-<meta property="og:description" content="Catch monsters, battle trainers and champions, and explore six islands. A game by George.">
+<meta property="og:description" content="Catch monsters, battle trainers and champions, and explore seven islands. A game by George.">
 <meta property="og:image" content="https://georgekling.com/games/monster-island.jpg">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="/favicon.png" type="image/png">
@@ -390,7 +390,7 @@ const NIGHT=[['wispurr','gloomkin'],['abyssquid','glowcap'],['glowcap','wispurr'
 // world-map pixel positions (map is 120 x 84)
 // ================= ISLANDS =================
 // island centers in sea tiles (the sea is 200 x 140, each island is 40 x 30)
-// the islands sit in a big circle around the whirlpool (George's idea), and Champion Island closes the circle
+// the islands sit in a big circle (George's idea). Earth Island closes the circle and Champion Island sits in the middle
 const ISLES=[
   {name:'Ember Isle',tr:[{name:'Camper Jo',team:[['blazepaw',5],['pebblit',5]]},{name:'Hiker Rocco',team:[['lavaslug',6],['ashmole',6],['flarepup',7]]},{name:'Lava Lily',team:[['blazepaw',7],['ashmole',7],['lavaslug',8]]}],el:'fire',x:35,y:100,blurb:'Hot sand, lava rocks, and a volcano that hums at night.',wild:['flarepup','pebblit','blazepaw','ashmole','lavaslug'],rare:'cindermaw',lv:[2,4],champ:{name:'Captain Cinder',team:[['ashmole',8],['lavaslug',9],['blazepaw',9],['flarepup',10]]}},
   {name:'Tidepool Bay',tr:[{name:'Swimmer Kai',team:[['shellby',8],['squibble',8]]},{name:'Fisher Mo',team:[['zaplet',9],['kelpie',9],['zappop',10]]},{name:'Surfer Nia',team:[['shellby',10],['zappop',11],['kelpie',11]]}],el:'water',x:100,y:118,blurb:'Splashy tide pools and coral reefs full of things that zap and squirt.',wild:['squibble','zaplet','shellby','kelpie','zappop'],rare:'tidefang',lv:[5,8],champ:{name:'Coral the Diver',team:[['zaplet',11],['kelpie',12],['shellby',12],['tidefang',13]]}},
@@ -422,17 +422,27 @@ ISLES.push({name:'Coralheart Deep',el:'deep',secret:true,deep:true,x:1600,y:70,w
 // Champion Island (George's idea): the last island in the circle, home of the champion of all islands.
 // It goes at the end of the list so old saves keep their island numbers.
 const CHAMP=ISLES.length;
-ISLES.push({name:'Champion Island',el:'champ',x:35,y:40,blurb:'The last island. Only the best trainers ever make it here.',
+ISLES.push({name:'Champion Island',el:'champ',x:100,y:70,blurb:'The island in the middle of them all. Only the best trainers ever make it here.',
   tr:[],arena:true,
   wild:['flintfox','abyssquid','glowcap','gravelord','voltusk','nightcoil'],rare:'cindermaw',rares:['tidefang','mossbrute','stormwing','eclipsar'],lv:[19,23],
   // a strong, balanced team: one monster of every element, and the legends of all five secret worlds (George said he was too easy)
   champ:{name:'The Grand Champion',team:[['magmaroc',36],['aquarion',36],['sylvanox',37],['mudzilla',37],['voltara',38],['nyxis',40]]}});
-// the islands you can sail to, in order around the circle
-const RING=[0,1,2,3,4,CHAMP];
-const champUnlocked=()=>S&&S.unlocked>MAIN;
-const isLocked=i=>i===CHAMP?!champUnlocked():i<MAIN&&i>=S.unlocked;
-const isNext=i=>!isLocked(i)&&!S.beaten.includes(i)&&(i===CHAMP||i===S.unlocked-1);
-const WHIRL={x:100,y:70};
+// Earth Island (George's idea): a rock island that takes Champion Island's old place in the circle.
+// It also goes at the end of the list so old saves keep their island numbers.
+const EARTH=ISLES.length;
+ISLES.push({name:'Earth Island',el:'stone',x:35,y:40,blurb:'A rock island. Cliffs, caves and boulders everywhere you look.',
+  tr:[{name:'Hiker Dot',team:[['pebblit',20],['mudpuff',20]]},{name:'Cave Kid Rio',team:[['ashmole',21],['beetlox',21],['gravelord',22]]},{name:'Rock Climber Jess',team:[['bouldrake',22],['gravelord',23],['beetlox',23]]}],
+  wild:['pebblit','mudpuff','ashmole','beetlox','gravelord'],rare:'boulderon',lv:[17,20],
+  champ:{name:'Captain Granite',team:[['beetlox',23],['ashmole',24],['bouldrake',25],['gravelord',25],['mudzilla',26]]}});
+// the six islands in the circle, then Champion Island in the middle
+const CIRCLE=[0,1,2,3,4,EARTH],RING=[...CIRCLE,CHAMP];
+const earthUnlocked=()=>S&&S.unlocked>MAIN;
+// players who already got into Champion Island before Earth Island existed keep it open
+const champUnlocked=()=>S&&(S.beaten.includes(EARTH)||S.beaten.includes(CHAMP)||!!S.tourneyWon||!!(S.tourney&&Object.keys(S.tourney.res||{}).length));
+const isLocked=i=>i===CHAMP?!champUnlocked():i===EARTH?!earthUnlocked():i<MAIN&&i>=S.unlocked;
+const isNext=i=>!isLocked(i)&&!S.beaten.includes(i)&&(i===CHAMP||i===EARTH||i===S.unlocked-1);
+// the whirlpool moved from the middle to the open water between Thunder Peak and Mossback Jungle
+const WHIRL={x:165,y:70};
 const THEME={
   fire:{sand:'#ecc48e',sand2:'#c99260',ground:'#7d4a32',ground2:'#5f3424',grass:'#e8743a',grassD:'#a8401c',path:'#c99566',path2:'#9a6a44',obst:'rock',rock:['#5a3a30','#3a241e','#8a5a48'],glow:'#ffae3d'},
   water:{sand:'#f7e5b6',sand2:'#dcc08a',ground:'#ead39e',ground2:'#d6bb84',grass:'#3cc2a8',grassD:'#1f8a78',path:'#d9b47c',path2:'#b48e58',obst:'coral',coral:['#ff7d92','#ff9e5a','#ffd25a']},
@@ -440,10 +450,11 @@ const THEME={
   storm:{sand:'#d8cfb4',sand2:'#b9ad8c',ground:'#8f97a5',ground2:'#767e8e',grass:'#d6bd3c',grassD:'#957f22',path:'#bcae8c',path2:'#948664',obst:'rock',rock:['#7c838f','#545a66','#b8bec8'],glow:'#fff27a'},
   deep:{sand:'#f0dcb0',sand2:'#d4bc8a',ground:'#3a8a9a',ground2:'#2e7484',grass:'#2ab07a',grassD:'#147050',path:'#e8d4a8',path2:'#c8b080',obst:'coral',coral:['#ff7d92','#ffb05a','#b47aff']},
   champ:{sand:'#f6e4b0',sand2:'#dcc488',ground:'#6fbf5c',ground2:'#55a548',grass:'#e8bf3a',grassD:'#b08a1c',path:'#f2ead8',path2:'#cfc4a8',obst:'crystal',crystal:['#ffe27a','#d49a17','#fff6d0']},
+  stone:{sand:'#e2d2b4',sand2:'#c4b090',ground:'#9a8a78',ground2:'#7e705f',grass:'#b8a06a',grassD:'#86703e',path:'#c8b89a',path2:'#a49274',obst:'rock',rock:['#7a6e62','#4e463e','#b0a494']},
   shadow:{sand:'#a898cc',sand2:'#8676b0',ground:'#3d346c',ground2:'#2e2756',grass:'#8c64ea',grassD:'#5a38b4',path:'#6e5eaa',path2:'#54468c',obst:'crystal',crystal:['#c7a6ff','#7a4ae0','#f2e6ff']}
 };
 const ARENA={champ:['#ffe9a8','#ffc860','#f08a3a','#7cc46a','#4f9a44','#ffd23a'],deep:['#5ac8f0','#2a90d0','#1a64b0','#c8b48a','#a89068','#7affea'],fire:['#ffcf8a','#ff9a5a','#e8643a','#8a4a32','#5f3424','#c9703a'],water:['#bfeaff','#7fd2f7','#4cb6ee','#ead39e','#d6bb84','#5fd4ee'],
-  leaf:['#c6f2ff','#9ee6b4','#5cc070','#4c9a3a','#2f7a2a','#7ad86a'],storm:['#aab4c8','#7f8aa3','#5e6884','#8f97a5','#5f6676','#f2d84a'],shadow:['#5b4a9a','#3a2a74','#241a52','#3d346c','#1e1840','#a77bff']};
+  leaf:['#c6f2ff','#9ee6b4','#5cc070','#4c9a3a','#2f7a2a','#7ad86a'],stone:['#e8dcc8','#c8b49a','#9a8670','#9a8a78','#6e6052','#d8b878'],storm:['#aab4c8','#7f8aa3','#5e6884','#8f97a5','#5f6676','#f2d84a'],shadow:['#5b4a9a','#3a2a74','#241a52','#3d346c','#1e1840','#a77bff']};
 
 // ================= SAVE =================
 // ---- player profiles: each player has their own save on this device ----
@@ -568,8 +579,8 @@ const walk=t=>t===T_SAND||t===T_GROUND||t===T_GRASS||t===T_PATH;
 const isleOff=i=>({x:ISLES[i].x-20,y:ISLES[i].y-15});
 const MAPS={};
 const T_HOUSE=6;
-const TOWNS={champ:['Victory Town','Trophy Bay','Crown Hill'],fire:['Cinder Village','Ashford','Magma Point'],water:['Shell Harbor','Coral Cove','Pearl Town'],leaf:['Fernwood','Mudville','Canopy Town'],storm:['Pebble Pass','Boulder Town','Sparkridge'],shadow:['Dusk Hollow','Gloomport','Midnight Town']};
-const TTITLE={champ:['Ace Trainer','Veteran','Battle Kid'],fire:['Camper','Hiker','Fire Fan'],water:['Swimmer','Fisher','Sailor'],leaf:['Bug Catcher','Explorer','Gardener'],storm:['Climber','Storm Chaser','Miner'],shadow:['Ghost Hunter','Night Diver','Stargazer']};
+const TOWNS={champ:['Victory Town','Trophy Bay','Crown Hill'],fire:['Cinder Village','Ashford','Magma Point'],water:['Shell Harbor','Coral Cove','Pearl Town'],leaf:['Fernwood','Mudville','Canopy Town'],storm:['Pebble Pass','Boulder Town','Sparkridge'],stone:['Gravel Gap','Cobble Town','Cave Point'],shadow:['Dusk Hollow','Gloomport','Midnight Town']};
+const TTITLE={champ:['Ace Trainer','Veteran','Battle Kid'],fire:['Camper','Hiker','Fire Fan'],water:['Swimmer','Fisher','Sailor'],leaf:['Bug Catcher','Explorer','Gardener'],storm:['Climber','Storm Chaser','Miner'],stone:['Hiker','Cave Kid','Rock Climber'],shadow:['Ghost Hunter','Night Diver','Stargazer']};
 const TNAMES=['Ben','Mia','Leo','Zoe','Sam','Ava','Max','Ivy','Eli','Nora','Finn','Ruby','Owen','Lila','Gus','Tess','Jay','Kit'];
 function genMap(i){
   if(MAPS[i])return MAPS[i];
@@ -649,7 +660,7 @@ function genMap(i){
   if(ISLES[i].arena)for(let k=objs.length-1;k>=0;k--){const o=objs[k];if(Math.abs(o.x-champ.x)<=3&&o.y<=champ.y&&o.y>=champ.y-4)objs.splice(k,1)}
   // each main island hides one secret: a tree, rock, coral or crystal you can bump into
   let secretStone=null;
-  if(!secret&&i!==CHAMP){const cand=[];for(const o of objs){const nb=N4.map(([dx,dy])=>({x:o.x+dx,y:o.y+dy})).find(q=>q.x>0&&q.y>0&&q.x<W-1&&q.y<H-1&&walk(g[q.y][q.x])&&dist[q.y][q.x]>=8&&g[q.y][q.x]!==T_PATH&&zoneOf(q.x,q.y)>=1&&zoneOf(q.x,q.y)<=2);
+  if(!secret&&i<MAIN){const cand=[];for(const o of objs){const nb=N4.map(([dx,dy])=>({x:o.x+dx,y:o.y+dy})).find(q=>q.x>0&&q.y>0&&q.x<W-1&&q.y<H-1&&walk(g[q.y][q.x])&&dist[q.y][q.x]>=8&&g[q.y][q.x]!==T_PATH&&zoneOf(q.x,q.y)>=1&&zoneOf(q.x,q.y)<=2);
       if(!nb||route.some(c=>Math.abs(c.x-o.x)+Math.abs(c.y-o.y)<3)||chests.some(c=>c.x===nb.x&&c.y===nb.y))continue;cand.push({x:o.x,y:o.y,fx:nb.x,fy:nb.y})}
     if(cand.length)secretStone=cand[Math.floor(r()*cand.length)]}
   return MAPS[i]={g,start,champ,tent,grass,dist,chests,objs,trainers,gates,towns,houses,zoneOf,springs,secretStone,secret};
@@ -668,11 +679,12 @@ const trBonus=info=>info.rival?1:info.leader?1:0;
 function champTeam(i){const s=ISLES[i];if(s.secret)return s.champ.team;if(i===CHAMP)return s.champ.team.map(([sp,l])=>[evolved(sp,l),l]);const t=[...s.champ.team],lo=Math.min(...t.map(x=>x[1])),pool=[...s.wild,...(NIGHT[i]||[])].filter(sp=>!t.some(x=>x[0]===sp));
   for(let k=0;t.length<6&&k<pool.length;k++)t.push([pool[k],lo]);return scaled(t,i===CHAMP?8:2)}
 // ================= CHAMPION TOURNAMENT (George's idea) =================
-// Eight trainers: you, the five island champions, Rex, and Challenger Zara.
+// Eight trainers: you, the six island champions and Rex.
 // Double elimination: your first loss drops you to the second-chance bracket, a second loss and you're out.
 // Win the whole tournament to earn a battle with The Grand Champion.
 const TOUR_NEW={name:'Challenger Zara',team:[['voltusk',24],['krakling',24],['flintfox',24],['glowcap',25],['bouldrake',25],['phantomkin',26]]};
-const TOUR_IDS=['you',0,1,2,3,4,'rex','zara'];
+// Challenger Zara stays only for tournaments that started before Earth Island existed
+const TOUR_IDS=['you',0,1,2,3,4,EARTH,'rex'];
 const TOUR_M=[
   ['W1','Round 1',['s',0],['s',1]],['W2','Round 1',['s',2],['s',3]],['W3','Round 1',['s',4],['s',5]],['W4','Round 1',['s',6],['s',7]],
   ['W5','Semifinal',['w','W1'],['w','W2']],['W6','Semifinal',['w','W3'],['w','W4']],
@@ -727,15 +739,20 @@ function tourney(msg){
 // after you beat the Grand Champion, Rex shows up with a team at the very same levels as the champion's
 const REX_LINE='Rex: "Hey, you beat me to the champion of islands. Well, now I\'ll just beat you."';
 // Preview links only (never the real site): ?champion jumps straight to Champion Island with a ready test player, ?tournament straight to the tournament bracket, ?winnersfinal or ?final to a new bracket where you're already in the winners final or grand final
-function previewChamp(){if(!/netlify\.app$|^localhost$/.test(location.hostname)||!/[?&](champion|tournament|winnersfinal|tournamentfinal|final)\b/.test(location.search))return false;
+// preview links work everywhere except the real site
+const PQ=()=>location.search+location.hash.replace(/^#/,"?");
+function previewChamp(){if(/georgekling\.com$/.test(location.hostname)||!/[?&](earth|champion|tournament|winnersfinal|tournamentfinal|final)\b/.test(PQ()))return false;
+  if(/[?&]earth\b/.test(PQ())){const id='pearth',ps=profiles();if(!ps.some(q=>q.id===id)){ps.push({id,name:'Earth Test',color:3});saveProfiles(ps)}PROFILE=ps.find(q=>q.id===id);
+    if(!readSave(id)){S={starter:'flicklet',team:[['flarion',23],['tidalord',22],['bloomroar',22],['stormhare',21],['phantomkin',21]].map(([sp,l])=>mk(sp,l)),unlocked:MAIN+1,beaten:[0,1,2,3,4],caught:{flicklet:1,bubblop:1,sproutle:1},coins:500,supers:5,pos:{},lookSeen:1,look:{},compass:1,buddy:{name:'Pip',d:{}},gift:1,onboard:1};save()}
+    S=load();map();return true}
   const id='pchamp',ps=profiles();if(!ps.some(q=>q.id===id)){ps.push({id,name:'Champion Test',color:4});saveProfiles(ps)}PROFILE=ps.find(q=>q.id===id);
-  if(!readSave(id)){S={starter:'flicklet',team:[['flarion',28],['tidalord',27],['bloomroar',27],['stormhare',26],['mudzilla',26],['phantomkin',26]].map(([sp,l])=>mk(sp,l)),unlocked:MAIN+1,beaten:[0,1,2,3,4],caught:{flicklet:1,bubblop:1,sproutle:1},coins:800,supers:5,pos:{},lookSeen:1,look:{},compass:1,buddy:{name:'Pip',d:{}},gift:1,onboard:1};save()}
+  if(!readSave(id)){S={starter:'flicklet',team:[['flarion',28],['tidalord',27],['bloomroar',27],['stormhare',26],['mudzilla',26],['phantomkin',26]].map(([sp,l])=>mk(sp,l)),unlocked:MAIN+1,beaten:[0,1,2,3,4,EARTH],caught:{flicklet:1,bubblop:1,sproutle:1},coins:800,supers:5,pos:{},lookSeen:1,look:{},compass:1,buddy:{name:'Pip',d:{}},gift:1,onboard:1};save()}
   S=load();const skipTo=(id,msg)=>{S.at=CHAMP;newTourney();let n;while((n=tNext())&&n.id!==id){const [a,b]=tPair(n);if(a==='you'||b==='you')S.tourney.res[n.id]={w:'you',l:a==='you'?b:a};else tSim(n)}save();tourney(msg)};
-  if(/[?&]winnersfinal\b/.test(location.search))skipTo('W7','Skipped ahead to the winners final!');
-  else if(/[?&]tournamentfinal\b/.test(location.search))skipTo('GF','Skipped ahead to the tournament final!');
+  if(/[?&]winnersfinal\b/.test(PQ()))skipTo('W7','Skipped ahead to the winners final!');
+  else if(/[?&]tournamentfinal\b/.test(PQ()))skipTo('GF','Skipped ahead to the tournament final!');
   // ?final: you already won the tournament, so the next battle is the real Grand Champion
-  else if(/[?&]final\b/.test(location.search)){skipTo('GF');const [a,b]=tPair(tNext());S.tourney.res.GF={w:'you',l:a==='you'?b:a};save();tourney()}
-  else if(/[?&]tournament\b/.test(location.search)){S.at=CHAMP;tourney()}else map();return true}
+  else if(/[?&]final\b/.test(PQ())){skipTo('GF');const [a,b]=tPair(tNext());S.tourney.res.GF={w:'you',l:a==='you'?b:a};save();tourney()}
+  else if(/[?&]tournament\b/.test(PQ())){S.at=CHAMP;tourney()}else map();return true}
 function rexFinalTeam(champ){const base=S.starter||'bubblop',ctr={flicklet:'bubblop',bubblop:'sproutle',sproutle:'flicklet'}[base]||'flicklet',lv=champ.map(t=>t[1]).sort((a,b)=>a-b);
   const others=[['cindermaw','fire'],['tidefang','water'],['mossbrute','leaf'],['boulderon','stone'],['thunderhop','storm'],['nightcoil','shadow']].filter(x=>x[1]!==SP[ctr].el).map(x=>x[0]);
   return [...others,ctr].slice(-lv.length).map((sp,k)=>[evolved(sp,lv[k]),lv[k]])}
@@ -756,7 +773,7 @@ function smp(mk,u,v){const x=u-.5,y=v-.5,x0=Math.floor(x),y0=Math.floor(y);let f
   const a=(x0<0||y0<0||x0>=W||y0>=H)?0:mk[y0*W+x0],b=(x0+1<0||y0<0||x0+1>=W||y0>=H)?0:mk[y0*W+x0+1],c=(x0<0||y0+1<0||x0>=W||y0+1>=H)?0:mk[(y0+1)*W+x0],d=(x0+1>=W||y0+1>=H||x0+1<0||y0+1<0)?0:mk[(y0+1)*W+x0+1];
   return a+(b-a)*fx+(c-a)*fy+(a-b-c+d)*fx*fy}
 const TEX={},GTEX={},HI={};
-const ROOF={champ:'#d49a17',deep:'#2f80ed',fire:'#c0392b',water:'#2f80ed',leaf:'#8b5a2b',storm:'#4f6a9a',shadow:'#7a4ae0'};
+const ROOF={champ:'#d49a17',deep:'#2f80ed',fire:'#c0392b',water:'#2f80ed',leaf:'#8b5a2b',storm:'#4f6a9a',stone:'#6e6052',shadow:'#7a4ae0'};
 const buildHi=i=>HI[i]||(HI[i]=buildTex(i,34,true));
 function buildTex(i,R=10,hi){
   if(!hi&&TEX[i])return TEX[i];
@@ -1139,7 +1156,7 @@ function runSeaView(cv,opts){
     if(opts.drift){view.cam.x=100+Math.sin(t/9000)*5;view.cam.y=70+Math.cos(t/11000)*3}
     drawSea(ctx,view.cam,sc,t,cw,ch);
     if(locks){ctx.setLineDash([.9,1.1]);ctx.lineDashOffset=-t/400;ctx.lineWidth=.45;ctx.lineCap='round';
-      for(let k=0;k<RING.length;k++){const a=ISLES[RING[k]],b=ISLES[RING[(k+1)%RING.length]];ctx.strokeStyle=!isLocked(RING[k])&&!isLocked(RING[(k+1)%RING.length])?'rgba(255,255,255,.85)':'rgba(255,255,255,.25)';ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()}ctx.setLineDash([])}
+      for(let k=0;k<CIRCLE.length;k++){const a=ISLES[CIRCLE[k]],b=ISLES[CIRCLE[(k+1)%CIRCLE.length]];ctx.strokeStyle=!isLocked(CIRCLE[k])&&!isLocked(CIRCLE[(k+1)%CIRCLE.length])?'rgba(255,255,255,.85)':'rgba(255,255,255,.25)';ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()}ctx.setLineDash([])}
     RING.forEach(i=>{const s=ISLES[i];if(view.hover!==i||(locks&&isLocked(i)))return;const o=isleOff(i);ctx.save();ctx.shadowColor='#fff6b0';ctx.shadowBlur=30;ctx.drawImage(buildTex(i),o.x,o.y,W,H);ctx.restore()});
     drawIslands(ctx,view.cam,sc,cw,ch,locks);
     if(locks)RING.forEach(i=>{const s=ISLES[i],m=genMap(i),o=isleOff(i),cx=o.x+m.champ.x+.5,cy=o.y+m.champ.y+.5;
@@ -1347,12 +1364,12 @@ function map(){
   document.getElementById('home').onclick=title;
   if(S.compass)document.getElementById('gd').onclick=()=>{const g=document.getElementById('guide');if(g.innerHTML){g.innerHTML='';return}SFX.select();wheel(g,null)};
 }
-function goIsland(i){if(i===DEEP){SFX.whoosh();toast('You dive into the whirlpool... down, down, down!');return island(DEEP,'portal')}if(isLocked(i)){SFX.bump();return toast(i===CHAMP?'Beat all five champions to unlock Champion Island.':'Beat the champion before this island to unlock it.')}SFX.whoosh();island(i,true)}
+function goIsland(i){if(i===DEEP){SFX.whoosh();toast('You dive into the whirlpool... down, down, down!');return island(DEEP,'portal')}if(isLocked(i)){SFX.bump();return toast(i===CHAMP?'Beat Captain Granite on Earth Island to unlock Champion Island.':i===EARTH?'Beat all five champions to unlock Earth Island.':'Beat the champion before this island to unlock it.')}SFX.whoosh();island(i,true)}
 
 // ================= OVERWORLD =================
 const WSTATE={},ZOOMS=[17,17,54,SEA_ACROSS],ZNAME=['3D','Close','Island','Sea'];
 function island(i,fromMap){
-  SCREEN='island';ROOM=null;if((i<MAIN||i===CHAMP)&&S)S.at=i;playSong('island');
+  SCREEN='island';ROOM=null;if((i<MAIN||i===CHAMP||i===EARTH)&&S)S.at=i;playSong('island');
   const s=ISLES[i],done=S.beaten.includes(i),m=genMap(i);S.secrets=S.secrets||{};
   const sp=S.pos[i];if(!sp||!m.g[sp.y]||!walk(m.g[sp.y][sp.x]))S.pos[i]={...m.start};
   const ws=WSTATE[i]||(WSTATE[i]={mons:[]});
@@ -1596,7 +1613,7 @@ function openChamp(){
   const Wd=WORLD,s=ISLES[Wd.i],pr=document.getElementById('prompt'),tired=!S.team.some(x=>x.hp>0);Wd.paused=true;
   pr.hidden=false;
   if(Wd.i===CHAMP&&!S.beaten.includes(CHAMP)&&!S.tourneyWon){const going=S.tourney&&!S.tourney.res.GF&&tLosses('you')<2&&Object.keys(S.tourney.res).length;
-    pr.innerHTML=`<div class="who">Champion Tournament</div><div>${going?'Your tournament is still going. Ready for your next match?':'Welcome to the Champion Tournament! Eight trainers: you, the five island champions, Rival Rex and Challenger Zara. Win it, and you get to battle The Grand Champion!'}</div><div class="row"><button class="btn hot sm" id="py">${going?'Back to the bracket':'Enter!'}</button><button class="btn ghost sm" id="pn">Not yet</button></div>`;
+    pr.innerHTML=`<div class="who">Champion Tournament</div><div>${going?'Your tournament is still going. Ready for your next match?':'Welcome to the Champion Tournament! Eight trainers: you, the six island champions and Rival Rex. Win it, and you get to battle The Grand Champion!'}</div><div class="row"><button class="btn hot sm" id="py">${going?'Back to the bracket':'Enter!'}</button><button class="btn ghost sm" id="pn">Not yet</button></div>`;
     document.getElementById('pn').onclick=()=>{pr.hidden=true;Wd.paused=false};
     document.getElementById('py').onclick=()=>{pr.hidden=true;if(!going)newTourney();SFX.whoosh();tourney()};
     return focusFirst('#prompt')}
@@ -2073,6 +2090,7 @@ const counterOf=el=>Object.keys(BEATS).find(e=>BEATS[e].includes(el));
 function buddyHint(i){
   const pick=a=>a[Math.floor(Math.random()*a.length)],team=S.team,hp=team.reduce((a,m)=>a+m.hp,0)/team.reduce((a,m)=>a+maxHp(m),0),top=Math.max(...team.map(m=>m.lvl));
   const pieces=Object.keys(S.pieces||{}).length;
+  if((i===null||i===undefined)&&earthUnlocked()&&!champUnlocked())return `Let's sail to Earth Island! Captain Granite is the champion there, and ${EL[counterOf('stone')].n} moves work great against Stone monsters.`;
   if((i===null||i===undefined)&&champUnlocked()&&!S.rexFinal&&!(pieces>=MAIN&&!S.caught.leviathorn&&Math.random()<.4))return S.beaten.includes(CHAMP)?'Rex is still waiting on Champion Island! Go back to the champion\'s spot to battle him.':'Let\'s sail to Champion Island! Win the Champion Tournament there, and you get to battle The Grand Champion.';
   if(i===null||i===undefined){const n=S.unlocked-1;if(S.beaten.length>=MAIN)return pieces>=MAIN&&!S.caught.leviathorn?'All five map pieces point to the whirlpool between the islands. Sail into it, if you dare!':'You beat every champion! Now hunt for secret worlds and fill your monster book.';
     const is=ISLES[Math.min(n,MAIN-1)];return `Let's sail to ${is.name}! ${is.champ.name} is the champion there, and ${EL[counterOf(ISLES[Math.min(n,MAIN-1)].el)].n} moves work great against ${EL[is.el].n} monsters.`}
@@ -2137,7 +2155,7 @@ function meetBuddy(next){
   const sugg=[...BUDDY_NAMES].sort(()=>Math.random()-.5).slice(0,8);
   const RULES=[n=>`Here's how Monster Island works. Tap anywhere on the island to walk there, or use the arrow buttons or keys. Monsters hide in the tall grass. Walk into one to battle it, then throw a net to catch it!`,
     n=>`Every island has three towns with locked gates. Beat each town's leader to open the gate. Watch out: other trainers will battle you if they spot you!`,
-    n=>`Beat the champion at the far end of an island to unlock the next one. Win all five islands to unlock Champion Island and its Champion Tournament!`,
+    n=>`Beat the champion at the far end of an island to unlock the next one. Win all five islands to unlock Earth Island. Beat Earth Island to unlock Champion Island in the middle, with its Champion Tournament!`,
     n=>`Tired monsters? Heal at the tent, a Rest House with a heart on the roof, or a sparkly spring. Every element is strong against two others. Tap Element guide on the map to see which!`,
     n=>`Every island hides treasure chests and a secret door to a hidden world. I'll pop up with hints when I find them. Tap "Ask ${n}" any time you're stuck. Let's go!`];
   const draw=()=>{registerCustom('_buddy',{...d,name:name||'Buddy'});
@@ -2429,10 +2447,10 @@ const PIECES=['The drawing shows waves and a swirl of water. A note on the back 
   'This piece shows arrows pointing between the islands, toward the middle of the sea.',
   'The last piece shows a whirlpool right in the middle of the circle of islands!'];
 async function checkPiece(i){
-  if(!everyoneBeaten(i))return;S.pieces=S.pieces||{};if(S.pieces[i])return;S.pieces[i]=1;const n=Object.keys(S.pieces).length;save();
+  if(i>=MAIN||!everyoneBeaten(i))return;S.pieces=S.pieces||{};if(S.pieces[i])return;S.pieces[i]=1;const n=Object.keys(S.pieces).length;save();
   SFX.chest();await say('Wait... something fell out of their pocket.',900);
   await say(n===1?'It is an old, torn piece of paper with a drawing on it. You put it in your Journal.':`Another torn piece of paper! That makes ${n}. You add it to your Journal.`,1300);
-  if(n===5){SFX.win();await say('The five pieces fit together... it is a MAP! It shows a whirlpool in the middle of the sea!',1600)}
+  if(n===5){SFX.win();await say('The five pieces fit together... it is a MAP! It shows a whirlpool between Thunder Peak and Mossback Jungle!',1600)}
 }
 async function winBattle(){
   stopSong();doVictoryHop();
@@ -2451,7 +2469,7 @@ async function winBattle(){
   if(i<MAIN)await checkPiece(i);
   if(first){
     S.beaten.push(i);S.supers++;await say('The champion gives you a Super Net!',800);
-    if(i<MAIN){const nx=i+1<MAIN?i+1:CHAMP;S.unlocked=Math.max(S.unlocked,i+2);save();await say(`New island unlocked: ${ISLES[nx].name}!`,1000);if(nx===CHAMP)await say('The champion of all islands is waiting there.',1100);await say(`A rare monster now hides on ${s.name}. It runs away from you!`,1000);map();return}
+    if(i<MAIN||i===EARTH){const nx=i===EARTH?CHAMP:i+1<MAIN?i+1:EARTH;if(i<MAIN)S.unlocked=Math.max(S.unlocked,i+2);save();await say(`New island unlocked: ${ISLES[nx].name}!`,1000);if(nx===CHAMP)await say('It sits right in the middle of all the islands. The champion of all islands is waiting there.',1300);await say(`A rare monster now hides on ${s.name}. It runs away from you!`,1000);map();return}
     if(i===CHAMP&&!S.rexFinal){save();const champ=B.enemies.map(m=>[m.sp,m.lvl]);await say('Wait... someone is running up the beach. It\'s Rex!',1300);await say(REX_LINE,2200);await say('Your monsters take a quick rest before the battle.',1000);return rexFinal(champ)}
     save();victory();return;
   }
