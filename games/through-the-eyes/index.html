@@ -526,100 +526,100 @@ function levelExtra(txt, ref){ // returns [kind, html] for the current line, or 
   if(LEVEL==='grown' && ref){ const n=(GO_DEEPER[story.id]||{})[ref]; if(n && !seen.has(ref)){ seen.add(ref); return ['deep','<b>Go deeper.</b> '+n]; } }
   return null;
 }
-// Grown-up level: questions you answer as you play. [question, right answer, wrong, wrong, why]
-// Each one appears right after the line with that Bible reference (first time it shows).
+// Grown-up level: questions you answer as you play. [question, right answer, wrong, wrong, wrong, why]
+// Grown-up questions are 4-choice. Each one appears right after the line with that Bible reference (first time it shows).
 const GROWN_ASK={
   adam:{
-    'Genesis 3:4-5':['The serpent’s trick started with a question. What did it do to God’s words?','Made a generous rule sound stingy','Read them out exactly right','Added a promise of gold','God said they could eat from every tree but one (Genesis 2:16). The serpent asked if God said they could not eat from any tree. Doubt about God’s goodness came before the bite.'],
-    'Genesis 3:24':['Cherubim guarded the way back into Eden. Where else do cherubim show up guarding God’s presence?','Woven into the curtain of the tabernacle','Painted on Noah’s ark','On Goliath’s armor','Exodus 26:31. That curtain kept people out of the Most Holy Place, a lot like the guarded garden. When Jesus died, the temple curtain tore from top to bottom (Matthew 27:51).']
+    'Genesis 3:4-5':['Compare God’s command (Genesis 2:16-17) with Eve’s answer to the serpent (Genesis 3:2-3). What did Eve add to God’s words?','“You must not touch it”','“You must not look at it”','“Only Adam may eat it”','“You must not smell it”','God never said not to touch the tree. Eve made the rule stricter and left out God’s generous “from any tree.” The serpent works best when people already picture God as harsher than He is.'],
+    'Genesis 3:24':['Cherubim guarded the way back to God in Eden. Where else are cherubim pictured guarding God’s presence?','Woven into the curtain before the Most Holy Place','Carved on the gates of Jericho','Painted on the sides of Noah’s ark','Stitched on the high priest’s belt','Exodus 26:31. That curtain kept people out of the Most Holy Place, like the guarded garden. When Jesus died, the temple curtain tore from top to bottom (Matthew 27:51). The way back was open.']
   },
   noah:{
-    'Genesis 7:1-4':['Noah took pairs of animals. How many of the “clean” animals did God tell him to take?','Seven pairs','Just one pair','Ten pairs','Genesis 7:2. Clean animals were the kind that could be offered to God. Noah needed extra, because right after the flood he offered some as a sacrifice (Genesis 8:20).'],
-    'Genesis 8:15-17':['How long were Noah and his family on the ark, from the first rain to stepping out?','About a year','Forty days','About a month','The rain began in Noah’s 600th year, on the 17th day of the 2nd month (Genesis 7:11). They came out on the 27th day of the 2nd month the next year (Genesis 8:14). The forty days was only the rain.']
+    'Genesis 7:1-4':['God told Noah to take seven pairs of “clean” animals, long before the Law of Moses listed which animals were clean. What does that suggest?','Offering animals to God was known before Moses','Noah wrote the Law of Moses','Clean meant washed in the river','Only clean animals could swim','Abel offered from his flock (Genesis 4:4), and Noah offered clean animals right after the flood (Genesis 8:20). The detailed list came centuries later in Leviticus 11.'],
+    'Genesis 8:15-17':['Using the dates in Genesis 7:11 and 8:14, how long were Noah’s family on the ark?','About a year','Forty days','Exactly 150 days','About seven months','They went in on the 17th day of the 2nd month of Noah’s 600th year and came out on the 27th day of the 2nd month of the next year. The forty days was only the rain. The 150 days was how long the water stayed high.']
   },
   abraham:{
-    'Genesis 12:1':['Before Haran, where did Abram’s family come from?','Ur, a big city in what is now Iraq','Egypt','Jerusalem','Genesis 11:31. Joshua 24:2 says Abram’s family there worshiped other gods. God called him out of all of it, with no map, only a promise.'],
-    'Genesis 15:4':['Abraham’s first son was not Isaac. Who was it?','Ishmael, son of Hagar','Lot','Eliezer','Sarai gave her servant Hagar to Abram, and Hagar had Ishmael (Genesis 16). Isaac, the son God promised to Sarah, came about 14 years later, when Abraham was 100 (Genesis 21:5).']
+    'Genesis 12:1':['Before God called Abram, what does Joshua 24:2 say his family did?','Worshiped other gods','Built the tower of Babel','Served as priests of God','Lived as slaves in Egypt','“Your ancestors, including Terah the father of Abraham, lived beyond the river and worshiped other gods.” God’s call came to a man from an idol-worshiping family, by grace, not because he was already religious.'],
+    'Genesis 15:4':['In Galatians 4, Paul uses Abraham’s two sons, Ishmael and Isaac, as a picture. What do they stand for?','Trying to earn God’s promise versus receiving it as a gift','Jewish people versus Romans','The Old Testament versus the New','Farmers versus shepherds','Galatians 4:22-31. Ishmael was born by human planning. Isaac was born by God’s promise when it was impossible. Paul says believers are children of the promise, like Isaac.']
   },
   joseph:{
-    'Genesis 37:26-27':['Judah came up with selling Joseph. Years later, what did Judah offer to do for his youngest brother Benjamin?','Become a slave in Benjamin’s place','Sell Benjamin too','Run away to Canaan','Genesis 44:33. The brother who sold one brother now gives himself up for another. Jesus would one day be born from Judah’s family line.'],
-    'Genesis 41:25-30':['Pharaoh had the same dream twice, with cows and then grain. What did Joseph say the double dream meant?','God had firmly decided it and would do it soon','There would be two famines','Pharaoh needed a second opinion','Genesis 41:32. Joseph himself had two dreams as a boy (Genesis 37:5-9), and both came true.']
+    'Genesis 37:26-27':['Judah came up with selling Joseph. Later, how does Judah show he has changed?','He offers to be a slave in Benjamin’s place','He pays back the twenty pieces of silver','He goes to Egypt alone to find Joseph','He confesses to Jacob right away','Genesis 44:33. The brother who sold one brother now gives himself up for another. Jacob later says the scepter will not depart from Judah (Genesis 49:10), and Jesus is born from Judah’s line.'],
+    'Genesis 41:25-30':['Joseph’s story moves in pairs. Which pair is NOT in it?','Two coats from his father','Two dreams as a boy','Two prisoners with dreams','Two sons born in Egypt','Genesis 37:5-9, 40:5, 41:1-7 and 41:50-52. Joseph said a dream given twice means God has firmly decided it (Genesis 41:32). Only one coat, and it was torn from him.']
   },
   babymoses:{
-    'Exodus 2:4':['Hebrews 11 praises Moses’ parents. What for?','They hid him and were not afraid of the king’s order','They built a big boat','They moved out of Egypt','Hebrews 11:23. They saw he was no ordinary child, and their faith was stronger than their fear.'],
-    'Exodus 2:8':['Moses had a big brother too. Who was he?','Aaron','Joshua','Caleb','Exodus 7:7 says Aaron was three years older than Moses. Miriam, Aaron and Moses would all lead Israel together (Micah 6:4).']
+    'Exodus 2:4':['Hebrews 11:23 praises Moses’ parents for their faith. What exactly does it say they did?','Hid him three months, unafraid of the king’s order','Prayed at the Nile every morning','Asked the princess to adopt him','Moved the family to Midian','Hebrews 11:23. They saw he was no ordinary child. Their faith was stronger than their fear of Pharaoh.'],
+    'Exodus 2:8':['Micah 6:4 says God sent Moses, Aaron and Miriam to lead Israel. Which of these did Miriam NOT do?','Help carry the ark across the Jordan','Lead a song after the Red Sea','Get called a prophet','Speak against Moses with Aaron','Exodus 15:20-21 and Numbers 12:1-2. Miriam died in the wilderness at Kadesh (Numbers 20:1), before Israel crossed the Jordan. The priests carried the ark across (Joshua 3).']
   },
   bush:{
-    'Exodus 3:6':['Years later, Moses asked to see God’s glory. What happened?','God hid him in a rock and let him see His back','God showed him His face','God said no and left','Exodus 33:18-23. God covered Moses with His hand as He passed by. Afterward Moses’ face shone so brightly that he wore a veil (Exodus 34:29-35).'],
-    'Exodus 3:10':['Moses was 80 years old here. How long had he been a shepherd in Midian?','About 40 years','About 4 years','About 70 years','Acts 7:23, 7:30 and Exodus 7:7. Moses spent 40 years in Pharaoh’s palace, 40 in the wilderness, and 40 leading Israel. He died at 120 (Deuteronomy 34:7).']
+    'Exodus 3:6':['Later Moses asked to see God’s glory. God said no one may see His face and live. What did God do instead?','Put him in a crack in a rock and let him see His back','Showed His face for a single moment','Sent an angel in His place','Spoke from the burning bush again','Exodus 33:18-23. God covered Moses with His hand as He passed by. Afterward Moses’ face shone so brightly that he wore a veil (Exodus 34:29-35).'],
+    'Exodus 3:10':['Stephen says Moses’ life came in three 40-year parts (Acts 7). What were they, in order?','Palace, wilderness, leading Israel','Wilderness, palace, leading Israel','Slavery, palace, wilderness','Palace, leading Israel, wilderness','Acts 7:23, 7:30, 7:36 and Exodus 7:7. Moses was 80 at the burning bush. He died at 120 (Deuteronomy 34:7). God spent 80 years getting him ready for 40 years of work.']
   },
   redsea:{
-    'Exodus 14:13-14':['God did not take the people on the short road out of Egypt. Why not?','They might see war, get scared and go back','The short road was flooded','Pharaoh owned that road','Exodus 13:17-18. The short road along the coast went through Philistine land. God knew they were not ready for war, so He led them toward the sea instead.'],
-    'Exodus 15:21':['Paul says crossing the sea was a picture of something Christians do. What?','Baptism','Communion','Christmas','1 Corinthians 10:1-2 says the Israelites were “baptized into Moses in the cloud and in the sea.” They went through the water and came out free.']
+    'Exodus 14:13-14':['Pharaoh thought the Israelites were wandering around lost by the sea (Exodus 14:3). Who set that up?','God, so Pharaoh would chase them','Moses, who took a wrong turn','Aaron, who misread the stars','The people, who wanted to go back','Exodus 14:1-4. God had them turn back and camp by the sea on purpose, “and the Egyptians will know that I am the Lord.” What looked like a trap was God’s plan.'],
+    'Exodus 15:21':['In 1 Corinthians 10:1-4, Paul says the sea and cloud pictured baptism. What does he say the rock that gave them water pictured?','Christ','The Holy Spirit','The Law of Moses','Heaven','“They drank from the spiritual rock that accompanied them, and that rock was Christ” (1 Corinthians 10:4). Paul read the whole Exodus story as pointing to Jesus.']
   },
   jericho:{
-    'Joshua 6:3-4':['How many trips around Jericho did the army make in all?','13','7','6','Once a day for six days, then seven times on the seventh day. Seven priests, seven horns, seven days, seven trips. In the Bible, seven often stands for something complete.'],
-    'Joshua 6:22':['Jericho is one of the oldest cities in the world. Where is it?','About 850 feet below sea level','On top of a tall mountain','Right on the seashore','It sits in the Jordan Valley near the Dead Sea, the lowest land on earth. Springs keep it green in the desert, so it was called the City of Palms (Deuteronomy 34:3).']
+    'Joshua 6:3-4':['Counting all seven days, how many times did the army march around Jericho?','13','7','12','14','Once a day for six days, then seven times on the seventh day. Seven priests, seven horns, seven days and seven laps on the last day. In the Bible, seven often means complete.'],
+    'Joshua 6:22':['Jericho shows up again in the Gospels. Which two people did Jesus meet there?','Zacchaeus and blind Bartimaeus','Nicodemus and Lazarus','Matthew and Thomas','Martha and Mary','Luke 19:1-10 and Mark 10:46-52. The city that fell to God’s people became a place where Jesus rescued people. He also set the story of the Good Samaritan on the road to Jericho (Luke 10:30).']
   },
   gideon:{
-    'Judges 6:23':['That same night God gave Gideon a first job. What was it?','Tear down his father’s altar to Baal','Count his soldiers','Build a winepress','Judges 6:25-32. Gideon did it at night because he was afraid. The town wanted him killed, but his father said, “Let Baal fight for himself.” So Gideon was called Jerub-Baal.'],
-    'Judges 7:7':['Later the Bible counts the enemy army. About how big was it?','About 135,000 men','About 3,000 men','About 30,000 men','Judges 8:10 says 120,000 fell and 15,000 were left. That is 450 enemy soldiers for every one of Gideon’s 300.']
+    'Judges 6:23':['After God called him, Gideon got a new nickname from his own town. What was it?','Jerub-Baal: “Let Baal fight him”','Mighty Warrior: “God is with him”','Yahweh Shalom: “The Lord is peace”','Ephraim: “Fruitful”','Judges 6:25-32. Gideon tore down his father’s altar to Baal. His father said, if Baal is a god, let him defend himself. Baal never did.'],
+    'Judges 7:7':['Judges 8:10 says the enemy army was about 135,000. About how many enemies did each of Gideon’s 300 men face?','About 450','About 4','About 45','About 4,500','135,000 divided by 300 is 450. God cut the army from 32,000 so that no one could say their own strength won the battle (Judges 7:2).']
   },
   samson:{
-    'Judges 16:17':['Which tribe of Israel was Samson from?','Dan','Judah','Levi','Judges 13:2. Dan was a small tribe squeezed by the Philistines along the coast. Long before, Jacob said Dan would “provide justice for his people” (Genesis 49:16).'],
-    'Judges 16:28':['Hebrews 11 lists heroes of faith. Is Samson on the list?','Yes','No, he made too many mistakes','Only his parents are','Hebrews 11:32 names Samson, along with Gideon and David. The list is not about perfect people. It is about people who trusted God.']
+    'Judges 16:17':['Samson was from the tribe of Dan. Which list of the twelve tribes leaves Dan out completely?','Revelation 7','Genesis 49','Numbers 1','Deuteronomy 33','Revelation 7:4-8 lists 12,000 from each tribe but skips Dan, perhaps because Dan led Israel into idol worship (Judges 18:30). Samson, Dan’s most famous son, shows a tribe that kept drifting from God.'],
+    'Judges 16:28':['Hebrews 11:32 names Samson as a person of faith. Who else is named in that same verse?','Gideon, Barak, Jephthah, David and Samuel','Elijah, Elisha and Jonah','Joseph, Moses and Joshua','Daniel, Esther and Ruth','Hebrews 11:32. Several of them had serious failures. The list praises faith, not perfection.']
   },
   david:{
-    '1 Samuel 17:8-9':['Goliath’s bronze armor weighed 5,000 shekels. About how much is that?','About 125 pounds','About 12 pounds','About 500 pounds','1 Samuel 17:5. His coat weighed about as much as a grown man, and the iron point of his spear alone weighed about 15 pounds (17:7).'],
-    '1 Samuel 17:37-38':['Why is it surprising that Saul offered David his armor?','Saul was the tallest man in Israel','Saul had no armor','Armor was against the law','1 Samuel 9:2 says Saul was a head taller than anyone else. Israel’s tallest warrior should have been the one to face the giant. Instead he sent a boy.']
+    '1 Samuel 17:8-9':['Goliath’s bronze armor weighed 5,000 shekels (1 Samuel 17:5). About how much is that?','About 125 pounds','About 12 pounds','About 60 pounds','About 500 pounds','A shekel was about 0.4 ounces. His coat weighed about as much as a grown man, and the iron point of his spear alone weighed about 15 pounds (1 Samuel 17:7).'],
+    '1 Samuel 17:37-38':['Why is it surprising that Saul, not someone else, offered David armor?','Saul was taller than anyone in Israel','Saul had beaten Goliath once before','Saul’s armor was made for a boy','Saul was David’s uncle','1 Samuel 9:2 says Saul was a head taller than everyone. Israel’s tallest warrior should have faced the giant. Instead he sent a boy and tried to make the boy look like Saul.']
   },
   elijah:{
-    '1 Kings 18:19':['Who was pushing Israel to worship Baal?','Queen Jezebel, King Ahab’s wife','Queen Esther','Delilah','1 Kings 16:31. Jezebel was a princess from Sidon, where Baal was worshiped. She had been hunting down the Lord’s prophets (1 Kings 18:4).'],
-    '1 Kings 18:44':['James in the New Testament uses Elijah as an example. Of what?','An ordinary person whose prayers were powerful','The fastest runner in Israel','Someone who was never afraid','James 5:17-18. Elijah was a human being just like us. Right after this he got so scared and tired that he ran away and asked to die (1 Kings 19:3-4), and God cared for him with food and rest.']
+    '1 Kings 18:19':['Who was pushing Israel to worship Baal, and where was she from?','Jezebel, a princess of Sidon','Athaliah, Ahab’s daughter','Delilah of the valley of Sorek','The Queen of Sheba','1 Kings 16:31. Jezebel was the daughter of the king of Sidon, where Baal was worshiped, and she hunted the Lord’s prophets (1 Kings 18:4). Athaliah, Ahab’s daughter, later did the same in Judah.'],
+    '1 Kings 18:44':['James 5:17 says how long it did not rain in Elijah’s time. How long?','Three and a half years','Exactly three years','Forty days','Seven years','James 5:17 and Luke 4:25. 1 Kings 18:1 says “in the third year,” counted from Elijah’s time hiding. James uses Elijah to show that an ordinary person’s prayers are powerful.']
   },
   jonah:{
-    'Jonah 1:9':['Jonah got his ship at Joppa. Who has a big moment in Joppa later in the Bible?','Peter, when God sent him to non-Jewish people','Paul, in prison','Mary Magdalene','Acts 10. In Joppa, Peter had a vision and was sent to a Roman officer named Cornelius. Jonah ran from Joppa to get away from foreigners. Peter went from Joppa to welcome them.'],
-    'Jonah 3:4':['When God spared Nineveh, how did Jonah feel?','Angry','Happy','Proud of himself','Jonah 4:1-2. He said he ran away because he knew God is “gracious and compassionate, slow to anger.” The book ends with God asking Jonah if He should not care about this great city.']
+    'Jonah 1:9':['Jonah sailed from Joppa. Who has a big moment in Joppa later in the Bible?','Peter, sent from there to welcome non-Jews','Paul, when he was in prison','Philip, baptizing a traveler','Mary Magdalene, telling the news','Acts 10. In Joppa, Peter had a vision and was sent to a Roman officer named Cornelius. Jonah ran from Joppa to get away from foreigners. Peter went from Joppa to welcome them.'],
+    'Jonah 3:4':['In Jonah 4:2 Jonah explains why he ran: he knew God is “gracious and compassionate, slow to anger.” Where was God first described that way?','Exodus 34:6, to Moses','Genesis 1:1, at creation','Psalm 23:1, by David','Isaiah 53:5, by Isaiah','Exodus 34:6, when God passed by Moses on the mountain. Jonah knew God’s character perfectly. He was angry that it applied to his enemies.']
   },
   daniel:{
-    'Daniel 6:16':['Before King Darius, Daniel served kings of which empire?','Babylon','Egypt','Rome','Daniel was taken from Jerusalem to Babylon as a teenager (Daniel 1:1-6). He served King Nebuchadnezzar, and he read the writing on the wall the night Babylon fell (Daniel 5).'],
-    'Daniel 6:20':['Which of Daniel’s friends were thrown into a fiery furnace years before?','Shadrach, Meshach and Abednego','Shem, Ham and Japheth','Peter, James and John','Daniel 3. They would not bow to a gold statue. Someone who looked like a son of the gods walked with them in the fire, and they came out without even smelling like smoke.']
+    'Daniel 6:16':['Daniel served under kings of two empires. Which pair, in order, is right?','Babylon, then Persia','Egypt, then Assyria','Assyria, then Babylon','Persia, then Greece','Daniel was taken to Babylon as a teenager (Daniel 1). He read the writing on the wall the night Babylon fell (Daniel 5), and then served Darius and Cyrus of Persia (Daniel 6:28).'],
+    'Daniel 6:20':['Babylon gave Daniel’s three friends new names: Shadrach, Meshach and Abednego. What were their Hebrew names?','Hananiah, Mishael and Azariah','Shem, Ham and Japheth','Hophni, Phinehas and Eli','Caleb, Joshua and Othniel','Daniel 1:6-7. Daniel’s Babylonian name was Belteshazzar. Babylon renamed them after its gods, but they stayed loyal to the Lord, even in a fiery furnace (Daniel 3).']
   },
   esther:{
-    'Esther 5:3':['Esther also had a Hebrew name. What was it?','Hadassah','Hannah','Deborah','Esther 2:7. Hadassah means myrtle, a sweet-smelling tree. Esther may come from a Persian word for star.'],
-    'Esther 7:6':['Haman came from the family of Agag. Which king of Israel was told to defeat Agag long before?','King Saul','King David','King Solomon','Haman is called an Agagite (Esther 3:1). Saul failed to finish the job with Agag (1 Samuel 15). Mordecai came from Saul’s own tribe, Benjamin (Esther 2:5). An old story finally ends.']
+    'Esther 5:3':['Esther also had a Hebrew name. What was it?','Hadassah','Hannah','Deborah','Abigail','Esther 2:7. Hadassah means myrtle, a sweet-smelling tree. Esther may come from a Persian word for star.'],
+    'Esther 7:6':['Haman was an Agagite (Esther 3:1). Which king of Israel had been told to wipe out Agag’s people and failed?','King Saul','King David','King Solomon','King Ahab','1 Samuel 15. Saul spared Agag. Mordecai was from Saul’s own tribe, Benjamin, and his family line includes a Kish, the same name as Saul’s father (Esther 2:5). An old story finally ends.']
   },
   christmas:{
-    'Luke 2:10':['Why were Mary and Joseph in Bethlehem at all?','A Roman census made people go to their family’s hometown','They lived there','They were on their way to Egypt','Luke 2:1-4. Emperor Augustus ordered it. Joseph was from David’s family, so he went to Bethlehem, the town Micah said the Messiah would come from (Micah 5:2).'],
-    'Luke 2:15':['When Jesus was a few weeks old, He was taken to the temple. Who knew who He was?','Simeon and Anna','Herod and his priests','Zacchaeus and Peter','Luke 2:25-38. Simeon had been promised he would see the Messiah before he died. He held Jesus and said, “My eyes have seen your salvation.”']
+    'Luke 2:10':['Luke 2:1 names the emperor whose census sent Joseph to Bethlehem. Who was it?','Caesar Augustus','Tiberius Caesar','Nero','Julius Caesar','Augustus was called “savior” and “son of god” on Roman coins and monuments. Luke quietly shows that the real Savior was born because of Augustus’ order, in the town Micah named (Micah 5:2).'],
+    'Luke 2:15':['When Jesus was about 40 days old, He was brought to the temple. Who recognized Him there?','Simeon and Anna','Zechariah and Elizabeth','Herod and the chief priests','Nicodemus and Joseph of Arimathea','Luke 2:22-38. Simeon had been promised he would see the Messiah before he died. Anna, a prophet in her 80s, told everyone. Zechariah and Elizabeth were John the Baptist’s parents (Luke 1).']
   },
   wisemen:{
-    'Matthew 2:8':['Which Herod was this?','Herod the Great, who rebuilt the temple','The Herod at Jesus’ trial','Herod, king of Egypt','Herod the Great ruled for Rome and made the Jerusalem temple huge and beautiful (John 2:20). His son Herod Antipas is the one Jesus stood before at His trial (Luke 23:7).'],
-    'Matthew 2:11':['After the wise men left, where did Joseph take Mary and Jesus?','Egypt','Rome','Babylon','Matthew 2:13-15. Matthew connects it to Hosea 11:1, “Out of Egypt I called my son.” Like Israel long ago, Jesus came up out of Egypt.']
+    'Matthew 2:8':['There are several Herods in the New Testament. Which one met the wise men?','Herod the Great, who rebuilt the temple','Herod Antipas, at Jesus’ trial','Herod Agrippa, who jailed Peter','Herod Philip, ruler of Iturea','Herod the Great made the Jerusalem temple huge and beautiful (John 2:20). His son Antipas met Jesus at His trial (Luke 23:7), and his grandson Agrippa I put Peter in prison (Acts 12).'],
+    'Matthew 2:11':['Matthew says Jesus’ time in Egypt fulfilled Hosea 11:1, “Out of Egypt I called my son.” In Hosea, who was that son?','The nation of Israel','Moses','Joseph','Benjamin','Hosea is looking back to the Exodus. Matthew shows Jesus living out Israel’s story: out of Egypt, through the water at His baptism, then 40 days in the wilderness.']
   },
   storm:{
-    'Mark 4:35':['The Sea of Galilee has other names in the Bible. Which one is right?','The Lake of Gennesaret','The Dead Sea','The Great Sea','Luke 5:1 calls it the Lake of Gennesaret, and John 6:1 calls it the Sea of Tiberias. It is only about 13 miles long and 8 miles wide.'],
-    'Mark 4:38':['Which prophet also slept in a boat during a storm?','Jonah','Elijah','Daniel','Jonah 1:5. Jonah was running from God, and the sailors threw him overboard. Jesus stays in the boat and calms the sea Himself. He said, “Something greater than Jonah is here” (Matthew 12:41).']
+    'Mark 4:35':['The Sea of Galilee goes by other names in the Bible. Which set is right?','Gennesaret, Tiberias and Kinnereth','The Salt Sea and the Sea of the Arabah','The Great Sea and the Western Sea','The Sea of Reeds and Yam Suph','Luke 5:1, John 6:1 and Numbers 34:11. Kinnereth may come from the Hebrew word for harp, because of the lake’s shape. The Salt Sea is the Dead Sea, and the Great Sea is the Mediterranean.'],
+    'Mark 4:38':['Jesus asleep in a storm echoes Jonah asleep in a storm. What is the biggest difference?','Jonah caused the storm; Jesus calms it Himself','Jonah stayed awake the whole time','Jesus was thrown overboard','Jonah’s boat sank','Jonah 1:5-15. The sailors had to throw Jonah in to calm the sea. Jesus just speaks. He said, “Something greater than Jonah is here” (Matthew 12:41).']
   },
   loaves:{
-    'John 6:7':['Philip said 200 denarii would not be enough. What was one denarius?','About one day’s pay for a worker','About one hour’s pay','About one month’s pay','Matthew 20:2. So 200 denarii was more than six months of work, and it still would not have fed the crowd.'],
-    'John 6:12':['After this miracle, what did the crowd want to do?','Make Jesus king by force','Send Him away','Throw Him a feast','John 6:15. They wanted a king who would fill their stomachs and fight Rome. Jesus slipped away to the mountain by Himself.']
+    'John 6:7':['A denarius was a day’s pay (Matthew 20:2). Resting on Sabbaths, about how long would a worker need to earn 200 denarii?','About 8 months','About 2 weeks','About 2 months','About 3 years','200 workdays at six days a week is about 33 weeks. Philip did the math, and it still was not enough. Andrew brought the boy’s lunch instead.'],
+    'John 6:12':['The next day Jesus told the crowd they were following Him for the wrong reason. What was it?','They had eaten the loaves and were filled','They wanted to see Him walk on water','They hoped He would pay their taxes','They thought He was John the Baptist','John 6:26-27. Jesus said, “Do not work for food that spoils, but for food that lasts for eternal life.” After His teaching many followers left (John 6:66).']
   },
   water:{
-    'Matthew 14:26':['Which Gospel writer was in the boat that night?','Matthew','Luke','Mark','Matthew was one of the twelve disciples, a former tax collector (Matthew 9:9). Mark and Luke were not among the twelve. Only Matthew tells about Peter walking on the water.'],
-    'Matthew 14:31':['After Easter, Peter jumped out of a boat toward Jesus again. What happened that time?','He swam to Jesus on the shore','He walked on the water','He caught 12 fish','John 21:7. Peter saw the risen Jesus on the beach and jumped in to swim to Him. That morning Jesus cooked the disciples breakfast.']
+    'Matthew 14:26':['Which Gospel writer was actually in the boat that night?','Matthew','Luke','Mark','Paul','Matthew was one of the twelve, a former tax collector (Matthew 9:9). Mark and Luke were not among the twelve, and Paul came to faith years later. Only Matthew tells about Peter walking on the water.'],
+    'Matthew 14:31':['After Easter, Peter jumped out of a boat toward Jesus again. What did Jesus ask him three times that morning?','“Do you love me?”','“Why did you doubt?”','“Who do you say I am?”','“Where is your faith?”','John 21:15-17. Peter had denied Jesus three times. Jesus gave him three chances to say he loved Him, and each time told him to care for His sheep.']
   },
   zacchaeus:{
-    'Luke 19:5':['Tax collectors like Zacchaeus collected money for whom?','The Roman government','The temple','King Herod’s horses','Tax collectors worked for Rome and often took extra for themselves, so many Jews saw them as traitors. Jesus chose a tax collector, Matthew, as one of His twelve (Matthew 9:9).'],
-    'Luke 19:7':['Where was Jesus going right after Jericho?','Jerusalem, where He would die and rise','Home to Nazareth','To Galilee to go fishing','Luke 19:28. Jericho is about 15 miles from Jerusalem. Within days Jesus would ride into the city on a donkey.']
+    'Luke 19:5':['Jesus said, “I must stay at your house.” Luke uses “must” for God’s plan. Which is another “must” in Luke?','The Son of Man must suffer and be raised','The disciples must fast twice a week','Zacchaeus must give away everything','The temple must be rebuilt in three days','Luke 9:22 and 24:7. Staying with Zacchaeus was not a whim. It belonged to the same mission as the cross.'],
+    'Luke 19:7':['People grumbled that Jesus welcomed sinners in Luke 15 too. Which three stories did He tell in answer?','Lost sheep, lost coin, lost son','Sower, mustard seed, yeast','Good Samaritan, rich fool, ten virgins','Talents, sheep and goats, wedding feast','Luke 15:1-32. Each ends with a party when the lost is found. Zacchaeus is the lost son coming home, and the grumbling crowd sounds like the older brother.']
   },
   easter:{
-    'John 20:2':['Who buried Jesus in this tomb?','Joseph of Arimathea and Nicodemus','Peter and John','Mary and Martha','John 19:38-42. Both were Jewish leaders who had followed Jesus in secret. Nicodemus brought about 75 pounds of spices, a burial fit for a king.'],
-    'John 20:13':['How long after Easter did Jesus go back up to heaven?','40 days','3 days','7 years','Acts 1:3-9. For 40 days He appeared to His followers and taught them. Ten days after that, on Pentecost, the Holy Spirit came.']
+    'John 20:2':['Nicodemus helped bury Jesus in this tomb. When did he first come to Jesus?','At night, asking how to be born again','At the feeding of the 5,000','At the wedding in Cana','On Palm Sunday, waving branches','John 3:1-21 and 19:39. The man who came secretly in the dark ended up publicly honoring Jesus’ body with about 75 pounds of spices.'],
+    'John 20:13':['How long after Easter did Jesus go back up to heaven?','40 days','3 days','7 days','50 days','Acts 1:3-9. For 40 days He appeared to His followers and taught them. Ten days later, at Pentecost (50 days after Passover), the Holy Spirit came.']
   },
   paul:{
-    'Acts 9:5-6':['Before this, Saul watched over the coats of people who killed which follower of Jesus?','Stephen','Peter','Andrew','Acts 7:58 to 8:1. Stephen was the first Christian to die for Jesus. As he died he prayed for the people hurting him. Now Jesus meets one of them on the road.'],
-    'Acts 9:17':['Later Saul had to escape from Damascus. How?','His friends lowered him over the wall in a basket','He sailed away on a ship','An angel opened the gate','Acts 9:23-25. The people who once welcomed his letters now wanted to kill him. Paul still talked about it years later (2 Corinthians 11:32-33).']
+    'Acts 9:5-6':['As Stephen died with Saul watching, he prayed, “Lord, do not hold this sin against them.” Whose words does that echo?','Jesus on the cross','Moses on Mount Nebo','Samson in the temple','Elijah in the whirlwind','Luke 23:34, “Father, forgive them.” Luke wrote both books and shows Stephen dying like his Lord (Acts 7:58-60). Now Jesus answers that prayer by meeting Saul.'],
+    'Acts 9:17':['Soon after this, Saul had to escape from Damascus. How?','Friends lowered him over the wall in a basket','He sailed away at night','An angel opened the city gate','He hid in a wagon of grain','Acts 9:23-25 and 2 Corinthians 11:32-33. The man who came to arrest believers left in a basket, helped by the believers he once hunted.']
   }
 };
 function askFor(ref){
@@ -635,7 +635,7 @@ function showAsk(a){
   el.querySelector('.ref').textContent='';
   el.querySelector('.extra').className='extra hidden';
   el.classList.add('asking');
-  const opts=[a[1],a[2],a[3]].sort(()=>Math.random()-0.5);
+  const opts=a.slice(1,-1).sort(()=>Math.random()-0.5), why=a[a.length-1];
   box.innerHTML=''; box.className='ask';
   opts.forEach((o,i)=>{ const b=document.createElement('button'); b.type='button'; b.innerHTML='<span>'+(i+1)+'</span> '; b.appendChild(document.createTextNode(o));
     b.addEventListener('pointerdown',e=>e.stopPropagation());
@@ -644,7 +644,7 @@ function showAsk(a){
       story._askN=(story._askN||0)+1; if(!tries) story._askRight=(story._askRight||0)+1;
       box.querySelectorAll('button').forEach(x=>{ x.disabled=true; if(x!==b) x.classList.add('dim'); }); b.classList.add('right');
       const t=box.querySelector('.try'); if(t) t.remove();
-      const w=document.createElement('div'); w.className='why'; w.innerHTML='<b>'+(tries?'That’s it!':'Yes!')+'</b> '; w.appendChild(document.createTextNode(a[4])); box.appendChild(w);
+      const w=document.createElement('div'); w.className='why'; w.innerHTML='<b>'+(tries?'That’s it!':'Yes!')+'</b> '; w.appendChild(document.createTextNode(why)); box.appendChild(w);
       story._ask=null; el.classList.remove('asking'); sayBusyUntil=performance.now()+500; };
     box.appendChild(b); });
   el.classList.remove('hidden'); sayBusyUntil=performance.now()+350;
@@ -5117,7 +5117,7 @@ addEventListener('keydown',e=>{
   const k=e.key.toLowerCase(); if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k)) e.preventDefault();
   if(k===' '||k==='e'||k==='enter'){ if(!e.repeat) pressAct(); else if(story&&story.step==='sling'&&!saying()) actHeld=true; return; }
   if(k==='escape'){ if(running) showMenu(); return; }
-  if(['1','2','3'].includes(k) && askKey(k)) return;
+  if(['1','2','3','4'].includes(k) && askKey(k)) return;
   if((k==='backspace'||k==='b') && running && saying()){ e.preventDefault(); sayBack(); return; }
   keys[k]=true;
 });
