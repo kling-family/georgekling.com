@@ -564,7 +564,7 @@ const GROWN_ASK={
     'Judges 7:7':['Later the Bible counts the enemy army. About how big was it?','About 135,000 men','About 3,000 men','About 30,000 men','Judges 8:10 says 120,000 fell and 15,000 were left. That is 450 enemy soldiers for every one of Gideon’s 300.']
   },
   samson:{
-    'Judges 16:17':['How much did each Philistine ruler promise Delilah to find Samson’s secret?','1,100 pieces of silver','30 pieces of silver','10 pieces of gold','Judges 16:5. There were five Philistine rulers, so that could be 5,500 pieces of silver, a huge fortune. Judas was paid 30 pieces to hand over Jesus.'],
+    'Judges 16:17':['Which tribe of Israel was Samson from?','Dan','Judah','Levi','Judges 13:2. Dan was a small tribe squeezed by the Philistines along the coast. Long before, Jacob said Dan would “provide justice for his people” (Genesis 49:16).'],
     'Judges 16:28':['Hebrews 11 lists heroes of faith. Is Samson on the list?','Yes','No, he made too many mistakes','Only his parents are','Hebrews 11:32 names Samson, along with Gideon and David. The list is not about perfect people. It is about people who trusted God.']
   },
   david:{
@@ -648,6 +648,107 @@ function showAsk(a){
   el.classList.remove('hidden'); sayBusyUntil=performance.now()+350;
 }
 function askKey(k){ if(!story||!story._ask) return false; const b=$('say').querySelectorAll('.ask button')[+k-1]; if(b) b.click(); return true; }
+// Grown-up level: more of the Bible passage, played right after the line with that reference.
+// Keys: 'Ref' (first time it shows), 'Ref|Speaker', or 'Ref#2' (second time it shows).
+const GL_B='Bible';
+const GROWN_LINES={
+  adam:{
+    'Genesis 2:15':[[GL_B,'A river flowed out of Eden to water the garden, and from there it split into four rivers. Two of them were the Tigris and the Euphrates.','Genesis 2:10-14']],
+    'Genesis 3:16-19':[['God','By the sweat of your brow you will eat your food, until you return to the ground. For dust you are, and to dust you will return.','Genesis 3:19'],
+      [GL_B,'God said the man must not reach out and take from the tree of life and live forever in this broken state.','Genesis 3:22']]
+  },
+  noah:{
+    'Genesis 8:4-5':[[GL_B,'The ark came to rest on the seventeenth day of the seventh month, exactly five months after the rain began.','Genesis 7:11, 8:4']],
+    'Genesis 8:22':[['God','Be fruitful and fill the earth. Every human life is precious, because I made people in My own image.','Genesis 9:1-6']]
+  },
+  abraham:{
+    'Genesis 12:7#2':[[GL_B,'From there Abram moved on to the hills east of Bethel. He pitched his tent, built another altar, and called on the name of the Lord.','Genesis 12:8']],
+    'Genesis 15:6':[[GL_B,'Then God told Abram to bring a young cow, a goat, a ram, a dove and a pigeon. Abram cut the animals in half and laid the halves across from each other.','Genesis 15:9-10'],
+      [GL_B,'After dark, a smoking firepot and a blazing torch passed between the pieces. That day the Lord made a covenant, a solemn promise, with Abram.','Genesis 15:17-18']]
+  },
+  joseph:{
+    'Genesis 39:1-3':[[GL_B,'Joseph worked so well that Potiphar put him in charge of his whole house.','Genesis 39:4-6']],
+    'Genesis 41:47-49':[[GL_B,'Before the famine, Joseph had two sons. He named the first Manasseh, “God made me forget my trouble,” and the second Ephraim, “God made me fruitful in the land of my suffering.”','Genesis 41:50-52']]
+  },
+  babymoses:{
+    'Exodus 2:10#2':[[GL_B,'Moses grew up in Pharaoh’s palace and was taught all the wisdom of Egypt. But he never forgot that the slaves were his own people.','Acts 7:22-23, Exodus 2:11'],
+      [GL_B,'One day, when he was grown, Moses saw an Egyptian beating a Hebrew slave. Moses struck the Egyptian down, and when Pharaoh found out, Moses ran away to the land of Midian.','Exodus 2:11-15']]
+  },
+  bush:{
+    'Exodus 4:5':[['God','Now put your hand inside your cloak.','Exodus 4:6'],
+      [GL_B,'Moses did. When he took it out, his skin was white like snow with a skin disease. God told him to put it back, and when he took it out again, it was healthy.','Exodus 4:6-7'],
+      ['God','If they still do not believe, take some water from the Nile and pour it on the ground. It will turn to blood.','Exodus 4:9']]
+  },
+  redsea:{
+    'Exodus 14:31':[[GL_B,'Three days later the people found only bitter water at a place called Marah. God showed Moses a piece of wood, and when he threw it in, the water turned sweet.','Exodus 15:22-25']]
+  },
+  jericho:{
+    'Joshua 4:19':[[GL_B,'The Jordan was flooding. But as soon as the priests carrying the ark stepped into the water, the river stopped and piled up, and everyone crossed on dry ground.','Joshua 3:15-17'],
+      [GL_B,'Soon they ate food grown in the land, and the manna stopped. After 40 years, God’s people were finally eating from the land He promised.','Joshua 5:11-12']]
+  },
+  gideon:{
+    'Judges 6:24':[[GL_B,'That same night, Gideon took ten servants and tore down his father’s altar to Baal. He did it at night because he was afraid of his family and the town.','Judges 6:25-27']],
+    'Judges 8:28':[[GL_B,'Afterward the people asked Gideon to be their king. Gideon said, “I will not rule over you. The Lord will rule over you.”','Judges 8:22-23']]
+  },
+  samson:{
+    'Judges 14:9':[[GL_B,'Later Samson made up a riddle about it: “Out of the eater, something to eat. Out of the strong, something sweet.”','Judges 14:14']]
+  },
+  david:{
+    '1 Samuel 16:11':[[GL_B,'Not long before, the prophet Samuel had come to Bethlehem and poured oil on David’s head. From that day on, the Spirit of the Lord came powerfully on him.','1 Samuel 16:13']],
+    '1 Samuel 17:47#2':[[GL_B,'From that day on, Saul kept David with him. And Saul’s son Jonathan loved David as himself. He gave David his own robe, sword and bow, and they became best friends.','1 Samuel 18:1-4']]
+  },
+  elijah:{
+    '1 Kings 18:1':[[GL_B,'During the drought, God had sent ravens to bring Elijah bread and meat by a brook. Later a widow shared her last flour and oil with him, and her jars never ran out.','1 Kings 17:2-16']],
+    '1 Kings 18:17':[[GL_B,'On the way, Elijah had met Obadiah, who ran Ahab’s palace but loved the Lord. When the Lord’s prophets were being hunted, Obadiah hid 100 of them in two caves.','1 Kings 18:3-4, 18:7']]
+  },
+  jonah:{
+    'Jonah 3:10':[[GL_B,'But Jonah was angry. He went out east of the city and sat down to watch what would happen. God made a leafy plant grow up to shade him, and Jonah was very happy about it.','Jonah 4:1-6'],
+      [GL_B,'At dawn the next day, God sent a worm to chew the plant, and it dried up. The sun beat down on Jonah, and he was angry about the plant.','Jonah 4:7-9'],
+      ['God','You cared about this plant, though you did not make it grow. Shouldn’t I care about the great city of Nineveh, with more than 120,000 people who do not know right from wrong, and many animals too?','Jonah 4:10-11']]
+  },
+  daniel:{
+    'Daniel 6:1-2':[[GL_B,'Daniel had lived in Babylon since he was a young man. Back then, he and his friends would not eat the king’s rich food, and God made them wiser than all the king’s advisers.','Daniel 1:8-20']],
+    'Daniel 6:27':[[GL_B,'So Daniel did well during the reign of Darius and the reign of Cyrus the Persian.','Daniel 6:28']]
+  },
+  esther:{
+    'Esther 4:4, 2:7':[[GL_B,'Esther had become queen after King Xerxes searched the whole kingdom. Mordecai told her not to tell anyone she was Jewish, and she kept it secret.','Esther 2:10, 2:17']],
+    'Esther 6:10-11':[[GL_B,'Haman hurried home, miserable. His wife and friends said, “If Mordecai is Jewish, you cannot win against him. You will surely fall.”','Esther 6:12-13']]
+  },
+  christmas:{
+    'Luke 2:20':[[GL_B,'On the eighth day the baby was named Jesus, the name the angel gave Him before He was born.','Luke 2:21']]
+  },
+  wisemen:{
+    'Matthew 2:12#2':[[GL_B,'After they left, an angel told Joseph in a dream to take the child and His mother and escape to Egypt. They stayed there until Herod died.','Matthew 2:13-15']]
+  },
+  storm:{
+    'Mark 4:41|The disciples':[[GL_B,'They reached the other side of the lake, the region of the Gerasenes. There Jesus set free a man who had been tormented by many demons, and the man begged to follow Him.','Mark 5:1-18']]
+  },
+  loaves:{
+    'John 6:1-3':[[GL_B,'It was almost time for the Passover, the feast that remembered God feeding His people in the desert and setting them free.','John 6:4']],
+    'John 6:14':[[GL_B,'Jesus knew they were about to come and make Him king by force, so He went away again to a mountain by Himself.','John 6:15']]
+  },
+  water:{
+    'Matthew 14:33|The disciples':[[GL_B,'When they crossed over, they landed at Gennesaret. People brought Jesus all their sick, and everyone who touched even the edge of His cloak was healed.','Matthew 14:34-36']]
+  },
+  zacchaeus:{
+    'Luke 19:10':[[GL_B,'Then Jesus told a story about a nobleman who gave his servants money to use while he was away. When he came back as king, he asked each one what he had done with it.','Luke 19:11-27']]
+  },
+  easter:{
+    'John 20:18|Bible':[[GL_B,'That evening the disciples were together behind locked doors. Jesus came and stood among them and said, “Peace be with you!” He showed them His hands and His side.','John 20:19-20'],
+      [GL_B,'Thomas was not there. He said he would not believe until he touched the nail marks. A week later Jesus came again, and Thomas said, “My Lord and my God!”','John 20:24-28']]
+  },
+  paul:{
+    'Acts 9:21-22':[[GL_B,'Later Barnabas brought Saul to the apostles in Jerusalem. He told them how Saul had met the Lord on the road and had preached bravely in Damascus.','Acts 9:26-27']]
+  }
+};
+function linesFor(who, ref){
+  if(LEVEL!=='grown' || !story || !ref) return null;
+  const m=GROWN_LINES[story.id]; if(!m) return null;
+  const c=story._refN||(story._refN={}); c[ref]=(c[ref]||0)+1;
+  const seen=story._seen||(story._seen=new Set());
+  for(const k of [ref+'#'+c[ref], ref+'|'+who, c[ref]===1?ref:null]){ if(k && m[k] && !seen.has('lines:'+k)){ seen.add('lines:'+k); return m[k]; } }
+  return null;
+}
 const READY = STORIES.filter(s=>s.ready);
 // A ready story opens when the ready story before it is done (or you already finished it).
 function isUnlocked(s){ const i=READY.indexOf(s); return i===0 || SAVE.done.includes(s.id) || SAVE.done.includes(READY[i-1].id); }
@@ -941,7 +1042,7 @@ function nextSay(){
   if(!sayQ.length){ el.classList.add('hidden'); const cb=sayCb; sayCb=null; if(cb) cb(); return; }
   const item=sayQ.shift(); if(item && item.ask){ showAsk(item.ask); return; }
   const [who,txt,ref,fn]=item; if(fn) fn();
-  { const a=askFor(ref); if(a) sayQ.unshift({ask:a}); }
+  { const more=linesFor(who,ref); if(more) sayQ.unshift(...more.map(l=>l.slice())); const a=askFor(ref); if(a) sayQ.unshift({ask:a}); }
   el.querySelector('.who').textContent=who||'';
   el.querySelector('.txt').textContent=txt;
   el.querySelector('.ref').textContent=ref||'';
