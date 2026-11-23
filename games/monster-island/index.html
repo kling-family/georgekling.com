@@ -741,7 +741,11 @@ const REX_LINE='Rex: "Hey, you beat me to the champion of islands. Well, now I\'
 // Preview links only (never the real site): ?champion jumps straight to Champion Island with a ready test player, ?tournament straight to the tournament bracket, ?winnersfinal or ?final to a new bracket where you're already in the winners final or grand final
 // preview links work everywhere except the real site
 const PQ=()=>location.search+location.hash.replace(/^#/,"?");
-function previewChamp(){if(/georgekling\.com$/.test(location.hostname)||!/[?&](earth|champion|tournament|winnersfinal|tournamentfinal|final)\b/.test(PQ()))return false;
+function previewChamp(){if(/georgekling\.com$/.test(location.hostname)||!/[?&](whirlpool|earth|champion|tournament|winnersfinal|tournamentfinal|final)\b/.test(PQ()))return false;
+  // #whirlpool: a test player who has all five map pieces, so the whirlpool is open on the sea chart
+  if(/[?&]whirlpool\b/.test(PQ())){const id='pwhirl',ps=profiles();if(!ps.some(q=>q.id===id)){ps.push({id,name:'Whirlpool Test',color:2});saveProfiles(ps)}PROFILE=ps.find(q=>q.id===id);
+    if(!readSave(id)){S={starter:'bubblop',team:[['tidalord',27],['flarion',26],['bloomroar',26],['stormhare',25],['boulderon',25],['phantomkin',25]].map(([sp,l])=>mk(sp,l)),unlocked:MAIN+1,beaten:[0,1,2,3,4,EARTH],pieces:{0:1,1:1,2:1,3:1,4:1},caught:{flicklet:1,bubblop:1,sproutle:1},coins:600,supers:8,pos:{},lookSeen:1,look:{},compass:1,buddy:{name:'Pip',d:{}},gift:1,onboard:1};save()}
+    S=load();map();return true}
   if(/[?&]earth\b/.test(PQ())){const id='pearth',ps=profiles();if(!ps.some(q=>q.id===id)){ps.push({id,name:'Earth Test',color:3});saveProfiles(ps)}PROFILE=ps.find(q=>q.id===id);
     if(!readSave(id)){S={starter:'flicklet',team:[['flarion',23],['tidalord',22],['bloomroar',22],['stormhare',21],['phantomkin',21]].map(([sp,l])=>mk(sp,l)),unlocked:MAIN+1,beaten:[0,1,2,3,4],caught:{flicklet:1,bubblop:1,sproutle:1},coins:500,supers:5,pos:{},lookSeen:1,look:{},compass:1,buddy:{name:'Pip',d:{}},gift:1,onboard:1};save()}
     S=load();map();return true}
