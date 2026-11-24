@@ -1626,9 +1626,6 @@ function leaveSecret(){
 }
 // there is only one Crystal Crash: it waits in Earth Island's little cave until you catch it
 const ownCrystal=()=>[...S.team,...(S.box||[])].some(x=>x.sp==='crystalrock');
-// the little cave: a dark opening in the rock, with a purple glint while Crystal Crash is still inside
-function drawCave(ctx,q,t){const cx=q.x+.5,cy=q.y+.9;ctx.save();ctx.fillStyle='#120d16';ctx.strokeStyle='#3a3430';ctx.lineWidth=.06;ctx.beginPath();ctx.moveTo(cx-.34,cy);ctx.quadraticCurveTo(cx-.36,cy-.52,cx,cy-.56);ctx.quadraticCurveTo(cx+.36,cy-.52,cx+.34,cy);ctx.closePath();ctx.fill();ctx.stroke();
-  if(!ownCrystal()){const k=.5+.5*Math.sin(t/300);ctx.globalAlpha=.5+.5*k;ctx.fillStyle='#c77dff';ctx.beginPath();ctx.arc(cx-.06,cy-.2,.07+.03*k,0,7);ctx.fill();ctx.fillStyle='#fff';ctx.globalAlpha=.7*k;ctx.fillRect(cx-.075,cy-.32,.03,.24);ctx.fillRect(cx-.18,cy-.215,.24,.03)}ctx.restore()}
 function openCave(){
   const Wd=WORLD,i=Wd.i,pr=document.getElementById('prompt'),first=!S.cave;Wd.paused=true;Wd.held=null;pr.hidden=false;
   // like every secret door, it stays shut until you beat the island's champion
@@ -1683,12 +1680,12 @@ function drawOver(t){
   const vx0=cam.x-o.x-cw/2/sc-1,vx1=cam.x-o.x+cw/2/sc+1,vy0=cam.y-o.y-ch/2/sc-1,vy1=cam.y-o.y+ch/2/sc+2,vis=(x,y)=>x>=vx0&&x<=vx1&&y>=vy0&&y<=vy1;
   const tilePx=sc;
   if(m.secret)drawPortal(ctx,m.start.x,m.start.y,t);else drawDock(ctx,m.start.x,m.start.y);
-  if(m.secretStone){const q=m.secretStone;if(S.secrets[i])drawPortal(ctx,q.x,q.y-.15,t,.8);else if(S.beaten.includes(i)){const k=.5+.5*Math.sin(t/220),cx=q.x+.5,cy=q.y+.1;ctx.save();ctx.globalAlpha=.35+.35*k;const gg=ctx.createRadialGradient(cx,cy,.05,cx,cy,.9);gg.addColorStop(0,'#fff');gg.addColorStop(.4,'#e6a8ff');gg.addColorStop(1,'rgba(200,120,255,0)');ctx.fillStyle=gg;ctx.beginPath();ctx.arc(cx,cy,.9,0,7);ctx.fill();ctx.globalAlpha=.9;ctx.fillStyle='#fff';const L=.22+.12*k;ctx.fillRect(cx-.03,cy-L,.06,L*2);ctx.fillRect(cx-L,cy-.03,L*2,.06);ctx.restore()}else if(Math.floor(t/300)%11===0){ctx.fillStyle='#fff';ctx.globalAlpha=.9;ctx.fillRect(q.x+.62,q.y-.25,.05,.24);ctx.fillRect(q.x+.53,q.y-.16,.24,.05);ctx.globalAlpha=1}}
+  // the cave rock on Earth Island looks just like the secret rocks on the other islands
+  {const q=m.secretStone||m.cave,found=m.secretStone?S.secrets[i]:S.cave;if(q){if(found)drawPortal(ctx,q.x,q.y-.15,t,.8);else if(S.beaten.includes(i)){const k=.5+.5*Math.sin(t/220),cx=q.x+.5,cy=q.y+.1;ctx.save();ctx.globalAlpha=.35+.35*k;const gg=ctx.createRadialGradient(cx,cy,.05,cx,cy,.9);gg.addColorStop(0,'#fff');gg.addColorStop(.4,'#e6a8ff');gg.addColorStop(1,'rgba(200,120,255,0)');ctx.fillStyle=gg;ctx.beginPath();ctx.arc(cx,cy,.9,0,7);ctx.fill();ctx.globalAlpha=.9;ctx.fillStyle='#fff';const L=.22+.12*k;ctx.fillRect(cx-.03,cy-L,.06,L*2);ctx.fillRect(cx-L,cy-.03,L*2,.06);ctx.restore()}else if(Math.floor(t/300)%11===0){ctx.fillStyle='#fff';ctx.globalAlpha=.9;ctx.fillRect(q.x+.62,q.y-.25,.05,.24);ctx.fillRect(q.x+.53,q.y-.16,.24,.05);ctx.globalAlpha=1}}}
   if(tilePx>=9){
     if(tilePx>=16)for(const g of m.grass)if(vis(g.x,g.y))drawTufts(ctx,th,g.x,g.y,t);
     const ents=[];
     for(const ob of m.objs)if(vis(ob.x,ob.y))ents.push({y:ob.y+.5,d:()=>drawObj(ctx,th,ob,t)});
-    if(m.cave&&vis(m.cave.x,m.cave.y))ents.push({y:m.cave.y+.51,d:()=>drawCave(ctx,m.cave,t)});
     for(const c of m.chests)if(vis(c.x,c.y))ents.push({y:c.y+.4,d:()=>drawChest(ctx,c.x,c.y,ws.opened.has(c.x+','+c.y),t)});
     ents.push({y:m.tent.y+.5,d:()=>drawTent(ctx,m.tent.x,m.tent.y,t)});
     for(const h of m.houses)if(vis(h.x,h.y))ents.push({y:h.y+.7,d:()=>drawHouse(ctx,h,s.el,t)});
@@ -1821,7 +1818,7 @@ function build3D(i){
   R3.portals=[];const ring=(x,z)=>{const g=new T.Mesh(new T.TorusGeometry(.42,.07,10,28),new T.MeshPhongMaterial({color:'#7ee4f4',emissive:'#4a8aff'}));g.position.set(x,.55,z);sc.add(g);R3.portals.push(g);return g};
   if(m.secret){const [x,z]=P(m.start.x,m.start.y);ring(x,z)}
   if(m.secretStone){const [x,z]=P(m.secretStone.x,m.secretStone.y);R3.secretRing=ring(x,z);R3.secretRing.position.y=1.1}else R3.secretRing=null;
-  if(m.cave){const [x,z]=P(m.cave.x,m.cave.y);R3.caveRing=ring(x,z);R3.caveRing.material.color.set('#c77dff');R3.caveRing.material.emissive.set('#7a22c0');R3.caveRing.position.y=1.1}else R3.caveRing=null;
+  if(m.cave){const [x,z]=P(m.cave.x,m.cave.y);R3.caveRing=ring(x,z);R3.caveRing.position.y=1.1}else R3.caveRing=null;
   R3.trainers=new Map();R3.mons=new Map();R3.player=player;R3.champ=champ;
   R3.monTex={};R3.shadowGeo=new T.CircleGeometry(.36,16);R3.shadowMat=new T.MeshBasicMaterial({color:0,transparent:true,opacity:.25,depthWrite:false});
   // a few clouds
@@ -1843,7 +1840,7 @@ function render3D(t){
   for(const tr of ws.trainers){let g=R3.trainers.get(tr.k);if(!g){g=person3D(palFor(tr));R3.scene.add(g);R3.trainers.set(tr.k,g)}
     g.position.set(O.x+tr.fx+.5,0,O.y+tr.fy+.5);g.rotation.y=ROT[tr.dir];const s2=Math.sin(tr.walkT||0)*.6;g.legs[0].rotation.x=s2;g.legs[1].rotation.x=-s2;g.bang.visible=!!tr.alert&&!trBeaten(tr.k)}
   R3.champ.bang.position.y=1.75+Math.sin(t/300)*.06;
-  for(const r of R3.portals){r.rotation.y=t/600;r.rotation.x=Math.sin(t/900)*.4}if(R3.secretRing)R3.secretRing.visible=!!S.secrets[i];if(R3.caveRing)R3.caveRing.visible=!!S.cave&&!ownCrystal();
+  for(const r of R3.portals){r.rotation.y=t/600;r.rotation.x=Math.sin(t/900)*.4}if(R3.secretRing)R3.secretRing.visible=!!S.secrets[i];if(R3.caveRing)R3.caveRing.visible=!!S.cave;
   if(m.secret&&!S.caught[ISLES[i].legend]&&!ws.mons.includes(R3.legendObj)){R3.legendObj={sp:ISLES[i].legend,rare:true,fx:m.champ.x,fy:m.champ.y,hx:0,face:true,legend:1};}
   // monsters
   const monList=R3.legendObj&&m.secret&&!S.caught[ISLES[i].legend]?[...ws.mons,R3.legendObj]:ws.mons;const live=new Set(monList);for(const [o,obj] of R3.mons)if(!live.has(o)){R3.scene.remove(obj);R3.mons.delete(o)}
