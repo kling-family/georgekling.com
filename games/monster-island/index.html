@@ -417,7 +417,7 @@ ISLES.find(q=>q.secret&&q.parent===1).wild.push('hydrowashy');
 ISLES.find(q=>q.secret&&q.parent===3).wild.push('lighteningbolt');
 // Fernwood (George's) lives only in Mossback Jungle's Hidden Grove
 ISLES.find(q=>q.secret&&q.parent===2).wild.push('fernwood');
-const SECRET_BG={fire:'#2a0c06',water:'#062848',leaf:'#0c2614',storm:'#bcd6f4',shadow:'#05030f',deep:'#0a3a6a'};
+const SECRET_BG={fire:'#2a0c06',water:'#062848',leaf:'#0c2614',storm:'#bcd6f4',shadow:'#05030f',deep:'#0a3a6a',stone:'#120a1c'};
 const DEEP=ISLES.length;
 ISLES.push({name:'Coralheart Deep',el:'deep',secret:true,deep:true,x:1600,y:70,wild:['coralfin','anglet','pearlcrab','jellybell','tidefang','abyssquid'],rare:'tidefang',lv:[18,22],legend:'leviathorn',llv:30,
   blurb:'A sunken kingdom at the bottom of the sea, lit by glowing coral.',champ:{name:'Leviathorn',team:[['leviathorn',30]]},tr:[]});
@@ -437,6 +437,11 @@ ISLES.push({name:'Earth Island',el:'stone',x:35,y:40,blurb:'A rock island. Cliff
   wild:['pebblit','mudpuff','ashmole','beetlox','gravelord'],extra:['crystalrock'],rare:'boulderon',lv:[17,20],
   champ:{name:'Captain Granite',team:[['beetlox',23],['ashmole',24],['bouldrake',25],['gravelord',25],['mudzilla',26]]}});
 // the six islands in the circle, then Champion Island in the middle
+// the Crystal Cave (George's idea): a little secret world inside Earth Island's rocks. Teddy's Crystal Crash lives at the far end, and nowhere else
+const CAVE=ISLES.length;
+ISLES.push({name:'Crystal Cave',el:'stone',secret:true,cave:true,theme:'cave',small:.62,parent:EARTH,x:2000,y:70,legend:'crystalrock',llv:28,lv:[19,22],
+  blurb:'A little cave hidden in the rocks of Earth Island, full of glittering purple crystals.',
+  wild:['boulderon','pebblit','beetlox','gravelord','ashmole'],rare:'boulderon',champ:{name:'Crystal Crash',team:[['crystalrock',28]]},tr:[]});
 const CIRCLE=[0,1,2,3,4,EARTH],RING=[...CIRCLE,CHAMP];
 const earthUnlocked=()=>S&&S.unlocked>MAIN;
 // players who already got into Champion Island before Earth Island existed keep it open
@@ -453,6 +458,8 @@ const THEME={
   deep:{sand:'#f0dcb0',sand2:'#d4bc8a',ground:'#3a8a9a',ground2:'#2e7484',grass:'#2ab07a',grassD:'#147050',path:'#e8d4a8',path2:'#c8b080',obst:'coral',coral:['#ff7d92','#ffb05a','#b47aff']},
   champ:{sand:'#f6e4b0',sand2:'#dcc488',ground:'#6fbf5c',ground2:'#55a548',grass:'#e8bf3a',grassD:'#b08a1c',path:'#f2ead8',path2:'#cfc4a8',obst:'crystal',crystal:['#ffe27a','#d49a17','#fff6d0']},
   stone:{sand:'#e2d2b4',sand2:'#c4b090',ground:'#9a8a78',ground2:'#7e705f',grass:'#b8a06a',grassD:'#86703e',path:'#c8b89a',path2:'#a49274',obst:'rock',rock:['#7a6e62','#4e463e','#b0a494']},
+  // the Crystal Cave: dark rock floor and glittering purple crystals
+  cave:{sand:'#6e6478',sand2:'#544a60',ground:'#4a4250',ground2:'#3a3340',grass:'#8a7a96',grassD:'#5e5068',path:'#7a7084',path2:'#5c5468',obst:'crystal',crystal:['#d49bff','#8a3ae0','#f4e2ff']},
   shadow:{sand:'#a898cc',sand2:'#8676b0',ground:'#3d346c',ground2:'#2e2756',grass:'#8c64ea',grassD:'#5a38b4',path:'#6e5eaa',path2:'#54468c',obst:'crystal',crystal:['#c7a6ff','#7a4ae0','#f2e6ff']}
 };
 const ARENA={champ:['#ffe9a8','#ffc860','#f08a3a','#7cc46a','#4f9a44','#ffd23a'],deep:['#5ac8f0','#2a90d0','#1a64b0','#c8b48a','#a89068','#7affea'],fire:['#ffcf8a','#ff9a5a','#e8643a','#8a4a32','#5f3424','#c9703a'],water:['#bfeaff','#7fd2f7','#4cb6ee','#ead39e','#d6bb84','#5fd4ee'],
@@ -588,7 +595,7 @@ function genMap(i){
   if(MAPS[i])return MAPS[i];
   const r=rng(i*7919+13),g=[...Array(H)].map(()=>Array(W).fill(T_WATER)),cx=(W-1)/2,cy=(H-1)/2,el=ISLES[i].el,secret=!!ISLES[i].secret;
   const bumps=[...Array(12)].map(()=>({x:r()*W,y:r()*H,a:(r()-.5)*.8}));
-  for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){let d=((x-cx)/(W/2-1.5))**2+((y-cy)/(H/2-1.5))**2;for(const b of bumps)d+=b.a*Math.exp(-((x-b.x)**2+(y-b.y)**2)/40);g[y][x]=d>1?T_WATER:d>.8?T_SAND:T_GROUND}
+  const sm=ISLES[i].small||1;for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){let d=((x-cx)/((W/2-1.5)*sm))**2+((y-cy)/((H/2-1.5)*sm))**2;for(const b of bumps)d+=b.a*Math.exp(-((x-b.x)**2+(y-b.y)**2)/40);g[y][x]=d>1?T_WATER:d>.8?T_SAND:T_GROUND}
   for(let x=0;x<W;x++){g[0][x]=g[H-1][x]=T_WATER}for(let y=0;y<H;y++){g[y][0]=g[y][W-1]=T_WATER}
   let start=null,best=-1e9;for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(g[y][x]===T_SAND&&g[y+1]&&g[y+1][x]===T_WATER){const sc=y*10-Math.abs(x-cx)*3;if(sc>best){best=sc;start={x,y}}}
   const grounds=[];for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(g[y][x]===T_GROUND)grounds.push({x,y});
@@ -792,7 +799,7 @@ const ROOF={champ:'#d49a17',deep:'#2f80ed',fire:'#c0392b',water:'#2f80ed',leaf:'
 const buildHi=i=>HI[i]||(HI[i]=buildTex(i,34,true));
 function buildTex(i,R=10,hi){
   if(!hi&&TEX[i])return TEX[i];
-  const m=genMap(i),el=ISLES[i].el,th=THEME[el],N=W*H,L=new Float32Array(N),G=new Float32Array(N),GR=new Float32Array(N),P=new Float32Array(N);
+  const m=genMap(i),el=ISLES[i].el,th=THEME[ISLES[i].theme||el],N=W*H,L=new Float32Array(N),G=new Float32Array(N),GR=new Float32Array(N),P=new Float32Array(N);
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){const t=m.g[y][x],k=y*W+x;if(t!==T_WATER)L[k]=1;if(t===T_GROUND||t===T_GRASS||t===T_PATH||t===T_OBST||t===T_HOUSE)G[k]=1;if(t===T_GRASS)GR[k]=1;if(t===T_PATH)P[k]=1}
   const Lb=blurMask(L,1),Gb=blurMask(G,1),GRb=blurMask(GR,2);
   const nz=vnoise(i*31+7),TW=W*R,TH=H*R,c=mkCanvas(TW,TH),x=c.getContext('2d'),img=x.createImageData(TW,TH),d=img.data;
@@ -1404,11 +1411,11 @@ function island(i,fromMap){
   <div class="worldwrap box np"><canvas class="scene" id="cv" data-aspect=".62"></canvas><div class="prompt box" id="prompt" hidden></div><div class="tip3d" id="tip3d" hidden>&#9650; walk forward &nbsp; &#9664; &#9654; turn &nbsp; &#9660; turn around</div></div>
   <div class="controls"><div class="box help"><div class="hshort">${s.secret?`Find the legendary <b>${SP[s.legend].name}</b> at the far end. Walk onto the glowing portal to go home.`:done?`You beat ${s.champ.name}! Explore for secrets, chests and rare monsters.`:`Tap anywhere on the island to walk there. Make your way to ${i===CHAMP?'the <b>big arena</b>':`<b>${s.champ.name}</b>`} at the far end.`}${S.buddy?` Stuck? Tap <b>Ask ${S.buddy.name}</b>.`:''}</div>
     <details class="hmore"><summary>How to play</summary><b>Tap</b> a spot to walk there, or use the <b>arrow keys</b> or <b>WASD</b> to walk. <b>+</b> and <b>&#8722;</b> zoom out to see the whole island and the sea.
-    ${s.secret?`<b>${s.deep?'You found the underwater kingdom!':'You found a secret world!'}</b> ${s.blurb} Rare monsters roam everywhere. The legendary <b>${SP[s.legend].name}</b> waits at the far end${legendGot?' (you caught it!)':''}. Walk back onto the glowing portal to go home.</details></div>`:`Monsters wander the tall grass. Walk into one to battle. If you get too close, they come after you!
+    ${s.secret?`<b>${s.deep?'You found the underwater kingdom!':s.cave?'You found the Crystal Cave!':'You found a secret world!'}</b> ${s.blurb} Rare monsters roam everywhere. The legendary <b>${SP[s.legend].name}</b> waits at the far end${legendGot?' (you caught it!)':''}. Walk back onto the glowing portal to go home.</details></div>`:`Monsters wander the tall grass. Walk into one to battle. If you get too close, they come after you!
     ${i===CHAMP?'Walk into the <b>big arena</b> at the far end to enter the Champion Tournament.':'Each island has <b>three towns</b> split by locked <b>gates</b>.'} Beat each town's <b>leader</b> to open the gate to the next town. Other <b>trainers</b> battle you if they see you! Find the hidden <b>treasure chests</b>. Heal your team at the <b>tent</b>, any <b>Rest House</b> (the ones with a heart), or a sparkly <b>healing spring</b>. ${s.champ.name} waits at the far end. Every town has a <b>Move Shop</b>.${i===CHAMP?'':' And somewhere on this island is a <b>secret</b>...'}</details></div>`}
     <div class="dpad" aria-label="Move"><button class="u" data-d="up" aria-label="Up">&#9650;</button><button class="l" data-d="left" aria-label="Left">&#9664;</button><button class="r" data-d="right" aria-label="Right">&#9654;</button><button class="d" data-d="down" aria-label="Down">&#9660;</button></div></div>
   ${s.secret?'':boardHTML()}
-  <div class="box"><h3>Monsters on ${s.name}</h3><div class="wild">${list.map(sp=>{const got=S.caught[sp],isR=sp===s.rare||(s.rares||[]).includes(sp);return `<div class="${got?'':'unknown'}"><div class="art">${spr(sp)}</div>${got?SP[sp].name:'???'}${s.secret?(sp===s.legend?'<div class="muted" style="font-size:12px">Legendary!</div>':''):(NIGHT[i]||[]).includes(sp)?'<div class="muted" style="font-size:12px">Only at night</div>':(s.extra||[]).includes(sp)?'<div class="muted" style="font-size:12px">Hides in a secret cave</div>':isR?`<div class="muted" style="font-size:12px">${done?'Rare. It runs away!':'Appears after the champion'}</div>`:''}</div>`}).join('')}</div>
+  <div class="box"><h3>Monsters on ${s.name}</h3><div class="wild">${list.map(sp=>{const got=S.caught[sp],isR=sp===s.rare||(s.rares||[]).includes(sp);return `<div class="${got?'':'unknown'}"><div class="art">${spr(sp)}</div>${got?SP[sp].name:'???'}${s.secret?(sp===s.legend?'<div class="muted" style="font-size:12px">Legendary!</div>':''):(NIGHT[i]||[]).includes(sp)?'<div class="muted" style="font-size:12px">Only at night</div>':(s.extra||[]).includes(sp)?'<div class="muted" style="font-size:12px">Lives in a secret cave</div>':isR?`<div class="muted" style="font-size:12px">${done?'Rare. It runs away!':'Appears after the champion'}</div>`:''}</div>`}).join('')}</div>
     <p class="muted small" style="margin-top:10px">${s.secret?`Monsters here are level ${s.lv[0]} to ${s.lv[1]}. ${SP[s.legend].name} is level ${s.llv}. Bring your strongest team and a Super Net!`:`Wild monsters here are level ${s.lv[0]} to ${s.lv[1]}. ${s.champ.name} has ${champTeam(i).length} monsters, up to level ${Math.max(...champTeam(i).map(t=>t[1]))}. ${i===CHAMP?'':i===EARTH?`Secret cave: ${S.cave?'<b>found!</b>':'not found yet'}. `:`Secret: ${S.secrets[i]?'<b>found!</b> '+SECRETS[i].name:'not found yet'}. `}${i===CHAMP?'':`Trainers beaten: ${m.trainers.filter(t=>(S.tb[i]||[]).includes(t.k)).length} of ${m.trainers.length}${m.trainers.some(t=>t.rival&&!(S.tb[i]||[]).includes(t.k))?' (Rival Rex is waiting just past the first gate!)':''}.`}`}</p></div>`;
   document.getElementById('team').onclick=()=>{WORLD=null;team(()=>island(i))};bindJournal(()=>island(i));
   const ab=document.getElementById('askb');if(ab)ab.onclick=()=>{if(WORLD)WORLD.lastBuddy=performance.now();buddySay(buddyHint(i),true)};
@@ -1607,7 +1614,7 @@ function openSecret(){
   focusFirst('#prompt');
 }
 // coming back out of a secret world puts you exactly where you went in, so it can't skip a locked gate
-function secretReturn(par){const f=S.secretFrom&&S.secretFrom[par];if(f)return {x:f.x,y:f.y};const m=genMap(par),st=m.secretStone,z=m.zoneOf(st.fx,st.fy);
+function secretReturn(par){const f=S.secretFrom&&S.secretFrom[par];if(f)return {x:f.x,y:f.y};const m=genMap(par),st=m.secretStone||m.cave,z=m.zoneOf(st.fx,st.fy);
   if(z===0||gateOpen(par,z-1))return {x:st.fx,y:st.fy};let best=null;for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){const x=st.x+dx,y=st.y+dy;if(x>=0&&y>=0&&x<W&&y<H&&walk(m.g[y][x])&&(m.zoneOf(x,y)===0||gateOpen(par,m.zoneOf(x,y)-1)))best={x,y}}return best||{...m.start}}
 function leaveSecret(){
   const Wd=WORLD,s=ISLES[Wd.i],pr=document.getElementById('prompt');Wd.paused=true;Wd.held=null;pr.hidden=false;
@@ -1623,14 +1630,13 @@ const ownCrystal=()=>[...S.team,...(S.box||[])].some(x=>x.sp==='crystalrock');
 function drawCave(ctx,q,t){const cx=q.x+.5,cy=q.y+.9;ctx.save();ctx.fillStyle='#120d16';ctx.strokeStyle='#3a3430';ctx.lineWidth=.06;ctx.beginPath();ctx.moveTo(cx-.34,cy);ctx.quadraticCurveTo(cx-.36,cy-.52,cx,cy-.56);ctx.quadraticCurveTo(cx+.36,cy-.52,cx+.34,cy);ctx.closePath();ctx.fill();ctx.stroke();
   if(!ownCrystal()){const k=.5+.5*Math.sin(t/300);ctx.globalAlpha=.5+.5*k;ctx.fillStyle='#c77dff';ctx.beginPath();ctx.arc(cx-.06,cy-.2,.07+.03*k,0,7);ctx.fill();ctx.fillStyle='#fff';ctx.globalAlpha=.7*k;ctx.fillRect(cx-.075,cy-.32,.03,.24);ctx.fillRect(cx-.18,cy-.215,.24,.03)}ctx.restore()}
 function openCave(){
-  const Wd=WORLD,pr=document.getElementById('prompt'),first=!S.cave,tired=!S.team.some(x=>x.hp>0);Wd.paused=true;Wd.held=null;pr.hidden=false;
+  const Wd=WORLD,i=Wd.i,pr=document.getElementById('prompt'),first=!S.cave;Wd.paused=true;Wd.held=null;pr.hidden=false;
+  // like every secret door, it stays shut until you beat the island's champion
+  if(!S.beaten.includes(i)){SFX.bump();pr.innerHTML=`<div class="who">A little cave</div><div>Something purple glitters deep inside... but big rocks block the way. Come back when you're the champion of ${ISLES[i].name}!</div><div class="row"><button class="btn sm" id="pn">OK</button></div>`;document.getElementById('pn').onclick=()=>{pr.hidden=true;Wd.paused=false};return focusFirst('#prompt')}
   if(first){S.cave=1;save();SFX.chest();Wd.sparkle=performance.now()}
-  const nm=SP.crystalrock.name;
-  pr.innerHTML=ownCrystal()?`<div class="who">The little cave</div><div>It's quiet in here now. ${nm} lives with you!</div><div class="row"><button class="btn sm" id="pn">OK</button></div>`
-    :tired?`<div class="who">${first?'You found a secret cave!':'The little cave'}</div><div>Something purple glitters deep inside... but your team is too tired. Go heal first!</div><div class="row"><button class="btn sm" id="pn">OK</button></div>`
-    :`<div class="who">${first?'You found a secret cave!':'The little cave'}</div><div>Something purple glitters in the dark... it's <b>${nm}</b>! There's only one in the whole world. It's level ${UNIQUE_LV}. A Super Net always works!</div><div class="row"><button class="btn hot sm" id="py">Battle!</button><button class="btn ghost sm" id="pn">Not yet</button></div>`;
+  pr.innerHTML=`<div class="who">${first?'You found a secret cave!':'Crystal Cave'}</div><div>${first?'The rocks rumble and roll aside... a little cave full of glittering purple crystals!':ownCrystal()?'The crystals glitter quietly.':'Purple crystals glitter inside.'} Go inside?</div><div class="row"><button class="btn sm" id="py">Go inside</button><button class="btn ghost sm" id="pn">Not now</button></div>`;
   document.getElementById('pn').onclick=()=>{pr.hidden=true;Wd.paused=false};
-  const y=document.getElementById('py');if(y)y.onclick=()=>{pr.hidden=true;battle({wild:true,legend:true,isle:Wd.i,enemies:[mk('crystalrock',UNIQUE_LV)],ent:null})};
+  document.getElementById('py').onclick=()=>{pr.hidden=true;SFX.whoosh();S.secretFrom=S.secretFrom||{};S.secretFrom[i]={x:Wd.p.x,y:Wd.p.y};save();island(CAVE,'portal')};
   focusFirst('#prompt');
 }
 const UNIQUE_LV=28;
@@ -1664,7 +1670,7 @@ function openChamp(){
   focusFirst('#prompt');
 }
 function drawOver(t){
-  const Wd=WORLD,{ctx,cv,m,p,ws,i}=Wd,s=ISLES[i],th=THEME[s.el],o=isleOff(i),cw=cv.width,ch=cv.height;
+  const Wd=WORLD,{ctx,cv,m,p,ws,i}=Wd,s=ISLES[i],th=THEME[s.theme||s.el],o=isleOff(i),cw=cv.width,ch=cv.height;
   const dt=Wd.lt?Math.min(100,t-Wd.lt):16;Wd.lt=t;updStorms(dt);
   const tgt=Wd.z<=1?{x:o.x+p.fx+.5,y:o.y+p.fy+.2}:Wd.z===2?{x:o.x+20,y:o.y+15}:{x:100,y:70};
   const a=1-Math.pow(.006,dt/1000),ts=cw/ZOOMS[Wd.z];
@@ -1755,7 +1761,7 @@ function build3D(i){
   if(!R3.renderer){R3.renderer=new T.WebGLRenderer({canvas:cv3(),antialias:true});R3.renderer.setPixelRatio(Math.min(2,devicePixelRatio||1));R3.renderer.shadowMap.enabled=true;R3.renderer.shadowMap.type=T.PCFSoftShadowMap}
   if(R3.isle===i&&R3.scene)return;
   if(R3.scene)disposeScene(R3.scene);
-  const sc=new T.Scene(),m=genMap(i),s=ISLES[i],th=THEME[s.el],O=isleOff(i),aniso=R3.renderer.capabilities.getMaxAnisotropy();
+  const sc=new T.Scene(),m=genMap(i),s=ISLES[i],th=THEME[s.theme||s.el],O=isleOff(i),aniso=R3.renderer.capabilities.getMaxAnisotropy();
   const sky=s.secret?SECRET_BG[s.el]:s.el==='shadow'?'#3a3266':s.el==='storm'?'#9aa8c0':'#a8e0ff';sc.background=new T.Color(sky);sc.fog=new T.Fog(sky,12,44);
   const cam=new T.PerspectiveCamera(60,1.6,.1,200);
   const hemi=new T.HemisphereLight('#eef8ff','#5a6a4a',s.el==='shadow'?.55:.78);sc.add(hemi);const sun=new T.DirectionalLight('#fff1d6',s.el==='shadow'?.5:.95);
