@@ -340,6 +340,8 @@ const SP={
   mossbrute:{name:'Mossbrute',el:'leaf',shape:'tall',color:'#2f7a3a',color2:'#a8d98a',b:[72,68,66,40],rare:1,fang:1},
   fernwood:{name:'Fernwood',el:'leaf',color:'#55b04e',color2:'#8fe07a',b:[70,66,68,56],rare:1,by:'George'},
   crystalrock:{name:'Crystal Crash',el:'stone',color:'#46464c',color2:'#b44cf0',b:[70,70,76,50],rare:1,by:'Teddy'},
+  // the legend of the Crystal Cave: a stone and crystal cousin of Magmaroc
+  gemaroc:{name:'Gemaroc',el:'stone',shape:'spiky',color:'#4a3a66',color2:'#d49bff',b:[90,90,88,74],rare:1,fang:1,legend:1},
   voltusk:{name:'Voltusk',el:'storm',shape:'wide',color:'#e0a91a',color2:'#fff0a6',b:[54,62,48,64],fang:1},
   bouldrake:{name:'Bouldrake',el:'stone',shape:'spiky',color:'#7b7166',color2:'#cfc4b6',b:[58,58,70,38]},
   stormwing:{name:'Stormwing',el:'storm',shape:'spiky',color:'#c9a400',color2:'#fff6c8',b:[62,74,54,80],rare:1},
@@ -437,11 +439,11 @@ ISLES.push({name:'Earth Island',el:'stone',x:35,y:40,blurb:'A rock island. Cliff
   wild:['pebblit','mudpuff','ashmole','beetlox','gravelord'],extra:['crystalrock'],rare:'boulderon',lv:[17,20],
   champ:{name:'Captain Granite',team:[['beetlox',23],['ashmole',24],['bouldrake',25],['gravelord',25],['mudzilla',26]]}});
 // the six islands in the circle, then Champion Island in the middle
-// the Crystal Cave (George's idea): a little secret world inside Earth Island's rocks. Teddy's Crystal Crash lives at the far end, and nowhere else
+// the Crystal Cave (George's idea): a secret world inside Earth Island's rocks, laid out like the Lava Cavern. The legendary Gemaroc waits at the far end, and Teddy's Crystal Crash roams the tall grass in a random place, like Spikeburst
 const CAVE=ISLES.length;
-ISLES.push({name:'Crystal Cave',el:'stone',secret:true,cave:true,theme:'cave',small:.62,parent:EARTH,x:2000,y:70,legend:'crystalrock',llv:28,lv:[19,22],
-  blurb:'A little cave hidden in the rocks of Earth Island, full of glittering purple crystals.',
-  wild:['boulderon','pebblit','beetlox','gravelord','ashmole'],rare:'boulderon',champ:{name:'Crystal Crash',team:[['crystalrock',28]]},tr:[]});
+ISLES.push({name:'Crystal Cave',el:'stone',secret:true,cave:true,theme:'cave',parent:EARTH,x:2000,y:70,legend:'gemaroc',llv:30,lv:[19,22],
+  blurb:'A cavern hidden in the rocks of Earth Island, full of glittering purple crystals.',
+  wild:['boulderon','pebblit','beetlox','gravelord','ashmole','crystalrock'],rare:'boulderon',champ:{name:'Gemaroc',team:[['gemaroc',30]]},tr:[]});
 const CIRCLE=[0,1,2,3,4,EARTH],RING=[...CIRCLE,CHAMP];
 const earthUnlocked=()=>S&&S.unlocked>MAIN;
 // players who already got into Champion Island before Earth Island existed keep it open
@@ -459,7 +461,9 @@ const THEME={
   champ:{sand:'#f6e4b0',sand2:'#dcc488',ground:'#6fbf5c',ground2:'#55a548',grass:'#e8bf3a',grassD:'#b08a1c',path:'#f2ead8',path2:'#cfc4a8',obst:'crystal',crystal:['#ffe27a','#d49a17','#fff6d0']},
   stone:{sand:'#e2d2b4',sand2:'#c4b090',ground:'#9a8a78',ground2:'#7e705f',grass:'#b8a06a',grassD:'#86703e',path:'#c8b89a',path2:'#a49274',obst:'rock',rock:['#7a6e62','#4e463e','#b0a494']},
   // the Crystal Cave: dark rock floor and glittering purple crystals
-  cave:{sand:'#6e6478',sand2:'#544a60',ground:'#4a4250',ground2:'#3a3340',grass:'#8a7a96',grassD:'#5e5068',path:'#7a7084',path2:'#5c5468',obst:'crystal',crystal:['#d49bff','#8a3ae0','#f4e2ff']},
+  cave:{sand:'#6e6478',sand2:'#544a60',ground:'#4a4250',ground2:'#3a3340',grass:'#8a7a96',grassD:'#5e5068',path:'#7a7084',path2:'#5c5468',obst:'crystal',crystal:['#d49bff','#8a3ae0','#f4e2ff'],
+    // half the cave's obstacles are dark boulders with glowing purple cracks, like the lava rocks in the Lava Cavern
+    mix:{obst:'rock',rock:['#4a4256','#2c2636','#746a88'],glow:'#d49bff',pulse:1}},
   shadow:{sand:'#a898cc',sand2:'#8676b0',ground:'#3d346c',ground2:'#2e2756',grass:'#8c64ea',grassD:'#5a38b4',path:'#6e5eaa',path2:'#54468c',obst:'crystal',crystal:['#c7a6ff','#7a4ae0','#f2e6ff']}
 };
 const ARENA={champ:['#ffe9a8','#ffc860','#f08a3a','#7cc46a','#4f9a44','#ffd23a'],deep:['#5ac8f0','#2a90d0','#1a64b0','#c8b48a','#a89068','#7affea'],fire:['#ffcf8a','#ff9a5a','#e8643a','#8a4a32','#5f3424','#c9703a'],water:['#bfeaff','#7fd2f7','#4cb6ee','#ead39e','#d6bb84','#5fd4ee'],
@@ -672,7 +676,7 @@ function genMap(i){
   if(!secret&&i<MAIN){const cand=[];for(const o of objs){const nb=N4.map(([dx,dy])=>({x:o.x+dx,y:o.y+dy})).find(q=>q.x>0&&q.y>0&&q.x<W-1&&q.y<H-1&&walk(g[q.y][q.x])&&dist[q.y][q.x]>=8&&g[q.y][q.x]!==T_PATH&&zoneOf(q.x,q.y)>=1&&zoneOf(q.x,q.y)<=2);
       if(!nb||route.some(c=>Math.abs(c.x-o.x)+Math.abs(c.y-o.y)<3)||chests.some(c=>c.x===nb.x&&c.y===nb.y))continue;cand.push({x:o.x,y:o.y,fx:nb.x,fy:nb.y})}
     if(cand.length)secretStone=cand[Math.floor(r()*cand.length)]}
-  // Earth Island hides a little secret cave in one of its rocks. Teddy's Crystal Crash lives there, and nowhere else
+  // Earth Island hides a secret cave in one of its rocks. Gemaroc and Teddy's Crystal Crash live there, and nowhere else
   let cave=null;
   if(i===EARTH){const cand=[];for(const o of objs){const nb=N4.map(([dx,dy])=>({x:o.x+dx,y:o.y+dy})).find(q=>q.x>0&&q.y>0&&q.x<W-1&&q.y<H-1&&walk(g[q.y][q.x])&&dist[q.y][q.x]>=8&&g[q.y][q.x]!==T_PATH&&zoneOf(q.x,q.y)>=1&&zoneOf(q.x,q.y)<=2);
       if(!nb||route.some(c=>Math.abs(c.x-o.x)+Math.abs(c.y-o.y)<3)||chests.some(c=>c.x===nb.x&&c.y===nb.y))continue;cand.push({x:o.x,y:o.y,fx:nb.x,fy:nb.y})}
@@ -895,7 +899,7 @@ function shadowBlob(ctx,x,y,rx,ry,a=.28){const l=daylight(),soft=(cx,cy,sx,sy,ro
   if(l>.05)soft(x+rx*.6,y+ry*.35,rx*1.25,ry*1.1,.32,a*.7*l);
   soft(x,y,rx*1.1,ry*1.15,0,a*1.15)}
 function drawObj(ctx,th,o,t){
-  const x=o.x+.5,y=o.y+.5,s=o.s,h=o.h;
+  const x=o.x+.5,y=o.y+.5,s=o.s,h=o.h;if(th.mix&&h%2)th=th.mix;
   if(th.obst==='tree'){const [c1,c2,c3]=th.tree;shadowBlob(ctx,x+.15,y+.38,.55*s,.2*s);
     ctx.fillStyle='#6a4022';ctx.fillRect(x-.08*s,y-.1,.16*s,.48);
     const sway=Math.sin(t/1200+h)*.03;
@@ -914,7 +918,7 @@ function drawObj(ctx,th,o,t){
   const [m1,m2,m3]=th.rock;shadowBlob(ctx,x+.08,y+.34,.5*s,.17*s);
   const g=ctx.createLinearGradient(x-.4*s,y-.5*s,x+.4*s,y+.3*s);g.addColorStop(0,m3);g.addColorStop(.45,m1);g.addColorStop(1,m2);ctx.fillStyle=g;
   ctx.beginPath();ctx.moveTo(x-.45*s,y+.3);ctx.quadraticCurveTo(x-.5*s,y-.2*s,x-.15*s,y-.42*s);ctx.quadraticCurveTo(x+.2*s,y-.55*s,x+.4*s,y-.15*s);ctx.quadraticCurveTo(x+.52*s,y+.2,x+.3*s,y+.32);ctx.closePath();ctx.fill();
-  if(th.glow){const on=th.obst==='rock'&&ISLES.find(z=>THEME[z.el]===th).el==='fire'?.6+.4*Math.sin(t/300+h):((Math.floor(t/140)+h)%23===0?1:0);
+  if(th.glow){const on=th.pulse||th===THEME.fire?.6+.4*Math.sin(t/300+h):((Math.floor(t/140)+h)%23===0?1:0);
     if(on>0){ctx.strokeStyle=th.glow;ctx.globalAlpha=on;ctx.lineWidth=.05;ctx.shadowColor=th.glow;ctx.shadowBlur=8;ctx.beginPath();ctx.moveTo(x-.2*s,y-.15*s);ctx.lineTo(x,y);ctx.lineTo(x-.05*s,y+.2);ctx.moveTo(x,y);ctx.lineTo(x+.2*s,y-.08*s);ctx.stroke();ctx.shadowBlur=0;ctx.globalAlpha=1}}
 }
 function drawTufts(ctx,th,x,y,t){const h=hash(x,y),sw=Math.sin(t/650+x*.7+y*.3)*.07;ctx.strokeStyle=th.grassD;ctx.lineCap='round';ctx.lineWidth=.07;
@@ -1039,6 +1043,7 @@ const LOOK={
   abyssquid:'tall|top:antenna|eyes:one|mouth:o|pat:spots|arms',
   glowcap:'pear|top:cap|eyes:sleepy|mouth:smile|cheeks',
   magmaroc:'spiky|top:horns|wings:bat|tail:flame|eyes:angry|mouth:fang|pat:zigzag',
+  gemaroc:'spiky|top:horns|wings:bat|tail:spike|eyes:angry|mouth:fang|pat:zigzag',
   aquarion:'tall|top:crest|wings:fairy|tail:fish|eyes:shiny|mouth:smile|pat:swirl',
   sylvanox:'spiky|top:unicorn|wings:fairy|tail:leaf|eyes:angry|mouth:grin',
   voltara:'bird|wings:bird|top:bolt|tail:bolt|eyes:angry|mouth:beak|pat:zigzag',
@@ -1526,7 +1531,6 @@ function spawn(rare,minD){
   let night=!rare&&i<MAIN&&isNight()&&Math.random()<.45,rp=[s.rare,...(s.rares||[])],sp=rare?rp[Math.floor(Math.random()*rp.length)]:night?NIGHT[i][rnd(0,1)]:s.wild[rnd(0,s.wild.length-1)];
   // Spikeburst and Hydro Washy are one of a kind: only one roams at a time, it's level 28, and once you own it no more appear
   const UNIQUE={spikeburst:28,hydrowashy:28,lighteningbolt:28,fernwood:28,crystalrock:28};
-  if(sp==='crystalrock')sp=s.wild[rnd(0,s.wild.length-1)];
   if(UNIQUE[sp]){const owned=[...S.team,...(S.box||[])].some(x=>x.sp===sp)||ws.mons.some(x=>x.sp===sp);if(owned){const alt=s.wild.filter(x=>!UNIQUE[x]);sp=alt[rnd(0,alt.length-1)]}}
   ws.mons.push({sp,rare,lvl:UNIQUE[sp]||(rare?s.lv[1]+1:rnd(s.lv[0],s.lv[1])),x:c.x,y:c.y,hx:c.x,hy:c.y,fx:c.x,fy:c.y,mv:null,next:t+600+Math.random()*1200,face:Math.random()<.5,chase:false});
   return true;
@@ -1627,14 +1631,14 @@ function leaveSecret(){
   document.getElementById('py').onclick=()=>{pr.hidden=true;SFX.whoosh();S.pos[s.parent]=secretReturn(s.parent);island(s.parent,'portal')};
   focusFirst('#prompt');
 }
-// there is only one Crystal Crash: it waits in Earth Island's little cave until you catch it
+// there is only one Crystal Crash: it roams Earth Island's Crystal Cave until you catch it
 const ownCrystal=()=>[...S.team,...(S.box||[])].some(x=>x.sp==='crystalrock');
 function openCave(){
   const Wd=WORLD,i=Wd.i,pr=document.getElementById('prompt'),first=!S.cave;Wd.paused=true;Wd.held=null;pr.hidden=false;
   // like every secret door, it stays shut until you beat the island's champion
   if(!S.beaten.includes(i)){SFX.bump();pr.innerHTML=`<div class="who">A little cave</div><div>Something purple glitters deep inside... but big rocks block the way. Come back when you're the champion of ${ISLES[i].name}!</div><div class="row"><button class="btn sm" id="pn">OK</button></div>`;document.getElementById('pn').onclick=()=>{pr.hidden=true;Wd.paused=false};return focusFirst('#prompt')}
   if(first){S.cave=1;save();SFX.chest();Wd.sparkle=performance.now()}
-  pr.innerHTML=`<div class="who">${first?'You found a secret cave!':'Crystal Cave'}</div><div>${first?'The rocks rumble and roll aside... a little cave full of glittering purple crystals!':ownCrystal()?'The crystals glitter quietly.':'Purple crystals glitter inside.'} Go inside?</div><div class="row"><button class="btn sm" id="py">Go inside</button><button class="btn ghost sm" id="pn">Not now</button></div>`;
+  pr.innerHTML=`<div class="who">${first?'You found a secret cave!':'Crystal Cave'}</div><div>${first?'The rocks rumble and roll aside... a cavern full of glittering purple crystals!':ownCrystal()?'The crystals glitter quietly.':'Purple crystals glitter inside.'} Go inside?</div><div class="row"><button class="btn sm" id="py">Go inside</button><button class="btn ghost sm" id="pn">Not now</button></div>`;
   document.getElementById('pn').onclick=()=>{pr.hidden=true;Wd.paused=false};
   document.getElementById('py').onclick=()=>{pr.hidden=true;SFX.whoosh();S.secretFrom=S.secretFrom||{};S.secretFrom[i]={x:Wd.p.x,y:Wd.p.y};save();island(CAVE,'portal')};
   focusFirst('#prompt');
@@ -1780,10 +1784,11 @@ function build3D(i){
     const base=new T.Mesh(new T.PlaneGeometry(W,H),new T.MeshBasicMaterial({map:me.material.map,transparent:true,opacity:.35,color:'#000',alphaTest:.45}));base.rotation.x=-Math.PI/2;base.position.set(o.x+W/2,-.03,o.y+H/2+.08);sc.add(base)});
   const P=(x,y)=>[O.x+x+.5,O.y+y+.5],dum=new T.Object3D(),C=new T.Color();
   const inst=(geo,mat,list,set,colorOf)=>{if(!list.length)return;const im=new T.InstancedMesh(geo,mat,list.length);list.forEach((o,k)=>{dum.position.set(0,0,0);dum.rotation.set(0,0,0);dum.scale.set(1,1,1);set(o,dum);dum.updateMatrix();im.setMatrixAt(k,dum.matrix);if(colorOf)im.setColorAt(k,C.set(colorOf(o,k)))});sc.add(im);return im};
-  const objs=m.objs,triple=objs.flatMap(o=>[0,1,2].map(j=>({...o,j})));
+  const mixR=th.mix?m.objs.filter(o=>o.h%2):[],objs=th.mix?m.objs.filter(o=>!(o.h%2)):m.objs,triple=objs.flatMap(o=>[0,1,2].map(j=>({...o,j})));
   if(th.obst==='tree'){inst(new T.CylinderGeometry(.08,.12,.7,6),new T.MeshLambertMaterial({color:'#6a4022'}),objs,(o,d)=>{const [x,z]=P(o.x,o.y);d.position.set(x,.35,z)});
     inst(new T.SphereGeometry(.42,10,8),new T.MeshLambertMaterial({color:'#fff'}),triple,(o,d)=>{const [x,z]=P(o.x,o.y),a=o.j*2.1+o.h;d.position.set(x+(o.j<2?Math.cos(a)*.2:0),.85+(o.j===2?.3:0),z+(o.j<2?Math.sin(a)*.2:0));d.scale.setScalar(o.s*(o.j===2?.95:.85))},o=>o.j===2?th.tree[0]:(o.h+o.j)%2?th.tree[0]:th.tree[1])}
   if(th.obst==='rock')inst(new T.DodecahedronGeometry(.42,0),new T.MeshLambertMaterial({color:'#fff',flatShading:true,emissive:s.el==='fire'?new T.Color('#3a1000'):new T.Color(0)}),objs,(o,d)=>{const [x,z]=P(o.x,o.y);d.position.set(x,.22*o.s,z);d.rotation.set(o.h%3,o.h%7,0);d.scale.set(o.s*1.1,o.s*.75,o.s)},o=>o.h%3?th.rock[0]:th.rock[1]);
+  if(th.mix)inst(new T.DodecahedronGeometry(.42,0),new T.MeshLambertMaterial({color:'#fff',flatShading:true,emissive:new T.Color('#2a1050')}),mixR,(o,d)=>{const [x,z]=P(o.x,o.y);d.position.set(x,.22*o.s,z);d.rotation.set(o.h%3,o.h%7,0);d.scale.set(o.s*1.1,o.s*.75,o.s)},o=>o.h%3?th.mix.rock[0]:th.mix.rock[2]);
   if(th.obst==='coral')inst(new T.ConeGeometry(.1,.75,6),new T.MeshLambertMaterial({color:'#fff'}),triple,(o,d)=>{const [x,z]=P(o.x,o.y),a=o.j*2.1+o.h;d.position.set(x+Math.cos(a)*.15,.35,z+Math.sin(a)*.15);d.rotation.set(Math.sin(a)*.4,0,Math.cos(a)*.4);d.scale.setScalar(o.s)},o=>th.coral[(o.h+o.j)%3]);
   if(th.obst==='crystal')inst(new T.OctahedronGeometry(.22,0),new T.MeshPhongMaterial({color:'#fff',emissive:new T.Color('#4a20a0'),shininess:120,transparent:true,opacity:.92}),triple,(o,d)=>{const [x,z]=P(o.x,o.y),a=o.j*2.1+o.h;d.position.set(x+(o.j<2?Math.cos(a)*.18:0),.45,z+(o.j<2?Math.sin(a)*.18:0));d.scale.set(o.s,o.s*(o.j===2?3.4:2.4),o.s)},o=>o.j===2?th.crystal[0]:th.crystal[2]);
   const tufts=m.grass.flatMap(gr=>[0,1,2,3].map(j=>({...gr,j,h:hash(gr.x*4+j,gr.y)})));
@@ -2536,14 +2541,14 @@ function playFx(mv,side){
   const dpr=Math.min(2,devicePixelRatio||1),R0=ar.getBoundingClientRect();cv.width=R0.width*dpr;cv.height=R0.height*dpr;const ctx=cv.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);
   const ctr=id=>{const r=document.getElementById(id).getBoundingClientRect();return {x:r.left-R0.left+r.width/2,y:r.top-R0.top+r.height*.55,s:r.width}};
   const A=ctr(side==='p'?'part':'eart'),T=ctr(side==='p'?'eart':'part'),W0=R0.width,H0=R0.height,big=mv.pow>=60,el=mv.el;
-  const dur=big?1050:720,t0=performance.now(),rr=Math.random;
+  const dur=mv.sig?1900:big?1050:720,t0=performance.now(),rr=Math.random;
   const parts=[...Array(big?60:26)].map((_,k)=>({k,a:rr()*6.28,r:rr(),d:rr()*.25,s:.6+rr()*.8,sp:(rr()-.5)}));
   const lerp=(a,b,k)=>a+(b-a)*k,ease=k=>1-Math.pow(1-k,3);
   const flash=(o)=>{const f=document.getElementById('flash');if(f){f.style.opacity=o;setTimeout(()=>f.style.opacity=0,120)}};
   const glow=(x,y,r,c,a=1)=>{const g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,c);g.addColorStop(1,'rgba(0,0,0,0)');ctx.globalAlpha=a;ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill();ctx.globalAlpha=1};
   const burst=(k,c1,c2,n=14,size=1)=>{if(k<=0)return;const e=ease(k);for(let j=0;j<n;j++){const a=j/n*6.28+k,rad=T.s*.55*e*size;ctx.globalAlpha=1-k;ctx.fillStyle=j%2?c1:c2;ctx.beginPath();ctx.arc(T.x+Math.cos(a)*rad,T.y+Math.sin(a)*rad,T.s*.05*(1-k)*size+1,0,7);ctx.fill()}ctx.globalAlpha=1;glow(T.x,T.y,T.s*.6*size*(1-k*.5),c1,.7*(1-k))};
   let hitDone=false;const hit=()=>{if(!hitDone){hitDone=true;SFX.hit();if(big)flash(.35)}};
-  if(big&&(el==='storm'||el==='shadow'))flash(el==='storm'?.6:0);
+  if(big&&!mv.sig&&(el==='storm'||el==='shadow'))flash(el==='storm'?.6:0);
   const fx={
     none:k=>{ // a quick dash and a star burst
       const kk=k/.45;if(kk<1){ctx.strokeStyle='rgba(255,255,255,.8)';ctx.lineWidth=3;for(let j=0;j<4;j++){const y=lerp(A.y,T.y,kk)+(j-1.5)*10,x=lerp(A.x,T.x,kk);ctx.beginPath();ctx.moveTo(x-40,y);ctx.lineTo(x-8,y);ctx.stroke()}}
@@ -2570,7 +2575,78 @@ function playFx(mv,side){
     shadow:k=>{if(big){ctx.fillStyle=`rgba(20,0,40,${.45*Math.sin(k*3.14)})`;ctx.fillRect(0,0,W0,H0);for(let j=0;j<4;j++){const kk=clamp((k-j*.12)/.6,0,1);if(kk<=0||kk>=1)continue;ctx.strokeStyle=`rgba(190,140,255,${1-kk})`;ctx.lineWidth=6*(1-kk)+1;ctx.beginPath();ctx.arc(T.x,T.y,T.s*(.1+kk*.9),0,7);ctx.stroke()}if(k>.3)hit()}
       else{for(let j=0;j<5;j++){const kk=clamp((k-j*.07)/.65,0,1);if(kk<=0||kk>=1)continue;const ang=kk*9+j*1.3,x=lerp(A.x,T.x,kk)+Math.cos(ang)*22,y=lerp(A.y,T.y,kk)+Math.sin(ang)*22;for(let q=0;q<5;q++)glow(x-Math.cos(ang)*q*5,y-Math.sin(ang)*q*5,10-q,'#b088ff',.7);glow(x,y,7,'#f2e6ff')}if(k>.62){hit();burst((k-.62)/.38,'#c7a6ff','#5a2ab0',12)}}}
   };
-  const f=fx[el]||fx.none;
+  // ---- signature moves: each one-of-a-kind monster gets its own special animation ----
+  const once={},one=(n,fn)=>{if(!once[n]){once[n]=1;fn()}},seg=(k,a,b)=>clamp((k-a)/(b-a),0,1);
+  const tint=(c,a)=>{ctx.globalAlpha=a;ctx.fillStyle=c;ctx.fillRect(0,0,W0,H0);ctx.globalAlpha=1};
+  const charge=(k,c1,c2)=>{if(k<=0||k>=1)return;glow(A.x,A.y,A.s*(1-.45*k),c1,.75*k);for(const p of parts.slice(0,26)){const rad=A.s*(1-k)*(.5+p.r*.6);ctx.globalAlpha=k;ctx.fillStyle=c2;ctx.beginPath();ctx.arc(A.x+Math.cos(p.a+k*2)*rad,A.y+Math.sin(p.a+k*2)*rad*.8,2+p.s*2,0,7);ctx.fill()}ctx.globalAlpha=1};
+  const sigFx={
+    // Spikeburst: powers up, fires a fan of flaming quills, then they all burst
+    'Quill Burst':k=>{
+      tint('#3a0800',.25*Math.sin(k*3.14));one('s',()=>SFX.whoosh());charge(seg(k,0,.24),'#ff7a3a','#ffd25a');
+      const dx=T.x-A.x,dy=T.y-A.y,len=Math.hypot(dx,dy),px=-dy/len,py=dx/len,N=9,QL=T.s*.2;
+      const pos=(q,off)=>{const bow=Math.sin(q*3.14)*off*len*.3;return [lerp(A.x,T.x+px*off*T.s*.2,q)+px*bow,lerp(A.y,T.y+py*off*T.s*.2,q)+py*bow]};
+      for(let j=0;j<N;j++){const off=(j-(N-1)/2)/((N-1)/2),q=seg(k,.2+j*.03,.56+j*.03);if(q<=0||k>.8)continue;
+        const [x,y]=pos(q,off),[x0,y0]=pos(Math.max(0,q-.04),off),ang=q<1?Math.atan2(y-y0,x-x0):Math.atan2(dy,dx)+off*.5;
+        if(q<1)for(let w=1;w<6;w++){const [tx,ty]=pos(Math.max(0,q-w*.035),off);glow(tx,ty,T.s*.09*(1-w/7),w%2?'#ffb03a':'#ff5a1f',.55)}else one('h',hit);
+        ctx.save();ctx.translate(x,y);ctx.rotate(ang);const g=ctx.createLinearGradient(-QL,0,QL*.6,0);g.addColorStop(0,'#ff7a3a');g.addColorStop(.5,'#c0282a');g.addColorStop(1,'#fff1c8');ctx.fillStyle=g;ctx.strokeStyle='#5a0c10';ctx.lineWidth=1.2;
+        ctx.beginPath();ctx.moveTo(QL*.6,0);ctx.lineTo(-QL*.5,-QL*.16);ctx.lineTo(-QL,0);ctx.lineTo(-QL*.5,QL*.16);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore()}
+      if(k>.8){one('f',()=>{flash(.5);SFX.hit()});const b=(k-.8)/.2;burst(b,'#ffcf4a','#ff3a1f',30,2);
+        ctx.strokeStyle='#ffe9a8';ctx.lineCap='round';ctx.globalAlpha=1-b;for(let j=0;j<12;j++){const a=j/12*6.28+.2,r1=T.s*(.2+.5*b),r2=T.s*(.45+.9*b);ctx.lineWidth=4*(1-b)+1;ctx.beginPath();ctx.moveTo(T.x+Math.cos(a)*r1,T.y+Math.sin(a)*r1);ctx.lineTo(T.x+Math.cos(a)*r2,T.y+Math.sin(a)*r2);ctx.stroke()}ctx.globalAlpha=1}},
+    // Hydro Washy: giant teardrops rain down, then a tidal splash rises up
+    'Tidal Tears':k=>{
+      tint('#06304a',.3*Math.sin(k*3.14));one('s',()=>SFX.whoosh());charge(seg(k,0,.2),'#5fd4ff','#e6fbff');
+      const gy=T.y+T.s*.32,N=8,tear=(x,y,s)=>{const g=ctx.createLinearGradient(x-s,y-s,x+s,y+s);g.addColorStop(0,'#e6fbff');g.addColorStop(.5,'#5fd4ff');g.addColorStop(1,'#1a6fc8');ctx.fillStyle=g;ctx.strokeStyle='#0e4c94';ctx.lineWidth=1.5;
+        ctx.beginPath();ctx.moveTo(x,y-s*1.9);ctx.bezierCurveTo(x+s*.3,y-s*.9,x+s,y-s*.3,x+s,y+s*.25);ctx.arc(x,y+s*.25,s,0,3.1416);ctx.bezierCurveTo(x-s,y-s*.3,x-s*.3,y-s*.9,x,y-s*1.9);ctx.fill();ctx.stroke();
+        ctx.fillStyle='rgba(255,255,255,.8)';ctx.beginPath();ctx.ellipse(x-s*.35,y+s*.1,s*.2,s*.36,.4,0,7);ctx.fill()};
+      for(let j=0;j<N;j++){const p=parts[j],x=T.x+(j-(N-1)/2)/((N-1)/2)*T.s*.55+p.sp*8,q=seg(k,.14+j*.055,.4+j*.055),s=T.s*(.09+.05*p.r);if(q<=0)continue;
+        if(q<1){ctx.globalAlpha=.35;ctx.fillStyle='#bff4ff';ctx.fillRect(x-1.5,lerp(-40,gy,q*q)-s*5,3,s*3.4);ctx.globalAlpha=1;tear(x,lerp(-40,gy-s,q*q),s)}
+        else{one('h',hit);const b=seg(k,.4+j*.055,.62+j*.055);if(b<1){ctx.globalAlpha=1-b;ctx.strokeStyle='#e6fbff';ctx.lineWidth=3*(1-b)+1;ctx.beginPath();ctx.ellipse(x,gy,s*(1+b*3.2),s*(.4+b*1.1),0,0,7);ctx.stroke();
+            for(let w=0;w<5;w++){const a=-3.14*(w+.5)/5;ctx.fillStyle='#bff4ff';ctx.beginPath();ctx.arc(x+Math.cos(a)*s*3*b,gy+Math.sin(a)*s*4.5*b+s*5*b*b,2.5,0,7);ctx.fill()}ctx.globalAlpha=1}}}
+      const r=seg(k,.62,1);if(r>0){one('f',()=>{flash(.4);SFX.hit()});const up=Math.sin(r*3.14),wh=T.s*1.5*up,w=T.s*.95;ctx.globalAlpha=.88;const g=ctx.createLinearGradient(0,gy-wh,0,gy+T.s*.2);g.addColorStop(0,'#e6fbff');g.addColorStop(.35,'#3fb6f0');g.addColorStop(1,'#1a6fc8');ctx.fillStyle=g;
+        ctx.beginPath();ctx.moveTo(T.x-w,gy+T.s*.2);for(let x=-w;x<=w;x+=6){const e=1-(x/w)**2;ctx.lineTo(T.x+x,gy+T.s*.2-wh*e*(.82+.18*Math.sin(x/9+k*40)))}ctx.lineTo(T.x+w,gy+T.s*.2);ctx.fill();ctx.globalAlpha=1;burst(r,'#bff4ff','#3fb6f0',22,1.7)}},
+    // Lightening Bolt: a golden crown appears over the foe, then a giant bolt crashes down through it
+    'Crown Strike':k=>{
+      tint('#0a0a2a',.4*Math.sin(k*3.14));one('s',()=>SFX.chest());charge(seg(k,0,.2),'#fff27a','#ffffff');
+      const a1=seg(k,.08,.36),cy=lerp(-T.s*.4,T.y-T.s*.95,ease(a1)),cs=T.s*.42*(.5+.5*ease(a1)),out=seg(k,.86,1);
+      const bolt=(x1,y1,x2,y2,w,seed,jit=36)=>{const r=rng(seed);ctx.strokeStyle='#fff9b0';ctx.shadowColor='#fff27a';ctx.shadowBlur=22;ctx.lineWidth=w;ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(x1,y1);for(let j=1;j<=8;j++){const q=j/8;ctx.lineTo(lerp(x1,x2,q)+(j<8?(r()-.5)*jit:0),lerp(y1,y2,q)+(j<8?(r()-.5)*jit*.5:0))}ctx.stroke();ctx.shadowBlur=0};
+      const s2=seg(k,.4,.86);if(s2>0&&s2<1){one('f',()=>{flash(.7);hit()});one('f2',()=>setTimeout(()=>{flash(.5);SFX.hit()},260));const fl=Math.floor(k*26);
+        glow(T.x,T.y,T.s*1.1,'#fff27a',.55);if(fl%3!==2){bolt(T.x+(rng(fl)()-.5)*30,-10,T.x,cy,9,fl*5+1,30);bolt(T.x,cy,T.x,T.y+T.s*.2,12,fl*5+2,44);ctx.strokeStyle='#fff';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(T.x,cy);ctx.lineTo(T.x,T.y+T.s*.2);ctx.stroke()}
+        for(let j=0;j<4;j++)if((fl+j)%2===0){const a=(j-1.5)*.55+1.57;bolt(T.x,T.y,T.x+Math.cos(a)*T.s*1.1,T.y+T.s*.3+Math.abs(Math.sin(a))*T.s*.1,3,fl*9+j,22)}
+        burst((s2*2.5)%1,'#fff9b0','#ffd23a',16,1.5)}
+      if(a1>0&&out<1){ctx.save();ctx.translate(T.x,cy+Math.sin(k*30)*2);ctx.rotate(Math.sin(k*14)*.06);ctx.globalAlpha=1-out;glow(0,0,cs*2.2,'#ffe27a',.6*(1-out));
+        const g=ctx.createLinearGradient(0,-cs,0,cs*.6);g.addColorStop(0,'#fff6c0');g.addColorStop(.5,'#ffd23a');g.addColorStop(1,'#d49a17');ctx.fillStyle=g;ctx.strokeStyle='#8a5a00';ctx.lineWidth=2;ctx.lineJoin='round';
+        ctx.beginPath();ctx.moveTo(-cs,cs*.55);ctx.lineTo(-cs*1.08,-cs*.45);ctx.lineTo(-cs*.52,cs*.02);ctx.lineTo(0,-cs*.85);ctx.lineTo(cs*.52,cs*.02);ctx.lineTo(cs*1.08,-cs*.45);ctx.lineTo(cs,cs*.55);ctx.closePath();ctx.fill();ctx.stroke();
+        ctx.fillStyle='#b8860b';ctx.fillRect(-cs,cs*.32,cs*2,cs*.12);[[-cs*1.08,-cs*.45,'#3f8cff'],[0,-cs*.85,'#ff8a2a'],[cs*1.08,-cs*.45,'#3f8cff'],[0,cs*.2,'#ff4d6a']].forEach(([x,y,c])=>{ctx.fillStyle=c;ctx.beginPath();ctx.arc(x,y,cs*.13,0,7);ctx.fill();ctx.fillStyle='rgba(255,255,255,.8)';ctx.beginPath();ctx.arc(x-cs*.04,y-cs*.04,cs*.045,0,7);ctx.fill()});
+        ctx.restore();ctx.globalAlpha=1}
+      if(out>0)burst(out,'#fff9b0','#ffd23a',24,1.8)},
+    // Fernwood: two vines whip out, wrap the foe up tight, then lash it twice
+    'Vine Lash':k=>{
+      tint('#062a10',.28*Math.sin(k*3.14));one('s',()=>SFX.whoosh());charge(seg(k,0,.2),'#6cd05a','#d8ff9a');
+      const leaf=(x,y,a,s,c)=>{ctx.save();ctx.translate(x,y);ctx.rotate(a);ctx.fillStyle=c;ctx.beginPath();ctx.moveTo(-s*1.8,0);ctx.quadraticCurveTo(0,-s*1.2,s*1.8,0);ctx.quadraticCurveTo(0,s*1.2,-s*1.8,0);ctx.fill();ctx.strokeStyle='rgba(0,60,0,.45)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(-s*1.6,0);ctx.lineTo(s*1.6,0);ctx.stroke();ctx.restore()};
+      const gone=seg(k,.86,1),grow=ease(seg(k,.12,.42));
+      if(grow>0&&gone<1)for(const sgn of [-1,1]){const mx=(A.x+T.x)/2+sgn*W0*.06,my=(A.y+T.y)/2+sgn*H0*.3+Math.sin(k*18+sgn)*8,pt=q=>[(1-q)*(1-q)*A.x+2*q*(1-q)*mx+q*q*T.x,(1-q)*(1-q)*A.y+2*q*(1-q)*my+q*q*T.y];
+        ctx.globalAlpha=1-gone;ctx.lineCap='round';ctx.lineJoin='round';for(const [c,w] of [['#1d5e27',9],['#3fae4a',5.5],['#9ef08a',1.6]]){ctx.strokeStyle=c;ctx.lineWidth=w;ctx.beginPath();ctx.moveTo(A.x,A.y);for(let q=.03;q<=grow+.001;q+=.03){const [x,y]=pt(Math.min(q,grow));ctx.lineTo(x,y)}ctx.stroke()}
+        for(let q=.12;q<grow;q+=.14){const [x,y]=pt(q),[x2,y2]=pt(q+.02),a=Math.atan2(y2-y,x2-x);leaf(x+Math.cos(a+1.57)*9*sgn,y+Math.sin(a+1.57)*9*sgn,a+.9*sgn,5,(q*50|0)%2?'#6cd05a':'#2f9e44')}ctx.globalAlpha=1}
+      const wrap=seg(k,.4,.62);if(wrap>0&&gone<1){const sq=1-.18*seg(k,.6,.86);ctx.globalAlpha=1-gone;ctx.lineCap='round';for(let j=0;j<3;j++){const yy=T.y+(j-1)*T.s*.26,end=Math.min(1,wrap*1.4-j*.15);if(end<=0)continue;
+          for(const [c,w] of [['#1d5e27',9],['#3fae4a',5.5]]){ctx.strokeStyle=c;ctx.lineWidth=w;ctx.beginPath();ctx.ellipse(T.x,yy,T.s*.52*sq,T.s*.13,-.18,.25,.25+end*2.7);ctx.stroke()}leaf(T.x+T.s*.5*sq*(j%2?-1:1),yy-6,j,5,'#6cd05a')}ctx.globalAlpha=1}
+      [[.6,-1],[.74,1]].forEach(([t0,sgn],n)=>{const b=seg(k,t0,t0+.14);if(b<=0)return;one('h'+n,()=>{n?SFX.hit():hit();flash(.3)});if(b>=1)return;ctx.save();ctx.translate(T.x,T.y);ctx.rotate(sgn*.7);ctx.globalAlpha=1-b*b;ctx.strokeStyle='#eaffd0';ctx.shadowColor='#6cd05a';ctx.shadowBlur=14;ctx.lineCap='round';ctx.lineWidth=7*(1-b)+2;
+        ctx.beginPath();ctx.arc(0,T.s*.9,T.s*1.1,-1.57-.75,-1.57-.75+1.5*Math.min(1,b*2.2));ctx.stroke();ctx.restore();ctx.shadowBlur=0;ctx.globalAlpha=1});
+      if(k>.74){const b=seg(k,.74,1);burst(b,'#9ef08a','#2f9e44',20,1.6);for(const p of parts.slice(0,22)){ctx.globalAlpha=1-b;leaf(T.x+Math.cos(p.a)*T.s*(.2+.9*b)*p.s,T.y+Math.sin(p.a)*T.s*(.2+.7*b)*p.s+b*b*30,p.a+b*8,4+p.s*3,p.k%2?'#6cd05a':'#2f9e44')}ctx.globalAlpha=1}},
+    // Crystal Crash: a glowing crack races along the ground, giant amethysts burst up under the foe, then shatter
+    'Amethyst Blast':k=>{
+      tint('#1a0630',.38*Math.sin(k*3.14));one('s',()=>SFX.whoosh());charge(seg(k,0,.2),'#b44cf0','#f4e2ff');
+      const gy=T.y+T.s*.36,ay=A.y+A.s*.36,cr=seg(k,.1,.32),sh=seg(k,.76,1);
+      if(cr>0&&sh<=0){const r=rng(77);ctx.strokeStyle='#e9c8ff';ctx.shadowColor='#b44cf0';ctx.shadowBlur=14;ctx.lineWidth=4;ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(A.x,ay);for(let j=1;j<=12;j++){const q=j/12;if(q>cr)break;ctx.lineTo(lerp(A.x,T.x,q)+(r()-.5)*16,lerp(ay,gy,q)+(r()-.5)*12)}ctx.stroke();ctx.shadowBlur=0}
+      const C=[[-.5,.75,.2,0],[.48,.85,.2,.05],[-.22,1.15,.24,.09],[.22,1.3,.25,.13],[0,1.6,.3,.17],[-.78,.5,.16,.2],[.78,.55,.16,.22]];
+      const hot=seg(k,.6,.76);if(hot>0&&sh<=0){glow(T.x,gy-T.s*.5,T.s*1.5,'#f4e2ff',.7*hot);ctx.save();ctx.translate(T.x,gy-T.s*.6);ctx.rotate(k*3);ctx.globalAlpha=.5*hot;ctx.fillStyle='#f4e2ff';for(let j=0;j<8;j++){ctx.rotate(.785);ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(-T.s*.07,-T.s*1.4);ctx.lineTo(T.s*.07,-T.s*1.4);ctx.fill()}ctx.restore();ctx.globalAlpha=1}
+      if(sh<=0)for(const [dx,hh,w,d] of C){const g0=seg(k,.3+d,.44+d);if(g0<=0)continue;one('h',hit);const e=g0<1?1-Math.pow(1-g0,3)+Math.sin(g0*3.14)*.15:1,bx=T.x+dx*T.s,top=gy-hh*T.s*e,ww=w*T.s;
+        const g=ctx.createLinearGradient(bx-ww,0,bx+ww,0);g.addColorStop(0,'#f4e2ff');g.addColorStop(.45,hot>0?'#f0d0ff':'#d49bff');g.addColorStop(1,'#8a3ae0');ctx.fillStyle=g;ctx.strokeStyle='#5a1596';ctx.lineWidth=1.5;ctx.shadowColor='#d49bff';ctx.shadowBlur=10+20*hot;
+        ctx.beginPath();ctx.moveTo(bx-ww,gy);ctx.lineTo(bx-ww*.8,top+ww*.7);ctx.lineTo(bx,top);ctx.lineTo(bx+ww*.8,top+ww*.7);ctx.lineTo(bx+ww,gy);ctx.closePath();ctx.fill();ctx.stroke();ctx.shadowBlur=0;
+        ctx.fillStyle='rgba(255,255,255,.55)';ctx.beginPath();ctx.moveTo(bx-ww*.55,gy);ctx.lineTo(bx-ww*.5,top+ww*.9);ctx.lineTo(bx-ww*.1,top+ww*.35);ctx.lineTo(bx-ww*.2,gy);ctx.fill()}
+      if(sh>0){one('f',()=>{flash(.6);SFX.hit();SFX.chest()});burst(sh,'#f4e2ff','#b44cf0',30,2.1);for(const p of parts){const rad=T.s*(.2+1.5*sh)*(.4+p.r),x=T.x+Math.cos(p.a)*rad,y=gy-T.s*.6+Math.sin(p.a)*rad*.8+sh*sh*T.s*.7,s=(4+p.s*7)*(1-sh*.5);
+          ctx.save();ctx.translate(x,y);ctx.rotate(p.a+sh*10*p.sp);ctx.globalAlpha=1-sh*sh;ctx.fillStyle=p.k%3===0?'#f4e2ff':p.k%3===1?'#d49bff':'#8a3ae0';ctx.beginPath();ctx.moveTo(0,-s);ctx.lineTo(s*.6,s*.5);ctx.lineTo(-s*.6,s*.7);ctx.fill();ctx.restore()}ctx.globalAlpha=1}}
+  };
+  const f=(mv.sig&&sigFx[mv.name])||fx[el]||fx.none;
   return new Promise(res=>{const step=()=>{const k=Math.min(1,(performance.now()-t0)/dur);ctx.clearRect(0,0,W0,H0);try{f(k)}catch(e){}if(k<1&&cv.isConnected)requestAnimationFrame(step);else{ctx.clearRect(0,0,W0,H0);if(!hitDone)SFX.hit();res()}};requestAnimationFrame(step)});
 }
 
