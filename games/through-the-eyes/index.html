@@ -1506,6 +1506,15 @@ function buildAdam(){
     const sn=new THREE.Group(); const tube=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts),90,0.11,8,false), mat(0x4a9a3a)); sn.add(tube);
     const hd=new THREE.Mesh(new THREE.SphereGeometry(0.16,10,8), mat(0x4a9a3a)); hd.scale.set(1,0.75,1.4); const end=pts[pts.length-1]; hd.position.set(0.2,end.y+0.1,0.9); hd.rotation.y=0.2; sn.add(hd);
     for(const sx of [-0.07,0.07]){ const e=new THREE.Mesh(new THREE.SphereGeometry(0.03,6,6), mat(0xf5d042)); e.position.set(hd.position.x+sx,hd.position.y+0.07,hd.position.z+0.17); sn.add(e); }
+    // legs, until God's curse (Genesis 3:14): little lizard legs gripping the trunk and reaching out
+    const legs=new THREE.Group(), lm=mat(0x7fb23a);
+    for(const t of [0.18,0.42,0.66,0.86]){ const a=t*9, r=0.72*(1-t*0.2), y=0.3+t*1.8, cx=Math.cos(a), cz=Math.sin(a);
+      for(const dir of [-1,1]){ const leg=new THREE.Group(); leg.position.set(cx*r,y,cz*r); leg.rotation.y=Math.atan2(cx*dir,cz*dir);
+        const up=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.075,0.42,7), lm); up.rotation.x=Math.PI/2-0.6; up.position.set(0,-0.07,0.2); leg.add(up);
+        const ft=new THREE.Mesh(new THREE.SphereGeometry(0.1,8,6), lm); ft.scale.set(1.3,0.5,1.4); ft.position.set(0,-0.2,0.4); leg.add(ft);
+           for(const k of [-1,0,1]){ const c=new THREE.Mesh(new THREE.ConeGeometry(0.025,0.12,5), mat(0xe8e0c0)); c.rotation.x=Math.PI/2; c.position.set(k*0.06,-0.2,0.53); leg.add(c); }
+        legs.add(leg); } }
+    sn.add(legs); W.serpentLegs=legs;
     sn.position.copy(know.position); sn.visible=false; g.add(sn); W.serpent=sn; W.serpentHead=hd; }
   // sun and moon (day 4)
   const sunM=new THREE.Mesh(new THREE.SphereGeometry(9,20,16), new THREE.MeshBasicMaterial({color:0xfff2b0,fog:false})); sunM.position.set(120,110,-160); sunM.add(glowSprite(0xffe9a0,60)); sunM.visible=false; g.add(sunM); W.sunM=sunM;
@@ -1597,7 +1606,7 @@ function goAdam(step){
       ['You are Adam','The woman You put here with me gave me some fruit from the tree, and I ate it.','Genesis 3:12'],
       ['God','What is this you have done?','Genesis 3:13'],
       ['Eve','The serpent tricked me, and I ate.','Genesis 3:13'],
-      [SAY_BIBLE,'God punished the serpent. He said one day a child of Eve would crush the serpent’s head. This was God’s very first promise of a Savior.','Genesis 3:14-15'],
+      [SAY_BIBLE,'God punished the serpent. From then on it would crawl on its belly. He said one day a child of Eve would crush the serpent’s head. This was God’s very first promise of a Savior.','Genesis 3:14-15', ()=>{ W.serpentLegs.visible=false; }],
       [SAY_BIBLE,'God told Adam and Eve that now life would be hard. Work would be tiring, thorns and weeds would grow, and one day they would die.','Genesis 3:16-19'],
       [SAY_BIBLE,'But God still loved them. He made clothes out of animal skins for Adam and Eve and dressed them.','Genesis 3:21', ()=>{ W.eve.userData.body.material.color.set(0x8a5a32); W.eve.userData.arms.forEach(a=>a.material.color.set(0x8a5a32)); hand.material=mat(0x8a5a32); hand.visible=true; }],
       [SAY_BIBLE,'Then God sent them out of the Garden of Eden.','Genesis 3:23']], ()=>goAdam('leave'));
