@@ -2303,9 +2303,9 @@ function team(back,pick){hushBuddy();
   focusFirst('.hud');
 }
 // Professor Bolt's Level Switcher (George's idea): after you beat him, talk to him to swap the levels of any two of your monsters
-// the first switch is free. After that it starts at 50 coins and goes up 25 every time you use it (up to 200).
+// the first switch is free. After that it starts at 50 coins and goes up 50 every time you use it (up to 200).
 // Take a break (5 battles without using it) and it drops back to 100, but never back down to 50.
-const BOLT_ISLE=3,LSW_START=50,LSW_STEP=25,LSW_MAX=200,LSW_REST=100,LSW_BREAK=5;
+const BOLT_ISLE=3,LSW_START=50,LSW_STEP=50,LSW_MAX=200,LSW_REST=100,LSW_BREAK=5;
 function lswPrice(){if(!S.lswPrice)S.lswPrice=LSW_START;if((S.lswSince||0)>=LSW_BREAK&&S.lswPrice>LSW_REST)S.lswPrice=LSW_REST;return S.lswPrice}
 function levelSwitcher(back,first){hushBuddy();
   SCREEN='team';S.box=S.box||[];
