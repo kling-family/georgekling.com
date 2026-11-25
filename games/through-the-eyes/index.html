@@ -1502,18 +1502,23 @@ function buildAdam(){
   life.userData.fruit.forEach(f=>{ f.material=new THREE.MeshLambertMaterial({color:0xf5d042,emissive:0x8a6a10}); });
   const know=fruitTree(plants,4.5,6,1.8,0xd83a2a); grow(know); W.know=know;
   // the serpent on the tree (hidden until later)
-  { const pts=[]; for(let i=0;i<=24;i++){ const t=i/24; pts.push(new THREE.Vector3(Math.cos(t*9)*0.72*(1-t*0.2), 0.3+t*1.8, Math.sin(t*9)*0.72*(1-t*0.2))); }
+  { const pts=[]; for(let i=0;i<=24;i++){ const t=i/24; pts.push(new THREE.Vector3(Math.cos(t*9)*0.72*(1-t*0.2), 0.3+t*1.8, Math.sin(t*9)*0.72*(1-t*0.2))); } pts.push(new THREE.Vector3(-0.22,2.12,0.58), new THREE.Vector3(0.16,2.1,0.74)); // neck up to the head
     const sn=new THREE.Group(); const tube=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts),90,0.11,8,false), mat(0x4a9a3a)); sn.add(tube);
     const hd=new THREE.Mesh(new THREE.SphereGeometry(0.16,10,8), mat(0x4a9a3a)); hd.scale.set(1,0.75,1.4); const end=pts[pts.length-1]; hd.position.set(0.2,end.y+0.1,0.9); hd.rotation.y=0.2; sn.add(hd);
     for(const sx of [-0.07,0.07]){ const e=new THREE.Mesh(new THREE.SphereGeometry(0.03,6,6), mat(0xf5d042)); e.position.set(hd.position.x+sx,hd.position.y+0.07,hd.position.z+0.17); sn.add(e); }
-    // legs, until God's curse (Genesis 3:14): little lizard legs gripping the trunk and reaching out
-    const legs=new THREE.Group(), lm=mat(0x7fb23a);
-    for(const t of [0.18,0.42,0.66,0.86]){ const a=t*9, r=0.72*(1-t*0.2), y=0.3+t*1.8, cx=Math.cos(a), cz=Math.sin(a);
-      for(const dir of [-1,1]){ const leg=new THREE.Group(); leg.position.set(cx*r,y,cz*r); leg.rotation.y=Math.atan2(cx*dir,cz*dir);
-        const up=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.075,0.42,7), lm); up.rotation.x=Math.PI/2-0.6; up.position.set(0,-0.07,0.2); leg.add(up);
-        const ft=new THREE.Mesh(new THREE.SphereGeometry(0.1,8,6), lm); ft.scale.set(1.3,0.5,1.4); ft.position.set(0,-0.2,0.4); leg.add(ft);
-           for(const k of [-1,0,1]){ const c=new THREE.Mesh(new THREE.ConeGeometry(0.025,0.12,5), mat(0xe8e0c0)); c.rotation.x=Math.PI/2; c.position.set(k*0.06,-0.2,0.53); leg.add(c); }
-        legs.add(leg); } }
+    // legs, until God's curse (Genesis 3:14): little lizard legs growing out of the body's sides and gripping the trunk
+    const legs=new THREE.Group(), lm=mat(0x7fb23a), cm=mat(0xe8e0c0), curve=tube.geometry.parameters.path, Y=new THREE.Vector3(0,1,0);
+    const limb=(a,b,r0,r1)=>{ const d=b.clone().sub(a), m=new THREE.Mesh(new THREE.CylinderGeometry(r1,r0,d.length(),7), lm);
+      m.position.copy(a).add(b).multiplyScalar(0.5); m.quaternion.setFromUnitVectors(Y,d.normalize()); legs.add(m); };
+    for(const t of [0.16,0.4,0.64,0.84]){ const p=curve.getPoint(t), T=curve.getTangent(t), out=new THREE.Vector3(p.x,0,p.z).normalize();
+      const side=new THREE.Vector3().crossVectors(T,out).normalize();
+      for(const dir of [-1,1]){ const sd=side.clone().multiplyScalar(dir);
+        const hip=p.clone().addScaledVector(sd,0.04), knee=p.clone().addScaledVector(sd,0.24).addScaledVector(out,0.1), foot=p.clone().addScaledVector(sd,0.38).addScaledVector(out,-0.02);
+        const hj=new THREE.Mesh(new THREE.SphereGeometry(0.08,8,6), lm); hj.position.copy(hip); legs.add(hj);
+        limb(hip,knee,0.07,0.055); limb(knee,foot,0.055,0.045);
+        const ft=new THREE.Mesh(new THREE.SphereGeometry(0.075,8,6), lm); ft.position.copy(foot); ft.scale.set(1.2,1.2,0.6); ft.lookAt(foot.clone().add(out)); legs.add(ft);
+        for(const k of [-1,0,1]){ const c=new THREE.Mesh(new THREE.ConeGeometry(0.022,0.11,5), cm); const tip=sd.clone().addScaledVector(T,k*0.6).normalize();
+          c.position.copy(foot).addScaledVector(tip,0.1); c.quaternion.setFromUnitVectors(Y,tip); legs.add(c); } } }
     sn.add(legs); W.serpentLegs=legs;
     sn.position.copy(know.position); sn.visible=false; g.add(sn); W.serpent=sn; W.serpentHead=hd; }
   // sun and moon (day 4)
