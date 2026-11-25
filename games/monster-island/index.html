@@ -764,10 +764,10 @@ function previewChamp(){if(/georgekling\.com$/.test(location.hostname)||!/[?&](w
   if(/[?&]whirlpool\b/.test(PQ())){const id='pwhirl',ps=profiles();if(!ps.some(q=>q.id===id)){ps.push({id,name:'Whirlpool Test',color:2});saveProfiles(ps)}PROFILE=ps.find(q=>q.id===id);
     if(!readSave(id)){S={starter:'bubblop',team:[['tidalord',27],['flarion',26],['bloomroar',26],['stormhare',25],['boulderon',25],['phantomkin',25]].map(([sp,l])=>mk(sp,l)),unlocked:MAIN+1,beaten:[0,1,2,3,4,EARTH],pieces:{0:1,1:1,2:1,3:1,4:1},caught:{flicklet:1,bubblop:1,sproutle:1},coins:600,supers:8,pos:{},lookSeen:1,look:{},compass:1,buddy:{name:'Pip',d:{}},gift:1,onboard:1};save()}
     S=load();map();return true}
-  // #switcher: a test player who just beat Professor Bolt and every trainer on the first five islands, so the Level Switcher is ready on the Team page
-  if(/[?&]switcher\b/.test(PQ())){const id='pswitch2',ps=profiles();if(!ps.some(q=>q.id===id)){ps.push({id,name:'Switcher Test',color:1});saveProfiles(ps)}PROFILE=ps.find(q=>q.id===id);
-    if(!readSave(id)){S={starter:'flicklet',team:[['flarion',19],['tidalord',18],['sproutle',5],['bloomroar',17]].map(([sp,l])=>mk(sp,l)),box:[mk('pebblit',4),mk('boltbunny',12)],unlocked:5,beaten:[0,1,2,3],switcher:1,tb:Object.fromEntries([0,1,2,3,4].map(i=>[i,genMap(i).trainers.map(t=>t.k)])),pieces:{},caught:{flicklet:1,bubblop:1,sproutle:1,pebblit:1,boltbunny:1},coins:400,supers:4,pos:{},lookSeen:1,look:{},compass:1,buddy:{name:'Pip',d:{}},gift:1,onboard:1};save()}
-    S=load();map();return true}
+  // #switcher: a test player who just beat Professor Bolt and every trainer on the first five islands, standing next to Professor Bolt, so the Level Switcher is ready on the Team page
+  if(/[?&]switcher\b/.test(PQ())){const id='pswitch3',ps=profiles();if(!ps.some(q=>q.id===id)){ps.push({id,name:'Switcher Test',color:1});saveProfiles(ps)}PROFILE=ps.find(q=>q.id===id);
+    if(!readSave(id)){S={starter:'flicklet',team:[['flarion',19],['tidalord',18],['sproutle',5],['bloomroar',17]].map(([sp,l])=>mk(sp,l)),box:[mk('pebblit',4),mk('boltbunny',12)],unlocked:5,beaten:[0,1,2,3],switcher:1,tb:Object.fromEntries([0,1,2,3,4].map(i=>[i,genMap(i).trainers.map(t=>t.k)])),at:BOLT_ISLE,pieces:{},caught:{flicklet:1,bubblop:1,sproutle:1,pebblit:1,boltbunny:1},coins:400,supers:4,pos:{},lookSeen:1,look:{},compass:1,buddy:{name:'Pip',d:{}},gift:1,onboard:1};save()}
+    S=load();{const m=genMap(BOLT_ISLE),c=m.champ,nb=[[0,1],[1,0],[-1,0],[0,-1]].map(([dx,dy])=>({x:c.x+dx,y:c.y+dy})).find(q=>walk(m.g[q.y][q.x]));if(nb){S.pos[BOLT_ISLE]=nb;save()}}island(BOLT_ISLE);return true}
   // #earthwon: a test player who already beat Captain Granite, standing right outside Earth Island's little secret cave
   if(/[?&]earthwon\b/.test(PQ())){const id='pcave',ps=profiles();if(!ps.some(q=>q.id===id)){ps.push({id,name:'Earth Champion Test',color:5});saveProfiles(ps)}PROFILE=ps.find(q=>q.id===id);
     if(!readSave(id)){const c=genMap(EARTH).cave;S={starter:'flicklet',team:[['flarion',28],['tidalord',27],['bloomroar',27],['stormhare',26],['mudzilla',26],['phantomkin',26]].map(([sp,l])=>mk(sp,l)),unlocked:MAIN+1,beaten:[0,1,2,3,4,EARTH],pieces:{0:1,1:1,2:1,3:1,4:1},caught:{flicklet:1,bubblop:1,sproutle:1},coins:800,supers:5,pos:c?{[EARTH]:{x:c.fx,y:c.fy}}:{},lookSeen:1,look:{},compass:1,buddy:{name:'Pip',d:{}},gift:1,onboard:1};save()}
@@ -1669,6 +1669,13 @@ function openChamp(){
     pr.innerHTML=`<div class="who">Rival Rex</div><div>${tired?'Your team looks tired. Go rest in the tent first!':REX_LINE.replace(/^Rex: /,'')}</div><div class="row">${tired?'<button class="btn sm" id="pn">OK</button>':'<button class="btn hot sm" id="py">Battle!</button><button class="btn ghost sm" id="pn">Not yet</button>'}</div>`;
     document.getElementById('pn').onclick=()=>{pr.hidden=true;Wd.paused=false};
     const y=document.getElementById('py');if(y)y.onclick=()=>{pr.hidden=true;rexFinal(champTeam(CHAMP))};
+    return focusFirst('#prompt')}
+  // after you beat him, Professor Bolt offers a rematch or a go on his Level Switcher
+  if(Wd.i===BOLT_ISLE&&S.beaten.includes(BOLT_ISLE)){
+    pr.innerHTML=`<div class="who">${s.champ.name}</div><div>"You want a rematch, or do you want to try out my new Level Switcher?"</div><div class="row"><button class="btn hot sm" id="py">Rematch!</button><button class="btn sm" id="psw">Level Switcher</button><button class="btn ghost sm" id="pn">Not now</button></div>`;
+    document.getElementById('pn').onclick=()=>{pr.hidden=true;Wd.paused=false};
+    document.getElementById('psw').onclick=()=>{pr.hidden=true;SFX.select();S.switcher=1;save();levelSwitcher(()=>island(BOLT_ISLE))};
+    document.getElementById('py').onclick=()=>{if(tired){SFX.bump();return toast('Your team looks tired. Go rest in the tent first!')}pr.hidden=true;battle({wild:false,isle:Wd.i,enemies:champTeam(Wd.i).map(([sp,l])=>mk(sp,l))})};
     return focusFirst('#prompt')}
   pr.innerHTML=tired?`<div class="who">${s.champ.name}</div><div>Your team looks tired. Go rest in the tent first!</div><div class="row"><button class="btn sm" id="pn">OK</button></div>`
     :`<div class="who">${s.champ.name}</div><div>${S.beaten.includes(Wd.i)?'Back for a rematch?':'So you want to battle for '+s.name+'?'}</div><div class="row"><button class="btn hot sm" id="py">Battle!</button><button class="btn ghost sm" id="pn">Not yet</button></div>`;
