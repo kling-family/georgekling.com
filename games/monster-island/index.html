@@ -765,8 +765,8 @@ function previewChamp(){if(/georgekling\.com$/.test(location.hostname)||!/[?&](w
     if(!readSave(id)){S={starter:'bubblop',team:[['tidalord',27],['flarion',26],['bloomroar',26],['stormhare',25],['boulderon',25],['phantomkin',25]].map(([sp,l])=>mk(sp,l)),unlocked:MAIN+1,beaten:[0,1,2,3,4,EARTH],pieces:{0:1,1:1,2:1,3:1,4:1},caught:{flicklet:1,bubblop:1,sproutle:1},coins:600,supers:8,pos:{},lookSeen:1,look:{},compass:1,buddy:{name:'Pip',d:{}},gift:1,onboard:1};save()}
     S=load();map();return true}
   // #switcher: a test player who just beat Professor Bolt and every trainer on the first five islands, standing next to Professor Bolt, so the Level Switcher is ready on the Team page
-  if(/[?&]switcher\b/.test(PQ())){const id='pswitch3',ps=profiles();if(!ps.some(q=>q.id===id)){ps.push({id,name:'Switcher Test',color:1});saveProfiles(ps)}PROFILE=ps.find(q=>q.id===id);
-    if(!readSave(id)){S={starter:'flicklet',team:[['flarion',19],['tidalord',18],['sproutle',5],['bloomroar',17]].map(([sp,l])=>mk(sp,l)),box:[mk('pebblit',4),mk('boltbunny',12)],unlocked:5,beaten:[0,1,2,3],switcher:1,tb:Object.fromEntries([0,1,2,3,4].map(i=>[i,genMap(i).trainers.map(t=>t.k)])),at:BOLT_ISLE,pieces:{},caught:{flicklet:1,bubblop:1,sproutle:1,pebblit:1,boltbunny:1},coins:400,supers:4,pos:{},lookSeen:1,look:{},compass:1,buddy:{name:'Pip',d:{}},gift:1,onboard:1};save()}
+  if(/[?&]switcher\b/.test(PQ())){const id='pswitch4',ps=profiles();if(!ps.some(q=>q.id===id)){ps.push({id,name:'Switcher Test',color:1});saveProfiles(ps)}PROFILE=ps.find(q=>q.id===id);
+    if(!readSave(id)){S={starter:'flicklet',team:[['flarion',19],['tidalord',18],['sproutle',5],['bloomroar',17]].map(([sp,l])=>mk(sp,l)),box:[mk('pebblit',4),mk('boltbunny',12)],unlocked:5,beaten:[0,1,2,3],tb:Object.fromEntries([0,1,2,3,4].map(i=>[i,genMap(i).trainers.map(t=>t.k)])),at:BOLT_ISLE,pieces:{},caught:{flicklet:1,bubblop:1,sproutle:1,pebblit:1,boltbunny:1},coins:400,supers:4,pos:{},lookSeen:1,look:{},compass:1,buddy:{name:'Pip',d:{}},gift:1,onboard:1};save()}
     S=load();{const m=genMap(BOLT_ISLE),c=m.champ,nb=[[0,1],[1,0],[-1,0],[0,-1]].map(([dx,dy])=>({x:c.x+dx,y:c.y+dy})).find(q=>walk(m.g[q.y][q.x]));if(nb){S.pos[BOLT_ISLE]=nb;save()}}island(BOLT_ISLE);return true}
   // #earthwon: a test player who already beat Captain Granite, standing right outside Earth Island's little secret cave
   if(/[?&]earthwon\b/.test(PQ())){const id='pcave',ps=profiles();if(!ps.some(q=>q.id===id)){ps.push({id,name:'Earth Champion Test',color:5});saveProfiles(ps)}PROFILE=ps.find(q=>q.id===id);
@@ -1672,9 +1672,9 @@ function openChamp(){
     return focusFirst('#prompt')}
   // after you beat him, Professor Bolt offers a rematch or a go on his Level Switcher
   if(Wd.i===BOLT_ISLE&&S.beaten.includes(BOLT_ISLE)){
-    pr.innerHTML=`<div class="who">${s.champ.name}</div><div>"You want a rematch, or do you want to try out my new Level Switcher?"</div><div class="row"><button class="btn hot sm" id="py">Rematch!</button><button class="btn sm" id="psw">Level Switcher</button><button class="btn ghost sm" id="pn">Not now</button></div>`;
+    pr.innerHTML=`<div class="who">${s.champ.name}</div><div>"You want a rematch, or do you want to try out my new Level Switcher?${S.lswUsed?` It costs ${LSW_COST} coins.`:' The first time is free!'}"</div><div class="row"><button class="btn hot sm" id="py">Rematch!</button><button class="btn sm" id="psw">Level Switcher (${S.lswUsed?LSW_COST+' coins':'free'})</button><button class="btn ghost sm" id="pn">Not now</button></div>`;
     document.getElementById('pn').onclick=()=>{pr.hidden=true;Wd.paused=false};
-    document.getElementById('psw').onclick=()=>{pr.hidden=true;SFX.select();S.switcher=1;save();levelSwitcher(()=>island(BOLT_ISLE))};
+    document.getElementById('psw').onclick=()=>{if(S.lswUsed&&S.coins<LSW_COST){SFX.bump();return toast(`You need ${LSW_COST} coins for the Level Switcher. You have ${S.coins}.`)}pr.hidden=true;SFX.select();levelSwitcher(()=>island(BOLT_ISLE))};
     document.getElementById('py').onclick=()=>{if(tired){SFX.bump();return toast('Your team looks tired. Go rest in the tent first!')}pr.hidden=true;battle({wild:false,isle:Wd.i,enemies:champTeam(Wd.i).map(([sp,l])=>mk(sp,l))})};
     return focusFirst('#prompt')}
   pr.innerHTML=tired?`<div class="who">${s.champ.name}</div><div>Your team looks tired. Go rest in the tent first!</div><div class="row"><button class="btn sm" id="pn">OK</button></div>`
@@ -2282,7 +2282,6 @@ function team(back,pick){hushBuddy();
       <div class="tbtns">${where==='team'?(pick!==undefined?`<button class="btn sm" data-swap="${k}">Swap out</button>`:`${k?`<button class="btn ghost sm" data-k="${k}">Make leader</button>`:`<span class="chip" style="background:var(--hot)">Leader</span>`}${S.team.length>1?`<button class="btn ghost sm" data-out="${k}">Send to camp</button>`:''}`)
         :(pick===k?`<button class="btn ghost sm" data-cancel="1">Cancel</button>`:`<button class="btn ${S.team.length<TEAM_MAX?'':'ghost '}sm" data-in="${k}">${S.team.length<TEAM_MAX?'Add to team':'Swap in'}</button>`)}</div></div>`};
   app.innerHTML=`<div class="box hud"><span class="name">Your team</span><button class="btn ghost sm" id="back">Back</button></div>
-  ${hasSwitcher()&&pick===undefined&&S.team.length+box.length>1?`<div class="box row" style="justify-content:space-between;gap:10px"><div><h3>Level Switcher</h3><p class="muted small">Professor Bolt's invention. Swap the levels of any two of your monsters.</p></div><button class="btn sm" id="lsw">Use it</button></div>`:''}
   <div class="box" style="display:flex;flex-direction:column;gap:8px">
     <div class="row" style="justify-content:space-between"><h3>Battle team <span class="muted">${S.team.length} of ${TEAM_MAX}</span></h3></div>
     <p class="muted small">${pick!==undefined?`Pick who sits out so <b>${nm(box[pick])}</b> can join.`:'These monsters battle with you. Your leader goes first.'}</p>
@@ -2295,7 +2294,6 @@ function team(back,pick){hushBuddy();
     <div class="dex">${all.map(sp=>`<div class="${S.caught[sp]?'':'unknown'}" title="${S.caught[sp]?SP[sp].name:'Not caught yet'}">${spr(sp)}</div>`).join('')}</div></div>`;
   scrollTo(0,pick===undefined&&y0===0?0:y0);
   document.getElementById('back').onclick=back;
-  const lsw=document.getElementById('lsw');if(lsw)lsw.onclick=()=>{SFX.select();levelSwitcher(()=>team(back))};
   const re=p=>team(back,p);
   app.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{SFX.select();const k=+b.dataset.k;const [m]=S.team.splice(k,1);S.team.unshift(m);save();re()});
   app.querySelectorAll('[data-out]').forEach(b=>b.onclick=()=>{SFX.select();const [m]=S.team.splice(+b.dataset.out,1);box.push(m);save();toast(`${nm(m)} is resting at camp.`);re()});
@@ -2304,8 +2302,9 @@ function team(back,pick){hushBuddy();
   app.querySelectorAll('[data-cancel]').forEach(b=>b.onclick=()=>re());
   focusFirst('.hud');
 }
-// Professor Bolt's Level Switcher (George's idea): after you beat him, swap the levels of any two of your monsters
-const BOLT_ISLE=3,hasSwitcher=()=>!!S&&(!!S.switcher||S.beaten.includes(BOLT_ISLE));
+// Professor Bolt's Level Switcher (George's idea): after you beat him, talk to him to swap the levels of any two of your monsters
+// the first switch is free, after that each switch costs coins
+const BOLT_ISLE=3,LSW_COST=50;
 function levelSwitcher(back,first){hushBuddy();
   SCREEN='team';S.box=S.box||[];
   const all=[...S.team.map((m,k)=>({m,where:'Team',id:'t'+k})),...S.box.map((m,k)=>({m,where:'Camp',id:'b'+k}))],a=all.find(x=>x.id===first);
@@ -2314,7 +2313,7 @@ function levelSwitcher(back,first){hushBuddy();
       <div class="muted small">${x.where}${a&&!on?`. After the switch: <b>Lv ${a.m.lvl}</b>`:''}</div></div>
       <div class="tbtns">${on?'<button class="btn ghost sm" data-cancel="1">Cancel</button>':a?`<button class="btn hot sm" data-go="${x.id}">Switch with ${nm(a.m)}</button>`:`<button class="btn sm" data-pick="${x.id}">Pick</button>`}</div></div>`};
   app.innerHTML=`<div class="box hud"><span class="name">Level Switcher</span><button class="btn ghost sm" id="back">Back</button></div>
-  <div class="box"><p>${a?`Now pick the monster to swap levels with <b>${nm(a.m)}</b> (level ${a.m.lvl}).`:'Professor Bolt\'s invention! Pick two monsters and they swap levels. Put a high level on a monster you want to use, or a low level on one you want to train.'}</p></div>
+  <div class="box"><p>${a?`Now pick the monster to swap levels with <b>${nm(a.m)}</b> (level ${a.m.lvl}).`:'Professor Bolt\'s invention! Pick two monsters and they swap levels. Put a high level on a monster you want to use, or a low level on one you want to train.'} ${S.lswUsed?`This switch costs <b>${LSW_COST} coins</b>. You have ${S.coins}.`:'This first switch is <b>free</b>!'}</p></div>
   <div class="box" style="display:flex;flex-direction:column;gap:8px">${all.map(card).join('')}</div>`;
   scrollTo(0,0);
   document.getElementById('back').onclick=()=>{SFX.select();back()};
@@ -2322,9 +2321,10 @@ function levelSwitcher(back,first){hushBuddy();
   app.querySelectorAll('[data-cancel]').forEach(b=>b.onclick=()=>{SFX.select();levelSwitcher(back)});
   app.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{const x=all.find(y=>y.id===b.dataset.go),p=a.m,q=x.m;
     if(p.lvl===q.lvl){SFX.bump();return toast('They are already the same level!')}
+    const paid=!!S.lswUsed;if(paid&&S.coins<LSW_COST){SFX.bump();return toast(`You need ${LSW_COST} coins. You have ${S.coins}.`)}if(paid)S.coins-=LSW_COST;S.lswUsed=1;
     const rp=p.hp/maxHp(p),rq=q.hp/maxHp(q);[p.lvl,q.lvl]=[q.lvl,p.lvl];[p.xp,q.xp]=[q.xp||0,p.xp||0];
     p.hp=Math.max(p.hp>0?1:0,Math.round(maxHp(p)*rp));q.hp=Math.max(q.hp>0?1:0,Math.round(maxHp(q)*rq));movesOf(p);movesOf(q);
-    SFX.level();save();toast(`Zap! ${nm(p)} is now level ${p.lvl} and ${nm(q)} is now level ${q.lvl}.`);levelSwitcher(back)});
+    SFX.level();save();toast(`Zap! ${nm(p)} is now level ${p.lvl} and ${nm(q)} is now level ${q.lvl}.${paid?` You paid ${LSW_COST} coins.`:''}`);back()});
   focusFirst('.hud');
 }
 function victory(){
@@ -2552,7 +2552,7 @@ async function winBattle(){
   if(i<MAIN)await checkPiece(i);
   if(first){
     S.beaten.push(i);S.supers++;await say('The champion gives you a Super Net!',800);
-    if(i===BOLT_ISLE){S.switcher=1;save();await say('Professor Bolt: "Great battle! Now look at this. I invented something!"',1600);await say('Professor Bolt gives you the Level Switcher! It swaps the levels of two of your monsters, so training is much easier.',2000);await say('Use it any time from your Team page.',1100)}
+    if(i===BOLT_ISLE){save();await say('Professor Bolt: "Great battle! You know, I just invented a machine that can switch the levels of your monsters..."',2200);await say('Professor Bolt: "Come talk to me if you want to try it. The first time is free!"',1800)}
     if(i<MAIN||i===EARTH){const nx=i===EARTH?CHAMP:i+1<MAIN?i+1:EARTH;if(i<MAIN)S.unlocked=Math.max(S.unlocked,i+2);save();await say(`New island unlocked: ${ISLES[nx].name}!`,1000);if(nx===CHAMP)await say('It sits right in the middle of all the islands. The champion of all islands is waiting there.',1300);await say(`A rare monster now hides on ${s.name}. It runs away from you!`,1000);map();return}
     if(i===CHAMP&&!S.rexFinal){save();const champ=B.enemies.map(m=>[m.sp,m.lvl]);await say('Wait... someone is running up the beach. It\'s Rex!',1300);await say(REX_LINE,2200);await say('Your monsters take a quick rest before the battle.',1000);return rexFinal(champ)}
     save();victory();return;
